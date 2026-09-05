@@ -1,0 +1,47 @@
+name: Build
+
+# 仅用于日常提交/PR 的编译校验，不会创建 Release
+# 正式发布请使用 Release 工作流（打 tag 或手动触发）
+on:
+  push:
+    branches: [ main ]
+    tags-ignore: [ '**' ]   # 打 tag 时交给 release.yml 处理，避免重复构建
+    paths-ignore:           # 只改这些文件不触发编译
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '7.0.410'
+
+      - name: Restore
+        run: dotnet restore DT_Tools/DT_Tools.csproj
+
+      - name: Build
+        run: dotnet build DT_Tools/DT_Tools.csproj -c Release --no-restore
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: DT_Tools
+          path: DT_Tools/bin/Release/netstandard2.1/*.dll
+          if-no-files-found: error

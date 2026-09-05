@@ -1,0 +1,110 @@
+name: Release
+
+# 触发方式：
+# 1) 推送形如 v*.*.* 的 tag，自动编译并发布 Release（tag 名即 Release 版本号）
+# 2) 手动在 Actions 页面点击 "Run workflow"，填入 tag 名，效果与推送 tag 相同
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的版本号（例如 v*.*.*）'
+        required: true
+        type: string
+
+# 创建 Release 需要写权限
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # 拉取完整历史，供下面校验 tag 是否来自 main 分支
+        # 手动触发时：检出你在 Actions 页面选择的分支（通常是 main）
+        # tag 触发时：检出该 tag 对应的代码
+        # 注意：手动触发时不要求 tag 已存在，Release 会基于当前分支自动创建新 tag
+
+      - name: 校验发布来源分支（防止在 dev 等分支误打 tag 导致误发布）
+        shell: bash
+        run: |
+          set -e
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # 手动触发：必须是在 main 分支上运行的
+            BRANCH="${{ github.ref_name }}"
+            if [ "$BRANCH" != "main" ]; then
+              echo "::error::手动发布必须在 main 分支上触发，当前触发分支是「$BRANCH」。请切换到 main 分支后重试。"
+              exit 1
+            fi
+          else
+            # tag push 触发：确认这个 tag 指向的 commit 确实存在于 main 分支的历史里
+            git fetch origin main
+            if ! git merge-base --is-ancestor "${{ github.sha }}" origin/main; then
+              echo "::error::此 tag（${GITHUB_REF#refs/tags/}）指向的提交不在 main 分支历史中，很可能是在 dev 或其他分支上误打的 tag。已阻止发布，请确认代码已合并到 main 后，在 main 分支重新打 tag。"
+              exit 1
+            fi
+          fi
+
+      - name: 确定版本号
+        id: ver
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '7.0.410'
+
+      - name: Restore
+        run: dotnet restore DT_Tools/DT_Tools.csproj
+
+      - name: Build
+        run: dotnet build DT_Tools/DT_Tools.csproj -c Release --no-restore
+
+      - name: 打包发布文件
+        id: package
+        shell: bash
+        run: |
+          set -e
+          OUT_DIR="DT_Tools/bin/Release/netstandard2.1"
+          STAGE="stage"
+          mkdir -p "$STAGE"
+
+          # 编译产物文件名由 csproj 中 TargetName 决定（DT_Tools_Release_<版本号>.dll）
+          # 发布包内统一重命名为 DT_Tools.dll，方便用户按 README 直接放入插件目录
+          DLL_PATH=$(find "$OUT_DIR" -maxdepth 1 -iname 'DT_Tools*.dll' | head -n 1)
+          if [ -z "$DLL_PATH" ]; then
+            echo "::error::未找到编译产物 dll，请检查构建是否成功"
+            exit 1
+          fi
+          cp "$DLL_PATH" "$STAGE/DT_Tools.dll"
+          cp README.md "$STAGE/" 2>/dev/null || true
+          cp DT_Tools/LICENSE "$STAGE/" 2>/dev/null || true
+
+          ZIP_NAME="DT_Tools-${{ steps.ver.outputs.tag }}.zip"
+          (cd "$STAGE" && zip -r "../$ZIP_NAME" .)
+
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: 创建 / 更新 GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: DT_Tools ${{ steps.ver.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            ${{ steps.package.outputs.zip_name }}
+            stage/DT_Tools.dll
