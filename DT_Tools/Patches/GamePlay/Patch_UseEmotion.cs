@@ -18,7 +18,7 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch(typeof(UI_EmotionSubItem), nameof(UI_EmotionSubItem.UseEmotion))]
     [PatchConfig(
-        "Enable_UseEmotion",
+        "UseEmotion",
         "表情发送无冷却：可连续使用表情动作。",
         defaultEnabled: true,
         author: "梦初雪")]

@@ -11,9 +11,9 @@
 - **入口**：`Plugin.cs` 反射扫描带 `[PatchConfig]` 的类型，按配置决定是否加载。
 - **补丁目录**：
   - `Patches/DevMode/` — 开发类型
-  - `Patches/Player/`  — 玩家类型
+  - `Patches/GamePlay /`  — 玩家类型
   - `Patches/System/`  — 游戏系统
-- **命名空间**与目录对应：`DT_Tools.Patches.{DevMode|Player|System}`
+- **命名空间**与目录对应：`DT_Tools.Patches.{DevMode|GamePlay |System}`
 
 ## 命名约定（与游戏源码对齐）
 

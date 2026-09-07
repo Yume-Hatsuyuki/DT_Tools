@@ -20,8 +20,8 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "GetHandWeaponTarget")]
     [PatchConfig(
-        "Enable_GetHandWeaponTarget",
-        "递刀距离：可在下方配置段修改最大递交距离（默认 224）。",
+        "GetHandWeaponTarget",
+        "递刀距离：可在本段修改最大递交距离（默认 224）。",
         author: "梦初雪")]
     internal static class Patch_GetHandWeaponTarget
     {

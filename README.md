@@ -8,8 +8,8 @@
 
 《[Deadly Trick](https://store.steampowered.com/app/3088400/Deadly_Trick/)》是一款最多支持8人游玩的社交推理游戏。
 
-**游戏联机方式基于 P2P 实现。**
-**部分功能客户端无需安装Mod即可体验。**
+**游戏联机方式基于 P2P 实现。**  
+**部分功能客户端无需安装Mod即可体验。**  
 **但为最佳游玩体验，仍建议房主与成员均安装 Mod。**
 
 > [!WARNING]

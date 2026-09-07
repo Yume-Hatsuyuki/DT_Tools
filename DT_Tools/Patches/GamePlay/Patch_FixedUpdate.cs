@@ -21,8 +21,8 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "FixedUpdate")]
     [PatchConfig(
-        "Enable_FixedUpdate",
-        "大厅移速：可在下方配置段修改大厅内移动倍率（默认 1.0）。",
+        "FixedUpdate",
+        "大厅移速：可在本段修改大厅内移动倍率（默认 1.0）。",
         author: "梦初雪")]
     internal static class Patch_FixedUpdate
     {

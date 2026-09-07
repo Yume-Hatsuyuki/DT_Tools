@@ -20,8 +20,8 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch(typeof(UI_GameTablet), "LateUpdate")]
     [PatchConfig(
-        "Enable_RefreshPlayerPin",
-        "地图玩家位置：平板电脑地图上显示所有玩家位置（无法区分阵营）。",
+        "RefreshPlayerPin",
+        "地图玩家位置：平板电脑地图上显示所有玩家位置（白方无法区分阵营）。",
         author: "梦初雪")]
     internal static class Patch_RefreshPlayerPin
     {

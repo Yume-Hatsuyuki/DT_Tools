@@ -21,7 +21,7 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch]
     [PatchConfig(
-        "Enable_OwnedEmoticonIds",
+        "OwnedEmoticonIds",
         "表情包全解锁：本地视为拥有全部表情包。",
         author: "梦初雪")]
     internal static class Patch_OwnedEmoticonIds

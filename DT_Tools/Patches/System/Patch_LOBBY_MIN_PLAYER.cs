@@ -19,8 +19,8 @@ namespace DT_Tools.Patches.System
     /// </summary>
     [HarmonyPatch]
     [PatchConfig(
-        "Enable_LOBBY_MIN_PLAYER",
-        "房间开局最少人数：可在下方配置段修改（默认 5）。测试模式开启时仍为 0。",
+        "LOBBY_MIN_PLAYER",
+        "房间开局最少人数：可在本段修改（默认 5）。测试模式开启时仍为 0。",
         author: "梦初雪")]
     internal static class Patch_LOBBY_MIN_PLAYER
     {
