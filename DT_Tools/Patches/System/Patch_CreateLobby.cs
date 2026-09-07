@@ -22,7 +22,7 @@ namespace DT_Tools.Patches.System
     /// </summary>
     [HarmonyPatch]
     [PatchConfig(
-        "Enable_CreateLobby",
+        "CreateLobby",
         "房间人数上限：创建房间时可容纳的最大人数（默认 8）。",
         author: "梦初雪")]
     internal static class Patch_CreateLobby

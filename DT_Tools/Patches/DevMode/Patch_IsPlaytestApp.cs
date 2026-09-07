@@ -21,7 +21,7 @@ namespace DT_Tools.Patches.DevMode
     /// </summary>
     [HarmonyPatch]
     [PatchConfig(
-        "Enable_IsPlaytestApp",
+        "IsPlaytestApp",
         "测试模式：按测试服逻辑运行（例如可更少人数开局），支付与库存仍走正式服。",
         author: "梦初雪")]
     internal static class Patch_IsPlaytestApp

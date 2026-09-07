@@ -18,8 +18,8 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.IsGhostView))]
     [PatchConfig(
-        "Enable_IsGhostView",
-        "幽灵视角：存活时也以幽灵视角进入。可能影响正常对局，建议仅本地调试使用。",
+        "IsGhostView",
+        "幽灵视角：（⚠️奇怪的功能）化身幽灵👻。\n可能影响正常对局，建议仅本地调试使用。",
         author: "梦初雪")]
     internal static class Patch_IsGhostView
     {

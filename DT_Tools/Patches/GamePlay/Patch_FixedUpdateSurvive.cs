@@ -26,7 +26,7 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "FixedUpdateSurvive")]
     [PatchConfig(
-        "Enable_FixedUpdateSurvive",
+        "FixedUpdateSurvive",
         "对局内移速：可按场景分别调整移速倍率，默认与游戏一致。",
         author: "梦初雪")]
     internal static class Patch_FixedUpdateSurvive

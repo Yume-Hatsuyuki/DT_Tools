@@ -20,8 +20,8 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "GetTargetPlayer")]
     [PatchConfig(
-        "Enable_GetTargetPlayer",
-        "黑方攻击距离：可在下方配置段修改最大攻击距离（默认 224）。",
+        "GetTargetPlayer",
+        "黑方攻击距离：可在本段修改最大攻击距离（默认 224）。",
         author: "梦初雪")]
     internal static class Patch_GetTargetPlayer
     {

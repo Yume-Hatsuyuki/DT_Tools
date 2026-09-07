@@ -27,7 +27,7 @@ namespace DT_Tools.Patches.GamePlay
     /// </summary>
     [HarmonyPatch]
     [PatchConfig(
-        "Enable_CanShowLie",
+        "CanShowLie",
         "黑幕伪证：允许黑幕在审判阶段使用伪证，可选内容与黑方一致。",
         author: "梦初雪")]
     internal static class Patch_CanShowLie
