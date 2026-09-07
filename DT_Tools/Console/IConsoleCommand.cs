@@ -18,6 +18,9 @@ namespace DT_Tools.Console
         /// <summary>功能描述。</summary>
         string Description { get; }
 
+        /// <summary>命令作者署名。</summary>
+        string Author { get; }
+
         /// <summary>
         /// 执行命令。
         /// </summary>

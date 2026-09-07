@@ -22,6 +22,7 @@ namespace DT_Tools.Console.Commands
         public string[] Aliases     => new[] { "?", "？" };
         public string   Usage       => "help [命令名]";
         public string   Description => "显示所有命令，或查询某个命令的详细用法。";
+        public string   Author      => "梦初雪";
 
         public void Execute(string[] args, WebConsole console)
         {
@@ -35,6 +36,8 @@ namespace DT_Tools.Console.Commands
                     console.Log($"说明: {cmd.Description}", LogLevel.Info);
                     if (cmd.Aliases.Length > 0)
                         console.Log($"短命令: {string.Join(", ", cmd.Aliases.Select(a => "/" + a))}", LogLevel.Info);
+                    if (!string.IsNullOrEmpty(cmd.Author))
+                        console.Log($"作者: {cmd.Author}", LogLevel.Info);
                 }
                 else
                 {
@@ -55,7 +58,10 @@ namespace DT_Tools.Console.Commands
                 string aliasPart = kv.Value.Aliases.Length > 0
                     ? $"  短命令: {string.Join(", ", kv.Value.Aliases)}"
                     : "";
-                lines.AppendLine($"  /{kv.Value.Usage}{aliasPart}");
+                string authorPart = !string.IsNullOrEmpty(kv.Value.Author)
+                    ? $"  [{kv.Value.Author}]"
+                    : "";
+                lines.AppendLine($"  /{kv.Value.Usage}{aliasPart}{authorPart}");
                 lines.AppendLine($"      {kv.Value.Description}");
             }
             lines.Append("提示: /help <命令名> 查看详情");
