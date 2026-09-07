@@ -19,7 +19,7 @@ namespace DT_Tools.Patches.GamePlay
     [HarmonyPatch(typeof(MyPlayer), "OnGhostVisualChanged")]
     [PatchConfig(
         "OnGhostVisualChanged",
-        "移除房间迷雾：本地始终显示完整地图，仅影响本机画面。",
+        "移除阴影，获得更明亮的视野。",
         author: "梦初雪")]
     internal static class Patch_OnGhostVisualChanged
     {
