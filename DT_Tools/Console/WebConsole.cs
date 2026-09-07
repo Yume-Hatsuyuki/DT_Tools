@@ -287,20 +287,35 @@ namespace DT_Tools.Console
 
         private string BuildCommandsJson()
         {
-            // 去重后返回主名 + 所有别名，供前端 Tab 补全
+            // 返回去重后的命令详情（主名 + 别名 + 用法 + 描述 + 作者），供前端预览/补全
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var names = new List<string>();
+            var list = new List<IConsoleCommand>();
             foreach (var kv in _commands)
             {
-                if (seen.Add(kv.Key))
-                    names.Add(kv.Key);
+                if (kv.Key != kv.Value.Name) continue; // 只取主名条目
+                if (!seen.Add(kv.Value.Name)) continue;
+                list.Add(kv.Value);
             }
-            names.Sort(StringComparer.OrdinalIgnoreCase);
+            list.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+
             var sb = new StringBuilder("[");
-            for (int i = 0; i < names.Count; i++)
+            for (int i = 0; i < list.Count; i++)
             {
                 if (i > 0) sb.Append(',');
-                sb.Append(JsonEscape(names[i]));
+                var c = list[i];
+                sb.Append('{');
+                sb.Append("\"name\":").Append(JsonEscape(c.Name));
+                sb.Append(",\"aliases\":[");
+                for (int j = 0; j < c.Aliases.Length; j++)
+                {
+                    if (j > 0) sb.Append(',');
+                    sb.Append(JsonEscape(c.Aliases[j]));
+                }
+                sb.Append(']');
+                sb.Append(",\"usage\":").Append(JsonEscape(c.Usage));
+                sb.Append(",\"description\":").Append(JsonEscape(c.Description));
+                sb.Append(",\"author\":").Append(JsonEscape(c.Author ?? ""));
+                sb.Append('}');
             }
             sb.Append(']');
             return sb.ToString();
@@ -330,6 +345,9 @@ namespace DT_Tools.Console
     --red: #ef2929;
     --cyan: #34e2e2;
     --cmd: #8ae234;
+    --suggest-bg: #1a1a1a;
+    --suggest-hover: #243024;
+    --suggest-sel: #2a3a2a;
     --radius: 4px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -389,13 +407,52 @@ namespace DT_Tools.Console
   #log::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
   .entry { white-space: pre-wrap; word-break: break-word; }
   .ts { color: var(--text-dim); margin-right: 8px; font-size: 12px; user-select: none; }
+  #bar-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+  #suggest {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 12px;
+    right: 12px;
+    max-height: 280px;
+    overflow-y: auto;
+    background: var(--suggest-bg);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--radius) var(--radius) 0 0;
+    z-index: 100;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
+  }
+  #suggest.open { display: block; }
+  #suggest::-webkit-scrollbar { width: 6px; }
+  #suggest::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+  .sug-item {
+    padding: 7px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px solid #222;
+    font-family: ""Cascadia Code"", ""Consolas"", monospace;
+    font-size: 13px;
+  }
+  .sug-item:last-child { border-bottom: none; }
+  .sug-item:hover { background: var(--suggest-hover); }
+  .sug-item.sel { background: var(--suggest-sel); }
+  .sug-name { color: var(--green-bright); font-weight: 600; min-width: 110px; flex-shrink: 0; }
+  .sug-desc { color: var(--text-dim); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+  .sug-author { font-size: 11px; flex-shrink: 0; }
+  .sug-author-label { color: var(--text-dim); }
+  .sug-author-name { color: var(--amber); }
   #bar {
     display: flex;
     background: var(--bg-panel);
     border-top: 1px solid var(--border);
     padding: 10px 12px;
     gap: 8px;
-    flex-shrink: 0;
     align-items: center;
   }
   #input {
@@ -431,18 +488,24 @@ namespace DT_Tools.Console
   <div id=""status""><span class=""dot""></span><span id=""status-text"">连接中…</span></div>
 </div>
 <div id=""log""></div>
-<div id=""bar"">
-  <input id=""input"" placeholder=""输入命令，/help 查看帮助"" autocomplete=""off"" spellcheck=""false"">
-  <button id=""send"">发送</button>
+<div id=""bar-wrap"">
+  <div id=""suggest""></div>
+  <div id=""bar"">
+    <input id=""input"" placeholder=""输入 / 查看命令，上下键选择，Enter 执行"" autocomplete=""off"" spellcheck=""false"">
+    <button id=""send"">发送</button>
+  </div>
 </div>
 <script>
 const log = document.getElementById('log');
 const inp = document.getElementById('input');
 const statusEl = document.getElementById('status');
 const statusText = document.getElementById('status-text');
+const sugEl = document.getElementById('suggest');
 let seq = 0;
 let hist = [], hIdx = -1;
-let commands = [];
+let commands = [];   // [{name,aliases,usage,description,author}, ...]
+let matches = [];    // current filtered list
+let selIdx = -1;     // selected index in matches
 
 async function loadCommands(){
   try{
@@ -451,14 +514,74 @@ async function loadCommands(){
   }catch{ commands = []; }
 }
 
+function getPartial(){
+  const val = inp.value;
+  // 只对第一个 token 做建议（命令名）
+  const m = val.match(/^([\/!]?)(\S*)$/);
+  if(!m) return null;
+  return { prefix: m[1], partial: m[2].toLowerCase() };
+}
+
+function filterCommands(){
+  const p = getPartial();
+  if(p === null){ hideSuggest(); return; }
+  const { partial } = p;
+  // 空 partial 或只有 / 时显示全部；否则按 name/aliases 前缀匹配
+  matches = commands.filter(c => {
+    if(!partial) return true;
+    if(c.name.toLowerCase().startsWith(partial)) return true;
+    return (c.aliases||[]).some(a => a.toLowerCase().startsWith(partial));
+  });
+  if(matches.length === 0){ hideSuggest(); return; }
+  selIdx = 0;
+  renderSuggest();
+}
+
+function renderSuggest(){
+  sugEl.innerHTML = '';
+  matches.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'sug-item' + (i === selIdx ? ' sel' : '');
+    d.innerHTML =
+      '<span class=""sug-name"">/' + escHtml(c.name) + '</span>' +
+      '<span class=""sug-desc"">' + escHtml(c.description || c.usage || '') + '</span>' +
+      (c.author ? '<span class=""sug-author""><span class=""sug-author-label"">功能制作者：</span><span class=""sug-author-name"">' + escHtml(c.author) + '</span></span>' : '');
+    d.onmousedown = (e) => { e.preventDefault(); applyMatch(i); };
+    sugEl.appendChild(d);
+  });
+  sugEl.classList.add('open');
+  // 滚动到选中项
+  const sel = sugEl.children[selIdx];
+  if(sel) sel.scrollIntoView({ block: 'nearest' });
+}
+
+function hideSuggest(){
+  sugEl.classList.remove('open');
+  matches = [];
+  selIdx = -1;
+}
+
+function applyMatch(idx){
+  if(idx < 0 || idx >= matches.length) return;
+  const c = matches[idx];
+  const p = getPartial();
+  const prefix = (p && p.prefix) ? p.prefix : '/';
+  inp.value = prefix + c.name + ' ';
+  hideSuggest();
+  inp.focus();
+  const pos = inp.value.length;
+  inp.setSelectionRange(pos, pos);
+}
+
 async function send(){
   const v = inp.value.trim();
   if(!v) return;
   hist.unshift(v); if(hist.length>50) hist.pop();
   hIdx = -1;
-  inp.value='';
-  appendLocal('> '+v, 'var(--cmd)');
-  await fetch('/api/run',{method:'POST',body:v});
+  hideSuggest();
+  inp.value = '';
+  appendLocal('> ' + v, 'var(--cmd)');
+  await fetch('/api/run', { method: 'POST', body: v });
 }
 
 function appendLocal(msg, color){
@@ -472,14 +595,14 @@ function appendLocal(msg, color){
 
 async function poll(){
   try{
-    const r = await fetch('/api/log?since='+seq);
+    const r = await fetch('/api/log?since=' + seq);
     const arr = await r.json();
-    arr.forEach(e=>{
+    arr.forEach(e => {
       seq = Math.max(seq, e.seq);
       const d = document.createElement('div');
       d.className = 'entry';
       const colorMap = { red:'var(--red)', orange:'var(--amber)', cyan:'var(--cyan)', white:'var(--text)' };
-      d.innerHTML = '<span class=""ts"">'+e.time+'</span><span style=""color:'+(colorMap[e.color]||e.color)+'"">'+escHtml(e.msg)+'</span>';
+      d.innerHTML = '<span class=""ts"">' + e.time + '</span><span style=""color:' + (colorMap[e.color]||e.color) + '"">' + escHtml(e.msg) + '</span>';
       log.appendChild(d);
     });
     if(arr.length) log.scrollTop = log.scrollHeight;
@@ -493,53 +616,85 @@ async function poll(){
 }
 
 function escHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// Tab 补全：补全第一个 token（命令名），支持前导 / 或 !
-function tabComplete(){
-  const val = inp.value;
-  const caret = inp.selectionStart ?? val.length;
-  const before = val.slice(0, caret);
-  const after = val.slice(caret);
-  // 只补全第一个词
-  const m = before.match(/^([\/!]?)(\S*)$/);
-  if(!m) return;
-  const prefix = m[1];          // / 或 ! 或空
-  const partial = m[2].toLowerCase();
-  if(commands.length === 0) return;
-  const matches = commands.filter(c => c.toLowerCase().startsWith(partial));
-  if(matches.length === 0) return;
-  if(matches.length === 1){
-    inp.value = prefix + matches[0] + (after.startsWith(' ') ? after : ' ' + after.trimStart());
-    const pos = (prefix + matches[0] + ' ').length;
-    inp.setSelectionRange(pos, pos);
-    return;
-  }
-  // 多个匹配：补公共前缀；若无进展则列出候选
-  let common = matches[0];
-  for(const m2 of matches.slice(1)){
-    let i = 0;
-    while(i < common.length && i < m2.length && common[i].toLowerCase() === m2[i].toLowerCase()) i++;
-    common = common.slice(0, i);
-  }
-  if(common.length > partial.length){
-    inp.value = prefix + common + after;
-    const pos = (prefix + common).length;
-    inp.setSelectionRange(pos, pos);
-  } else {
-    appendLocal(matches.map(c => prefix + c).join('  '), 'var(--text-dim)');
-  }
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 document.getElementById('send').onclick = send;
-inp.addEventListener('keydown', e=>{
-  if(e.key === 'Enter'){ send(); return; }
-  if(e.key === 'Tab'){ e.preventDefault(); tabComplete(); return; }
-  if(e.key === 'ArrowUp'){ hIdx = Math.min(hIdx+1, hist.length-1); inp.value = hist[hIdx]||''; e.preventDefault(); }
-  if(e.key === 'ArrowDown'){ hIdx = Math.max(hIdx-1, -1); inp.value = hIdx<0 ? '' : hist[hIdx]; e.preventDefault(); }
+
+inp.addEventListener('input', () => {
+  hIdx = -1;
+  filterCommands();
 });
-loadCommands();
+
+inp.addEventListener('keydown', e => {
+  const open = sugEl.classList.contains('open');
+
+  if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    if(open && matches.length){
+      selIdx = (selIdx - 1 + matches.length) % matches.length;
+      renderSuggest();
+    } else {
+      hIdx = Math.min(hIdx + 1, hist.length - 1);
+      inp.value = hist[hIdx] || '';
+      hideSuggest();
+    }
+    return;
+  }
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    if(open && matches.length){
+      selIdx = (selIdx + 1) % matches.length;
+      renderSuggest();
+    } else {
+      hIdx = Math.max(hIdx - 1, -1);
+      inp.value = hIdx < 0 ? '' : hist[hIdx];
+      hideSuggest();
+    }
+    return;
+  }
+  if(e.key === 'Tab'){
+    e.preventDefault();
+    if(open && matches.length && selIdx >= 0){
+      applyMatch(selIdx);
+    } else {
+      filterCommands();
+      if(matches.length === 1) applyMatch(0);
+    }
+    return;
+  }
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    if(open && matches.length && selIdx >= 0){
+      // 若输入只有命令前缀（无空格参数），应用选中项后再发送；有参数则直接发
+      const val = inp.value.trim();
+      const hasArgs = /\s+\S/.test(val);
+      if(!hasArgs){
+        applyMatch(selIdx);
+        // 稍等 DOM 更新后发送
+        setTimeout(send, 0);
+        return;
+      }
+    }
+    send();
+    return;
+  }
+  if(e.key === 'Escape'){
+    hideSuggest();
+    return;
+  }
+});
+
+inp.addEventListener('blur', () => {
+  // 延迟关闭，允许 mousedown 先触发
+  setTimeout(hideSuggest, 150);
+});
+
+inp.addEventListener('focus', () => {
+  filterCommands();
+});
+
+loadCommands().then(() => filterCommands());
 poll();
 inp.focus();
 </script>

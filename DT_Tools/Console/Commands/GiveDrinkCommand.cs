@@ -30,6 +30,7 @@ namespace DT_Tools.Console.Commands
         public string[] Aliases     => new[] { "drink", "give" };
         public string   Usage       => "givedrink <all|#id> <item>";
         public string   Description => "给所有/指定玩家发放手持道具（含武器与任务道具）。不带参数时显示可用道具列表。";
+        public string   Author      => "梦初雪";
 
         // ── 道具别名表 ──────────────────────────────────────
         // 原则：Define.cs 中 ITEM_ID_* 全量收录（ITEM_ID_START=1000 是区间哨兵值，非真实道具，排除）。

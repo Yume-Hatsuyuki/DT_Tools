@@ -21,6 +21,7 @@ namespace DT_Tools.Console.Commands
         public string[] Aliases     => new[] { "list", "who" };
         public string   Usage       => "list_players";
         public string   Description => "列出所有玩家的 PlayerId / SteamId / 昵称。";
+        public string   Author      => "梦初雪";
 
         public void Execute(string[] args, WebConsole console)
         {
