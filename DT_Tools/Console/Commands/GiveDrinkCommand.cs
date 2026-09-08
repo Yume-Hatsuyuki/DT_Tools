@@ -16,8 +16,8 @@ namespace DT_Tools.Console.Commands
     ///   #&lt;playerId&gt;  指定玩家数字 ID
     ///
     /// 道具收录范围: Define.cs 中全部 ITEM_ID_* 常量（ITEM_ID_START 哨兵值除外）。
-    /// EquipItem(int itemId) 对任意 ID 一视同仁地贴 Sprite，武器(2xxx)与任务道具
-    /// 和饮料罐走的是同一条渲染路径，没有类型限制，因此全部可发。
+    /// 发放走 ItemManager.CreateAndInsertInven 原生链路，创建真实 Item 实例并写入
+    /// 服务器 Hand/Weapon，客户端背包可见、可使用/攻击、开关平板不丢失。
     ///
     /// 示例:
     ///   /givedrink all can03   → 全体 can03
@@ -26,16 +26,15 @@ namespace DT_Tools.Console.Commands
     /// </summary>
     internal sealed class GiveDrinkCommand : IConsoleCommand
     {
-        public string   Name        => "givedrink";
-        public string[] Aliases     => new[] { "drink", "give" };
-        public string   Usage       => "givedrink <all|#id> <item>";
-        public string   Description => "给所有/指定玩家发放手持道具（含武器与任务道具）。不带参数时显示可用道具列表。";
-        public string   Author      => "梦初雪";
+        public string Name => "givedrink";
+        public string[] Aliases => new[] { "drink", "give" };
+        public string Usage => "givedrink <all|#id> <item>";
+        public string Description => "给所有/指定玩家发放手持道具（含武器与任务道具）。不带参数时显示可用道具列表。";
+        public string Author => "梦初雪";
 
         // ── 道具别名表 ──────────────────────────────────────
         // 原则：Define.cs 中 ITEM_ID_* 全量收录（ITEM_ID_START=1000 是区间哨兵值，非真实道具，排除）。
-        // EquipItem(int itemId) 对任意 itemId 一视同仁：只要 Managers.Data.ItemDic 里能查到，
-        // 就按 AnimType 贴到 item / twohanded / phone 槽位，武器(2xxx)与任务道具走的是同一条路径，
+        // 所有值均为 DataId，可直接传入 ItemManager.CreateAndInsertInven。
         private static readonly Dictionary<string, int> ItemAliases =
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
@@ -241,9 +240,9 @@ namespace DT_Tools.Console.Commands
 
             // ── 解析参数 ──────────────────────────────────
             // 默认值
-            bool   targetAll = true;
-            int    targetId  = -1;
-            int    itemId    = Define.ITEM_ID_CAN01;
+            bool targetAll = true;
+            int targetId = -1;
+            int itemId = Define.ITEM_ID_CAN01;
 
             int argIdx = 0;
 
@@ -259,7 +258,7 @@ namespace DT_Tools.Console.Commands
                 else if (t.StartsWith("#") && int.TryParse(t.Substring(1), out int pid))
                 {
                     targetAll = false;
-                    targetId  = pid;
+                    targetId = pid;
                     argIdx++;
                 }
                 // 否则视为 item 参数，target 保持 all
@@ -276,8 +275,7 @@ namespace DT_Tools.Console.Commands
                 }
             }
 
-            // ── 执行广播 ──────────────────────────────────
-            // GameRoom.Broadcast 已封装线程安全，直接调用即可（我们在主线程里）
+            // ── 执行发放 ──────────────────────────────────
             int count = 0;
 
             if (targetAll)
@@ -285,7 +283,7 @@ namespace DT_Tools.Console.Commands
                 foreach (var player in room.Players)
                 {
                     if (player?.PublicInfo == null) continue;
-                    SendHandItem(room, player.PublicInfo.PlayerId, itemId);
+                    SendHandItem(player, itemId);
                     count++;
                 }
                 console.Log($"已给 {count} 名玩家发放道具 (ITEM_ID={itemId})。", LogLevel.Message);
@@ -298,21 +296,31 @@ namespace DT_Tools.Console.Commands
                     console.Log($"找不到 PlayerId={targetId} 的玩家。", LogLevel.Warning);
                     return;
                 }
-                SendHandItem(room, targetId, itemId);
+                SendHandItem(found, itemId);
                 console.Log($"已给玩家 {found.Name}（#{targetId}）发放道具 (ITEM_ID={itemId})。", LogLevel.Message);
             }
         }
 
         // ── 工具方法 ─────────────────────────────────────────
 
-        private static void SendHandItem(GameRoom room, int playerId, int itemId)
+        private static void SendHandItem(Server.Game.Player player, int itemId)
         {
-            room.Broadcast(new S_MODIFY_PLAYER
+            // 清空手持物
+            if (itemId <= 0)
             {
-                PlayerId = playerId,
-                Type     = EModifyPlayerEvent.ChangeHandItem,
-                Value    = itemId
-            });
+                player.RemoveHand(isForce: true);
+                player.RemoveWeapon();
+                return;
+            }
+
+            // 武器(2xxx)发放前先移除已有武器，避免 InsertWeapon 内 Assert 失败
+            if (itemId >= 2000 && itemId < 3000 && player.Weapon != null)
+            {
+                player.RemoveWeapon();
+            }
+
+            // 走原生发放链路：创建真实 Item → 写入 Hand/Weapon → 发 S_ADD_ITEM → 同步
+            ItemManager.Instance.CreateAndInsertInven(player, itemId);
         }
 
         private static bool TryParseItem(string s, out int itemId)

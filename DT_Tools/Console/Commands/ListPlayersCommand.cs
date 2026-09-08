@@ -51,7 +51,7 @@ namespace DT_Tools.Console.Commands
                 int    pid     = player.PublicInfo.PlayerId;
                 ulong  steamId = Managers.Player.GetRosterSteamId(pid);
                 string name    = player.Name ?? "(未命名)";
-                string tag     = pid == myId ? "  ← 我" : "";
+                string tag     = pid == myId ? "  ← 这是你" : "";
 
                 string steamStr = steamId != 0
                     ? steamId.ToString()

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using BepInEx.Configuration;
@@ -59,12 +61,62 @@ namespace DT_Tools.Console
             _log4bep  = bepLog;
             DontDestroyOnLoad(gameObject);
 
-            // 注册内置命令
-            Register(new HelpCommand(_commands));
-            Register(new GiveDrinkCommand());
-            Register(new ListPlayersCommand());
+            // 自动扫描并注册所有 IConsoleCommand 实现
+            RegisterDiscoveredCommands();
 
             StartServer();
+        }
+
+        /// <summary>
+        /// 反射扫描本程序集中实现 <see cref="IConsoleCommand"/> 的具体类并注册。
+        /// <list type="bullet">
+        ///   <item>优先匹配构造函数 <c>ctor(Dictionary&lt;string, IConsoleCommand&gt;)</c>（如 HelpCommand，注入注册表）。</item>
+        ///   <item>否则要求无参构造函数。</item>
+        ///   <item>抽象类 / 接口 / 无法实例化的类型会被跳过。</item>
+        /// </list>
+        /// 新增命令只需实现接口并放在程序集内，无需再改此处。
+        /// </summary>
+        private void RegisterDiscoveredCommands()
+        {
+            var commandType = typeof(IConsoleCommand);
+            var registryCtorParam = typeof(Dictionary<string, IConsoleCommand>);
+
+            var types = GetType().Assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && commandType.IsAssignableFrom(t))
+                .OrderBy(t => t.Name, StringComparer.Ordinal); // 稳定顺序，避免反射顺序抖动
+
+            foreach (var type in types)
+            {
+                IConsoleCommand instance = null;
+
+                // HelpCommand 等需要注入注册表的命令
+                var registryCtor = type.GetConstructor(
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                    null,
+                    new[] { registryCtorParam },
+                    null);
+                if (registryCtor != null)
+                {
+                    instance = (IConsoleCommand)registryCtor.Invoke(new object[] { _commands });
+                }
+                else
+                {
+                    var emptyCtor = type.GetConstructor(
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                        null,
+                        Type.EmptyTypes,
+                        null);
+                    if (emptyCtor == null)
+                    {
+                        Log($"[WebConsole] 跳过命令类型 {type.Name}：无可用构造函数。", LogLevel.Warning);
+                        continue;
+                    }
+                    instance = (IConsoleCommand)emptyCtor.Invoke(null);
+                }
+
+                Register(instance);
+                Log($"[WebConsole] 已注册命令 /{instance.Name}", LogLevel.Debug);
+            }
         }
 
         public void Register(IConsoleCommand cmd)

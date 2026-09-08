@@ -26,7 +26,13 @@
 ## 安装方法
 
 1. 确保游戏已安装 [BepInEx](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.5) 运行环境。
-2. 将 `DT_Tools.dll` 放入 `Deadly Trick\BepInEx\plugins\` 目录。
+  - 默认的 [BepInEx](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.5) 缺乏特定依赖，导致无法使用所有功能。
+
+    > 下载下面的依赖包，使用压缩包工具打开，并将目录 `lib\net452`  下的所有文件手动复制到`BepInEx\core`目录下。  
+
+    - [MonoMod.Backports](https://www.nuget.org/packages/MonoMod.Backports)
+    - [MonoMod.ILHelpers](https://www.nuget.org/packages/MonoMod.ILHelpers)
+2. 将 `DT_Tools.dll` 放入 `Deadly Trick\BepInEx\plugins` 目录。
 3. 启动游戏，配置文件将自动生成于 `Deadly Trick\BepInEx\config\DT_Tools.cfg`。
 4. 按需编辑配置文件，启用或禁用相应功能。
 
