@@ -47,11 +47,14 @@ namespace DT_Tools.Console.Commands
                 int index = 1;
                 foreach (var room in rooms)
                 {
-                    string state = room.State == "ingame" ? "游戏中" : "等待中";
-                    string ping  = room.Ping >= 0 ? $"{room.Ping}ms" : "—";
-                    string name  = string.IsNullOrEmpty(room.Name) ? "(未命名)" : room.Name;
+                    string state  = room.State == "ingame" ? "游戏中" : "等待中";
+                    string ping   = room.Ping >= 0 ? $"{room.Ping}ms" : "—";
+                    string name   = string.IsNullOrEmpty(room.Name) ? "(未命名)" : room.Name;
+                    string lang   = string.IsNullOrEmpty(room.Lang) ? "—" : (room.Lang == "ANY" ? "任意" : room.Lang);
+                    string region = string.IsNullOrEmpty(room.Region) ? "—" : room.Region;
+                    string mic    = room.Mic == "on" ? "🔊" : "🔇";
 
-                    text.AppendLine($"  {index,2}. {room.Code}  {name,-16} {room.Cur}/{room.Max}  {state}  {ping}");
+                    text.AppendLine($"  {index,2}. {room.Code}  {name,-16} {room.Cur}/{room.Max}  {state}  {mic}  {region,-12} {lang}  {ping}");
                     index++;
                 }
 
