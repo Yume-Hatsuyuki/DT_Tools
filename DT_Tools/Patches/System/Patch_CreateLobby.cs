@@ -18,7 +18,7 @@ namespace DT_Tools.Patches.System
     ///   不改动 UI_RoomSubItem.MaxUserCount：房间列表仍显示各大厅真实 MemberLimit。
     ///
     /// <b>修改方式</b>：
-    ///   Prefix，按 0.1.11a 签名写入 pending 字段后调用 CreateLobby。
+    ///   Prefix，写入 pending 字段后调用 CreateLobby。
     /// </summary>
     [HarmonyPatch]
     [PatchConfig(
@@ -38,7 +38,6 @@ namespace DT_Tools.Patches.System
                 new ConfigDescription("创建房间时的最大人数，游戏默认为 8。"));
         }
 
-        // 0.1.11a：
         // CreateLobby(string roomCode, string roomName, bool isPrivate, string mic, string lang, Action<bool> onComplete = null)
         [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]
         [HarmonyPrefix]
