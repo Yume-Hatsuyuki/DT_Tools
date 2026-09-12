@@ -39,7 +39,7 @@ namespace DT_Tools.Patches.GamePlay
                 "UseSabotage",
                 "CastingTime",
                 2.5f,
-                new ConfigDescription("销毁证据（Dark / Black 按 Q 破坏线索）的读条时长，游戏默认为 2.5 秒。仅影响本地读条表现，不改变服务端 30 秒冷却。"));
+                new ConfigDescription("销毁证据（Dark / Black 按 Q 破坏线索）的读条时长，游戏默认为 2.5 秒。仅影响本地读条表现，不改变服务端 30 秒冷却。\n已验证：写0会无法读条，建议值>=0.1"));
         }
 
         [HarmonyPrefix]
@@ -48,7 +48,11 @@ namespace DT_Tools.Patches.GamePlay
             if (Managers.Game.CastingSlider != null)
                 return false;
 
-            Managers.Game.StartCasting(_castingTime.Value, delegate
+            float castTime = _castingTime.Value;
+            if (castTime < 0.1f || float.IsNaN(castTime) || float.IsInfinity(castTime))
+                castTime = 0.1f;
+
+            Managers.Game.StartCasting(castTime, delegate
             {
                 Managers.Sound.PlaySystem("SabotageSfx");
                 Managers.Network.GameServer.Send(new C_DESTROY_EVIDENCE

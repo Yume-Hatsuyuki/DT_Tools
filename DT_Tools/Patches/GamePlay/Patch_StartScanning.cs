@@ -39,7 +39,7 @@ namespace DT_Tools.Patches.GamePlay
                 "StartScanning",
                 "CastingTime",
                 2.0f,
-                new ConfigDescription("扫描（搜索线索）读条时长，游戏默认为 2.0 秒；ScanUp 会将其覆盖为 0.5 秒，本补丁忽略该覆盖。"));
+                new ConfigDescription("扫描（搜索线索）读条时长，游戏默认为 2.0 秒；ScanUp 会将其覆盖为 0.5 秒，本补丁忽略该覆盖。\n已验证：写0会无法读条，建议值>=0.1"));
         }
 
         [HarmonyPrefix]
@@ -48,7 +48,11 @@ namespace DT_Tools.Patches.GamePlay
             if (__instance.ScanningSlider != null)
                 return false;
 
-            castingTime = _castingTime.Value;
+            float castTime = _castingTime.Value;
+            if (castTime < 0.1f || float.IsNaN(castTime) || float.IsInfinity(castTime))
+                castTime = 0.1f;
+
+            castingTime = castTime;
 
             Managers.Sound.PlayLoop("ScanningSfx");
             MyPlayer myPlayer = Managers.Player.MyPlayer;
