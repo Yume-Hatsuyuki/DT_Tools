@@ -4,7 +4,7 @@ using DummyClient;
 using Google.Protobuf;
 using Server.Game;
 
-namespace DT_Tools.Console.Commands
+namespace DT_Tools.Console.Commands.PacketCall
 {
     /// <summary>
     /// /call_c &lt;#id&gt; &lt;C_*包名&gt; [json]
@@ -15,7 +15,7 @@ namespace DT_Tools.Console.Commands
         public string Name => "call_c";
         public string[] Aliases => new[] { "callc", "send_c" };
         public string Usage => "call_c <#id> <C_PacketName> [json]";
-        public string Description => "以指定玩家身份注入 C_* 包到 Host 处理链。无参显示帮助与包名自检。";
+        public string Description => "以指定玩家身份注入 C_* 包到 Host 处理链，无参显示帮助与包名自检。";
         public string Author => "梦初雪";
 
         public void Execute(string[] args, WebConsole console)

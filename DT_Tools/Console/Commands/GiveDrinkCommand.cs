@@ -15,7 +15,8 @@ namespace DT_Tools.Console.Commands
     ///   all          全体玩家
     ///   #&lt;playerId&gt;  指定玩家数字 ID
     ///
-    /// 道具收录范围: Define.cs 中全部 ITEM_ID_* 常量（ITEM_ID_START 哨兵值除外）。
+    /// 道具收录范围: Define.cs 中全部 ITEM_ID_* 常量（ITEM_ID_START 哨兵值除外），
+    /// 另含不以 ITEM_ID_ 命名但同为手持物的 ITEM_SMAHO(4001，手机/平板)。
     /// 发放走 ItemManager.CreateAndInsertInven 原生链路，创建真实 Item 实例并写入
     /// 服务器 Hand/Weapon，客户端背包可见、可使用/攻击、开关平板不丢失。
     ///
@@ -33,7 +34,8 @@ namespace DT_Tools.Console.Commands
         public string Author => "梦初雪";
 
         // ── 道具别名表 ──────────────────────────────────────
-        // 原则：Define.cs 中 ITEM_ID_* 全量收录（ITEM_ID_START=1000 是区间哨兵值，非真实道具，排除）。
+        // 原则：Define.cs 中 ITEM_ID_* 全量收录（ITEM_ID_START=1000 是区间哨兵值，非真实道具，排除）；
+        // 另收录 ITEM_SMAHO=4001（不以 ITEM_ID_ 命名，但原版扫描/开平板时确实作为手持物显示）。
         // 所有值均为 DataId，可直接传入 ItemManager.CreateAndInsertInven。
         private static readonly Dictionary<string, int> ItemAliases =
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
@@ -143,6 +145,10 @@ namespace DT_Tools.Console.Commands
             { "horn",          Define.ITEM_ID_AIRHORN },
             { "bell",          Define.ITEM_ID_BELL },
             { "syringe_potion",Define.ITEM_ID_SYRINGE_POTION },
+            // ── 手机/平板 (4xxx；原版为扫描/打开平板时的虚拟手持物) ──
+            { "smaho",         Define.ITEM_SMAHO },
+            { "phone",         Define.ITEM_SMAHO },
+            { "tablet",        Define.ITEM_SMAHO },
             // ── 灯笼 (4xxx) ──
             { "lantern",       Define.ITEM_ID_LANTERN },
             { "lantern_red",   Define.ITEM_ID_LANTERN_RED },
@@ -205,6 +211,8 @@ namespace DT_Tools.Console.Commands
             "  airhorn          气喇叭            (3008)\n" +
             "  bell             铃铛              (3009)\n" +
             "  syringe_potion   注射药水          (3011)\n" +
+            " 【手机/平板 - 原版扫描/开平板时手持】\n" +
+            "  smaho/phone/tablet 手机            (4001)\n" +
             " 【灯笼】\n" +
             "  lantern          白灯笼            (4004)\n" +
             "  lantern_red      红灯笼            (4005)\n" +

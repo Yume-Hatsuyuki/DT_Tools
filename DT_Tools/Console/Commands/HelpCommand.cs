@@ -55,14 +55,19 @@ namespace DT_Tools.Console.Commands
                 if (kv.Key != kv.Value.Name) continue;   // 是别名，跳过
                 if (!seen.Add(kv.Value.Name))  continue;  // 已显示
 
-                string aliasPart = kv.Value.Aliases.Length > 0
-                    ? $"  短命令: {string.Join(", ", kv.Value.Aliases)}"
-                    : "";
-                string authorPart = !string.IsNullOrEmpty(kv.Value.Author)
-                    ? $"  [{kv.Value.Author}]"
-                    : "";
-                lines.AppendLine($"  /{kv.Value.Usage}{aliasPart}{authorPart}");
+                // 第一行：用法
+                lines.AppendLine($"/{kv.Value.Usage}");
+
+                // 第二行：作者（如果有）
+                if (!string.IsNullOrEmpty(kv.Value.Author))
+                    lines.AppendLine($"      功能制作者：[{kv.Value.Author}]");
+
+                // 第三行：描述
                 lines.AppendLine($"      {kv.Value.Description}");
+
+                // 第四行：短命令（如果有）
+                if (kv.Value.Aliases.Length > 0)
+                    lines.AppendLine($"      短命令: {string.Join(", ", kv.Value.Aliases.Select(a => "/" + a))}");
             }
             lines.Append("提示: /help <命令名> 查看详情");
             console.Log(lines.ToString(), LogLevel.Info);

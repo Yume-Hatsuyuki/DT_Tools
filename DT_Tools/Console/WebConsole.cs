@@ -16,9 +16,10 @@ namespace DT_Tools.Console
     /// <summary>
     /// 内嵌 HTTP 服务器，在本地端口提供控制台 WebUI。
     /// 线程模型：
-    ///   - HttpListener 跑在独立线程（_listenerThread）
-    ///   - 命令执行通过 _pendingCommands 队列转发回 Unity 主线程（由 Update() 消费）
-    ///   - 输出日志线程安全地写入 _log 循环缓冲区
+    ///   - HttpListener 接连接线程只负责 GetContext，请求丢到 ThreadPool 处理（避免 /api/run 阻塞轮询）
+    ///   - 命令通过 _pending 队列转发到 Unity 主线程，由 Update() 消费执行
+    ///   - /api/run 在工作线程上同步等待主线程结果（命令可用 SetResult 返回结构化 JSON）
+    ///   - 日志写入固定容量环形缓冲（无 List.RemoveAt 开销）
     /// </summary>
     internal class WebConsole : MonoBehaviour
     {
@@ -30,14 +31,24 @@ namespace DT_Tools.Console
         internal static ConfigEntry<int>    CfgPort;
         internal static ConfigEntry<string> CfgPassword;   // 空 = 不鉴权
 
-        // ── 日志环形缓冲（线程安全） ─────────────────────────
+        // ── 日志环形缓冲（线程安全，O(1) 写入） ───────────────
         private const int LOG_CAPACITY = 200;
-        private readonly List<LogEntry> _log      = new List<LogEntry>(LOG_CAPACITY);
-        private readonly object          _logLock  = new object();
+        private readonly LogEntry[] _logRing  = new LogEntry[LOG_CAPACITY];
+        private int                 _logHead;   // 最旧条目下标
+        private int                 _logCount;  // 当前有效条数
+        private int                 _logSeq;
+        private readonly object     _logLock  = new object();
 
         // ── 命令队列（listener→主线程） ──────────────────────
-        private readonly Queue<string>   _pending  = new Queue<string>();
-        private readonly object          _pendLock = new object();
+        private readonly Queue<PendingRequest> _pending  = new Queue<PendingRequest>();
+        private readonly object                _pendLock = new object();
+
+        // 当前主线程正在执行的命令的结果（仅主线程读写）
+        private string _currentResultJson;
+
+        // ── 静态响应缓存（命令表启动后不变；HTML 恒定） ─────
+        private static string _cachedWebUiHtml;
+        private string        _cachedCommandsJson;
 
         // ── HTTP 监听器 ───────────────────────────────────────
         private HttpListener _listener;
@@ -63,6 +74,7 @@ namespace DT_Tools.Console
 
             // 自动扫描并注册所有 IConsoleCommand 实现
             RegisterDiscoveredCommands();
+            _cachedCommandsJson = BuildCommandsJson();
 
             StartServer();
         }
@@ -163,11 +175,22 @@ namespace DT_Tools.Console
                 try { ctx = _listener.GetContext(); }
                 catch { break; }
 
-                try { HandleRequest(ctx); }
-                catch (Exception ex)
+                // 接到连接后立刻交 ThreadPool，listener 继续 Accept。
+                // 这样 /api/run 的 Wait 不会堵住 /api/log 轮询或其它并发请求。
+                var captured = ctx;
+                ThreadPool.QueueUserWorkItem(_ =>
                 {
-                    Log($"[WebConsole] 请求处理错误: {ex.Message}", LogLevel.Warning);
-                }
+                    try
+                    {
+                        HandleRequest(captured);
+                    }
+                    catch (Exception ex)
+                    {
+                        try { Log($"[WebConsole] 请求处理错误: {ex.Message}", LogLevel.Warning); }
+                        catch { /* 关闭阶段忽略 */ }
+                        try { captured.Response.Abort(); } catch { }
+                    }
+                });
             }
         }
 
@@ -204,16 +227,35 @@ namespace DT_Tools.Console
 
             if (path == "/" || path == "/index.html")
             {
-                WriteHtml(resp, BuildWebUI());
+                WriteHtml(resp, _cachedWebUiHtml ??= BuildWebUI());
                 return;
             }
 
             if (path == "/api/run" && req.HttpMethod == "POST")
             {
                 string cmd = ReadBody(req).Trim();
-                if (!string.IsNullOrEmpty(cmd))
-                    EnqueueCommand(cmd);
-                WriteJson(resp, "{\"ok\":true}");
+                if (string.IsNullOrEmpty(cmd))
+                {
+                    WriteJson(resp, "{\"ok\":false,\"error\":\"empty command\"}");
+                    return;
+                }
+
+                // 同步等待主线程执行完毕，返回命令自定义的 JSON（或默认 {"ok":true}）
+                var pending = new PendingRequest
+                {
+                    Command = cmd,
+                    Done    = new ManualResetEventSlim(false)
+                };
+                lock (_pendLock) _pending.Enqueue(pending);
+
+                // 超时保护：主线程卡死时不无限挂起 HTTP 线程
+                const int timeoutMs = 5000;
+                if (pending.Done.Wait(timeoutMs))
+                    WriteJson(resp, pending.ResultJson ?? "{\"ok\":true}");
+                else
+                    WriteJson(resp, "{\"ok\":false,\"error\":\"timeout\"}");
+
+                pending.Done.Dispose();
                 return;
             }
 
@@ -228,7 +270,8 @@ namespace DT_Tools.Console
 
             if (path == "/api/commands")
             {
-                WriteJson(resp, BuildCommandsJson());
+                // 命令表启动后不变，直接返回缓存
+                WriteJson(resp, _cachedCommandsJson ?? "[]");
                 return;
             }
 
@@ -244,32 +287,35 @@ namespace DT_Tools.Console
         {
             while (true)
             {
-                string cmd;
+                PendingRequest pending;
                 lock (_pendLock)
                 {
                     if (_pending.Count == 0) break;
-                    cmd = _pending.Dequeue();
+                    pending = _pending.Dequeue();
                 }
-                ExecuteCommand(cmd);
+                ExecuteCommand(pending);
             }
         }
 
-        private void EnqueueCommand(string raw)
-        {
-            lock (_pendLock) _pending.Enqueue(raw);
-        }
+        // 入队统一走 /api/run（WebUI 与脚本相同路径）；脚本可拿到 SetResult 的 JSON
 
         // ═════════════════════════════════════════════════════
         //  命令执行（主线程）
         // ═════════════════════════════════════════════════════
 
-        private void ExecuteCommand(string raw)
+        private void ExecuteCommand(PendingRequest pending)
         {
+            string raw = pending.Command ?? "";
+
             // 去掉前导 / 或 !
             if (raw.StartsWith("/") || raw.StartsWith("!"))
                 raw = raw.Substring(1);
 
-            if (string.IsNullOrWhiteSpace(raw)) return;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                CompleteRequest(pending, "{\"ok\":false,\"error\":\"empty command\"}");
+                return;
+            }
 
             var parts = raw.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             string name = parts[0];
@@ -277,27 +323,48 @@ namespace DT_Tools.Console
             if (!_commands.TryGetValue(name, out var cmd))
             {
                 Log($"未知命令: {name}  （输入 /? 或 /help 查看帮助）", LogLevel.Warning);
+                CompleteRequest(pending, "{\"ok\":false,\"error\":\"unknown command\"}");
                 return;
             }
 
             string[] args = parts.Length > 1
                 ? parts[1..]          // C# 8+，netstandard2.1 + LangVersion=latest 均支持
                 : Array.Empty<string>();
+
+            // 每次执行前清空；命令可通过 SetResult 覆盖默认值
+            _currentResultJson = null;
             try
             {
                 cmd.Execute(args, this);
+                CompleteRequest(pending, _currentResultJson ?? "{\"ok\":true}");
             }
             catch (Exception ex)
             {
                 Log($"[{name}] 执行出错: {ex.Message}", LogLevel.Error);
+                CompleteRequest(pending, "{\"ok\":false,\"error\":" + JsonEscape(ex.Message) + "}");
             }
         }
 
-        // ═════════════════════════════════════════════════════
-        //  日志
-        // ═════════════════════════════════════════════════════
+        private static void CompleteRequest(PendingRequest pending, string json)
+        {
+            if (pending.Done == null) return; // fire-and-forget（WebUI）
+            pending.ResultJson = json;
+            pending.Done.Set();
+        }
 
-        private int _logSeq;
+        /// <summary>
+        /// 命令在 Execute 内调用，为当前 /api/run 请求设置结构化 JSON 返回值。
+        /// 未调用时默认返回 <c>{"ok":true}</c>。WebUI 日志仍走 <see cref="Log"/>。
+        /// 仅主线程有效。
+        /// </summary>
+        public void SetResult(string json)
+        {
+            _currentResultJson = json;
+        }
+
+        // ═════════════════════════════════════════════════════
+        //  日志（固定容量环形缓冲）
+        // ═════════════════════════════════════════════════════
 
         public void Log(string message, LogLevel level = LogLevel.Message)
         {
@@ -307,31 +374,65 @@ namespace DT_Tools.Console
             lock (_logLock)
             {
                 _logSeq++;
-                if (_log.Count >= LOG_CAPACITY) _log.RemoveAt(0);
-                _log.Add(new LogEntry { Seq = _logSeq, Time = DateTime.Now, Level = level, Message = message });
+                var entry = new LogEntry
+                {
+                    Seq     = _logSeq,
+                    Time    = DateTime.Now,
+                    Level   = level,
+                    Message = message
+                };
+
+                if (_logCount < LOG_CAPACITY)
+                {
+                    int idx = (_logHead + _logCount) % LOG_CAPACITY;
+                    _logRing[idx] = entry;
+                    _logCount++;
+                }
+                else
+                {
+                    // 覆盖最旧条目，头指针前移
+                    _logRing[_logHead] = entry;
+                    _logHead = (_logHead + 1) % LOG_CAPACITY;
+                }
             }
         }
 
         private string BuildLogJson(int since)
         {
-            var sb = new StringBuilder("[");
-            bool first = true;
+            // 持锁只做快照，字符串拼接放到锁外，缩短与 Log 的竞争窗口
+            LogEntry[] snapshot;
+            int count;
+            int head;
             lock (_logLock)
             {
-                foreach (var e in _log)
+                count = _logCount;
+                head  = _logHead;
+                snapshot = new LogEntry[count];
+                for (int i = 0; i < count; i++)
+                    snapshot[i] = _logRing[(head + i) % LOG_CAPACITY];
+            }
+
+            var sb = new StringBuilder(count > 0 ? count * 64 : 2);
+            sb.Append('[');
+            bool first = true;
+            for (int i = 0; i < count; i++)
+            {
+                var e = snapshot[i];
+                if (e.Seq <= since) continue;
+                if (!first) sb.Append(',');
+                first = false;
+                string color = e.Level switch
                 {
-                    if (e.Seq <= since) continue;
-                    if (!first) sb.Append(',');
-                    first = false;
-                    string color = e.Level switch
-                    {
-                        LogLevel.Error   => "red",
-                        LogLevel.Warning => "orange",
-                        LogLevel.Info    => "cyan",
-                        _                => "white"
-                    };
-                    sb.Append($"{{\"seq\":{e.Seq},\"time\":\"{e.Time:HH:mm:ss}\",\"color\":\"{color}\",\"msg\":{JsonEscape(e.Message)}}}");
-                }
+                    LogLevel.Error   => "red",
+                    LogLevel.Warning => "orange",
+                    LogLevel.Info    => "cyan",
+                    _                => "white"
+                };
+                sb.Append("{\"seq\":").Append(e.Seq)
+                  .Append(",\"time\":\"").Append(e.Time.ToString("HH:mm:ss")).Append('"')
+                  .Append(",\"color\":\"").Append(color).Append('"')
+                  .Append(",\"msg\":").Append(JsonEscape(e.Message))
+                  .Append('}');
             }
             sb.Append(']');
             return sb.ToString();
@@ -927,6 +1028,17 @@ document.getElementById('p').addEventListener('keydown', e=>{ if(e.key==='Enter'
             public DateTime Time;
             public LogLevel Level;
             public string   Message;
+        }
+
+        /// <summary>
+        /// 命令队列元素。Done 为 null 表示 WebUI fire-and-forget；
+        /// 非 null 时由主线程执行完后写入 ResultJson 并 Set。
+        /// </summary>
+        private sealed class PendingRequest
+        {
+            public string              Command;
+            public ManualResetEventSlim Done;
+            public string              ResultJson;
         }
     }
 }

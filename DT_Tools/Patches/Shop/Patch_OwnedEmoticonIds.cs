@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using HarmonyLib;
 
-namespace DT_Tools.Patches.GamePlay
+namespace DT_Tools.Patches.Shop
 {
     /// <summary>
     /// <b>修改目标</b>：
