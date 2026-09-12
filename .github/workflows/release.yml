@@ -92,6 +92,7 @@ jobs:
           fi
           cp "$DLL_PATH" "$STAGE/DT_Tools.dll"
           cp README.md "$STAGE/" 2>/dev/null || true
+          cp FEATURES.md "$STAGE/" 2>/dev/null || true
           cp DT_Tools/LICENSE "$STAGE/" 2>/dev/null || true
 
           ZIP_NAME="DT_Tools-${{ steps.ver.outputs.tag }}.zip"
