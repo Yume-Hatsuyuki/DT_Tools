@@ -1,5 +1,6 @@
 using System.Text;
 using BepInEx.Logging;
+using DT_Tools.Patches.System;
 using Server.Game;
 using Steamworks;
 
@@ -14,8 +15,8 @@ namespace DT_Tools.Console.Commands
     ///   - 房间号:   Managers.Network.RoomCode
     ///   - 当前人数: 房主端 → GameRoom.Instance.Players.Count（服务器权威）
     ///               客户端 → Lobby.GetMembers().Count（Steam Lobby 可见成员）
-    ///   - 人数上限: SteamMatchmaking.GetLobbyMemberLimit(LobbyId)
-    ///               （读取实际 Lobby 上限，兼容 CreateLobby 补丁调整后的人数）
+    ///   - 人数上限: Patch_CreateLobby.MaxMembers（游戏进房判定，默认 8）
+    ///   - Steam容器: GetLobbyMemberLimit（仅当与进房上限不一致时附加一行）
     ///
     /// 这是纯读操作，不需要房主权限。
     /// </summary>
@@ -43,17 +44,9 @@ namespace DT_Tools.Console.Commands
                 return;
             }
 
-            // 人数上限：从实际 Steam Lobby 读取，兼容补丁调整后的人数
-            int max = 8;
+            int max = Patch_CreateLobby.MaxMembers;
             var lobby = Managers.Network.Lobby;
-            if (lobby != null && lobby.InLobby)
-            {
-                int limit = SteamMatchmaking.GetLobbyMemberLimit(lobby.LobbyId);
-                if (limit > 0)
-                    max = limit;
-            }
 
-            // 当前人数：房主端用服务器权威列表，客户端用 Steam Lobby 成员数
             int current;
             if (Managers.Host != null && Managers.Host.IsHost)
             {
@@ -70,6 +63,13 @@ namespace DT_Tools.Console.Commands
             text.AppendLine("━━━ 房间信息 ━━━");
             text.AppendLine($"  房间号:  {code}");
             text.Append($"  玩家数:  {current} / {max}");
+
+            if (lobby != null && lobby.InLobby)
+            {
+                int steamLimit = SteamMatchmaking.GetLobbyMemberLimit(lobby.LobbyId);
+                if (steamLimit > 0 && steamLimit != max)
+                    text.Append($"\n  Steam容器:  {current} / {steamLimit}（仅容器，进房仍按 {max}）");
+            }
 
             console.Log(text.ToString(), LogLevel.Info);
         }

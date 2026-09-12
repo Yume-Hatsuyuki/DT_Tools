@@ -3,7 +3,7 @@ using BepInEx.Logging;
 using Google.Protobuf;
 using Server.Game;
 
-namespace DT_Tools.Console.Commands
+namespace DT_Tools.Console.Commands.PacketCall
 {
     /// <summary>
     /// /call_s &lt;all|#id&gt; &lt;S_*包名&gt; [json]

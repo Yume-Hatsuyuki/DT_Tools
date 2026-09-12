@@ -27,7 +27,7 @@ namespace DT_Tools.Patches.GamePlay
     [HarmonyPatch(typeof(GameManagerEX), "StartScanning")]
     [PatchConfig(
         "StartScanning",
-        "天堂制造：时间要开始加速了！\n扫描读条时间：可在本段修改默认搜索（扫描）读条时长（默认 2.0 秒），并忽略 ScanUp 的强制覆盖。",
+        "天堂制造：时间要开始变化了！\n扫描读条时间：可在本段修改默认搜索（扫描）读条时长（默认 2.0 秒），并忽略 ScanUp 的强制覆盖。",
         author: "梦初雪")]
     internal static class Patch_StartScanning
     {

@@ -8,7 +8,7 @@ using Google.Protobuf;
 using Protocol;
 using Server.Game;
 
-namespace DT_Tools.Console.Commands
+namespace DT_Tools.Console.Commands.PacketCall
 {
     /// <summary>
     /// /call_s、/call_c 共用：反射枚举 Protocol 包、JSON 填充、发送/注入。

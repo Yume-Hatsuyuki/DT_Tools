@@ -47,7 +47,7 @@ namespace DT_Tools
                     WebConsole.CfgEnabled = Config.Bind(
                         WEB_CONSOLE_SECTION,
                         "Enabled",
-                        false,
+                        true,
                         "是否启用控制台 WebUI。");
 
                     WebConsole.CfgPort = Config.Bind(

@@ -23,15 +23,19 @@ namespace DT_Tools.Console.Commands
     ///
     /// 添加:
     ///   /givebuff #1 footprint 3         → 添加 Footprint，持续 3 秒
+    ///   /givebuff #1 footprint           → 省略秒数，使用最大时长 3600 秒
     ///
     /// 说明:
     ///   - 添加走 BuffComponent.AddBuff；若已有同类 BUFF 会先 RemoveBuffForce 再添加（刷新时长）
+    ///   - 时长上限为 3600 秒（与原版 Raasrush/DetailCheck/MindControl 等被动技能一致）；
+    ///     超出会自动钳制到 3600 秒；省略秒数则默认使用 3600 秒
     ///   - 原版 Flush 只遍历 AlivePlayers，大厅列表为空导致不会自动到期；
     ///     本命令在添加后额外 PushAfter(durationMs) 调用 RemoveBuffForce 作为兜底
     ///   - 清除走 RemoveBuffForce / Clear，不依赖 AlivePlayers，大厅也可用
     ///
     /// 示例:
-    ///   /givebuff all scanup 3600
+    ///   /givebuff all scanup             ← 省略秒数，使用最大 3600 秒
+    ///   /givebuff all scanup 3600        ← 显式指定上限
     ///   /givebuff #5 slow 5
     ///   /givebuff #1 footprint 0
     ///   /givebuff all clear
@@ -43,6 +47,12 @@ namespace DT_Tools.Console.Commands
         public string Usage => "givebuff <all|#id> <buff|clear> [seconds|clear|0]";
         public string Description => "给所有/指定玩家添加或清除 BUFF。不带参数时显示可用 BUFF 列表。";
         public string Author => "梦初雪";
+
+        /// <summary>
+        /// 单次添加 BUFF 的最大时长（秒）。与原版 Raasrush/DetailCheck/MindControl
+        /// 等被动技能挂载时长一致（3600000 ms）。
+        /// </summary>
+        private const int MaxDurationSeconds = 3600;
 
         private static readonly Dictionary<string, EBuffType> BuffAliases =
             new Dictionary<string, EBuffType>(StringComparer.OrdinalIgnoreCase)
@@ -90,7 +100,7 @@ namespace DT_Tools.Console.Commands
             "  staminaup        体力提升（Hasung 技能 Raasrush）\n" +
             "  scanup           扫描加速（Miyuki 技能 DetailCheck，读条 2s→0.5s）\n" +
             "  quantumleap      量子跃迁（Jeremy 技能 MindControl）\n" +
-            "  deaddetective    死亡时广播尸体箭头（Louis 技能 Telekinesis 附加）\n" +
+            "  deaddetective    死亡广播（Louis 技能 Telekinesis）\n" +
             " 【场景/系统】\n" +
             "  theworld         时间停止表现（Seol 技能 TimeStop，客户端表现完整）\n" +
             "  footprint        留下可追踪脚印\n" +
@@ -105,7 +115,8 @@ namespace DT_Tools.Console.Commands
             "  /givebuff #1 footprint 0\n" +
             "  /givebuff #1 footprint clear\n" +
             "【添加示例】\n" +
-            "  /givebuff all scanup 3600\n" +
+            "  /givebuff all scanup              ← 省略秒数，默认 3600 秒\n" +
+            "  /givebuff all scanup 3600         ← 3600 秒为上限，超出会被钳制\n" +
             "  /givebuff #5 slow 5";
 
         public void Execute(string[] args, WebConsole console)
@@ -192,33 +203,41 @@ namespace DT_Tools.Console.Commands
             }
             argIdx++;
 
-            // 第三参：clear / 0 → 清该 BUFF；正整数秒 → 添加
+            // 第三参（可选）：clear / 0 → 清该 BUFF；正整数秒 → 添加；省略 → 使用最大时长
+            int seconds;
             if (argIdx >= args.Length)
             {
-                console.Log("缺少时长参数（正整数秒，或 0 / clear 表示清除）。", LogLevel.Warning);
-                return;
+                seconds = MaxDurationSeconds;
             }
-
-            string third = args[argIdx];
-            if (IsClearToken(third) || (int.TryParse(third, out int zeroCheck) && zeroCheck == 0))
+            else
             {
-                int cleared = ApplyToTargets(room, targetAll, targetId, console, player =>
+                string third = args[argIdx];
+                if (IsClearToken(third) || (int.TryParse(third, out int zeroCheck) && zeroCheck == 0))
                 {
-                    player.BuffComponent.RemoveBuffForce(buffType);
-                }, requireAlive: false);
+                    int cleared = ApplyToTargets(room, targetAll, targetId, console, player =>
+                    {
+                        player.BuffComponent.RemoveBuffForce(buffType);
+                    }, requireAlive: false);
 
-                if (cleared < 0) return;
-                if (targetAll)
-                    console.Log($"已从 {cleared} 名玩家清除 BUFF={buffType}。", LogLevel.Message);
-                else
-                    console.Log($"已清除 BUFF={buffType}。", LogLevel.Message);
-                return;
-            }
+                    if (cleared < 0) return;
+                    if (targetAll)
+                        console.Log($"已从 {cleared} 名玩家清除 BUFF={buffType}。", LogLevel.Message);
+                    else
+                        console.Log($"已清除 BUFF={buffType}。", LogLevel.Message);
+                    return;
+                }
 
-            if (!int.TryParse(third, out int seconds) || seconds < 0)
-            {
-                console.Log("持续时间无效，应为非负整数（单位：秒；0 表示清除）。", LogLevel.Warning);
-                return;
+                if (!int.TryParse(third, out seconds) || seconds < 0)
+                {
+                    console.Log($"持续时间无效，应为非负整数（单位：秒；0 / clear 表示清除；省略则使用最大 {MaxDurationSeconds} 秒）。", LogLevel.Warning);
+                    return;
+                }
+
+                if (seconds > MaxDurationSeconds)
+                {
+                    console.Log($"时长 {seconds} 秒超过最大值，已修正为 {MaxDurationSeconds} 秒。", LogLevel.Debug);
+                    seconds = MaxDurationSeconds;
+                }
             }
 
             // seconds > 0：添加（先强制移除再加，以刷新时长）
