@@ -48,7 +48,9 @@ namespace DT_Tools.Console.Commands
         public string Description => "给所有/指定玩家添加或清除 BUFF。不带参数时显示可用 BUFF 列表。";
         public string Author => "梦初雪";
 
-        /// <summary>
+        
+        public bool RequireHost => true;
+/// <summary>
         /// 单次添加 BUFF 的最大时长（秒）。与原版 Raasrush/DetailCheck/MindControl
         /// 等被动技能挂载时长一致（3600000 ms）。
         /// </summary>

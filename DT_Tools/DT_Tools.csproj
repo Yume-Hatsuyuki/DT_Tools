@@ -4,9 +4,11 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>DT_Tools</AssemblyName>
     <Description>Deadly Trick Plugin</Description>
-    <Version>1.0.4.1</Version>
+    <Version>1.0.5</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
+    <!-- ConfigField fields assigned by ConfigBinder reflection -->
+    <NoWarn>$(NoWarn);CS0649</NoWarn>
     <TargetName>$(AssemblyName)_$(Configuration)_$(Version)</TargetName>
     <!-- 相对 csproj 所在目录，上一级的 libs -->
     <GameManaged Condition="'$(GameManaged)' == ''">$(MSBuildThisFileDirectory)..\libs</GameManaged>
@@ -52,6 +54,10 @@
       <HintPath>$(GameManaged)\com.rlabrecque.steamworks.net.dll</HintPath>
       <Private>false</Private>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="WEBUI/**" CopyToOutputDirectory="PreserveNewest" Link="WEBUI/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

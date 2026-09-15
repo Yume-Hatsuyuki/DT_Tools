@@ -11,7 +11,9 @@ namespace DT_Tools.Console.Commands.Faction
         public string   Description => "列出当前局所有黑方（仅游戏中、需房主）。";
         public string   Author      => "梦初雪";
 
-        public void Execute(string[] args, WebConsole console)
+        
+        public bool RequireHost => true;
+public void Execute(string[] args, WebConsole console)
         {
             FactionListHelper.Execute(console, Protocol.EPlayerColor.Black, "黑方");
         }

@@ -25,7 +25,9 @@ namespace DT_Tools.Console.Commands
         public string   Description => "将指定玩家踢出房间（仅大厅可用，需房主）。";
         public string   Author      => "梦初雪";
 
-        public void Execute(string[] args, WebConsole console)
+        
+        public bool RequireHost => true;
+public void Execute(string[] args, WebConsole console)
         {
             // 确认是房主（只有 Host 端才有 GameRoom）
             if (Managers.Host == null || !Managers.Host.IsHost)

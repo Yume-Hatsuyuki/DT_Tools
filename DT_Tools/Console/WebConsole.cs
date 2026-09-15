@@ -9,6 +9,7 @@ using System.Threading;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using DT_Tools.Console.Commands;
+using DT_Tools.Console.Http;
 using UnityEngine;
 
 namespace DT_Tools.Console
@@ -47,7 +48,6 @@ namespace DT_Tools.Console
         private string _currentResultJson;
 
         // ── 静态响应缓存（命令表启动后不变；HTML 恒定） ─────
-        private static string _cachedWebUiHtml;
         private string        _cachedCommandsJson;
 
         // ── HTTP 监听器 ───────────────────────────────────────
@@ -218,16 +218,22 @@ namespace DT_Tools.Console
                             return;
                         }
                     }
-                    WriteHtml(resp, LoginPage(), 401);
+                    resp.StatusCode = 401;
+                    if (!StaticFiles.TryServeLogin(resp, msg => Log(msg, LogLevel.Warning)))
+                        WriteText(resp, "Unauthorized");
                     return;
                 }
             }
 
             string path = req.Url.AbsolutePath;
 
-            if (path == "/" || path == "/index.html")
+            // 静态资源（外置 WEBUI）；缺失时对页面 503，API 不受影响
+            if (StaticFiles.TryServe(req, resp, msg => Log(msg, LogLevel.Warning)))
+                return;
+
+            if (path.StartsWith("/api/config/", StringComparison.Ordinal))
             {
-                WriteHtml(resp, _cachedWebUiHtml ??= BuildWebUI());
+                HandleConfigApi(req, resp, path);
                 return;
             }
 
@@ -328,10 +334,20 @@ namespace DT_Tools.Console
             }
 
             string[] args = parts.Length > 1
-                ? parts[1..]          // C# 8+，netstandard2.1 + LangVersion=latest 均支持
+                ? parts[1..]
                 : Array.Empty<string>();
 
-            // 每次执行前清空；命令可通过 SetResult 覆盖默认值
+            if (cmd.RequireHost)
+            {
+                bool isHost = Managers.Host != null && Managers.Host.IsHost;
+                if (!isHost)
+                {
+                    Log($"[{name}] 需要房主权限", LogLevel.Warning);
+                    CompleteRequest(pending, "{\"ok\":false,\"error\":\"host required\"}");
+                    return;
+                }
+            }
+
             _currentResultJson = null;
             try
             {
@@ -478,476 +494,70 @@ namespace DT_Tools.Console
         //  WebUI HTML
         // ═════════════════════════════════════════════════════
 
-        private static string BuildWebUI() => @"<!DOCTYPE html>
-<html lang=""zh-CN"">
-<head>
-<meta charset=""utf-8"">
-<meta name=""viewport"" content=""width=device-width, initial-scale=1"">
-<title>DT Console</title>
-<style>
-  :root {
-    --bg: #0c0c0c;
-    --bg-panel: #141414;
-    --bg-input: #1a1a1a;
-    --border: #2a2a2a;
-    --text: #c8c8c8;
-    --text-dim: #666666;
-    --green: #4e9a06;
-    --green-bright: #8ae234;
-    --amber: #c4a000;
-    --red: #ef2929;
-    --cyan: #34e2e2;
-    --cmd: #8ae234;
-    --suggest-bg: #1a1a1a;
-    --suggest-hover: #243024;
-    --suggest-sel: #2a3a2a;
-    --radius: 4px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: ""Segoe UI"", ""PingFang SC"", ""Microsoft YaHei"", system-ui, sans-serif;
-    display: flex;
-    flex-direction: column;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-  #toolbar {
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-  #toolbar h1 {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--green-bright);
-    letter-spacing: 1px;
-    font-family: ""Cascadia Code"", ""Consolas"", monospace;
-  }
-  #status {
-    margin-left: auto;
-    font-size: 12px;
-    color: var(--text-dim);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: ""Cascadia Code"", ""Consolas"", monospace;
-  }
-  #status .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--text-dim);
-  }
-  #status.online .dot { background: var(--green-bright); }
-  #status.offline .dot { background: var(--red); }
-  #log {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px 14px;
-    font-family: ""Cascadia Code"", ""JetBrains Mono"", ""Consolas"", ""Courier New"", monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    background: var(--bg);
-  }
-  #log::-webkit-scrollbar { width: 8px; }
-  #log::-webkit-scrollbar-track { background: transparent; }
-  #log::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-  .entry { white-space: pre-wrap; word-break: break-word; }
-  .ts { color: var(--text-dim); margin-right: 8px; font-size: 12px; user-select: none; }
-  #bar-wrap {
-    position: relative;
-    flex-shrink: 0;
-  }
-  #suggest {
-    display: none;
-    position: absolute;
-    bottom: 100%;
-    left: 12px;
-    right: 12px;
-    max-height: 280px;
-    overflow-y: auto;
-    background: var(--suggest-bg);
-    border: 1px solid var(--border);
-    border-bottom: none;
-    border-radius: var(--radius) var(--radius) 0 0;
-    z-index: 100;
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
-  }
-  #suggest.open { display: block; }
-  #suggest::-webkit-scrollbar { width: 6px; }
-  #suggest::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
-  .sug-item {
-    padding: 7px 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    border-bottom: 1px solid #222;
-    font-family: ""Cascadia Code"", ""Consolas"", monospace;
-    font-size: 13px;
-  }
-  .sug-item:last-child { border-bottom: none; }
-  .sug-item:hover { background: var(--suggest-hover); }
-  .sug-item.sel { background: var(--suggest-sel); }
-  .sug-name { color: var(--green-bright); font-weight: 600; min-width: 110px; flex-shrink: 0; }
-  .sug-desc { color: var(--text-dim); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-  .sug-author { font-size: 11px; flex-shrink: 0; }
-  .sug-author-label { color: var(--text-dim); }
-  .sug-author-name { color: var(--amber); }
-  #bar {
-    display: flex;
-    background: var(--bg-panel);
-    border-top: 1px solid var(--border);
-    padding: 10px 12px;
-    gap: 8px;
-    align-items: center;
-  }
-  #input {
-    flex: 1;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: ""Cascadia Code"", ""Consolas"", monospace;
-    font-size: 13px;
-    padding: 8px 12px;
-    outline: none;
-  }
-  #input::placeholder { color: var(--text-dim); }
-  #input:focus { border-color: var(--green); }
-  #send {
-    background: var(--green);
-    color: #0c0c0c;
-    border: none;
-    border-radius: var(--radius);
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  #send:hover { background: var(--green-bright); }
-</style>
-</head>
-<body>
-<div id=""toolbar"">
-  <h1>DT CONSOLE</h1>
-  <div id=""status""><span class=""dot""></span><span id=""status-text"">连接中…</span></div>
-</div>
-<div id=""log""></div>
-<div id=""bar-wrap"">
-  <div id=""suggest""></div>
-  <div id=""bar"">
-    <input id=""input"" placeholder=""输入 / 查看命令，上下键选择，Enter 执行"" autocomplete=""off"" spellcheck=""false"">
-    <button id=""send"">发送</button>
-  </div>
-</div>
-<script>
-const log = document.getElementById('log');
-const inp = document.getElementById('input');
-const statusEl = document.getElementById('status');
-const statusText = document.getElementById('status-text');
-const sugEl = document.getElementById('suggest');
-let seq = 0;
-let hist = [], hIdx = -1;
-let commands = [];   // [{name,aliases,usage,description,author}, ...]
-let matches = [];    // current filtered list
-let selIdx = -1;     // selected index in matches
+        private void HandleConfigApi(HttpListenerRequest req, HttpListenerResponse resp, string path)
+        {
+            var config = Plugin.Instance.Config;
 
-async function loadCommands(){
-  try{
-    const r = await fetch('/api/commands');
-    commands = await r.json();
-  }catch{ commands = []; }
-}
+            if (path == "/api/config/list" && req.HttpMethod == "GET")
+            {
+                WriteJson(resp, ConfigApi.ListJson(config));
+                return;
+            }
 
-function getPartial(){
-  const val = inp.value;
-  // 只对第一个 token 做建议（命令名）
-  const m = val.match(/^([\/!]?)(\S*)$/);
-  if(!m) return null;
-  return { prefix: m[1], partial: m[2].toLowerCase() };
-}
+            if (path == "/api/config/update" && req.HttpMethod == "POST")
+            {
+                WriteJson(resp, ConfigApi.HandleUpdate(config, ReadBody(req)));
+                return;
+            }
 
-function filterCommands(){
-  const p = getPartial();
-  if(p === null){ hideSuggest(); return; }
-  const { partial } = p;
-  // 空 partial 或只有 / 时显示全部；否则按 name/aliases 前缀匹配
-  matches = commands.filter(c => {
-    if(!partial) return true;
-    if(c.name.toLowerCase().startsWith(partial)) return true;
-    return (c.aliases||[]).some(a => a.toLowerCase().startsWith(partial));
-  });
-  if(matches.length === 0){ hideSuggest(); return; }
-  selIdx = 0;
-  renderSuggest();
-}
+            if (path == "/api/config/save" && req.HttpMethod == "POST")
+            {
+                WriteJson(resp, ConfigApi.HandleSave(config));
+                return;
+            }
 
-function renderSuggest(){
-  sugEl.innerHTML = '';
-  matches.forEach((c, i) => {
-    const d = document.createElement('div');
-    d.className = 'sug-item' + (i === selIdx ? ' sel' : '');
-    d.innerHTML =
-      '<span class=""sug-name"">/' + escHtml(c.name) + '</span>' +
-      '<span class=""sug-desc"">' + escHtml(c.description || c.usage || '') + '</span>' +
-      (c.author ? '<span class=""sug-author""><span class=""sug-author-label"">功能制作者：</span><span class=""sug-author-name"">' + escHtml(c.author) + '</span></span>' : '');
-    d.onmousedown = (e) => { e.preventDefault(); applyMatch(i); };
-    sugEl.appendChild(d);
-  });
-  sugEl.classList.add('open');
-  // 滚动到选中项
-  const sel = sugEl.children[selIdx];
-  if(sel) sel.scrollIntoView({ block: 'nearest' });
-}
+            if (path == "/api/config/reset" && req.HttpMethod == "POST")
+            {
+                WriteJson(resp, ConfigApi.HandleReset(config, ReadBody(req)));
+                return;
+            }
 
-function hideSuggest(){
-  sugEl.classList.remove('open');
-  matches = [];
-  selIdx = -1;
-}
+            if (path == "/api/config/import" && req.HttpMethod == "POST")
+            {
+                WriteJson(resp, ConfigApi.HandleImport(config, ReadBody(req)));
+                return;
+            }
 
-function applyMatch(idx){
-  if(idx < 0 || idx >= matches.length) return;
-  const c = matches[idx];
-  const p = getPartial();
-  const prefix = (p && p.prefix) ? p.prefix : '/';
-  inp.value = prefix + c.name + ' ';
-  hideSuggest();
-  inp.focus();
-  const pos = inp.value.length;
-  inp.setSelectionRange(pos, pos);
-}
+            if (path == "/api/config/export.cfg" && req.HttpMethod == "GET")
+            {
+                string cfg = ConfigApi.ExportCfg(config);
+                var bytes = Encoding.UTF8.GetBytes(cfg);
+                resp.StatusCode = 200;
+                resp.ContentType = "text/plain; charset=utf-8";
+                resp.AddHeader("Content-Disposition", "attachment; filename=\"DT_Tools.cfg\"");
+                resp.ContentLength64 = bytes.Length;
+                resp.OutputStream.Write(bytes, 0, bytes.Length);
+                resp.OutputStream.Close();
+                return;
+            }
 
-async function send(){
-  const v = inp.value.trim();
-  if(!v) return;
-  hist.unshift(v); if(hist.length>50) hist.pop();
-  hIdx = -1;
-  hideSuggest();
-  inp.value = '';
-  appendLocal('> ' + v, 'var(--cmd)');
-  await fetch('/api/run', { method: 'POST', body: v });
-}
+            if (path == "/api/config/export.json" && req.HttpMethod == "GET")
+            {
+                string json = ConfigApi.ListJson(config);
+                var bytes = Encoding.UTF8.GetBytes(json);
+                resp.StatusCode = 200;
+                resp.ContentType = "application/json; charset=utf-8";
+                resp.AddHeader("Content-Disposition", "attachment; filename=\"DT_Tools.json\"");
+                resp.ContentLength64 = bytes.Length;
+                resp.OutputStream.Write(bytes, 0, bytes.Length);
+                resp.OutputStream.Close();
+                return;
+            }
 
-function appendLocal(msg, color){
-  const d = document.createElement('div');
-  d.className = 'entry';
-  d.style.color = color || 'var(--text)';
-  d.textContent = msg;
-  log.appendChild(d);
-  log.scrollTop = log.scrollHeight;
-}
+            resp.StatusCode = 404;
+            WriteText(resp, "Not Found");
+        }
 
-async function poll(){
-  try{
-    const r = await fetch('/api/log?since=' + seq);
-    const arr = await r.json();
-    arr.forEach(e => {
-      seq = Math.max(seq, e.seq);
-      const d = document.createElement('div');
-      d.className = 'entry';
-      const colorMap = { red:'var(--red)', orange:'var(--amber)', cyan:'var(--cyan)', white:'var(--text)' };
-      d.innerHTML = '<span class=""ts"">' + e.time + '</span><span style=""color:' + (colorMap[e.color]||e.color) + '"">' + escHtml(e.msg) + '</span>';
-      log.appendChild(d);
-    });
-    if(arr.length) log.scrollTop = log.scrollHeight;
-    statusEl.className = 'online';
-    statusText.textContent = '在线';
-  }catch{
-    statusEl.className = 'offline';
-    statusText.textContent = '离线';
-  }
-  setTimeout(poll, 800);
-}
-
-function escHtml(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-document.getElementById('send').onclick = send;
-
-inp.addEventListener('input', () => {
-  hIdx = -1;
-  filterCommands();
-});
-
-inp.addEventListener('keydown', e => {
-  const open = sugEl.classList.contains('open');
-
-  if(e.key === 'ArrowUp'){
-    e.preventDefault();
-    if(open && matches.length){
-      selIdx = (selIdx - 1 + matches.length) % matches.length;
-      renderSuggest();
-    } else {
-      hIdx = Math.min(hIdx + 1, hist.length - 1);
-      inp.value = hist[hIdx] || '';
-      hideSuggest();
-    }
-    return;
-  }
-  if(e.key === 'ArrowDown'){
-    e.preventDefault();
-    if(open && matches.length){
-      selIdx = (selIdx + 1) % matches.length;
-      renderSuggest();
-    } else {
-      hIdx = Math.max(hIdx - 1, -1);
-      inp.value = hIdx < 0 ? '' : hist[hIdx];
-      hideSuggest();
-    }
-    return;
-  }
-  if(e.key === 'Tab'){
-    e.preventDefault();
-    if(open && matches.length && selIdx >= 0){
-      applyMatch(selIdx);
-    } else {
-      filterCommands();
-      if(matches.length === 1) applyMatch(0);
-    }
-    return;
-  }
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    if(open && matches.length && selIdx >= 0){
-      // 若输入只有命令前缀（无空格参数），应用选中项后再发送；有参数则直接发
-      const val = inp.value.trim();
-      const hasArgs = /\s+\S/.test(val);
-      if(!hasArgs){
-        applyMatch(selIdx);
-        // 稍等 DOM 更新后发送
-        setTimeout(send, 0);
-        return;
-      }
-    }
-    send();
-    return;
-  }
-  if(e.key === 'Escape'){
-    hideSuggest();
-    return;
-  }
-});
-
-inp.addEventListener('blur', () => {
-  // 延迟关闭，允许 mousedown 先触发
-  setTimeout(hideSuggest, 150);
-});
-
-inp.addEventListener('focus', () => {
-  filterCommands();
-});
-
-loadCommands().then(() => filterCommands());
-poll();
-inp.focus();
-</script>
-</body>
-</html>";
-
-        private static string LoginPage() => @"<!DOCTYPE html>
-<html lang=""zh-CN"">
-<head>
-<meta charset=""utf-8"">
-<meta name=""viewport"" content=""width=device-width, initial-scale=1"">
-<title>DT Console · 登录</title>
-<style>
-  :root {
-    --bg: #0c0c0c;
-    --card: #141414;
-    --border: #2a2a2a;
-    --text: #c8c8c8;
-    --text-dim: #666;
-    --green: #4e9a06;
-    --green-bright: #8ae234;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: ""Segoe UI"", ""PingFang SC"", ""Microsoft YaHei"", system-ui, sans-serif;
-    color: var(--text);
-  }
-  .box {
-    background: var(--card);
-    padding: 28px 24px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    width: 300px;
-  }
-  h2 {
-    text-align: center;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--green-bright);
-    font-family: ""Cascadia Code"", ""Consolas"", monospace;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-  }
-  .sub {
-    text-align: center;
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 18px;
-  }
-  input {
-    width: 100%;
-    background: #1a1a1a;
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 9px 12px;
-    font-family: ""Cascadia Code"", ""Consolas"", monospace;
-    font-size: 13px;
-    border-radius: 4px;
-    margin-bottom: 12px;
-    outline: none;
-  }
-  input:focus { border-color: var(--green); }
-  input::placeholder { color: var(--text-dim); }
-  button {
-    width: 100%;
-    background: var(--green);
-    color: #0c0c0c;
-    border: none;
-    padding: 9px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  button:hover { background: var(--green-bright); }
-</style>
-</head>
-<body>
-<div class=""box"">
-  <h2>DT CONSOLE</h2>
-  <p class=""sub"">请输入访问密码</p>
-  <input type=""password"" id=""p"" placeholder=""密码"" autofocus>
-  <button onclick=""login()"">登录</button>
-</div>
-<script>
-async function login(){
-  const v = document.getElementById('p').value;
-  const r = await fetch('/login?token='+encodeURIComponent(v),{method:'POST',body:v});
-  if(await r.text()==='ok') location.href='/';
-  else alert('密码错误');
-}
-document.getElementById('p').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
-</script>
-</body>
-</html>";
 
         // ═════════════════════════════════════════════════════
         //  HTTP 工具

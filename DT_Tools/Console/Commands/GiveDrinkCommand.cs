@@ -33,7 +33,9 @@ namespace DT_Tools.Console.Commands
         public string Description => "给所有/指定玩家发放手持道具（含武器与任务道具）。不带参数时显示可用道具列表。";
         public string Author => "梦初雪";
 
-        // ── 道具别名表 ──────────────────────────────────────
+        
+        public bool RequireHost => true;
+// ── 道具别名表 ──────────────────────────────────────
         // 原则：Define.cs 中 ITEM_ID_* 全量收录（ITEM_ID_START=1000 是区间哨兵值，非真实道具，排除）；
         // 另收录 ITEM_SMAHO=4001（不以 ITEM_ID_ 命名，但原版扫描/开平板时确实作为手持物显示）。
         // 所有值均为 DataId，可直接传入 ItemManager.CreateAndInsertInven。

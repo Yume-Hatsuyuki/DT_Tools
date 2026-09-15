@@ -31,7 +31,9 @@ namespace DT_Tools.Console.Commands.Phase
         public string   Description => "跳过裁判投票阶段立即开票（仅房主、投票阶段可用；已投票数保留，未投按弃权）。";
         public string   Author      => "梦初雪";
 
-        public void Execute(string[] args, WebConsole console)
+        
+        public bool RequireHost => true;
+public void Execute(string[] args, WebConsole console)
         {
             var room = PhaseJumpHelper.ValidateRoom(console);
             if (room == null) return;

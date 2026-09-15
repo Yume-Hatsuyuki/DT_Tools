@@ -1,6 +1,6 @@
 using System.Text;
 using BepInEx.Logging;
-using DT_Tools.Patches.System;
+using DT_Tools.Features.System;
 using Server.Game;
 using Steamworks;
 
@@ -15,7 +15,7 @@ namespace DT_Tools.Console.Commands
     ///   - 房间号:   Managers.Network.RoomCode
     ///   - 当前人数: 房主端 → GameRoom.Instance.Players.Count（服务器权威）
     ///               客户端 → Lobby.GetMembers().Count（Steam Lobby 可见成员）
-    ///   - 人数上限: Patch_CreateLobby.MaxMembers（游戏进房判定，默认 8）
+    ///   - 人数上限: LobbyMaxPlayersFeature.MaxMembers（游戏进房判定，默认 8）
     ///   - Steam容器: GetLobbyMemberLimit（仅当与进房上限不一致时附加一行）
     ///
     /// 这是纯读操作，不需要房主权限。
@@ -28,7 +28,9 @@ namespace DT_Tools.Console.Commands
         public string   Description => "显示当前房间的房间号（邀请码）及玩家数。";
         public string   Author      => "梦初雪";
 
-        public void Execute(string[] args, WebConsole console)
+        
+        public bool RequireHost => true;
+public void Execute(string[] args, WebConsole console)
         {
             if (Managers.Network == null)
             {
@@ -44,7 +46,7 @@ namespace DT_Tools.Console.Commands
                 return;
             }
 
-            int max = Patch_CreateLobby.MaxMembers;
+            int max = LobbyMaxPlayersFeature.MaxMembers;
             var lobby = Managers.Network.Lobby;
 
             int current;

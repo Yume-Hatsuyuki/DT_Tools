@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DT Tools</title>
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div id="toolbar">
+  <button class="tab active" data-tab="console">DT CONSOLE</button>
+  <button class="tab" data-tab="config">DT CONFIG</button>
+  <div id="status"><span class="dot"></span><span id="status-text">连接中…</span></div>
+</div>
+
+<div id="panel-console" class="panel active">
+  <div id="log"></div>
+  <div id="bar-wrap">
+    <div id="suggest"></div>
+    <div id="bar">
+      <input id="input" placeholder="输入 / 查看命令，上下键选择，Enter 执行" autocomplete="off" spellcheck="false">
+      <button id="send">发送</button>
+    </div>
+  </div>
+</div>
+
+<div id="panel-config" class="panel">
+  <div id="cfg-toolbar">
+    <span id="cfg-dirty" class="dirty" style="display:none">● 未保存</span>
+    <input id="cfg-search" type="search" placeholder="搜索 Section / 键…">
+    <button class="btn" id="cfg-save">保存到 .cfg</button>
+    <button class="btn secondary" id="cfg-export-cfg">导出 .cfg</button>
+    <button class="btn secondary" id="cfg-export-json">导出 JSON</button>
+    <button class="btn secondary" id="cfg-import-mem">仅导入参数</button>
+    <button class="btn secondary" id="cfg-import-over">覆盖配置</button>
+    <button class="btn danger" id="cfg-reset-all">全部恢复默认</button>
+  </div>
+  <div id="cfg-list"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const id = 'panel-' + btn.dataset.tab;
+    document.getElementById(id).classList.add('active');
+    if (btn.dataset.tab === 'config' && window.DTConfig) window.DTConfig.load();
+  });
+});
+</script>
+<script src="/js/console.js"></script>
+<script src="/js/config.js"></script>
+</body>
+</html>
