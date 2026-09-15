@@ -12,13 +12,13 @@ namespace DT_Tools.Features.Experience
     [HarmonyPatch(typeof(MyPlayer), "GetHandWeaponTarget")]
     [PatchFeature(
         section: "GetHandWeaponTarget",
-        description: "递刀距离：可修改最大递交距离（默认 224）。",
+        description: "递刀距离：可修改黑幕最大递交武器的距离（默认 224）。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         author: "梦初雪")]
     internal static class PassKnifeRangeFeature
     {
-        [ConfigField(224f, "递交道具可触及的最大距离，游戏默认为 224。")]
+        [ConfigField(224f, "递交武器可触及的最大距离，游戏默认为 224。")]
         public static ConfigEntry<float> Range;
 
         [HarmonyPrefix]

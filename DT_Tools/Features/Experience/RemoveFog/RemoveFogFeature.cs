@@ -9,7 +9,7 @@ namespace DT_Tools.Features.Experience
     [HarmonyPatch(typeof(MyPlayer), "OnGhostVisualChanged")]
     [PatchFeature(
         section: "OnGhostVisualChanged",
-        description: "移除迷雾：关闭本机房间阴影遮罩。",
+        description: "移除迷雾：移除房间阴影效果。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         author: "梦初雪")]
