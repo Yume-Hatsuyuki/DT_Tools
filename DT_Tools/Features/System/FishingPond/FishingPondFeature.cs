@@ -11,7 +11,7 @@ namespace DT_Tools.Features.System
     [HarmonyPatch(typeof(Server.Game.Fishing), nameof(Server.Game.Fishing.HandleEvent))]
     [PatchFeature(
         section: "FishingRandomItem",
-        description: "印度鱼塘：可配置钓鱼随机物品。",
+        description: "许愿鱼池：你可能在鱼塘里钓出各种东西（甚至是武器）。",
         defaultEnabled: false,
         side: FeatureSide.Host,
         author: "梦初雪")]

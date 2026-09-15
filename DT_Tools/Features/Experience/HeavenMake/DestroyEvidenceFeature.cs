@@ -11,7 +11,7 @@ namespace DT_Tools.Features.Experience
     [HarmonyPatch(typeof(DeviceBase), "UseSabotage")]
     [PatchFeature(
         section: "UseSabotage",
-        description: "天堂制造（毁尸）：可修改 Dark/Black 销毁证据读条时长（默认 2.5s，仅本地表现）。",
+        description: "专业清洁：可修改 Dark/Black 销毁证据读条时长（默认 2.5s，仅本地表现）。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         author: "梦初雪")]

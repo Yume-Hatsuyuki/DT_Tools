@@ -12,7 +12,7 @@ namespace DT_Tools.Features.Experience
     [HarmonyPatch(typeof(Fusebox), "Interact")]
     [PatchFeature(
         section: "FuseboxInteract",
-        description: "天堂制造（修电）：可修改修电闸默认读条时长（默认 10s，不超过服务端剩余）。",
+        description: "专业电工：可修改修电闸默认读条时长（默认 10s，优先结算来自服务端的剩余时间）。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         author: "梦初雪")]

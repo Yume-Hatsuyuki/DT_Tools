@@ -10,7 +10,7 @@ namespace DT_Tools.Features.Experience
     [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.EnqueueNormalChat))]
     [PatchFeature(
         section: "EnqueueNormalChat",
-        description: "亡者呢喃：活人也能看到死者的聊天消息。",
+        description: "亡者呢喃：那些死者的回响依附在你的身边。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         author: "梦初雪")]

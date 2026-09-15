@@ -10,7 +10,7 @@ namespace DT_Tools.Features.Experience
     [HarmonyPatch(typeof(UI_GameTablet), "LateUpdate")]
     [PatchFeature(
         section: "RefreshPlayerPin",
-        description: "玩家雷达：平板电脑地图上显示所有玩家位置。",
+        description: "玩家雷达：平板电脑显示全部玩家位置（白方无法区分黑方/黑幕）。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         author: "梦初雪")]

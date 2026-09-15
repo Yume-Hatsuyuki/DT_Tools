@@ -148,18 +148,30 @@ namespace DT_Tools.Core
 
         private static ConfigEntry<bool> BindFeatureSection(ConfigFile config, FeatureDesc desc)
         {
-            string fullDescription = string.IsNullOrWhiteSpace(desc.Author)
-                ? desc.Description
-                : $"Author: {desc.Author}\n{desc.Description}";
+            // 写入 .cfg 的 ## 注释元数据（Author / Side），正文为功能说明
+            var sb = new System.Text.StringBuilder();
+            if (!string.IsNullOrWhiteSpace(desc.Author))
+                sb.Append("Author: ").Append(desc.Author.Trim()).Append('\n');
+            sb.Append("Side: ").Append(FormatSide(desc.Side)).Append('\n');
+            if (!string.IsNullOrWhiteSpace(desc.Description))
+                sb.Append(desc.Description.Trim());
 
             var enabled = config.Bind(
                 desc.Section,
                 "Enabled",
                 desc.DefaultEnabled,
-                fullDescription);
+                sb.ToString());
 
             ConfigBinder.BindFields(config, desc.Type, desc.Section);
             return enabled;
         }
+
+        private static string FormatSide(FeatureSide side) => side switch
+        {
+            FeatureSide.Client => "Client",
+            FeatureSide.Host => "Host",
+            FeatureSide.Both => "Both",
+            _ => side.ToString()
+        };
     }
 }

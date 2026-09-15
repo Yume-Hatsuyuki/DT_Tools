@@ -43,13 +43,21 @@
       title.className = 'sec-title';
       title.innerHTML = '<span class="sec-name">[' + esc(sec.section) + ']</span>';
 
-      // 作者取自 Enabled 配置描述中的 Author 行
-      let author = '';
+      // 元数据取自 Enabled 描述中的 Author / Side 行
+      let author = '', side = '';
       for (const e of (sec.entries || [])) {
         if (e.key === 'Enabled') {
-          author = splitDesc(e.description).author;
+          const meta = splitDesc(e.description);
+          author = meta.author;
+          side = meta.side;
           break;
         }
+      }
+      if (side) {
+        const sd = document.createElement('span');
+        sd.className = 'sec-side';
+        sd.textContent = formatSide(side);
+        title.appendChild(sd);
       }
       if (author) {
         const au = document.createElement('span');
@@ -78,16 +86,26 @@
   function splitDesc(desc) {
     const lines = String(desc || '').split(/\r?\n/);
     let author = '';
+    let side = '';
     const body = [];
     for (const line of lines) {
-      const m = line.match(/^Author:\s*(.*)$/i);
-      if (m) author = m[1].trim();
-      else body.push(line); // 保留空行与梗文换行
+      const a = line.match(/^Author:\s*(.*)$/i);
+      if (a) { author = a[1].trim(); continue; }
+      const s = line.match(/^Side:\s*(.*)$/i);
+      if (s) { side = s[1].trim(); continue; }
+      body.push(line);
     }
-    // 去掉首尾空行，中间空行保留
     while (body.length && !body[0].trim()) body.shift();
     while (body.length && !body[body.length - 1].trim()) body.pop();
-    return { author, text: body.join('\n') };
+    return { author, side, text: body.join('\n') };
+  }
+
+  function formatSide(side) {
+    const k = String(side || '').toLowerCase();
+    if (k === 'client') return '客户端';
+    if (k === 'host') return '服务端';
+    if (k === 'both') return '双端';
+    return side || '';
   }
 
   function row(section, e) {
