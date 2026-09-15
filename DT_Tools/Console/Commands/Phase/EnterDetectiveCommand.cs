@@ -24,7 +24,9 @@ namespace DT_Tools.Console.Commands.Phase
         public string   Description => "强制进入调查阶段（仅房主、生存阶段可用；有尸体时走原版发现流程）。";
         public string   Author      => "梦初雪";
 
-        public void Execute(string[] args, WebConsole console)
+        
+        public bool RequireHost => true;
+public void Execute(string[] args, WebConsole console)
         {
             PhaseJumpHelper.JumpToDetective(console);
         }

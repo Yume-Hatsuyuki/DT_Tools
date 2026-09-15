@@ -29,7 +29,9 @@ namespace DT_Tools.Console.Commands
         public string   Description => "列出存活玩家并标注阵营（仅游戏中、需房主）。";
         public string   Author      => "梦初雪";
 
-        public void Execute(string[] args, WebConsole console)
+        
+        public bool RequireHost => true;
+public void Execute(string[] args, WebConsole console)
         {
             if (Managers.Host == null || !Managers.Host.IsHost)
             {

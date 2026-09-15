@@ -23,7 +23,9 @@ namespace DT_Tools.Console.Commands.Phase
         public string   Description => "强制进入学级裁判（调查阶段=跳过剩余调查时间；生存阶段=连调查一并跳过）。";
         public string   Author      => "梦初雪";
 
-        public void Execute(string[] args, WebConsole console)
+        
+        public bool RequireHost => true;
+public void Execute(string[] args, WebConsole console)
         {
             PhaseJumpHelper.JumpToTrial(console);
         }

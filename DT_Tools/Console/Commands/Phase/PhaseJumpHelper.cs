@@ -1,5 +1,5 @@
 using BepInEx.Logging;
-using DT_Tools.Patches.System;
+using DT_Tools.Features.System;
 using Protocol;
 using Server.Game;
 
@@ -95,7 +95,7 @@ namespace DT_Tools.Console.Commands.Phase
             }
 
             // 无尸体裸进：原版 StartDetective 开头无 null 保护，必须由补丁修复
-            if (!Patch_StartDetective.IsApplied)
+            if (!DetectivePhaseFixFeature.IsApplied)
             {
                 console.Log(
                     "场上没有未处理尸体，直接进入调查阶段需要启用补丁 [StartDetective] " +
