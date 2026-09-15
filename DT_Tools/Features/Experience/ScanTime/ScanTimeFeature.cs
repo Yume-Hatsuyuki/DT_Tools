@@ -13,7 +13,7 @@ namespace DT_Tools.Features.Experience
     [HarmonyPatch(typeof(GameManagerEX), "StartScanning")]
     [PatchFeature(
         section: "StartScanning",
-        description: "福尔摩斯：可修改搜索读条时长（默认 2.0s）。配置&lt;0.5s 忽略 ScanUp。",
+        description: "福尔摩斯：可修改搜索读条时长（默认 2.0s）。配置<0.5s 忽略 ScanUp。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         author: "梦初雪")]
