@@ -267,7 +267,6 @@
 
   document.getElementById('cfg-save').onclick = save;
   document.getElementById('cfg-export-cfg').onclick = () => download('/api/config/export.cfg', 'DT_Tools.cfg');
-  document.getElementById('cfg-export-json').onclick = () => download('/api/config/export.json', 'DT_Tools.json');
   document.getElementById('cfg-import-mem').onclick = () => importFile('memory');
   document.getElementById('cfg-import-over').onclick = () => importFile('overwrite');
   document.getElementById('cfg-reset-all').onclick = resetAll;
