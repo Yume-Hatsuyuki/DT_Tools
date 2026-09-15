@@ -53,13 +53,10 @@ jobs:
           else
             TAG="${GITHUB_REF#refs/tags/}"
           fi
-          case "$TAG" in
-            v*.*.*) ;;
-            *)
-              echo "::error::tag 须为 vMAJOR.MINOR.PATCH，当前为「$TAG」"
-              exit 1
-              ;;
-          esac
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::tag 须为 vMAJOR.MINOR.PATCH（仅数字，三段，例如 v1.0.6），当前为「$TAG」"
+            exit 1
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
