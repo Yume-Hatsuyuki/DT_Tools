@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using BepInEx.Logging;
 using DT_Tools.Console.Commands.Weapon;
@@ -9,7 +10,7 @@ using UnityEngine;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /beacon [x y | spawn &lt;i&gt; | lobby | error]
+    /// /beacon [x y | spawn &lt;#i&gt; | player &lt;#id&gt; | lobby | error]
     ///
     /// 战略信标：掉皮掉肉不掉队！瞬移到指定坐标（跟随控制台 / 客户端）。
     ///
@@ -37,15 +38,23 @@ namespace DT_Tools.Console.Commands
     ///   - 区域（RoomData）无固定出生坐标：RoomData 仅含 DataId/Type/AdjacentArea/PrefabName，
     ///     不含 Pos 字段；AreaManager.GetArea(pos) 按 224 格网格反查区域，而非区域存坐标。
     ///
+    /// player #id 目标来源：
+    ///   - Managers.Player.Players（PlayerId → Player）只含存活且已 Spawn 的玩家；
+    ///     他人坐标经 S_MOVE 持续更新（PlayerManager.HandleMove → Player.TargetPos），
+    ///     TargetPos 即服务端该玩家 PublicInfo.Pos 的最新值，取它落点。
+    ///   - 死亡玩家收到 S_DESPAWN 后移出该表（PlayerManager.Despawn），无法定位；
+    ///     本机 MyPlayer 不在表内，#自己 直接提示无需瞬移。
+    ///
     /// 权限 / 前置条件（跟随控制台 / 客户端）：
     ///   - 本机已进入对局，且 Managers.Network.GameServer 链路可用
     ///   - 本机非 Hide/Sit 状态（服务端 HandleMove 拒绝这两种状态发包）
     ///   - 坐标需落在地图可行走网格内，否则服务端强制改到 ErrorPos（force respawn）
     ///
     /// 示例:
-    ///   /beacon              列出出生点坐标 + 帮助
+    ///   /beacon              列出出生点 / 在线玩家坐标 + 帮助
     ///   /beacon 3360 2240    瞬移到 (3360, 2240)
-    ///   /beacon spawn 2      瞬移到第 2 个出生点
+    ///   /beacon spawn #2     瞬移到第 2 个出生点（# 可省略）
+    ///   /beacon player #3    瞬移到 #3 号玩家当前位置
     ///   /beacon lobby        瞬移到大厅点
     ///   /beacon error        瞬移到 ErrorPos（用于测试 / 兜底点）
     /// </summary>
@@ -53,7 +62,7 @@ namespace DT_Tools.Console.Commands
     {
         public string   Name        => "beacon";
         public string[] Aliases     => new[] { "战略信标", "信标", "teleport", "tp", "瞬移" };
-        public string   Usage       => "beacon [x y | spawn <i> | lobby | error]";
+        public string   Usage       => "beacon [x y | spawn <#i> | player <#id> | lobby | error]";
         public string   Description => "战略信标：瞬移到指定坐标。掉皮掉肉不掉队！（跟随控制台 / 客户端）";
         public string   Author      => "梦初雪";
 
@@ -78,7 +87,7 @@ namespace DT_Tools.Console.Commands
                 return;
             }
 
-            // 2. 无参数 → 列出出生点 + 帮助
+            // 2. 无参数 → 列出出生点 / 在线玩家 + 帮助
             if (args.Length == 0)
             {
                 console.Log(BuildHelpAndSpawns(mapData, my), LogLevel.Info);
@@ -92,13 +101,23 @@ namespace DT_Tools.Console.Commands
                                  + ",\"room\":\"" + EscapeJson(ResolveRoomLabel(p, mapData).raw) + "\"}");
                     }
                 }
+
+                int myId = my.PublicInfo.PlayerId;
+                var players = new List<string> { BuildPlayerJson(myId, my.Name, my.PublicInfo.Pos, my.State, mapData, true) };
+                foreach (var p in Managers.Player.Players.Values.OrderBy(p => p.PublicInfo.PlayerId))
+                {
+                    players.Add(BuildPlayerJson(p.PublicInfo.PlayerId, p.Name, p.TargetPos ?? p.PublicInfo.Pos,
+                        p.State, mapData, p.PublicInfo.PlayerId == myId));
+                }
+
                 console.SetResult("{\"ok\":true,\"spawns\":" + spawnCount
-                                 + ",\"list\":[" + string.Join(",", spawns) + "]}");
+                                 + ",\"list\":[" + string.Join(",", spawns) + "]"
+                                 + ",\"players\":[" + string.Join(",", players) + "]}");
                 return;
             }
 
             // 3. 解析目标坐标
-            if (!TryResolveTarget(args, mapData, console, out var target, out string label))
+            if (!TryResolveTarget(args, mapData, my, console, out var target, out string label, out int targetPlayerId))
             {
                 console.SetResult("{\"ok\":false,\"error\":\"bad args\"}");
                 return;
@@ -120,16 +139,19 @@ namespace DT_Tools.Console.Commands
             var roomLabel = ResolveRoomLabel(target, mapData);
             console.Log($"[战略信标] 已瞬移到 {label} → ({target.X:F0}, {target.Y:F0})  [{roomLabel.localized}]。掉皮掉肉不掉队！",
                 LogLevel.Message);
+            string targetJson = targetPlayerId > 0 ? ",\"targetId\":" + targetPlayerId : string.Empty;
             console.SetResult("{\"ok\":true,\"x\":" + target.X + ",\"y\":" + target.Y
-                             + ",\"room\":\"" + EscapeJson(roomLabel.raw) + "\"}");
+                             + ",\"room\":\"" + EscapeJson(roomLabel.raw) + "\"" + targetJson + "}");
         }
 
         // ── 解析目标坐标 ────────────────────────────────────
-        private static bool TryResolveTarget(string[] args, Data.MapData mapData, WebConsole console,
-            out PosInfo target, out string label)
+        // targetPlayerId > 0 表示目标来自 player #id（仅用于结果 JSON 回带）。
+        private static bool TryResolveTarget(string[] args, Data.MapData mapData, MyPlayer my, WebConsole console,
+            out PosInfo target, out string label, out int targetPlayerId)
         {
             target = null;
             label = null;
+            targetPlayerId = 0;
 
             // beacon lobby | error
             if (args.Length == 1)
@@ -159,7 +181,7 @@ namespace DT_Tools.Console.Commands
                 }
             }
 
-            // beacon spawn <i>
+            // beacon spawn <#i>
             if (args.Length == 2
                 && (args[0].Equals("spawn", StringComparison.OrdinalIgnoreCase) || args[0] == "出生"))
             {
@@ -169,13 +191,47 @@ namespace DT_Tools.Console.Commands
                     console.Log("MapData.StartPosList 为空（不在对局地图 / 未加载）。", LogLevel.Warning);
                     return false;
                 }
-                if (!int.TryParse(args[1], out int idx) || idx < 1 || idx > list.Count)
+                if (!WeaponPacketHelper.TryParseId(args[1], out int idx, out string idErr))
                 {
-                    console.Log($"出生点序号无效：{args[1]}（范围 1..{list.Count}）。", LogLevel.Warning);
+                    console.Log($"{idErr}出生点写法 /beacon spawn #<i>（# 可省略）。", LogLevel.Warning);
+                    return false;
+                }
+                if (idx < 1 || idx > list.Count)
+                {
+                    console.Log($"出生点序号超出范围：#{idx}（有效范围 1..{list.Count}）。", LogLevel.Warning);
                     return false;
                 }
                 target = list[idx - 1];
                 label = $"出生点 #{idx}";
+                return true;
+            }
+
+            // beacon player <#id>
+            if (args.Length == 2
+                && (args[0].Equals("player", StringComparison.OrdinalIgnoreCase) || args[0] == "玩家"))
+            {
+                if (!WeaponPacketHelper.TryParseId(args[1], out int pid, out string idErr))
+                {
+                    console.Log(idErr, LogLevel.Warning);
+                    return false;
+                }
+                if (pid == my.PublicInfo.PlayerId)
+                {
+                    console.Log($"#{pid} 就是本机自己，当前位置即目标，无需瞬移。", LogLevel.Warning);
+                    return false;
+                }
+                var other = WeaponPacketHelper.FindClientPlayer(pid);
+                if (other == null)
+                {
+                    console.Log($"玩家表中找不到存活的 #{pid}（未入局 / 已死亡被 S_DESPAWN 移除 / 旁观者）。"
+                              + "可用无参 /beacon 查看在线玩家列表。", LogLevel.Warning);
+                    return false;
+                }
+                // TargetPos 是 S_MOVE 最新落点（服务端当前 PublicInfo.Pos）；拷贝一份避免与他人 PosInfo 别名共享。
+                var src = other.TargetPos ?? other.PublicInfo.Pos;
+                target = new PosInfo { X = src.X, Y = src.Y };
+                label = $"玩家 {other.Name}（#{pid}）";
+                targetPlayerId = pid;
                 return true;
             }
 
@@ -189,7 +245,7 @@ namespace DT_Tools.Console.Commands
                 return true;
             }
 
-            console.Log("参数无效。用法：/beacon [x y | spawn <i> | lobby | error]", LogLevel.Warning);
+            console.Log("参数无效。用法：/beacon [x y | spawn <#i> | player <#id> | lobby | error]", LogLevel.Warning);
             return false;
         }
 
@@ -258,8 +314,19 @@ namespace DT_Tools.Console.Commands
             sb.AppendLine($"  ({my.PublicInfo.Pos.X:F0}, {my.PublicInfo.Pos.Y:F0})  状态={my.State}  区域=[{curRoom.localized}]");
             sb.AppendLine();
 
+            // 在线玩家（#id 即 /beacon player 的目标参数）
+            sb.AppendLine("【在线玩家 Players】（用 /beacon player #id 瞬移到其身边）");
+            int myId = my.PublicInfo.PlayerId;
+            AppendPlayerLine(sb, myId, my.Name, my.PublicInfo.Pos, my.State, mapData, self: true);
+            foreach (var p in Managers.Player.Players.Values.OrderBy(p => p.PublicInfo.PlayerId))
+            {
+                AppendPlayerLine(sb, p.PublicInfo.PlayerId, p.Name, p.TargetPos ?? p.PublicInfo.Pos,
+                    p.State, mapData, p.PublicInfo.PlayerId == myId);
+            }
+            sb.AppendLine();
+
             // 出生点
-            sb.AppendLine("【默认出生点 StartPosList】");
+            sb.AppendLine("【默认出生点 StartPosList】（用 /beacon spawn #i 瞬移）");
             var list = mapData.StartPosList;
             if (list == null || list.Count == 0)
             {
@@ -290,15 +357,17 @@ namespace DT_Tools.Console.Commands
 
             // 用法
             sb.AppendLine("【用法】");
-            sb.AppendLine("  /beacon              列出出生点坐标 + 帮助");
+            sb.AppendLine("  /beacon              列出出生点 / 在线玩家坐标 + 帮助");
             sb.AppendLine("  /beacon <x> <y>      瞬移到指定坐标");
-            sb.AppendLine("  /beacon spawn <i>    瞬移到第 <i> 个出生点（1 起）");
+            sb.AppendLine("  /beacon spawn #i     瞬移到第 i 个出生点（1 起，# 可省略）");
+            sb.AppendLine("  /beacon player #id   瞬移到 #id 号玩家当前位置（# 可省略）");
             sb.AppendLine("  /beacon lobby        瞬移到大厅点");
             sb.AppendLine("  /beacon error        瞬移到兜底点 ErrorPos");
             sb.AppendLine();
             sb.AppendLine("【注意】");
             sb.AppendLine("  - Hide/Sit 状态服务端拒收 C_MOVE，请先脱离藏身处/座位");
             sb.AppendLine("  - 坐标超出可行走网格时，服务端会强制改到 ErrorPos");
+            sb.AppendLine("  - player 目标须在存活玩家表内：死亡（S_DESPAWN）/旁观者无法定位");
             sb.AppendLine("  - 跟随控制台 / 客户端：非房主可用，仅作用于本机");
             return sb.ToString();
         }
@@ -338,6 +407,26 @@ namespace DT_Tools.Console.Commands
         private static string FormatPos(PosInfo p)
         {
             return p == null ? "未配置" : $"{p.X:F0}, {p.Y:F0}";
+        }
+
+        // ── 在线玩家行（帮助文本 / 结构化 JSON 同源） ────────
+        private static void AppendPlayerLine(StringBuilder sb, int id, string name, PosInfo pos,
+            EPlayerState state, Data.MapData mapData, bool self)
+        {
+            string tag = self ? "(我)" : "   ";
+            string room = ResolveRoomLabel(pos, mapData).localized;
+            sb.AppendLine($"  {tag} #{id,-2} {name}  ({pos.X:F0}, {pos.Y:F0})  状态={state}  区域=[{room}]");
+        }
+
+        private static string BuildPlayerJson(int id, string name, PosInfo pos, EPlayerState state,
+            Data.MapData mapData, bool self)
+        {
+            return "{\"id\":" + id
+                 + ",\"name\":\"" + EscapeJson(name) + "\""
+                 + ",\"x\":" + pos.X + ",\"y\":" + pos.Y
+                 + ",\"state\":\"" + state + "\""
+                 + ",\"room\":\"" + EscapeJson(ResolveRoomLabel(pos, mapData).raw) + "\""
+                 + ",\"me\":" + (self ? "true" : "false") + "}";
         }
 
         // 最小 JSON 字符串转义（避免 room 名含 " 或 \ 时破坏 JSON）

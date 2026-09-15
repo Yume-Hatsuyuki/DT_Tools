@@ -61,24 +61,54 @@
     renderSuggest();
   }
 
+  let renderedKey = '';
+
   function renderSuggest() {
-    sugEl.innerHTML = '';
-    matches.forEach((c, i) => {
-      const d = document.createElement('div');
-      d.className = 'sug-item' + (i === selIdx ? ' sel' : '');
-      d.innerHTML =
-        '<span class="sug-name">/' + escHtml(c.name) + '</span>' +
-        '<span class="sug-desc">' + escHtml(c.description || c.usage || '') + '</span>';
-      d.onmousedown = (e) => { e.preventDefault(); applyMatch(i); };
-      sugEl.appendChild(d);
-    });
+    // 只在候选集合真正变化时才重建 DOM
+    const key = matches.map(c => c.name).join('\u0001');
+    if (key !== renderedKey) {
+      renderedKey = key;
+      sugEl.innerHTML = '';
+      sugEl.scrollTop = 0;
+      matches.forEach((c, i) => {
+        const d = document.createElement('div');
+        d.className = 'sug-item';
+        d.innerHTML =
+          '<span class="sug-name">/' + escHtml(c.name) + '</span>' +
+          '<span class="sug-desc">' + escHtml(c.description || c.usage || '') + '</span>';
+        d.onmousedown = (e) => { e.preventDefault(); applyMatch(i); };
+        d.onmouseenter = () => { selIdx = i; updateSel(); };
+        sugEl.appendChild(d);
+      });
+    }
+    updateSel();
     sugEl.classList.add('open');
+  }
+
+  function updateSel() {
+    const items = sugEl.children;
+    for (let i = 0; i < items.length; i++)
+      items[i].classList.toggle('sel', i === selIdx);
+    scrollSelectedIntoView();
+  }
+
+  function scrollSelectedIntoView() {
+    const el = sugEl.children[selIdx];
+    if (!el) return;
+    const top = el.offsetTop;
+    const bottom = top + el.offsetHeight;
+    if (top < sugEl.scrollTop) {
+      sugEl.scrollTop = top;
+    } else if (bottom > sugEl.scrollTop + sugEl.clientHeight) {
+      sugEl.scrollTop = bottom - sugEl.clientHeight;
+    }
   }
 
   function hideSuggest() {
     sugEl.classList.remove('open');
     matches = [];
     selIdx = -1;
+    renderedKey = '';   // 下次打开时强制重建
   }
 
   function applyMatch(idx) {
