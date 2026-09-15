@@ -541,19 +541,6 @@ namespace DT_Tools.Console
                 return;
             }
 
-            if (path == "/api/config/export.json" && req.HttpMethod == "GET")
-            {
-                string json = ConfigApi.ListJson(config);
-                var bytes = Encoding.UTF8.GetBytes(json);
-                resp.StatusCode = 200;
-                resp.ContentType = "application/json; charset=utf-8";
-                resp.AddHeader("Content-Disposition", "attachment; filename=\"DT_Tools.json\"");
-                resp.ContentLength64 = bytes.Length;
-                resp.OutputStream.Write(bytes, 0, bytes.Length);
-                resp.OutputStream.Close();
-                return;
-            }
-
             resp.StatusCode = 404;
             WriteText(resp, "Not Found");
         }
