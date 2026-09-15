@@ -5,11 +5,11 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*.*.*.*'
   workflow_dispatch:
     inputs:
       tag:
-        description: '版本号（例如 v*.*.*）'
+        description: '版本号（例如 v*.*.*.*）'
         required: true
         type: string
 
@@ -53,12 +53,15 @@ jobs:
           else
             TAG="${GITHUB_REF#refs/tags/}"
           fi
-          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::tag 须为 vMAJOR.MINOR.PATCH（仅数字，三段，例如 v1.0.6），当前为「$TAG」"
+          if [[ ! "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?) ]]; then
+            echo "::error::tag 须以 vMAJOR.MINOR.PATCH[.BUILD] 开头（例如 v1.0.0 或 v1.0.0.1），当前为「$TAG」"
             exit 1
           fi
+          # 编译用的版本号必须是纯数字（BepInEx / System.Version 不支持后缀），
+          # 只取匹配到的 v数字.数字.数字(.数字)? 前缀，后面不管跟什么（-c2 / _b2 / 中文 / 空格等）一律丢弃。
+          ASSEMBLY_VERSION="${BASH_REMATCH[1]}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "version=$ASSEMBLY_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
