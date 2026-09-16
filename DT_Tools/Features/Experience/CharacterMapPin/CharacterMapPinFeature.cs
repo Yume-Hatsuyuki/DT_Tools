@@ -104,38 +104,34 @@ namespace DT_Tools.Features.Experience
             if (pin.Type != Define.EMinimapPinType.Player)
                 return;
 
-            // TurnComplyRules() 内部有 AlreadyComplyRules 守卫，重复调用是 no-op
-            // Kaho 技能已经转换过的 pin 不会被重复处理
-            if (pin.AlreadyComplyRules)
-                return;
+            // 禁止调用 TurnComplyRules()：它会把 AlreadyComplyRules=true，
+            // 导致 Kaho 的 RefreshComplyRulesPin 跳过 SetComplyRulesArrow，监视箭头直接消失。
+            // 只换贴图，不碰 AlreadyComplyRules，Kaho 仍可正常挂箭头。
 
             bool isBlack = IsKnownBlack(player.PublicInfo.PlayerId);
             if (isBlack && !replaceBlack)
                 return;
 
-            // 直接调用 TurnComplyRules()——与 Kaho 技能完全相同的代码路径
-            // 内部会：AlreadyComplyRules = true → GetObject(0).SetVisible(true) → GetImage(0).sprite = Load("{Type}_Map_Black.sprite")
-            pin.TurnComplyRules();
-
-            // TurnComplyRules 只加载 Black；缺失角色（如 Madeline）会得到 null 白块。
-            // 用 GetSprite 统一回退（专属 → Someone），再按阵营选 White/Black 覆盖。
+            // 官方 Black/White 主要差边框色（粉/绿）；Kaho 路径固定用 Black。
             string key = isBlack
                 ? player.CharData.Type + BlackKey
                 : player.CharData.Type + WhiteKey;
             Sprite sprite = GetSprite(key);
-            if (sprite != null)
-            {
-                Image mark = Traverse.Create(pin).Method("GetImage", 0).GetValue<Image>();
-                if (mark != null)
-                    mark.sprite = sprite;
-            }
+            if (sprite == null)
+                return;
+
+            var comply = Traverse.Create(pin).Method("GetObject", 0).GetValue<GameObject>();
+            if (comply != null)
+                comply.SetVisible(true);
+
+            Image mark = Traverse.Create(pin).Method("GetImage", 0).GetValue<Image>();
+            if (mark != null)
+                mark.sprite = sprite;
 
             if (!_diagnosticsLogged)
             {
                 _diagnosticsLogged = true;
-                string bk = player.CharData.Type + BlackKey;
-                Sprite bs = Managers.Resource.Load<Sprite>(bk);
-                Debug.Log($"[DT_Tools][CharacterMapPin] 首次应用: 角色={player.CharData.Type}, isBlack={isBlack}, BlackSprite={bs?.name ?? "NULL"}, applied={sprite?.name ?? "NULL"}");
+                Debug.Log($"[DT_Tools][CharacterMapPin] 首次应用: 角色={player.CharData.Type}, isBlack={isBlack}, sprite={sprite.name}");
             }
         }
 
