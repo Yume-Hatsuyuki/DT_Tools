@@ -237,6 +237,12 @@ namespace DT_Tools.Console
                 return;
             }
 
+            if (path == "/api/steam/players" && req.HttpMethod == "GET")
+            {
+                WriteJson(resp, SteamApi.GetCurrentPlayersJson(msg => Log(msg, LogLevel.Warning)));
+                return;
+            }
+
             if (path == "/api/run" && req.HttpMethod == "POST")
             {
                 string cmd = ReadBody(req).Trim();

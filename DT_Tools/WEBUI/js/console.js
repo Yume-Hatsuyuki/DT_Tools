@@ -201,7 +201,28 @@
   inp.addEventListener('input', filterCommands);
   document.getElementById('send').onclick = send;
 
+  // ── Steam 全球当前在线人数（走后端同源代理，规避 CORS） ──
+  const steamBox = document.getElementById('steam-players');
+  const steamCount = document.getElementById('steam-players-count');
+
+  async function pollSteamPlayers() {
+    try {
+      const r = await fetch('/api/steam/players');
+      if (!r.ok) throw new Error(String(r.status));
+      const d = await r.json();
+      if (!d.ok || typeof d.players !== 'number') throw new Error(d.error || 'bad response');
+      if (steamCount) steamCount.textContent = d.players.toLocaleString('en-US');
+      steamBox && steamBox.classList.remove('fail');
+      steamBox && steamBox.classList.add('ok');
+    } catch {
+      steamBox && steamBox.classList.add('fail');
+      steamBox && steamBox.classList.remove('ok');
+    }
+  }
+
   loadCommands();
   poll();
+  pollSteamPlayers();
   setInterval(poll, 800);
+  setInterval(pollSteamPlayers, 60000);
 })();
