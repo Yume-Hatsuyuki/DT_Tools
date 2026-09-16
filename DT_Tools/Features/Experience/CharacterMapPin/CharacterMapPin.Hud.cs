@@ -42,6 +42,59 @@ namespace DT_Tools.Features.Experience
                 CharacterMapPinCore.ApplyPin(pin, player, replaceBlack: true);
         }
 
+        // ── 白方强制显示他人 Pin（独立开关 ShowPinsForWhite）──────────────────
+        // 原版 LateUpdate 在 Color==White 时直接 return，不调用 RefreshPlayerPin。
+        // 开启后每帧补调 RefreshPlayerPin + ApplyPin，并清理已死亡/离开的 pin。
+        [HarmonyPatch(typeof(UI_GameScene), "LateUpdate")]
+        [HarmonyPostfix]
+        private static void PostfixEnsureWhitePins(UI_GameScene __instance)
+        {
+            if (!(ShowPinsForWhite?.Value ?? false))
+                return;
+
+            MyPlayer my = Managers.Player.MyPlayer;
+            if (my == null || my.Color != EPlayerColor.White)
+                return;
+
+            EGameState gs = Managers.Game.State;
+            if (gs == EGameState.Trial || gs == EGameState.Lobby)
+                return;
+
+            var liveIds = new HashSet<int> { my.PublicInfo.PlayerId };
+            foreach (Player player in Managers.Player.Players.Values)
+            {
+                int id = player.PublicInfo.PlayerId;
+                if (id == my.PublicInfo.PlayerId)
+                    continue;
+                if (player.CharData == null || player.IsSpectator)
+                    continue;
+                if (Managers.Player.KnownDeadIds.Contains(id))
+                    continue;
+
+                liveIds.Add(id);
+                Traverse.Create(__instance).Method("RefreshPlayerPin", player).GetValue();
+
+                UI_MinimapSubItem pin = FindPin(HudPinsField, __instance, id);
+                if (pin != null)
+                    CharacterMapPinCore.ApplyPin(pin, player, ReplaceBlackPin?.Value ?? true);
+            }
+
+            // 清掉已不在 live 列表里的他人 pin（保留自己的 MyPlayer pin）
+            var pinList = HudPinsField?.GetValue(__instance) as List<UI_MinimapSubItem>;
+            if (pinList == null)
+                return;
+
+            for (int i = pinList.Count - 1; i >= 0; i--)
+            {
+                UI_MinimapSubItem pin = pinList[i];
+                if (pin == null || liveIds.Contains(pin.ID))
+                    continue;
+                if (pin.Type == Define.EMinimapPinType.MyPlayer)
+                    continue;
+                Traverse.Create(__instance).Method("DeletePin", pin.ID).GetValue();
+            }
+        }
+
         // ── 常驻角色箭头（不开平板也可见）────────────────────────────────────
         // 用 WeaponArrow 类型 + 每帧更新 TargetPos（private set 通过 Traverse 写入）。
         // Mark 头像（GetImage(1)）替换为角色 *_Map_Black/White，与 Kaho 箭头一致。
