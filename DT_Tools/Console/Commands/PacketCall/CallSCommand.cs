@@ -17,6 +17,9 @@ namespace DT_Tools.Console.Commands.PacketCall
         public string Description => "向玩家发送 S_* 协议包（JSON 填充，房主）。无参显示帮助与包名自检。";
         public string Author => "梦初雪";
 
+        
+        public bool RequireHost => true;
+
         public void Execute(string[] args, WebConsole console)
         {
             PacketCallHelper.EnsureInit(console);

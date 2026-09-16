@@ -18,6 +18,9 @@ namespace DT_Tools.Console.Commands.PacketCall
         public string Description => "以指定玩家身份注入 C_* 包到 Host 处理链，无参显示帮助与包名自检。";
         public string Author => "梦初雪";
 
+        
+        public bool RequireHost => true;
+
         public void Execute(string[] args, WebConsole console)
         {
             PacketCallHelper.EnsureInit(console);
