@@ -43,6 +43,8 @@ namespace DT_Tools.Features.Shop
             {
                 dict["Madeline_SD.sprite"] = sd;
                 dict["Medelin_SD.sprite"] = sd;
+                // Kaho 技能栏要头像特写，从 Mastermind_SD 裁头部（非全身）
+                InjectSkillFromMastermindSd(dict, sd as Sprite);
             }
             if (dict.TryGetValue("Mastermind_clue.sprite", out var clue))
             {
@@ -162,17 +164,15 @@ namespace DT_Tools.Features.Shop
         private static Texture2D _mapBlackTex;
 
         /// <summary>
-        /// 从 Madeline 立绘裁正方形脸区，缩放到 88×88（与 statement 同尺寸），
-        /// 写入 Madeline/Medelin_Map_White 与 _Map_Black。
-        /// 裁切区与 statement 同源（390,1630,300,300），已在立绘 atlas 上验证过。
-        /// Black 版在像素上乘暗色，贴近其他角色 Map_Black 观感。
+        /// 从 Madeline 立绘裁正方形脸区，缩放到 88×88（与 statement 同尺寸）。
+        /// 官方 Map_Black / Map_White 主要差边框色（粉/绿），脸本身亮度一致，
+        /// 故 Black/White 共用同一张裁切，不再压暗。
         /// </summary>
         private static void InjectMapSpritesFromStanding(Dictionary<string, Object> dict, Texture2D orig)
         {
             if (dict.TryGetValue("Madeline_Map_White.sprite", out var existW) && existW is Sprite
                 && dict.TryGetValue("Madeline_Map_Black.sprite", out var existB) && existB is Sprite)
             {
-                // 已有正式资源则不覆盖
                 dict["Medelin_Map_White.sprite"] = existW;
                 dict["Medelin_Map_Black.sprite"] = existB;
                 return;
@@ -180,9 +180,10 @@ namespace DT_Tools.Features.Shop
 
             try
             {
-                // 与 Madeline_statement 相同源区，缩到 88×88
+                // 与 Madeline_statement 相同源区，缩到 88×88；Black/White 共用
                 _mapWhite = CreateScaledSprite(orig, 390, 1630, 300, 300, 88, 88, out _mapWhiteTex);
-                _mapBlack = CreateDarkenedSprite(_mapWhiteTex, 0.55f, out _mapBlackTex);
+                _mapBlack = _mapWhite;
+                _mapBlackTex = _mapWhiteTex;
 
                 dict["Madeline_Map_White.sprite"] = _mapWhite;
                 dict["Madeline_Map_Black.sprite"] = _mapBlack;
@@ -194,6 +195,62 @@ namespace DT_Tools.Features.Shop
                 Debug.LogWarning("[MadelineFix] Map 裁切失败，回退 Someone_Map: " + ex.Message);
                 InjectMapSpritesFallback(dict);
             }
+        }
+
+        private static Sprite _skillSprite;
+        private static Texture2D _skillTex;
+
+        /// <summary>
+        /// 从 Mastermind_SD 裁顶部正方形头部 → 256×256 作为 Madeline_skill。
+        /// textureRect 兼容图集；Unity 纹理 Y 向上，头部在 rect 顶部。
+        /// </summary>
+        private static void InjectSkillFromMastermindSd(Dictionary<string, Object> dict, Sprite sdSprite)
+        {
+            if (sdSprite == null)
+                return;
+            try
+            {
+                // 不裁切：整只 SD 等比缩进黑底方画布（与官方 skill 同为方图），留边避免顶满。
+                const int outSize = 512;
+                const float margin = 0.03f;
+                _skillSprite = FitSpriteOnBlack(sdSprite, outSize, margin, out _skillTex);
+                dict["Madeline_skill.sprite"] = _skillSprite;
+                dict["Medelin_skill.sprite"] = _skillSprite;
+            }
+            catch (global::System.Exception ex)
+            {
+                Debug.LogWarning("[MadelineFix] SD 缩放失败，回退原图: " + ex.Message);
+                dict["Madeline_skill.sprite"] = sdSprite;
+                dict["Medelin_skill.sprite"] = sdSprite;
+            }
+        }
+
+        /// <summary>
+        /// 将 sprite 的 textureRect 等比缩放到 outSize*(1-2*margin) 内，居中贴到黑底方图。
+        /// </summary>
+        private static Sprite FitSpriteOnBlack(Sprite src, int outSize, float margin, out Texture2D dst)
+        {
+            Texture2D tex = src.texture;
+            Rect r = src.textureRect;
+            float inner = outSize * (1f - 2f * margin);
+            float scale = Mathf.Min(inner / r.width, inner / r.height);
+            int dw = Mathf.Max(1, Mathf.RoundToInt(r.width * scale));
+            int dh = Mathf.Max(1, Mathf.RoundToInt(r.height * scale));
+
+            Sprite scaled = CreateScaledSprite(tex, r.x, r.y, r.width, r.height, dw, dh, out var tmp);
+
+            dst = new Texture2D(outSize, outSize, TextureFormat.RGBA32, false);
+            var clear = new Color[outSize * outSize];
+            for (int i = 0; i < clear.Length; i++)
+                clear[i] = Color.black;
+            dst.SetPixels(clear);
+
+            int ox = (outSize - dw) / 2;
+            int oy = (outSize - dh) / 2;
+            dst.SetPixels(ox, oy, dw, dh, tmp.GetPixels());
+            dst.Apply();
+            Object.Destroy(tmp);
+            return Sprite.Create(dst, new Rect(0, 0, outSize, outSize), new Vector2(0.5f, 0.5f));
         }
 
         /// <summary>立绘不可用时的兜底：Someone_Map_*。</summary>
@@ -216,24 +273,6 @@ namespace DT_Tools.Features.Shop
                 dict["Madeline_Map_White.sprite"] = white;
                 dict["Medelin_Map_White.sprite"] = white;
             }
-        }
-
-        /// <summary>复制纹理并将 RGB 乘以 factor（保留 alpha），用于 Map_Black。</summary>
-        private static Sprite CreateDarkenedSprite(Texture2D src, float factor, out Texture2D dst)
-        {
-            int w = src.width;
-            int h = src.height;
-            dst = new Texture2D(w, h, TextureFormat.RGBA32, false);
-            Color[] pixels = src.GetPixels();
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                pixels[i].r *= factor;
-                pixels[i].g *= factor;
-                pixels[i].b *= factor;
-            }
-            dst.SetPixels(pixels);
-            dst.Apply();
-            return Sprite.Create(dst, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f));
         }
 
         private static void EnsureMedelinCutscenePos()
