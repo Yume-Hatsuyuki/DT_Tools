@@ -83,7 +83,9 @@ namespace DT_Tools.Console.Commands
         public string   Description => "给所有玩家派发特定任务，自动联动初始化前置设备（仅房主、生存阶段可用）。不带参数时显示任务列表。";
         public string   Author      => "梦初雪";
 
-        private const string MissionManagerTypeName = "Server.Game.MissionManager";
+        
+        public bool RequireHost => true;
+private const string MissionManagerTypeName = "Server.Game.MissionManager";
 
         /// <summary>switch 中无对应 Start_ScXXX 分支的占位任务类型。</summary>
         private static readonly HashSet<ESchoolMission> EmptyCaseMissions =

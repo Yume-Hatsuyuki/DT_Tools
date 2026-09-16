@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading;
 
 namespace DT_Tools.Console.Http
 {
@@ -14,6 +15,9 @@ namespace DT_Tools.Console.Http
         private const string Endpoint =
             "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=";
         private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
+        private const int MaxAttempts = 3;
+        private const int RequestTimeoutMs = 6000;
+        private const int RetryDelayMs = 400;
         private static readonly object Gate = new object();
 
         private static string _cachedJson;
@@ -21,9 +25,8 @@ namespace DT_Tools.Console.Http
 
         static SteamApi()
         {
-            // 部分 Unity Mono 运行环境默认协议偏旧，Steam 仅接受 TLS1.2+
             try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; }
-            catch { /* 枚举值在运行时不可用时忽略 */ }
+            catch { /* 运行时不支持时忽略 */ }
         }
 
         /// <summary>返回 {"ok":true,"appid":..,"players":N}；失败且有旧缓存时降级返回缓存。</summary>
@@ -34,18 +37,27 @@ namespace DT_Tools.Console.Http
                 if (_cachedJson != null && DateTime.UtcNow - _cachedAt < CacheTtl)
                     return _cachedJson;
 
-                try
+                Exception last = null;
+                for (int attempt = 1; attempt <= MaxAttempts; attempt++)
                 {
-                    _cachedJson = Fetch();
-                    _cachedAt = DateTime.UtcNow;
+                    try
+                    {
+                        _cachedJson = Fetch();
+                        _cachedAt = DateTime.UtcNow;
+                        return _cachedJson;
+                    }
+                    catch (Exception ex)
+                    {
+                        last = ex;
+                        if (attempt < MaxAttempts)
+                            Thread.Sleep(RetryDelayMs * attempt);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    warn?.Invoke($"[WebConsole] Steam 在线人数获取失败: {ex.Message}");
-                    if (_cachedJson != null) return _cachedJson;
-                    return "{\"ok\":false,\"error\":" + JsonEscape(ex.Message) + "}";
-                }
-                return _cachedJson;
+
+                warn?.Invoke(
+                    $"[WebConsole] Steam 在线人数获取失败（已重试 {MaxAttempts} 次）: {last?.Message}");
+                if (_cachedJson != null) return _cachedJson;
+                return "{\"ok\":false,\"error\":" + JsonEscape(last?.Message ?? "unknown") + "}";
             }
         }
 
@@ -53,8 +65,8 @@ namespace DT_Tools.Console.Http
         {
             var request = (HttpWebRequest)WebRequest.Create(Endpoint + Define.STEAM_RELEASE_APP_ID);
             request.Method = "GET";
-            request.Timeout = 6000;
-            request.ReadWriteTimeout = 6000;
+            request.Timeout = RequestTimeoutMs;
+            request.ReadWriteTimeout = RequestTimeoutMs;
             request.UserAgent = "DT_Tools-WebConsole";
 
             using (var response = (HttpWebResponse)request.GetResponse())
@@ -72,7 +84,6 @@ namespace DT_Tools.Console.Http
             }
         }
 
-        /// <summary>解析 {"response":{"result":1,"player_count":N}}；失败返回 -1。</summary>
         private static int ExtractPlayerCount(string json)
         {
             if (string.IsNullOrEmpty(json)) return -1;

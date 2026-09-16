@@ -25,6 +25,9 @@ namespace DT_Tools.Console.Commands.Power
         public string   Description => "强制触发全场停电（等效 Dark 断开第 2 个电箱，需房主·生存阶段）。";
         public string   Author      => "梦初雪";
 
+        
+        public bool RequireHost => true;
+
         public void Execute(string[] args, WebConsole console)
         {
             PowerControlHelper.Blackout(console);

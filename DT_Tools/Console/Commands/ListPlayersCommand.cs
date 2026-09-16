@@ -28,8 +28,9 @@ namespace DT_Tools.Console.Commands
         public string   Author      => "梦初雪";
 
         
-        public bool RequireHost => true;
-public void Execute(string[] args, WebConsole console)
+        public bool RequireHost => false;
+
+        public void Execute(string[] args, WebConsole console)
         {
             if (Managers.Player == null)
             {

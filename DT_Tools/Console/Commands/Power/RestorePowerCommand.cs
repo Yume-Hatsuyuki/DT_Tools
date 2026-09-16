@@ -22,6 +22,9 @@ namespace DT_Tools.Console.Commands.Power
         public string   Description => "强制恢复全场电力（等效所有损坏电箱被修完，需房主·生存阶段）。";
         public string   Author      => "梦初雪";
 
+        
+        public bool RequireHost => true;
+
         public void Execute(string[] args, WebConsole console)
         {
             PowerControlHelper.RestorePower(console);
