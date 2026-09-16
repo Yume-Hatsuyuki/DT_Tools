@@ -56,9 +56,16 @@ namespace DT_Tools.Features.Shop
 
             if (!dict.TryGetValue("Madeline_standing.sprite", out var standingObj) ||
                 !(standingObj is Sprite source))
+            {
+                // 立绘不可用：回退 Someone_Map，避免白块
+                InjectMapSpritesFallback(dict);
                 return;
+            }
 
             Texture2D orig = source.texture;
+
+            // 从立绘裁脸做 Map 头像（优先于 Someone 回退）
+            InjectMapSpritesFromStanding(dict, orig);
 
             _insight  = Sprite.Create(orig, new Rect(380, 1373, 364, 555), new Vector2(0.5f, 0.5f));
             _cutscene = Sprite.Create(orig, new Rect(367, 1606, 356, 336), new Vector2(0.5f, 0.5f));
@@ -146,6 +153,87 @@ namespace DT_Tools.Features.Shop
             RenderTexture.ReleaseTemporary(rtScale);
 
             return Sprite.Create(dstTex, new Rect(0, 0, dstW, dstH), new Vector2(0.5f, 0.5f));
+        }
+
+        // Map 脸图静态缓存，避免重复 Create
+        private static Sprite _mapWhite;
+        private static Sprite _mapBlack;
+        private static Texture2D _mapWhiteTex;
+        private static Texture2D _mapBlackTex;
+
+        /// <summary>
+        /// 从 Madeline 立绘裁正方形脸区，缩放到 88×88（与 statement 同尺寸），
+        /// 写入 Madeline/Medelin_Map_White 与 _Map_Black。
+        /// 裁切区与 statement 同源（390,1630,300,300），已在立绘 atlas 上验证过。
+        /// Black 版在像素上乘暗色，贴近其他角色 Map_Black 观感。
+        /// </summary>
+        private static void InjectMapSpritesFromStanding(Dictionary<string, Object> dict, Texture2D orig)
+        {
+            if (dict.TryGetValue("Madeline_Map_White.sprite", out var existW) && existW is Sprite
+                && dict.TryGetValue("Madeline_Map_Black.sprite", out var existB) && existB is Sprite)
+            {
+                // 已有正式资源则不覆盖
+                dict["Medelin_Map_White.sprite"] = existW;
+                dict["Medelin_Map_Black.sprite"] = existB;
+                return;
+            }
+
+            try
+            {
+                // 与 Madeline_statement 相同源区，缩到 88×88
+                _mapWhite = CreateScaledSprite(orig, 390, 1630, 300, 300, 88, 88, out _mapWhiteTex);
+                _mapBlack = CreateDarkenedSprite(_mapWhiteTex, 0.55f, out _mapBlackTex);
+
+                dict["Madeline_Map_White.sprite"] = _mapWhite;
+                dict["Madeline_Map_Black.sprite"] = _mapBlack;
+                dict["Medelin_Map_White.sprite"] = _mapWhite;
+                dict["Medelin_Map_Black.sprite"] = _mapBlack;
+            }
+            catch (global::System.Exception ex)
+            {
+                Debug.LogWarning("[MadelineFix] Map 裁切失败，回退 Someone_Map: " + ex.Message);
+                InjectMapSpritesFallback(dict);
+            }
+        }
+
+        /// <summary>立绘不可用时的兜底：Someone_Map_*。</summary>
+        private static void InjectMapSpritesFallback(Dictionary<string, Object> dict)
+        {
+            Object black = null;
+            if (dict.TryGetValue("Someone_Map_Black.sprite", out var someoneBlack))
+                black = someoneBlack;
+            if (black is Sprite)
+            {
+                dict["Madeline_Map_Black.sprite"] = black;
+                dict["Medelin_Map_Black.sprite"] = black;
+            }
+
+            Object white = black;
+            if (dict.TryGetValue("Someone_Map_White.sprite", out var someoneWhite) && someoneWhite is Sprite)
+                white = someoneWhite;
+            if (white is Sprite)
+            {
+                dict["Madeline_Map_White.sprite"] = white;
+                dict["Medelin_Map_White.sprite"] = white;
+            }
+        }
+
+        /// <summary>复制纹理并将 RGB 乘以 factor（保留 alpha），用于 Map_Black。</summary>
+        private static Sprite CreateDarkenedSprite(Texture2D src, float factor, out Texture2D dst)
+        {
+            int w = src.width;
+            int h = src.height;
+            dst = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            Color[] pixels = src.GetPixels();
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i].r *= factor;
+                pixels[i].g *= factor;
+                pixels[i].b *= factor;
+            }
+            dst.SetPixels(pixels);
+            dst.Apply();
+            return Sprite.Create(dst, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f));
         }
 
         private static void EnsureMedelinCutscenePos()
