@@ -1,19 +1,7 @@
 namespace DT_Tools.Console.Commands.Phase
 {
     /// <summary>
-    /// /enter_trial
-    ///
-    /// 强制进入学级裁判（EGameState.Trial）。仅房主可用。
-    ///
-    ///   - 调查阶段（Detective）执行：等效于调查倒计时立即归零，直接开庭。
-    ///   - 生存阶段（Survive）执行：连调查阶段一并跳过。无需任何凶手数据——原版裁判
-    ///     链路对 Black==null 全程有保护，最终按凶手未被捕获（黑方胜）结算。
-    ///
-    /// 开庭后原版子状态机照常推进：
-    ///   Discuss → VotePhase → VoteResult →（Replay）→ TrialResult → TotalResult
-    ///
-    /// 示例:
-    ///   /enter_trial
+    /// /enter_trial — 强制进入学级裁判。仅房主。
     /// </summary>
     internal sealed class EnterTrialCommand : IConsoleCommand
     {
@@ -23,9 +11,9 @@ namespace DT_Tools.Console.Commands.Phase
         public string   Description => "强制进入学级裁判（调查阶段=跳过剩余调查时间；生存阶段=连调查一并跳过）。";
         public string   Author      => "梦初雪";
 
-        
         public bool RequireHost => true;
-public void Execute(string[] args, WebConsole console)
+
+        public void Execute(string[] args, WebConsole console)
         {
             PhaseJumpHelper.JumpToTrial(console);
         }
