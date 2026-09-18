@@ -7,18 +7,7 @@ using Steamworks;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /room_code
-    ///
-    /// 显示当前房间的房间号（7 位邀请码）及玩家数 [当前/上限]。
-    ///
-    /// 数据来源:
-    ///   - 房间号:   Managers.Network.RoomCode
-    ///   - 当前人数: 房主端 → GameRoom.Instance.Players.Count（服务器权威）
-    ///               客户端 → Lobby.GetMembers().Count（Steam Lobby 可见成员）
-    ///   - 人数上限: LobbyMaxPlayersFeature.MaxMembers（游戏进房判定，默认 8）
-    ///   - Steam容器: GetLobbyMemberLimit（仅当与进房上限不一致时附加一行）
-    ///
-    /// 这是纯读操作，不需要房主权限。
+    /// /room_code — 房间号与人数；同时 SetResult JSON。
     /// </summary>
     internal sealed class RoomCodeCommand : IConsoleCommand
     {
@@ -28,7 +17,6 @@ namespace DT_Tools.Console.Commands
         public string   Description => "显示当前房间的房间号（邀请码）及玩家数。";
         public string   Author      => "梦初雪";
 
-        
         public bool RequireHost => false;
 
         public void Execute(string[] args, WebConsole console)
@@ -36,6 +24,7 @@ namespace DT_Tools.Console.Commands
             if (Managers.Network == null)
             {
                 console.Log("网络管理器尚未初始化。", LogLevel.Warning);
+                console.SetResult("{\"ok\":false,\"error\":\"network not ready\"}");
                 return;
             }
 
@@ -44,6 +33,7 @@ namespace DT_Tools.Console.Commands
             if (string.IsNullOrEmpty(code))
             {
                 console.Log("当前不在任何房间中（房间号为空）。", LogLevel.Warning);
+                console.SetResult("{\"ok\":false,\"error\":\"not in room\",\"code\":\"\"}");
                 return;
             }
 
@@ -51,7 +41,8 @@ namespace DT_Tools.Console.Commands
             var lobby = Managers.Network.Lobby;
 
             int current;
-            if (Managers.Host != null && Managers.Host.IsHost)
+            bool isHost = Managers.Host != null && Managers.Host.IsHost;
+            if (isHost)
             {
                 current = GameRoom.Instance?.Players.Count ?? 0;
             }
@@ -62,19 +53,53 @@ namespace DT_Tools.Console.Commands
                     : 0;
             }
 
+            int steamLimit = 0;
+            if (lobby != null && lobby.InLobby)
+                steamLimit = SteamMatchmaking.GetLobbyMemberLimit(lobby.LobbyId);
+
             var text = new StringBuilder();
             text.AppendLine("━━━ 房间信息 ━━━");
             text.AppendLine($"  房间号:  {code}");
             text.Append($"  玩家数:  {current} / {max}");
 
-            if (lobby != null && lobby.InLobby)
-            {
-                int steamLimit = SteamMatchmaking.GetLobbyMemberLimit(lobby.LobbyId);
-                if (steamLimit > 0 && steamLimit != max)
-                    text.Append($"\n  Steam容器:  {current} / {steamLimit}（仅容器，进房仍按 {max}）");
-            }
+            if (steamLimit > 0 && steamLimit != max)
+                text.Append($"\n  Steam容器:  {current} / {steamLimit}（仅容器，进房仍按 {max}）");
 
             console.Log(text.ToString(), LogLevel.Info);
+
+            var json = new StringBuilder();
+            json.Append("{\"ok\":true");
+            json.Append(",\"code\":").Append(JsonStr(code));
+            json.Append(",\"players\":").Append(current);
+            json.Append(",\"max\":").Append(max);
+            json.Append(",\"isHost\":").Append(isHost ? "true" : "false");
+            if (steamLimit > 0)
+                json.Append(",\"steamLimit\":").Append(steamLimit);
+            json.Append('}');
+            console.SetResult(json.ToString());
+        }
+
+        private static string JsonStr(string s)
+        {
+            if (s == null) return "\"\"";
+            var sb = new StringBuilder("\"");
+            foreach (char c in s)
+            {
+                switch (c)
+                {
+                    case '\\': sb.Append("\\\\"); break;
+                    case '"':  sb.Append("\\\""); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
+                    default:
+                        if (c < 32) sb.AppendFormat("\\u{0:x4}", (int)c);
+                        else sb.Append(c);
+                        break;
+                }
+            }
+            sb.Append('"');
+            return sb.ToString();
         }
     }
 }

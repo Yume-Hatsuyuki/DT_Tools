@@ -173,11 +173,37 @@
       return wrap;
     }
 
+    // 枚举 / AcceptableValueList → 下拉（互斥选项）
+    // API 可能返回 string[] 或 { values: [...] } / { Values: [...] }
+    let accepts = e.accepts || e.Accepts;
+    if (accepts && !Array.isArray(accepts))
+      accepts = accepts.values || accepts.Values || null;
+    if (Array.isArray(accepts) && accepts.length > 0) {
+      const sel = document.createElement('select');
+      sel.className = 'cfg-select';
+      const cur = e.value == null ? '' : String(e.value);
+      accepts.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = String(opt);
+        o.textContent = String(opt);
+        if (String(opt) === cur) o.selected = true;
+        sel.appendChild(o);
+      });
+      if (!accepts.map(String).includes(cur) && cur) {
+        const o = document.createElement('option');
+        o.value = cur;
+        o.textContent = cur + ' (当前)';
+        o.selected = true;
+        sel.appendChild(o);
+      }
+      sel.addEventListener('change', () => update(section, e.key, sel.value, e));
+      return sel;
+    }
+
     const input = document.createElement('input');
     input.type = (type === 'int32' || type === 'single' || type === 'double') ? 'number' : 'text';
     if (type === 'single' || type === 'double') input.step = 'any';
     input.value = e.value == null ? '' : e.value;
-    let timer;
     const commit = () => update(section, e.key, input.value, e);
     input.addEventListener('change', commit);
     input.addEventListener('blur', commit);

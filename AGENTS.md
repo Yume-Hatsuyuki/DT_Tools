@@ -26,6 +26,10 @@ WEBUI/                    # 静态前端（与 dll 同级输出）
 命名空间与目录一致，例如 `DT_Tools.Features.Experience`。
 - 命名空间 `DT_Tools.Features.*` 下写 `System.*` 会优先解析到 `DT_Tools.Features.System`；需用 `global::System`。
 
+## 目录共用类型
+
+同一 Domain下多个 Feature 共用的枚举、常量池、小工具类，可放在 `Features/<Domain>/` 下（不要放进 Core/）。
+互斥选项优先用枚举 + ConfigEntry<枚举>（ConfigBinder 会生成可选列表），不要拆成多个仅 Enabled 不同的 Feature。
 
 ## 功能声明
 

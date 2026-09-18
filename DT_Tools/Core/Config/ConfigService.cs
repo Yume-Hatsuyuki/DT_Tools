@@ -378,6 +378,13 @@ namespace DT_Tools.Core
 
         private static object ExtractAccepts(ConfigEntryBase entry)
         {
+            // 枚举不走 AcceptableValueList（Unity 上 MakeGenericType 会失败），在此补全选项供 WebUI 下拉
+            if (entry.SettingType != null && entry.SettingType.IsEnum)
+            {
+                var names = Enum.GetNames(entry.SettingType);
+                return new Dictionary<string, object> { ["values"] = names };
+            }
+
             var acc = entry.Description?.AcceptableValues;
             if (acc == null) return null;
 
