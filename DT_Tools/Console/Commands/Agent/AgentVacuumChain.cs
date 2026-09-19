@@ -37,6 +37,9 @@ namespace DT_Tools.Console.Commands.Agent
                 }
             }
 
+            // 当前仍需要的花色（喷雾合成台 + 调酒台缺口）
+            var needFlowers = AgentItemHelper.BuildNeededFlowerIds(devices);
+
             // 地面
             foreach (var dev in devices)
             {
@@ -45,15 +48,24 @@ namespace DT_Tools.Console.Commands.Agent
                 if (st == null || st.Count == 0 || st[0] <= 0) continue;
                 int dataId = st[0];
                 if (!AgentItemHelper.IsMissionItem(dataId)) continue;
+                // 核心过滤：该道具能满足的任务，必须至少有一个真的在本局激活中，
+                // 否则场上根本没有地方能用这个道具（例如没有符文任务时的符文书），
+                // 拾取只会造成手上卡着无用物品。依据 AgentMissionState（见其注释）。
+                if (!AgentItemHelper.IsItemMissionActive(dataId)) continue;
                 if (filter.MissionId.HasValue && !AgentItemHelper.ItemMatchesMission(dataId, filter.MissionId.Value))
                     continue;
                 // 矿石：只捡仍缺的颜色（已交满的蓝不再捡）
                 if (dataId >= 1032 && dataId <= 1034 && needMinerals.Count > 0
                     && !needMinerals.Contains(dataId))
                     continue;
+                // 花：只捡仍缺的颜色，避免捡到用不上的花卡在手上等待交付
+                if (dataId >= 1021 && dataId <= 1024 && needFlowers.Count > 0
+                    && !needFlowers.Contains(dataId))
+                    continue;
 
                 int objId = dev.ID;
-                int? rel = AgentItemHelper.MissionOfItem(dataId);
+                var itemMissions = AgentItemHelper.MissionsOfItem(dataId);
+                int? rel = itemMissions.Length > 0 ? itemMissions[0] : (int?)null;
                 int pri = (dataId == 1039 || dataId == 1040) ? Pri.ShakeLast : Pri.Vacuum;
                 if (dataId >= 1032 && dataId <= 1034)
                     pri = Pri.Vacuum - 4;
@@ -72,6 +84,7 @@ namespace DT_Tools.Console.Commands.Agent
                 {
                     int itemId = st[i];
                     if (itemId == 0 || !AgentItemHelper.IsMissionItem(itemId)) continue;
+                    if (!AgentItemHelper.IsItemMissionActive(itemId)) continue;
                     if (filter.MissionId.HasValue && !AgentItemHelper.ItemMatchesMission(itemId, filter.MissionId.Value))
                         continue;
 
@@ -83,7 +96,9 @@ namespace DT_Tools.Console.Commands.Agent
                     if (item == 1051 || item == 1052 || item == 1008 || item == 1011 || item == 1026)
                         pri = Pri.Vacuum - 1;
 
-                    Add(pri, $"获取仓储{item}#{id}[{idx}]", AgentItemHelper.MissionOfItem(item), id,
+                    var storageMissions = AgentItemHelper.MissionsOfItem(item);
+                    int? storageRel = storageMissions.Length > 0 ? storageMissions[0] : (int?)null;
+                    Add(pri, $"获取仓储{item}#{id}[{idx}]", storageRel, id,
                         () => Managers.Network.GameServer.Send(new C_INTERACT_STORAGE
                         {
                             StorageId = id,

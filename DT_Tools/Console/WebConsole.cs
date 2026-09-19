@@ -237,6 +237,12 @@ namespace DT_Tools.Console
                 return;
             }
 
+            if (path.StartsWith("/api/automation/", StringComparison.Ordinal))
+            {
+                HandleAutomationApi(req, resp, path);
+                return;
+            }
+
             if (path == "/api/steam/players" && req.HttpMethod == "GET")
             {
                 WriteJson(resp, SteamApi.GetCurrentPlayersJson(msg => Log(msg, LogLevel.Warning)));
@@ -500,9 +506,94 @@ namespace DT_Tools.Console
         //  WebUI HTML
         // ═════════════════════════════════════════════════════
 
+
+        private void HandleAutomationApi(HttpListenerRequest req, HttpListenerResponse resp, string path)
+        {
+            var config = Plugin.Instance != null ? Plugin.Instance.Config : null;
+            if (config == null)
+            {
+                WriteJson(resp, "{\"ok\":false,\"error\":\"plugin not ready\"}");
+                return;
+            }
+
+            if (path == "/api/automation/status" && req.HttpMethod == "GET")
+            {
+                WriteJson(resp, AutomationApi.StatusJson(config));
+                return;
+            }
+
+            if (path == "/api/automation/host" && req.HttpMethod == "POST")
+            {
+                WriteJson(resp, AutomationApi.SetHostEnabled(ReadBody(req)));
+                return;
+            }
+
+            // /api/automation/modules/{id}/log
+            const string prefix = "/api/automation/modules/";
+            if (path.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                string rest = path.Substring(prefix.Length);
+                int slash = rest.IndexOf('/');
+                string id = slash >= 0 ? rest.Substring(0, slash) : rest;
+                string tail = slash >= 0 ? rest.Substring(slash) : "";
+
+                if (tail == "/log" && req.HttpMethod == "GET")
+                {
+                    WriteJson(resp, AutomationApi.GetModuleLog(id));
+                    return;
+                }
+                if (tail == "/log" && req.HttpMethod == "DELETE")
+                {
+                    WriteJson(resp, AutomationApi.ClearModuleLog(id));
+                    return;
+                }
+                if (tail == "/log/clear" && req.HttpMethod == "POST")
+                {
+                    WriteJson(resp, AutomationApi.ClearModuleLog(id));
+                    return;
+                }
+            }
+
+            WriteJson(resp, "{\"ok\":false,\"error\":\"unknown automation endpoint\"}");
+        }
+
         private void HandleConfigApi(HttpListenerRequest req, HttpListenerResponse resp, string path)
         {
             var config = Plugin.Instance.Config;
+
+            // 功能段独立日志
+            const string secPrefix = "/api/config/section/";
+            if (path.StartsWith(secPrefix, StringComparison.Ordinal))
+            {
+                string rest = path.Substring(secPrefix.Length);
+                int slash = rest.IndexOf('/');
+                string section = slash >= 0 ? Uri.UnescapeDataString(rest.Substring(0, slash)) : Uri.UnescapeDataString(rest);
+                string tail = slash >= 0 ? rest.Substring(slash) : "";
+                if (tail == "/log" && req.HttpMethod == "GET")
+                {
+                    var (seq, lines) = DT_Tools.Core.FeatureLogRegistry.Snapshot(section);
+                    var sb = new System.Text.StringBuilder();
+                    sb.Append("{\"ok\":true,\"section\":").Append(JsonEscape(section));
+                    sb.Append(",\"seq\":").Append(seq);
+                    sb.Append(",\"lines\":[");
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        if (i > 0) sb.Append(',');
+                        sb.Append(JsonEscape(lines[i]));
+                    }
+                    sb.Append("]}");
+                    WriteJson(resp, sb.ToString());
+                    return;
+                }
+                if ((tail == "/log/clear" && req.HttpMethod == "POST") ||
+                    (tail == "/log" && req.HttpMethod == "DELETE"))
+                {
+                    DT_Tools.Core.FeatureLogRegistry.Clear(section);
+                    DT_Tools.Core.FeatureLogRegistry.Info(section, "日志已清空");
+                    WriteJson(resp, "{\"ok\":true}");
+                    return;
+                }
+            }
 
             if (path == "/api/config/list" && req.HttpMethod == "GET")
             {

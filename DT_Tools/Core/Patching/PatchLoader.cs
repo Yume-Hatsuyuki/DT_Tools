@@ -97,6 +97,7 @@ namespace DT_Tools.Core
                         }
                     }
 
+                    DT_Tools.Core.FeatureLogRegistry.Info(desc.Section, "补丁已加载");
                     result.EnabledCount++;
                     log.LogInfo($"已启用功能: {desc.Type.Name} ([{desc.Section}], {desc.Side})");
                 }

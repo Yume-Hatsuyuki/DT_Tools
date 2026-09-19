@@ -372,17 +372,32 @@ namespace DT_Tools.Core
                 Value = entry.BoxedValue,
                 Default = entry.DefaultValue,
                 Description = entry.Description?.Description ?? "",
-                Accepts = ExtractAccepts(entry)
+                Accepts = ExtractAccepts(def, entry)
             };
         }
 
-        private static object ExtractAccepts(ConfigEntryBase entry)
+        /// <summary>
+        /// 把三种"可选值来源"归一成同一份结构，前端只需认这一种协议：
+        ///   options : [{value,label}]  —— 下拉（label 给人看，value 写回配置）
+        ///   values  : [string]         —— options 的纯值列表（兼容旧前端）
+        ///   min/max : 数值范围
+        /// 来源优先级：OptionProviders（动态） &gt; 枚举 &gt; AcceptableValueList。
+        /// </summary>
+        private static object ExtractAccepts(ConfigDefinition def, ConfigEntryBase entry)
         {
-            // 枚举不走 AcceptableValueList（Unity 上 MakeGenericType 会失败），在此补全选项供 WebUI 下拉
+            // 1) 显式声明的动态选项（角色表、出生点等运行时才知道的数据）
+            var dyn = OptionProviders.TryGet(def.Section, def.Key);
+            if (dyn != null)
+                return OptionsAccepts(dyn);
+
+            // 2) 枚举：不走 AcceptableValueList（Unity 上 MakeGenericType 会失败），
+            //    在此用 Enum.GetNames 补全。
             if (entry.SettingType != null && entry.SettingType.IsEnum)
             {
-                var names = Enum.GetNames(entry.SettingType);
-                return new Dictionary<string, object> { ["values"] = names };
+                var opts = new List<ConfigOption>();
+                foreach (string name in Enum.GetNames(entry.SettingType))
+                    opts.Add(new ConfigOption(name));
+                return OptionsAccepts(opts);
             }
 
             var acc = entry.Description?.AcceptableValues;
@@ -403,13 +418,34 @@ namespace DT_Tools.Core
                 var arr = t.GetProperty("AcceptableValues")?.GetValue(acc) as Array;
                 if (arr != null)
                 {
-                    var list = new List<object>();
-                    foreach (var x in arr) list.Add(x);
-                    return new Dictionary<string, object> { ["values"] = list };
+                    var opts = new List<ConfigOption>();
+                    foreach (var x in arr)
+                        opts.Add(new ConfigOption(Convert.ToString(x, CultureInfo.InvariantCulture)));
+                    return OptionsAccepts(opts);
                 }
             }
 
             return null;
+        }
+
+        private static Dictionary<string, object> OptionsAccepts(IReadOnlyList<ConfigOption> opts)
+        {
+            var options = new List<object>(opts.Count);
+            var values = new List<object>(opts.Count);
+            foreach (var o in opts)
+            {
+                options.Add(new Dictionary<string, object>
+                {
+                    ["value"] = o.Value,
+                    ["label"] = o.Label
+                });
+                values.Add(o.Value);
+            }
+            return new Dictionary<string, object>
+            {
+                ["options"] = options,
+                ["values"] = values
+            };
         }
 
         private static object ParseValue(string raw, Type type)

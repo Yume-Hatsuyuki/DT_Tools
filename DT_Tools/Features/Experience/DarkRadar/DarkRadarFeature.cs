@@ -36,7 +36,8 @@ namespace DT_Tools.Features.Experience
         section: "DarkRadar",
         description: "黑幕情报共享：白方/持刀者在平板地图上也能看到凶器刷新位置和可破坏电闸标记（原版仅黑幕 Dark 可见）。",
         defaultEnabled: false,
-        side: FeatureSide.Client)]
+        side: FeatureSide.Client,
+        author: "梦初雪")]
     internal static class DarkRadarFeature
     {
         private const float CheckInterval = 2f;

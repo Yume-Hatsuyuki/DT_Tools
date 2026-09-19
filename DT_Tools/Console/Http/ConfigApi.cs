@@ -31,7 +31,7 @@ namespace DT_Tools.Console.Http
                     sb.Append("\"value\":").Append(JV(e.Value)).Append(',');
                     sb.Append("\"default\":").Append(JV(e.Default)).Append(',');
                     sb.Append("\"description\":").Append(J(e.Description ?? "")).Append(',');
-                    sb.Append("\"accepts\":").Append(AcceptsJson(e.Accepts));
+                    sb.Append("\"accepts\":").Append(JV(e.Accepts));
                     sb.Append('}');
                 }
                 sb.Append("]}");
@@ -104,79 +104,9 @@ namespace DT_Tools.Console.Http
         }
 
 
-        private static string AcceptsJson(object accepts)
-        {
-            if (accepts == null) return "null";
-            if (accepts is Dictionary<string, object> d)
-            {
-                var sb = new StringBuilder();
-                sb.Append('{');
-                bool first = true;
-                foreach (var kv in d)
-                {
-                    if (!first) sb.Append(',');
-                    first = false;
-                    sb.Append(J(kv.Key)).Append(':');
-                    if (kv.Value is System.Collections.IEnumerable list && kv.Value is not string)
-                    {
-                        sb.Append('[');
-                        bool f2 = true;
-                        foreach (var x in list)
-                        {
-                            if (!f2) sb.Append(',');
-                            f2 = false;
-                            sb.Append(JV(x));
-                        }
-                        sb.Append(']');
-                    }
-                    else sb.Append(JV(kv.Value));
-                }
-                sb.Append('}');
-                return sb.ToString();
-            }
-            return "null";
-        }
-
-        private static string J(string s)
-        {
-            if (s == null) return "null";
-            var sb = new StringBuilder("\"");
-            foreach (char c in s)
-            {
-                switch (c)
-                {
-                    case '\\': sb.Append("\\\\"); break;
-                    case '"': sb.Append("\\\""); break;
-                    case '\n': sb.Append("\\n"); break;
-                    case '\r': sb.Append("\\r"); break;
-                    case '\t': sb.Append("\\t"); break;
-                    default:
-                        if (c < 32) sb.AppendFormat("\\u{0:x4}", (int)c);
-                        else sb.Append(c);
-                        break;
-                }
-            }
-            sb.Append('"');
-            return sb.ToString();
-        }
-
-        private static string JV(object v)
-        {
-            if (v == null) return "null";
-            switch (v)
-            {
-                case bool b: return b ? "true" : "false";
-                case int i: return i.ToString(CultureInfo.InvariantCulture);
-                case long l: return l.ToString(CultureInfo.InvariantCulture);
-                case float f: return f.ToString(CultureInfo.InvariantCulture);
-                case double d: return d.ToString(CultureInfo.InvariantCulture);
-                case string s: return J(s);
-                default:
-                    if (v is IFormattable fmt && v.GetType().IsPrimitive)
-                        return fmt.ToString(null, CultureInfo.InvariantCulture);
-                    return J(Convert.ToString(v, CultureInfo.InvariantCulture));
-            }
-        }
+        // 序列化统一委托给 JsonWriter（全项目唯一实现）；保留短名以减小调用点改动。
+        private static string J(string s) => JsonWriter.Str(s);
+        private static string JV(object v) => JsonWriter.Value(v);
 
         private static bool TryGetString(string json, string key, out string value)
         {

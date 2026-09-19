@@ -2,29 +2,28 @@
 
 ## 项目
 
-- BepInEx 5.x + HarmonyX，Unity 客户端 Mod（含房主侧逻辑）。
-- GPL-3.0，禁止商业用途。
-- 对照游戏版本：`0.1.14b` 反编译源码。
+- BepInEx 5.x + HarmonyX，Unity 客户端 Mod。
+- [GPL-3.0](LICENSE)许可证。 
 
 ## 目录
 
 ```text
 Plugin.cs                 # 入口，仅组装
 Core/                     # 基础设施（Attribute、ConfigBinder、PatchLoader）
-Features/                 # 功能（按领域）
+Features/                 # 功能补丁（按领域，Harmony + PatchFeature）
   Experience/             # 游玩体验（多为 Client）
   Shop/                   # 商店 / 解锁（Client）
   System/                 # 房间与规则（多为 Host）
   Fun/                    # 整活
   Dev/                    # 开发 / 测试向
+Automation/               # 发包自动化（无 PatchFeature；运行时生效）
+  Shared/                 # 发包封装、角色表等
+  AutoPickCharacter/      # 示例：自动选角
 Console/
   Commands/               # IConsoleCommand，反射注册
   Host/ Http/             # Web 控制台（拆分中）
 WEBUI/                    # 静态前端（与 dll 同级输出）
 ```
-
-命名空间与目录一致，例如 `DT_Tools.Features.Experience`。
-- 命名空间 `DT_Tools.Features.*` 下写 `System.*` 会优先解析到 `DT_Tools.Features.System`；需用 `global::System`。
 
 ## 目录共用类型
 
@@ -75,6 +74,18 @@ internal static class XxxFeature
 | Description | 一句话说明 |
 | Author | 署名 |
 | Execute(args, console) | 执行体 |
+
+### 自动化（Automation）
+
+- 总开关 `[Automation].Enabled`；子模块段名 `Auto.*`。
+- 用 `[AutomationModule]` 标记，由 `AutomationRegistry` 发现；**不要**使用 `[PatchFeature]`。
+- 主线程 `AutomationRunner` Tick；改配置运行时生效，无需重启装卸。
+- WEBUI 第三栏 `AUTOMATION`：模块卡片 + 每模块可折叠独立日志。
+- API：`/api/automation/status`、`/api/automation/host`、`/api/automation/modules/{id}/log`。
+
+
+命名空间与目录一致，例如 `DT_Tools.Features.Experience`。
+- 命名空间 `DT_Tools.Features.*` 下写 `System.*` 会优先解析到 `DT_Tools.Features.System`；需用 `global::System`。
 
 ## 配置与 Web
 

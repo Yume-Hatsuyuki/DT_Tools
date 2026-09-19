@@ -15,7 +15,7 @@ namespace DT_Tools.Features.System
 {
     /// <summary>
     /// 货架补货与首轮必出指定商品。
-    /// 注意：货架拿取走的是 Storage.Interact，不是 HandleEvent。
+    /// 拿取走 Storage.Interact；必出 ID：优先空槽，否则强制替换一格。
     /// </summary>
     [HarmonyPatch]
     [PatchFeature(
@@ -48,49 +48,49 @@ namespace DT_Tools.Features.System
                     return;
 
                 var storages = Traverse.Create(__instance).Field("_storages").GetValue<List<GameStorage>>();
-                if (storages == null)
+                if (storages == null || storages.Count == 0)
                     return;
 
-                bool found = false;
-                foreach (GameStorage s in storages)
-                {
-                    if (s.StorageType != EStorageType.StorageNormal)
-                        continue;
-                    if (s.DeviceInfo?.StateList != null && s.DeviceInfo.StateList.Contains(guaranteed))
-                    {
-                        found = true;
-                        break;
-                    }
-                    foreach (var item in s.Items)
-                    {
-                        if (item?.Data != null && item.Data.DataId == guaranteed)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (found) break;
-                }
-
-                if (found)
+                if (HasItemOnShelves(storages, guaranteed))
                     return;
 
+                // 1) 优先空槽
                 foreach (GameStorage s in storages)
                 {
                     if (s.StorageType != EStorageType.StorageNormal)
                         continue;
                     if (s.InsertItem(0, guaranteed, isMissionItem: false))
                     {
-                        Debug.Log($"[SupplyShelfRefill] guaranteed item {guaranteed} placed on storage={s.ID}");
+                        Debug.Log($"[SupplyShelfRefill] guaranteed item {guaranteed} placed (empty slot) storage={s.ID}");
                         return;
                     }
                 }
 
-                Debug.LogWarning($"[SupplyShelfRefill] guaranteed item {guaranteed} could not place (no empty slot)");
+                // 2) 无空槽：在 StorageNormal 中随机选一格强制替换
+                var candidates = new List<(GameStorage storage, int index)>();
+                foreach (GameStorage s in storages)
+                {
+                    if (s.StorageType != EStorageType.StorageNormal)
+                        continue;
+                    if (s.Items == null)
+                        continue;
+                    for (int i = 0; i < s.Items.Count; i++)
+                        candidates.Add((s, i));
+                }
+
+                if (candidates.Count == 0)
+                {
+                    Debug.LogWarning($"[SupplyShelfRefill] guaranteed item {guaranteed} could not place (no StorageNormal slots)");
+                    return;
+                }
+
+                var pick = candidates[Util.GetRandomNumber(0, candidates.Count)];
+                ForceSetSlot(pick.storage, pick.index, guaranteed);
+                Debug.Log($"[SupplyShelfRefill] guaranteed item {guaranteed} forced replace storage={pick.storage.ID} slot={pick.index}");
             }
         }
 
-        // ── 拿取后补货：必须挂 Interact，不是 HandleEvent ─────────────────
+        // ── 拿取后补货 ────────────────────────────────────────────────────
 
         [HarmonyPatch]
         private static class InteractRefillPatch
@@ -114,8 +114,6 @@ namespace DT_Tools.Features.System
                 int index = interact.Index;
                 if (index < 0 || index >= __instance.Items.Count)
                     return;
-
-                // Interact 成功后该格应已清空；若仍有物品说明本次未取走，不补
                 if (__instance.Items[index] != null)
                     return;
                 if (index < __instance.DeviceInfo.StateList.Count &&
@@ -147,6 +145,38 @@ namespace DT_Tools.Features.System
 
                 Debug.Log($"[SupplyShelfRefill] scheduled storage={storageId} slot={slot} itemId={refillId} after={interval}s");
             }
+        }
+
+        private static bool HasItemOnShelves(List<GameStorage> storages, int dataId)
+        {
+            foreach (GameStorage s in storages)
+            {
+                if (s.StorageType != EStorageType.StorageNormal)
+                    continue;
+                if (s.DeviceInfo?.StateList != null && s.DeviceInfo.StateList.Contains(dataId))
+                    return true;
+                if (s.Items == null)
+                    continue;
+                foreach (var item in s.Items)
+                {
+                    if (item?.Data != null && item.Data.DataId == dataId)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private static void ForceSetSlot(GameStorage storage, int index, int itemId)
+        {
+            if (storage.Items[index] != null)
+            {
+                Server.Game.ItemManager.Instance.RemoveItem(storage.Items[index]);
+                storage.Items[index] = null;
+            }
+
+            storage.DeviceInfo.StateList[index] = itemId;
+            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);
+            storage.BroadcastStateInArea();
         }
 
         private static int PickRefillItemId()

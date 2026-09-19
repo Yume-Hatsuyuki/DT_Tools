@@ -1,6 +1,7 @@
 using System.IO;
 using BepInEx;
 using HarmonyLib;
+using DT_Tools.Automation;
 using DT_Tools.Console;
 using DT_Tools.Core;
 
@@ -28,12 +29,18 @@ namespace DT_Tools
                 Logger,
                 extraSections: new[]
                 {
-                    (WebConsoleSection, (System.Action)BindWebConsoleSection)
+                    (WebConsoleSection, (System.Action)BindWebConsoleSection),
+                    (AutomationHost.Section, (System.Action)BindAutomationSection),
                 });
 
             // 关闭自动保存后，首次运行需主动落盘生成 .cfg
             if (!File.Exists(Config.ConfigFilePath))
                 Config.Save();
+
+            // 自动化主线程 Tick（与 WebConsole 无关，始终挂载）
+            var autoGo = new UnityEngine.GameObject("DT_Automation");
+            UnityEngine.Object.DontDestroyOnLoad(autoGo);
+            autoGo.AddComponent<AutomationRunner>();
 
             if (WebConsole.CfgEnabled != null && WebConsole.CfgEnabled.Value)
             {
@@ -67,7 +74,7 @@ namespace DT_Tools
                 WebConsoleSection,
                 "Enabled",
                 true,
-                "是否启用控制台 WebUI。");
+                "Author: 梦初雪\n"+"是否启用控制台 WebUI。");
 
             WebConsole.CfgPort = Config.Bind(
                 WebConsoleSection,
@@ -80,6 +87,11 @@ namespace DT_Tools
                 "Password",
                 "",
                 "访问密码。留空则不需要密码。");
+        }
+
+        private void BindAutomationSection()
+        {
+            AutomationHost.BindAndInit(Config, Logger);
         }
     }
 }

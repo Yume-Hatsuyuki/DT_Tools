@@ -18,7 +18,8 @@ namespace DT_Tools.Features.Experience
         section: "CharacterMapPin",
         description: "角色头像 Pin：平板与小地图上其他玩家的白点/黑点显示为对应角色头像；可另开常驻角色箭头。白方默认不显示他人 Pin，可用「白方也显示他人 Pin」单独打开。",
         defaultEnabled: false,
-        side: FeatureSide.Client)]
+        side: FeatureSide.Client,
+        author: "梦初雪")]
     internal static partial class CharacterMapPinFeature
     {
         [ConfigField(true, "已识破的黑方玩家黑点也替换为黑色角色头像；关闭则保留原版黑点")]

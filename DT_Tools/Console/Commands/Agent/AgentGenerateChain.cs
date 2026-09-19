@@ -86,32 +86,7 @@ namespace DT_Tools.Console.Commands.Agent
                 MineralMineCooldown--;
 
             // 花：仅当喷雾台/调酒台仍缺花槽时才浇/采（按目标 DataId）
-            var neededFlowerIds = new HashSet<int>();
-            foreach (var d in devices)
-            {
-                if (d.Data == null) continue;
-                var dst = d.Info.StateList;
-                if (dst == null) continue;
-                int dmt = d.Info.MissionType;
-                // 喷雾合成台 Cancer SubType=1：State[4]/[5] 目标花，State[2]/[3]==0 表示空槽
-                if (d.DeviceType == EDeviceType.Cancer && d.Data.SubType == 1
-                    && dmt == (int)ESchoolMission.ScMakeSpray && dst.Count >= 6 && dst[0] == 1)
-                {
-                    if (dst[2] == 0 && dst[4] >= 1021 && dst[4] <= 1024)
-                        neededFlowerIds.Add(dst[4]);
-                    if (dst[3] == 0 && dst[5] >= 1021 && dst[5] <= 1024)
-                        neededFlowerIds.Add(dst[5]);
-                }
-                // 调酒台 Drink SubType=0：State[2]/[3] 目标，State[4]/[5] 是否已放
-                if (d.DeviceType == EDeviceType.Drink && d.Data.SubType == 0
-                    && dmt == (int)ESchoolMission.ScDrink && dst.Count >= 6 && dst[0] == 1)
-                {
-                    if (dst[4] == 0 && dst[2] >= 1021 && dst[2] <= 1024)
-                        neededFlowerIds.Add(dst[2]);
-                    if (dst[5] == 0 && dst[3] >= 1021 && dst[3] <= 1024)
-                        neededFlowerIds.Add(dst[3]);
-                }
-            }
+            var neededFlowerIds = AgentItemHelper.BuildNeededFlowerIds(devices);
             bool needFlower = neededFlowerIds.Count > 0;
 
             bool minePlanned = false;
@@ -177,24 +152,20 @@ namespace DT_Tools.Console.Commands.Agent
                         changesHand: true);
                 }
 
-                // 花：仅缺花时；优先采已长好的、且 SubType 对应的 DataId 在缺口里
+                // 花：仅缺花时；只操作 SubType 能正确映射且确实在缺口里的花盆
                 if (needFlower && dev.DeviceType == EDeviceType.Flower && st != null && st.Count > 1)
                 {
-                    // Flower SubType → 花 DataId：常见 0→1021 … 需与地图一致；用 Data.SubType 映射
                     int flowerItem = AgentItemHelper.FlowerItemId(sub);
+                    // flowerItem==0 表示 SubType 无法映射到已知花色（FlowerNone 或异常值），
+                    // 此时既不知道该花盆产出什么、也无法判断是否命中缺口，直接跳过更安全，
+                    // 不再对"映射失败"做无差别浇水/采摘的兜底（该兜底曾在花色映射有误时
+                    // 掩盖问题，导致对不需要的花盆重复操作）。
                     bool thisNeeded = flowerItem > 0 && neededFlowerIds.Contains(flowerItem);
-                    // 缺口未映射到具体花时，仍允许操作任意花盆（兼容）
-                    if (!thisNeeded && neededFlowerIds.Count > 0 && flowerItem > 0)
+
+                    if (thisNeeded && st[0] == 2)
                     {
-                        // 若所有缺口都不匹配任何已知映射，允许浇任意空盆
-                        // 仅当 flowerItem 完全对不上任一缺口时跳过采摘
-                    }
-                    if (st[0] == 2)
-                    {
-                        // 可采：手上已有花则先交/丢，不采
                         int handChk = Managers.Player?.MyPlayer?.PublicInfo?.HandItemId ?? 0;
-                        if (handChk > 0) { }
-                        else if (thisNeeded || neededFlowerIds.Count == 0)
+                        if (handChk <= 0)
                         {
                             int fid = id;
                             Add(Pri.Generate, $"采花{flowerItem}#{fid}", (int)ESchoolMission.ScMakeSpray, fid,
@@ -202,15 +173,11 @@ namespace DT_Tools.Console.Commands.Agent
                                 changesHand: true);
                         }
                     }
-                    else if (st[0] == 0 && (thisNeeded || neededFlowerIds.Count > 0))
+                    else if (thisNeeded && st[0] == 0)
                     {
-                        // 浇水：只浇缺口对应的花盆；若映射失败则仍浇（让花长出来再采）
-                        if (thisNeeded || flowerItem == 0)
-                        {
-                            int fid = id;
-                            Add(Pri.TimedStart, $"浇水花{flowerItem}#{fid}", (int)ESchoolMission.ScMakeSpray, fid,
-                                () => Managers.Network.GameServer.Send(new C_INTERACT_FLOWER { FlowerId = fid }));
-                        }
+                        int fid = id;
+                        Add(Pri.TimedStart, $"浇水花{flowerItem}#{fid}", (int)ESchoolMission.ScMakeSpray, fid,
+                            () => Managers.Network.GameServer.Send(new C_INTERACT_FLOWER { FlowerId = fid }));
                     }
                 }
 
