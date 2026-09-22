@@ -7,13 +7,13 @@ using Server.Game;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /givedrink &lt;all|#id&gt; &lt;item&gt;
+    /// /givedrink <all|#id> <item>
     ///
     /// 不带参数时打印可用道具列表，不执行发放。
     ///
     /// 目标:
     ///   all          全体玩家
-    ///   #&lt;playerId&gt;  指定玩家数字 ID
+    ///   #<playerId>  指定玩家数字 ID
     ///
     /// 道具收录范围: Define.cs 中全部 ITEM_ID_* 常量（ITEM_ID_START 哨兵值除外），
     /// 另含不以 ITEM_ID_ 命名但同为手持物的 ITEM_SMAHO(4001，手机/平板)。

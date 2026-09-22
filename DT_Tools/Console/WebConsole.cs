@@ -82,7 +82,7 @@ namespace DT_Tools.Console
         /// <summary>
         /// 反射扫描本程序集中实现 <see cref="IConsoleCommand"/> 的具体类并注册。
         /// <list type="bullet">
-        ///   <item>优先匹配构造函数 <c>ctor(Dictionary&lt;string, IConsoleCommand&gt;)</c>（如 HelpCommand，注入注册表）。</item>
+        ///   <item>优先匹配构造函数 <c>ctor(Dictionary<string, IConsoleCommand>)</c>（如 HelpCommand，注入注册表）。</item>
         ///   <item>否则要求无参构造函数。</item>
         ///   <item>抽象类 / 接口 / 无法实例化的类型会被跳过。</item>
         /// </list>

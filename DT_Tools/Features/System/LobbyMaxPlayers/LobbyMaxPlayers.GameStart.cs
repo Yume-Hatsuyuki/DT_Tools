@@ -8,6 +8,7 @@ using Protocol;
 using Server.Game;
 using UnityEngine;
 using GamePlayer = Server.Game.Player;
+using DT_Tools.Core;
 
 namespace DT_Tools.Features.System
 {
@@ -16,12 +17,15 @@ namespace DT_Tools.Features.System
         /// <summary>
         /// GameStart：StartPosList 打乱后分配。
         /// 人数不超过出生点时与原版一致；超出则 i % Count 循环复用，避免越界。
-        /// 仅当 MaxMembers &gt; 8 时接管，否则走原版。
+        /// 仅当 MaxMembers > 8 时接管，否则走原版。
         /// </summary>
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.GameStart))]
         [HarmonyPrefix]
         private static bool PrefixGameStart(GameRoom __instance)
         {
+            if (!FeatureGate.Enabled(typeof(LobbyMaxPlayersFeature)))
+                return true;
+
             if (MaxMembers <= 8)
                 return true;
 

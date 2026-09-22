@@ -19,6 +19,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(UI_EmotionSubItem __instance)
         {
+            if (!FeatureGate.Enabled(typeof(EmoteNoCdFeature)))
+                return true;
+
             // 对齐 0.1.14b UI_EmotionSubItem.UseEmotion：仅移除冷却判断与冷却置位。
             if (__instance.EmotionId <= 0)
                 return false;

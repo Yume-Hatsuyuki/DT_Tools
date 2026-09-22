@@ -24,6 +24,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(MyPlayer __instance, ref Player __result)
         {
+            if (!FeatureGate.Enabled(typeof(PassKnifeRangeFeature)))
+                return true;
+
             Player best = null;
             float bestDist = float.PositiveInfinity;
             float range = Range.Value;

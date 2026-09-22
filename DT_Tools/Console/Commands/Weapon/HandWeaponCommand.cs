@@ -6,7 +6,7 @@ using Protocol;
 namespace DT_Tools.Console.Commands.Weapon
 {
     /// <summary>
-    /// /hand_weapon &lt;#playerId&gt;
+    /// /hand_weapon <#playerId>
     ///
     /// 营图：黑幕无视距离把手中凶器交给任意一名 White（客户端发包，跟随控制台，非房主可用）。
     ///

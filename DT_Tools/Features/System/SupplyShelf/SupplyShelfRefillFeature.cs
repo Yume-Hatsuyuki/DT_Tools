@@ -43,6 +43,9 @@ namespace DT_Tools.Features.System
             [HarmonyPostfix]
             private static void Postfix(GameDeviceManager __instance)
             {
+            if (!FeatureGate.Enabled(typeof(SupplyShelfRefillFeature)))
+                return;
+
                 int guaranteed = GuaranteedItemId?.Value ?? 0;
                 if (guaranteed <= 0)
                     return;
@@ -101,6 +104,9 @@ namespace DT_Tools.Features.System
             [HarmonyPostfix]
             private static void Postfix(GameStorage __instance, GamePlayer player, Packet pkt)
             {
+            if (!FeatureGate.Enabled(typeof(SupplyShelfRefillFeature)))
+                return;
+
                 int interval = RefillIntervalSeconds?.Value ?? -1;
                 if (interval < 0)
                     return;

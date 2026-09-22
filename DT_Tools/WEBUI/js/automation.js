@@ -133,7 +133,6 @@
     hintEl.textContent = hostCb.checked ? '自动化宿主运行中' : '总开关关闭时所有模块待机';
   });
 
-  document.getElementById('auto-refresh').onclick = () => load();
   document.getElementById('auto-save').onclick = async () => {
     const res = await api('/api/config/save', { method: 'POST' });
     if (res.ok) {
@@ -194,5 +193,61 @@
     });
   }
 
-  window.DTAutomation = { load };
+  let autoRefresh = true;
+  let panelActive = false;
+  let panelTimer = null;
+  const autoBtn = document.getElementById('auto-autorefresh');
+
+  function syncAutoBtn() {
+    if (!autoBtn) return;
+    autoBtn.textContent = autoRefresh ? '自动刷新:开' : '自动刷新:关';
+    autoBtn.title = autoRefresh ? '点击关闭面板自动刷新' : '点击开启面板自动刷新';
+  }
+  syncAutoBtn();
+
+  function isEditingInPanel() {
+    const ae = document.activeElement;
+    if (!ae || !listEl.contains(ae)) return false;
+    const tag = (ae.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'select' || tag === 'textarea';
+  }
+
+  function stopPanelPoll() {
+    if (panelTimer) {
+      clearInterval(panelTimer);
+      panelTimer = null;
+    }
+  }
+
+  function startPanelPoll() {
+    stopPanelPoll();
+    if (!panelActive || !autoRefresh) return;
+    panelTimer = setInterval(() => {
+      if (!panelActive || !autoRefresh) return;
+      if (isEditingInPanel()) return;
+      load();
+    }, 3000);
+  }
+
+  if (autoBtn) {
+    autoBtn.onclick = () => {
+      autoRefresh = !autoRefresh;
+      syncAutoBtn();
+      if (autoRefresh) {
+        load();
+        startPanelPoll();
+      } else stopPanelPoll();
+    };
+  }
+
+  window.DTAutomation = {
+    load,
+    setActive: (on) => {
+      panelActive = !!on;
+      if (panelActive) {
+        load();
+        startPanelPoll();
+      } else stopPanelPoll();
+    }
+  };
 })();

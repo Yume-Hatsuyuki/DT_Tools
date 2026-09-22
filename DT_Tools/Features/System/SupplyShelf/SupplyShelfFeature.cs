@@ -37,6 +37,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static bool Prefix(GameDeviceManager __instance)
         {
+            if (!FeatureGate.Enabled(typeof(SupplyShelfFeature)))
+                return true;
+
             var t = Traverse.Create(__instance);
             var storages = t.Field("_storages").GetValue<List<GameStorage>>();
             if (storages == null)

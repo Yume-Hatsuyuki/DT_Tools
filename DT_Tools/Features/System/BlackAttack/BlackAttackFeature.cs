@@ -10,7 +10,7 @@ namespace DT_Tools.Features.System
 {
     /// <summary>
     /// 黑方击杀次数与武器冷却（房主权威）。
-    /// KillLimit 覆盖 GameRoom.BlackKillLimit（原版：开局人数&lt;6 为 1，否则 2）。
+    /// KillLimit 覆盖 GameRoom.BlackKillLimit（原版：开局人数<6 为 1，否则 2）。
     /// Cooltime 覆盖 StartWeaponCooltime 中的首次 5s 与再装填 20s；其它调用（如 LockKnifeForSeconds）不改。
     /// </summary>
     [HarmonyPatch]
@@ -39,6 +39,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static bool PrefixBlackKillLimit(ref int __result)
         {
+            if (!FeatureGate.Enabled(typeof(BlackAttackFeature)))
+                return true;
+
             __result = EffectiveKillLimit;
             return false;
         }
@@ -51,6 +54,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static bool PrefixStartWeaponCooltime(GamePlayer __instance, ref int seconds)
         {
+            if (!FeatureGate.Enabled(typeof(BlackAttackFeature)))
+                return true;
+
             if (seconds != 5 && seconds != 20)
                 return true;
 

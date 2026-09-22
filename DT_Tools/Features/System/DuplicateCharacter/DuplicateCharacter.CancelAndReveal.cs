@@ -6,6 +6,7 @@ using Protocol;
 using Server.Game;
 using UnityEngine;
 using GamePlayer = Server.Game.Player;
+using DT_Tools.Core;
 
 namespace DT_Tools.Features.System
 {
@@ -19,6 +20,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static bool PrefixCancelPickCharacter(GameRoom __instance, GamePlayer player)
         {
+            if (!FeatureGate.Enabled(typeof(DuplicateCharacterFeature)))
+                return true;
+
             if (__instance.State != EGameState.PickCharacter)
                 return false;
 
@@ -93,6 +97,12 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static void PrefixPickCharacterTick(out int __state)
         {
+            if (!FeatureGate.Enabled(typeof(DuplicateCharacterFeature)))
+            {
+                __state = 0;
+                return;
+            }
+
             __state = TimeManager.Instance.StopWatch;
         }
 
@@ -100,6 +110,9 @@ namespace DT_Tools.Features.System
         [HarmonyPostfix]
         private static void PostfixPickCharacterTick(GameRoom __instance, int __state)
         {
+            if (!FeatureGate.Enabled(typeof(DuplicateCharacterFeature)))
+                return;
+
             if (__instance.State != EGameState.PickCharacter)
                 return;
 
@@ -149,6 +162,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static void PrefixRandomOwned(ref HashSet<int> taken)
         {
+            if (!FeatureGate.Enabled(typeof(DuplicateCharacterFeature)))
+                return;
+
             taken = EmptyTaken;
         }
 

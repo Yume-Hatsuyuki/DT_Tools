@@ -83,7 +83,7 @@ namespace DT_Tools.Console.Commands.Agent
         /// <summary>
         /// 通过反射读取 Host 本地 MissionManager.Instance 的某个 List/Queue 属性，
         /// 提取每个元素的 Type 字段，返回 Type 集合。
-        /// 属性类型是 List&lt;MissionData&gt; 或 Queue&lt;MissionData&gt;，两者都实现
+        /// 属性类型是 List<MissionData> 或 Queue<MissionData>，两者都实现
         /// IEnumerable，用非泛型 IEnumerable 遍历即可，不需要关心具体是哪一种容器。
         /// </summary>
         private static HashSet<int> ReadTypesViaReflection(PropertyInfo listProp)

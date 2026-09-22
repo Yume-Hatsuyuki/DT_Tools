@@ -47,10 +47,24 @@ namespace DT_Tools.Features.Experience
         private static readonly HashSet<Vector2> _myFuseboxPins = new HashSet<Vector2>();
         private static float _nextCheck;
 
+        public static void OnDisabled()
+        {
+            ClearAllMyPins();
+            _nextCheck = 0f;
+        }
+
+        public static void OnEnabled()
+        {
+            _nextCheck = 0f;
+        }
+
         [HarmonyPatch(typeof(UI_GameTablet), "LateUpdate")]
         [HarmonyPostfix]
         private static void PostfixTabletLateUpdate()
         {
+            if (!FeatureGate.Enabled(typeof(DarkRadarFeature)))
+                return;
+
             if (Time.time < _nextCheck)
                 return;
             _nextCheck = Time.time + CheckInterval;

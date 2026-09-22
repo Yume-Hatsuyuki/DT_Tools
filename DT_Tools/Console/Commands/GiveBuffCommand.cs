@@ -7,13 +7,13 @@ using Server.Game;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /givebuff &lt;all|#id&gt; &lt;buff|clear&gt; [seconds|clear|0]
+    /// /givebuff <all|#id> <buff|clear> [seconds|clear|0]
     ///
     /// 不带参数时打印可用 BUFF 列表，不执行添加。
     ///
     /// 目标:
     ///   all          全体玩家
-    ///   #&lt;playerId&gt;  指定玩家数字 ID
+    ///   #<playerId>  指定玩家数字 ID
     ///
     /// 清除:
     ///   /givebuff all clear              → 清除全体全部 BUFF

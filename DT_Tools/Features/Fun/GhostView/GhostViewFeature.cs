@@ -18,6 +18,9 @@ namespace DT_Tools.Features.Fun
         [HarmonyPrefix]
         private static bool Prefix(ref bool __result)
         {
+            if (!FeatureGate.Enabled(typeof(GhostViewFeature)))
+                return true;
+
             __result = true;
             return false;
         }

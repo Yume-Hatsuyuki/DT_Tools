@@ -23,6 +23,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(DeviceBase __instance)
         {
+            if (!FeatureGate.Enabled(typeof(DestroyEvidenceFeature)))
+                return true;
+
             if (Managers.Game.CastingSlider != null)
                 return false;
 

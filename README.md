@@ -8,14 +8,19 @@
 
 > [!WARNING]
 > 自游戏 [**0.1.10**](https://store.steampowered.com/news/app/3088400/view/696523089338434233) 起，官方会对非免费角色与表情的使用做数据收集。  
-> 本项目仅供学习与技术交流，请遵守 [GPL-3.0](LICENSE)许可证。  
+> 本项目仅供学习与技术交流，请遵守 [GPL-3.0](LICENSE) 许可证。  
 > 使用此插件所引发的纠纷或游戏状态异常等相关后果由使用者自行处理。
 
 ---
 
 ## 功能
 
-完整列表与默认开关见 [FEATURES.md](FEATURES.md)。
+安装完成后打开**浏览器**，访问：<u>[http://127.0.0.1:19450](http://127.0.0.1:19450)</u>
+
+可自行探索相关配置项：
+命令行：**DT CONSOLE**
+补丁类：**DT CONFIG**
+自动化：**AUTOMATION**
 
 ---
 
@@ -23,7 +28,7 @@
 
 ### 1. BepInEx
 
-安装 [BepInEx 5.4.23.x](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.5)。
+安装 [BepInEx 5.4.23.x](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.23.5) 。
 
 若缺少 MonoMod 依赖导致补丁无法加载，从 NuGet 包中将 `lib/net452` 下的程序集复制到 `BepInEx/core`：
 

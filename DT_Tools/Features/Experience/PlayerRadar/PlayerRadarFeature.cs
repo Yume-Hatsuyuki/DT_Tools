@@ -19,6 +19,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(UI_GameTablet __instance)
         {
+            if (!FeatureGate.Enabled(typeof(PlayerRadarFeature)))
+                return true;
+
             var t = Traverse.Create(__instance);
             if (!t.Field("_init").GetValue<bool>())
                 return false;

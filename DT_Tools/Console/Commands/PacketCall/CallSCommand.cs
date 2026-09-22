@@ -6,7 +6,7 @@ using Server.Game;
 namespace DT_Tools.Console.Commands.PacketCall
 {
     /// <summary>
-    /// /call_s &lt;all|#id&gt; &lt;S_*包名&gt; [json]
+    /// /call_s <all|#id> <S_*包名> [json]
     /// 服务端 → 客户端：构造 S_* 包并 Send / 全员各发一份。
     /// </summary>
     internal sealed class CallSCommand : IConsoleCommand

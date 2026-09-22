@@ -3,14 +3,14 @@ using System;
 namespace DT_Tools.Core
 {
     /// <summary>
-    /// 标记功能类上的 <c>public static ConfigEntry&lt;T&gt;</c> 字段。
+    /// 标记功能类上的 <c>public static ConfigEntry<T></c> 字段。
     /// ConfigBinder 在启动时按所属 <see cref="PatchFeatureAttribute.Section"/> 自动 Bind，
     /// 字段名默认即配置键；可用 <see cref="Key"/> 覆盖以保持旧 .cfg 兼容。
     /// </summary>
     [AttributeUsage(AttributeTargets.Field, Inherited = false)]
     public sealed class ConfigFieldAttribute : Attribute
     {
-        /// <summary>默认值（类型需与 ConfigEntry&lt;T&gt; 的 T 一致）。</summary>
+        /// <summary>默认值（类型需与 ConfigEntry<T> 的 T 一致）。</summary>
         public object Default { get; }
 
         /// <summary>.cfg 注释 / UI 描述。</summary>

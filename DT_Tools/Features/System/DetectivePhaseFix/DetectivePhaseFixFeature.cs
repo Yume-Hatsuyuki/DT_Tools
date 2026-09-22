@@ -12,17 +12,55 @@ namespace DT_Tools.Features.System
 {
     /// <summary>
     /// StartDetective 开头 black.IsAlive 在 Black==null 时 NRE。将 get_IsAlive 换为 null 安全调用。
+    /// Transpiler 使用独立 Harmony 实例，Enabled 热切换时 Patch/Unpatch，关闭即可恢复原 IL。
     /// </summary>
     [HarmonyPatch]
     [PatchFeature(
         section: "StartDetective",
-        description: "调查阶段补丁：修复无凶手时 StartDetective 空引用；/enter_detective 依赖此补丁。",
+        description: "调查阶段补丁：修复无凶手时 StartDetective 空引用；/enter_detective 依赖此补丁。关闭时会卸载 Transpiler，无需重启。",
         defaultEnabled: true,
         side: FeatureSide.Host,
         author: "梦初雪")]
     internal static class DetectivePhaseFixFeature
     {
+        /// <summary>供 PatchLoader 识别为自行管理 Harmony。</summary>
+        internal static Harmony SelfHarmony;
+
         public static bool IsApplied { get; private set; }
+
+        private static bool _patched;
+
+        /// <summary>启动：按当前 Enabled 决定是否挂上 Transpiler。</summary>
+        public static void OnPatched()
+        {
+            SelfHarmony ??= new Harmony("DT_Tools.DetectivePhaseFix");
+            if (FeatureGate.Enabled(typeof(DetectivePhaseFixFeature)))
+                ApplyPatches();
+            else
+                RemovePatches();
+        }
+
+        public static void OnEnabled() => ApplyPatches();
+
+        public static void OnDisabled() => RemovePatches();
+
+        private static void ApplyPatches()
+        {
+            if (_patched) return;
+            SelfHarmony ??= new Harmony("DT_Tools.DetectivePhaseFix");
+            SelfHarmony.PatchAll(typeof(DetectivePhaseFixFeature));
+            _patched = true;
+            FeatureLogRegistry.Info("StartDetective", "Transpiler 已挂载");
+        }
+
+        private static void RemovePatches()
+        {
+            if (SelfHarmony == null) return;
+            SelfHarmony.UnpatchSelf();
+            _patched = false;
+            IsApplied = false;
+            FeatureLogRegistry.Info("StartDetective", "Transpiler 已卸载");
+        }
 
         [HarmonyPatch(typeof(GameRoom), "StartDetective")]
         [HarmonyTranspiler]

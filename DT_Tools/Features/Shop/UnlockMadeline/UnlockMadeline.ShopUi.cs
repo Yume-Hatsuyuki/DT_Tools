@@ -5,6 +5,7 @@ using Protocol;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using DT_Tools.Core;
 
 namespace DT_Tools.Features.Shop
 {
@@ -14,6 +15,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static bool PrefixOrderedOwnedIds(UI_Shop_Skin __instance, ref List<int> __result)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return true;
+
             IEnumerable<int> enumerable = Managers.Inventory.OwnedCharacterIds;
             var shop = Traverse.Create(__instance).Field<UI_ShopPopup>("_shop").Value;
 
@@ -38,6 +42,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static bool PrefixFillChineseOrder(List<int> order)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return true;
+
             order.AddRange(new int[]
             {
                 106, 104, 113, 108, 102, 103, 110, 107, 112, 111,
@@ -50,6 +57,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static void PrefixGetText(ref string textId)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             if (textId == "PropositionSentenceMadeline")
                 textId = Define.PROPOSITION_SENTENCE_CLUE;
         }
@@ -60,6 +70,9 @@ namespace DT_Tools.Features.Shop
         private static void PostfixInfoSkillSetInfo(
             UI_InfoSkillSubItem __instance, ESkillType type, bool isActive, bool isMine)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             if (!isMine || type != ESkillType.SuperRazer)
                 return;
 

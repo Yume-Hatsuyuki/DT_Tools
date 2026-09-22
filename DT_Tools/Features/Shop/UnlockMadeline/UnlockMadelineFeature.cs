@@ -18,6 +18,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static bool PrefixIsCharacterOwned(int dataId, ref bool __result)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return true;
+
             if (dataId != 101)
                 return true;
             __result = true;
@@ -30,6 +33,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPostfix]
         private static void PostfixOwnedCharacterIds(ref IReadOnlyList<int> __result)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             if (__result == null)
                 return;
             for (int i = 0; i < __result.Count; i++)
@@ -47,6 +53,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static bool PrefixSaveManagerIsCharacterOwned(int dataId, ref bool __result)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return true;
+
             if (dataId != 101)
                 return true;
             __result = true;

@@ -33,7 +33,7 @@ namespace DT_Tools.Console.Commands.Agent
         /// S_ADD_ITEM/S_STATE 等回包后才会更新（见 PacketHandler.Handle_S_ADD_ITEM →
         /// Inventory.InsertHand），是异步确认的，不是发包后立即生效的本地状态。
         ///
-        /// 0.6s 的旧 tick 下，这个网络往返延迟（通常 &lt;200ms）天然小于一个 tick 周期，
+        /// 0.6s 的旧 tick 下，这个网络往返延迟（通常 <200ms）天然小于一个 tick 周期，
         /// 问题被掩盖；换成 0.25s 后，若延迟接近/超过一个 tick，Planner 会在
         /// HandItemId 尚未刷新时误判"仍是空手"，对同一个地面物品重复发送
         /// C_ACQUIRE_ITEM，造成重复拾取/重复交付判定，表现为同一目标反复出现在日志里。

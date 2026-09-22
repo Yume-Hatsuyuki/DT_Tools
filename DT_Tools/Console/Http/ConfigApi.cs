@@ -52,6 +52,20 @@ namespace DT_Tools.Console.Http
             var (ok, error, value) = ConfigService.Update(config, section, key, raw);
             if (!ok)
                 return "{\"ok\":false,\"error\":" + J(error) + "}";
+
+            if (section == "CustomRoomName" && key == "RoomName")
+            {
+                try
+                {
+                    DT_Tools.Features.System.CustomRoomNameFeature.TryApplyRoomName("ConfigAPI");
+                }
+                catch (System.Exception ex)
+                {
+                    return "{\"ok\":true,\"section\":" + J(section) + ",\"key\":" + J(key) +
+                           ",\"value\":" + JV(value) + ",\"applyError\":" + J(ex.Message) + "}";
+                }
+            }
+
             return "{\"ok\":true,\"section\":" + J(section) + ",\"key\":" + J(key) +
                    ",\"value\":" + JV(value) + "}";
         }

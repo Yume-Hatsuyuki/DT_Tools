@@ -30,6 +30,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static bool PrefixPickCharacter(GameRoom __instance, GamePlayer player, int characterId)
         {
+            if (!FeatureGate.Enabled(typeof(DuplicateCharacterFeature)))
+                return true;
+
             if (__instance.State != EGameState.PickCharacter)
                 return false;
 

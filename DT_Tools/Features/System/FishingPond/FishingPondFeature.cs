@@ -26,6 +26,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static bool Prefix(Server.Game.Fishing __instance, GamePlayer player, Packet pkt)
         {
+            if (!FeatureGate.Enabled(typeof(FishingPondFeature)))
+                return true;
+
             if (!(pkt?.Pkt is C_HANDLE_FISHING fishPkt))
                 return true;
 

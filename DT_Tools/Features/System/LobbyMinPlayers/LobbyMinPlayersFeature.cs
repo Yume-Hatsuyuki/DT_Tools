@@ -23,6 +23,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static bool Prefix(ref int __result)
         {
+            if (!FeatureGate.Enabled(typeof(LobbyMinPlayersFeature)))
+                return true;
+
             __result = Define.IsPlaytestApp ? 0 : Value.Value;
             return false;
         }

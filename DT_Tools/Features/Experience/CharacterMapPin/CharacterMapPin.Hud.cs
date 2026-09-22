@@ -18,6 +18,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixHudPlayerPin(UI_GameScene __instance, Player player)
         {
+            if (!FeatureGate.Enabled(typeof(CharacterMapPinFeature)))
+                return;
+
             if (player?.CharData == null)
                 return;
 
@@ -30,6 +33,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixHudBlackPin(UI_GameScene __instance, int id)
         {
+            if (!FeatureGate.Enabled(typeof(CharacterMapPinFeature)))
+                return;
+
             if (!(ReplaceBlackPin?.Value ?? true))
                 return;
 
@@ -49,6 +55,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixEnsureWhitePins(UI_GameScene __instance)
         {
+            if (!FeatureGate.Enabled(typeof(CharacterMapPinFeature)))
+                return;
+
             if (!(ShowPinsForWhite?.Value ?? false))
                 return;
 
@@ -114,6 +123,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixSyncArrows()
         {
+            if (!FeatureGate.Enabled(typeof(CharacterMapPinFeature)))
+                return;
+
             if (!(ShowCharacterArrow?.Value ?? false))
             {
                 ClearAllArrows();

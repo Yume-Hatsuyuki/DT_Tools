@@ -114,6 +114,9 @@ namespace DT_Tools.Features.Fun
         [HarmonyPostfix]
         private static void AfterInventoryInit(InventoryManager __instance)
         {
+            if (!FeatureGate.Enabled(typeof(LoginRewardFeature)))
+                return;
+
             EnsureConfig();
 
             if (!_subscribed)
@@ -152,8 +155,25 @@ namespace DT_Tools.Features.Fun
             go.AddComponent<LoginRewardTicker>();
         }
 
+        public static void OnEnabled()
+        {
+            // 下次 Inventory 回调或已有会话逻辑会自行 EnsureTicker；此处不主动发奖
+        }
+
+        public static void OnDisabled()
+        {
+            _retryAt = -1f;
+            _popupRetryAt = -1f;
+            _waitingReveal = false;
+            if (LoginRewardTicker.Instance != null)
+                LoginRewardTicker.Instance.enabled = false;
+        }
+
         internal static void Tick()
         {
+            if (!FeatureGate.Enabled(typeof(LoginRewardFeature)))
+                return;
+
             if (!_attemptedThisSession)
             {
                 if (_retryAt >= 0f && Time.unscaledTime >= _retryAt)

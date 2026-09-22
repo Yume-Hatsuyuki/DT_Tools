@@ -79,14 +79,15 @@
   }
 
   /**
-   * 可折叠模块日志。
+   * 可折叠模块日志。展开后默认自动刷新；可点按钮关闭/开启自动刷新。
    * @param {{ key:string, fetchLog:()=>Promise<{ok:boolean,lines?:string[],error?:string}>, clearLog:()=>Promise<void>, stateMap:Map }} opt
    */
   function buildModLog(opt) {
     const key = opt.key;
     const stateMap = opt.stateMap;
-    if (!stateMap.has(key)) stateMap.set(key, { open: false, timer: null });
+    if (!stateMap.has(key)) stateMap.set(key, { open: false, timer: null, auto: true });
     const st = stateMap.get(key);
+    if (typeof st.auto !== 'boolean') st.auto = true;
 
     const details = document.createElement('details');
     details.className = 'mod-log';
@@ -98,15 +99,14 @@
 
     const tools = document.createElement('div');
     tools.className = 'mod-log-tools';
-    const btnR = document.createElement('button');
-    btnR.type = 'button';
-    btnR.className = 'btn secondary btn-xs';
-    btnR.textContent = '刷新';
+    const btnAuto = document.createElement('button');
+    btnAuto.type = 'button';
+    btnAuto.className = 'btn secondary btn-xs';
     const btnC = document.createElement('button');
     btnC.type = 'button';
     btnC.className = 'btn secondary btn-xs';
     btnC.textContent = '清空';
-    tools.appendChild(btnR);
+    tools.appendChild(btnAuto);
     tools.appendChild(btnC);
     details.appendChild(tools);
 
@@ -115,6 +115,12 @@
     pre.textContent = '加载中…';
     details.appendChild(pre);
 
+    function syncAutoLabel() {
+      btnAuto.textContent = st.auto ? '自动刷新:开' : '自动刷新:关';
+      btnAuto.title = st.auto ? '点击关闭自动刷新' : '点击开启自动刷新';
+    }
+    syncAutoLabel();
+
     async function pull() {
       try {
         const j = await opt.fetchLog();
@@ -122,8 +128,10 @@
           pre.textContent = (j && j.error) || '加载失败';
           return;
         }
-        pre.textContent = (j.lines && j.lines.length) ? j.lines.join('\n') : '（空）';
-        pre.scrollTop = pre.scrollHeight;
+        const next = (j.lines && j.lines.length) ? j.lines.join('\n') : '（空）';
+        const stick = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 24;
+        pre.textContent = next;
+        if (stick) pre.scrollTop = pre.scrollHeight;
       } catch (e) {
         pre.textContent = String(e);
       }
@@ -131,7 +139,7 @@
 
     function startPoll() {
       pull();
-      if (!st.timer) st.timer = setInterval(pull, 2500);
+      if (st.auto && !st.timer) st.timer = setInterval(pull, 2000);
     }
     function stopPoll() {
       if (st.timer) {
@@ -145,7 +153,15 @@
       if (details.open) startPoll();
       else stopPoll();
     });
-    btnR.onclick = (ev) => { ev.preventDefault(); pull(); };
+    btnAuto.onclick = (ev) => {
+      ev.preventDefault();
+      st.auto = !st.auto;
+      syncAutoLabel();
+      if (!details.open) return;
+      stopPoll();
+      if (st.auto) startPoll();
+      else pull();
+    };
     btnC.onclick = async (ev) => {
       ev.preventDefault();
       try { await opt.clearLog(); } catch (_) {}
@@ -156,6 +172,7 @@
 
     return details;
   }
+
 
   /**
    * 参数行：左 key/type，右控件，下描述。

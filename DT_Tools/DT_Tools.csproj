@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>DT_Tools</AssemblyName>
     <Description>Deadly Trick Plugin</Description>
-    <Version>1.0.6</Version>
+    <Version>1.0.6.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <!-- ConfigField fields assigned by ConfigBinder reflection -->

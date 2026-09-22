@@ -45,7 +45,7 @@ namespace DT_Tools.Console.Http
 
         /// <summary>
         /// 任意值 → JSON。递归支持 null / bool / 数值 / 字符串 / 枚举 /
-        /// IDictionary&lt;string,object&gt; / IEnumerable（数组）。
+        /// IDictionary<string,object> / IEnumerable（数组）。
         /// 关键：IEnumerable 被展开为 JSON 数组，而不是 ToString()。
         /// </summary>
         public static string Value(object v)

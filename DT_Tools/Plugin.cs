@@ -56,15 +56,14 @@ namespace DT_Tools
             if (result.FailedCount > 0)
             {
                 Logger.LogWarning(
-                    $"{PluginInfo.PLUGIN_GUID} 加载完成：成功 {result.EnabledCount}，" +
-                    $"跳过 {result.SkippedCount}，失败 {result.FailedCount}。" +
-                    "失败的功能已跳过，其余不受影响；请检查上方错误日志。");
+                    $"{PluginInfo.PLUGIN_GUID} 加载完成：挂载成功 {result.MountedCount}，" +
+                    $"失败 {result.FailedCount}。" +
+                    "失败的功能已跳过，其余不受影响；各功能 Enabled 可在局内热切换。");
             }
             else
             {
                 Logger.LogInfo(
-                    $"{PluginInfo.PLUGIN_GUID} 加载完成：已启用 {result.EnabledCount} 个功能" +
-                    $"（跳过 {result.SkippedCount}）。");
+                    $"{PluginInfo.PLUGIN_GUID} 加载完成：已挂载 {result.MountedCount} 个功能（Enabled 支持局内热切换）。");
             }
         }
 

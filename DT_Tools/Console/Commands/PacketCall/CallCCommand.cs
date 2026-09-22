@@ -7,7 +7,7 @@ using Server.Game;
 namespace DT_Tools.Console.Commands.PacketCall
 {
     /// <summary>
-    /// /call_c &lt;#id&gt; &lt;C_*包名&gt; [json]
+    /// /call_c <#id> <C_*包名> [json]
     /// 模拟指定玩家向 Host 提交 C_* 包（走 PacketManager.HandlePacket）。
     /// </summary>
     internal sealed class CallCCommand : IConsoleCommand

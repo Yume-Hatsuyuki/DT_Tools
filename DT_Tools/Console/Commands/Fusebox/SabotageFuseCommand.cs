@@ -29,7 +29,7 @@ namespace DT_Tools.Console.Commands.Fusebox
     ///   分析MOD客户端功能数据包.md §5）。
     ///
     /// 参数：
-    ///   - 无参：列出当前已武装且完好的电闸（MissionType==-1 &&amp; StateList[0]==0）。
+    ///   - 无参：列出当前已武装且完好的电闸（MissionType==-1 && StateList[0]==0）。
     ///   - all：遍历本机设备缓存中所有已武装完好的电闸逐个发包拉闸。
     ///     注：第 2 个电闸拉断时服务端会 ClearFuseboxSabotage 解除第 3 个的武装，
     ///     第 3 个包服务端 DisconnetCable 会因 MissionType!=−1 提前 return（无效果）。

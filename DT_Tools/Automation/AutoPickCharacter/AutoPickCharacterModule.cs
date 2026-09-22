@@ -11,6 +11,10 @@ namespace DT_Tools.Automation.AutoPickCharacter
     /// <summary>
     /// 大厅同步外观 + 选角阶段自动 C_PICK_CHARACTER。
     /// 角色列表运行时从 CharacterDic 读取（含梅德琳）。
+    ///
+    /// 可靠性：服务端在 StartPick 的 SyncAllPlayer 回调前 _pickReady=false，
+    /// 过早的 C_PICK_CHARACTER 会被静默忽略。因此在延迟后按间隔重试，
+    /// 直到离开选角阶段或达到最大次数（服务端对已选玩家幂等）。
     /// </summary>
     [AutomationModule(
         id: "pick-character",
@@ -35,15 +39,20 @@ namespace DT_Tools.Automation.AutoPickCharacter
         public static ConfigEntry<AutoPickMode> Mode;
         public static ConfigEntry<int> CharacterId;
         public static ConfigEntry<float> DelaySeconds;
+        public static ConfigEntry<float> RetryInterval;
+        public static ConfigEntry<int> MaxAttempts;
         public static ConfigEntry<bool> SyncLobby;
+        public static ConfigEntry<bool> FallbackToRandom;
 
         public bool ModuleEnabled => Enabled != null && Enabled.Value;
 
         private bool _bound;
         private EGameState _lastState = EGameState.NoneState;
-        private bool _sentPickThisPhase;
         private float _phaseEnterRealtime = -1f;
+        private float _nextTryRealtime;
+        private int _attempts;
         private bool _waitingLogged;
+        private bool _gaveUpLogged;
         private int _lastLobbySyncedId = int.MinValue;
         private float _nextLobbyTryRealtime;
 
@@ -69,8 +78,23 @@ namespace DT_Tools.Automation.AutoPickCharacter
             DelaySeconds = config.Bind(
                 Section,
                 "DelaySeconds",
-                0.6f,
-                "进入选角阶段后延迟多少秒再发包。");
+                1.2f,
+                "进入选角阶段后延迟多少秒再开始发包（需等服务端 _pickReady）。");
+            RetryInterval = config.Bind(
+                Section,
+                "RetryInterval",
+                0.8f,
+                "发包后仍未确认时的重试间隔（秒）。过早包会被服务端忽略。");
+            MaxAttempts = config.Bind(
+                Section,
+                "MaxAttempts",
+                20,
+                "本阶段最多发送次数。达到后停止（避免无限刷包）。");
+            FallbackToRandom = config.Bind(
+                Section,
+                "FallbackToRandom",
+                true,
+                "Fixed 模式下，后半次尝试改为随机（-2），避免目标角色已被他人占用。");
             SyncLobby = config.Bind(
                 Section,
                 "SyncLobby",
@@ -96,17 +120,17 @@ namespace DT_Tools.Automation.AutoPickCharacter
             {
                 if (state == EGameState.PickCharacter)
                 {
-                    _sentPickThisPhase = false;
                     _phaseEnterRealtime = Time.realtimeSinceStartup;
+                    _nextTryRealtime = 0f;
+                    _attempts = 0;
                     _waitingLogged = false;
+                    _gaveUpLogged = false;
                     Log.Info("已进入选角阶段");
                 }
                 else if (_lastState == EGameState.PickCharacter)
                 {
-                    Log.Info($"离开选角阶段 → {state}");
-                    _sentPickThisPhase = false;
-                    _phaseEnterRealtime = -1f;
-                    _waitingLogged = false;
+                    Log.Info($"离开选角阶段 → {state}（本阶段尝试 {_attempts} 次）");
+                    ResetPhaseTracking();
                 }
 
                 if (state == EGameState.Lobby)
@@ -128,10 +152,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
 
         private void TryAutoPick()
         {
-            if (_sentPickThisPhase)
-                return;
-
-            float delay = DelaySeconds != null ? Mathf.Max(0f, DelaySeconds.Value) : 0.6f;
+            float delay = DelaySeconds != null ? Mathf.Max(0f, DelaySeconds.Value) : 1.2f;
             if (_phaseEnterRealtime < 0f)
                 _phaseEnterRealtime = Time.realtimeSinceStartup;
 
@@ -139,11 +160,26 @@ namespace DT_Tools.Automation.AutoPickCharacter
             {
                 if (!_waitingLogged)
                 {
-                    Log.Info($"等待 {delay:0.##}s 后发包");
+                    Log.Info($"等待 {delay:0.##}s 后开始发包（等服务端选角就绪）");
                     _waitingLogged = true;
                 }
                 return;
             }
+
+            int maxAttempts = MaxAttempts != null ? Mathf.Max(1, MaxAttempts.Value) : 20;
+            if (_attempts >= maxAttempts)
+            {
+                if (!_gaveUpLogged)
+                {
+                    Log.Warn($"已达最大尝试次数 {maxAttempts}，停止本阶段发包");
+                    _gaveUpLogged = true;
+                }
+                return;
+            }
+
+            float interval = RetryInterval != null ? Mathf.Max(0.1f, RetryInterval.Value) : 0.8f;
+            if (_attempts > 0 && Time.realtimeSinceStartup < _nextTryRealtime)
+                return;
 
             int id = ResolvePickId();
             if (!CharacterCatalog.IsKnown(id) && id != CharacterCatalog.RandomId)
@@ -153,11 +189,15 @@ namespace DT_Tools.Automation.AutoPickCharacter
             if (!ClientPacket.TrySend(packet, out string err))
             {
                 Log.Warn($"选角发送失败: {err}");
+                _nextTryRealtime = Time.realtimeSinceStartup + interval;
                 return;
             }
 
-            _sentPickThisPhase = true;
-            Log.Info($"已发送 C_PICK_CHARACTER CharacterId={id}（{CharacterCatalog.GetDisplayName(id)}）");
+            _attempts++;
+            _nextTryRealtime = Time.realtimeSinceStartup + interval;
+            Log.Info(
+                $"已发送 C_PICK_CHARACTER CharacterId={id}（{CharacterCatalog.GetDisplayName(id)}）" +
+                $" 第{_attempts}/{maxAttempts}次");
         }
 
         private void TrySyncLobbyCharacter()
@@ -217,7 +257,23 @@ namespace DT_Tools.Automation.AutoPickCharacter
         {
             if (Mode != null && Mode.Value == AutoPickMode.Random)
                 return CharacterCatalog.RandomId;
-            return CharacterId != null ? CharacterId.Value : 102;
+
+            int fixedId = CharacterId != null ? CharacterId.Value : 102;
+
+            // 后半次尝试回退随机，避免目标角色已被占用时一直空选
+            bool fallback = FallbackToRandom == null || FallbackToRandom.Value;
+            if (fallback && _attempts > 0)
+            {
+                int maxAttempts = MaxAttempts != null ? Mathf.Max(1, MaxAttempts.Value) : 20;
+                if (_attempts >= Math.Max(1, maxAttempts / 2))
+                {
+                    if (_attempts == Math.Max(1, maxAttempts / 2))
+                        Log.Info($"Fixed 目标可能被占用，后续尝试改用随机 ({CharacterCatalog.RandomId})");
+                    return CharacterCatalog.RandomId;
+                }
+            }
+
+            return fixedId;
         }
 
         private static bool TryGetState(out EGameState state)
@@ -247,9 +303,11 @@ namespace DT_Tools.Automation.AutoPickCharacter
         private void ResetPhaseTracking()
         {
             _lastState = EGameState.NoneState;
-            _sentPickThisPhase = false;
             _phaseEnterRealtime = -1f;
+            _nextTryRealtime = 0f;
+            _attempts = 0;
             _waitingLogged = false;
+            _gaveUpLogged = false;
         }
     }
 }

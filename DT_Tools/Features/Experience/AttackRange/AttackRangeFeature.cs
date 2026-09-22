@@ -24,6 +24,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(MyPlayer __instance, ref Player __result)
         {
+            if (!FeatureGate.Enabled(typeof(AttackRangeFeature)))
+                return true;
+
             if (__instance.Inventory.Weapon.DataId == 0)
             {
                 __result = null;

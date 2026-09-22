@@ -31,6 +31,16 @@ namespace DT_Tools.Features.Experience
         [ConfigField(false, "常驻角色箭头：不开平板也在屏幕边缘显示指向其他存活玩家的箭头（接近时自动隐藏，Kaho 技能目标不重复显示）")]
         public static ConfigEntry<bool> ShowCharacterArrow;
 
+        public static void OnDisabled()
+        {
+            ClearAllArrows();
+        }
+
+        public static void OnEnabled()
+        {
+            // 下一帧 Postfix 会按开关重建箭头/Pin
+        }
+
         private static readonly FieldInfo TabletSubItemsField =
             AccessTools.Field(typeof(UI_GameTablet), "_subItems");
 
@@ -39,6 +49,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixTabletPlayerPin(UI_GameTablet __instance, Player player)
         {
+            if (!FeatureGate.Enabled(typeof(CharacterMapPinFeature)))
+                return;
+
             if (player?.CharData == null)
                 return;
 
@@ -51,6 +64,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixTabletBlackPin(UI_GameTablet __instance, int id)
         {
+            if (!FeatureGate.Enabled(typeof(CharacterMapPinFeature)))
+                return;
+
             if (!(ReplaceBlackPin?.Value ?? true))
                 return;
 

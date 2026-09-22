@@ -19,6 +19,9 @@ namespace DT_Tools.Features.Dev
         [HarmonyPrefix]
         private static bool PrefixIsPlaytestApp(ref bool __result)
         {
+            if (!FeatureGate.Enabled(typeof(PlaytestModeFeature)))
+                return true;
+
             __result = true;
             return false;
         }
@@ -27,6 +30,9 @@ namespace DT_Tools.Features.Dev
         [HarmonyPrefix]
         private static bool PrefixPayBackendUrl(ref string __result)
         {
+            if (!FeatureGate.Enabled(typeof(PlaytestModeFeature)))
+                return true;
+
             __result = Define.PAY_BACKEND_URL_MAIN;
             return false;
         }
@@ -35,6 +41,9 @@ namespace DT_Tools.Features.Dev
         [HarmonyPrefix]
         private static bool PrefixInventoryCheckUrl(ref string __result)
         {
+            if (!FeatureGate.Enabled(typeof(PlaytestModeFeature)))
+                return true;
+
             __result = Define.INVENTORY_CHECK_URL_MAIN;
             return false;
         }

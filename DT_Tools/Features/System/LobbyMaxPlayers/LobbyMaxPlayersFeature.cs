@@ -49,6 +49,9 @@ namespace DT_Tools.Features.System
             string lang,
             Action<bool> onComplete)
         {
+            if (!FeatureGate.Enabled(typeof(LobbyMaxPlayersFeature)))
+                return true;
+
             var t = Traverse.Create(__instance);
 
             t.Field("_pendingRoomCode").SetValue(roomCode);

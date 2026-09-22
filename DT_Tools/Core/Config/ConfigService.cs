@@ -381,7 +381,7 @@ namespace DT_Tools.Core
         ///   options : [{value,label}]  —— 下拉（label 给人看，value 写回配置）
         ///   values  : [string]         —— options 的纯值列表（兼容旧前端）
         ///   min/max : 数值范围
-        /// 来源优先级：OptionProviders（动态） &gt; 枚举 &gt; AcceptableValueList。
+        /// 来源优先级：OptionProviders（动态） > 枚举 > AcceptableValueList。
         /// </summary>
         private static object ExtractAccepts(ConfigDefinition def, ConfigEntryBase entry)
         {

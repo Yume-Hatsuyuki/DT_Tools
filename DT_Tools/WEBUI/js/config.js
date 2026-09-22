@@ -95,12 +95,26 @@
 
   function control(section, e) {
     const ctl = U.buildEntryControl(e, (v) => update(section, e.key, v, e));
-    // 仅 CONFIG 页特有：Enabled 需重启才生效的提示
-    if (e.key === 'Enabled' && (e.type || '').toLowerCase() === 'boolean') {
-      const tip = document.createElement('div');
-      tip.className = 'bool-tip';
-      tip.textContent = '改 Enabled 后需保存并重启才能装卸补丁';
-      ctl.appendChild(tip);
+    if (section === 'CustomRoomName' && e.key === 'RoomName') {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.gap = '8px';
+      row.style.alignItems = 'center';
+      row.style.flexWrap = 'wrap';
+      row.style.marginTop = '6px';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn secondary';
+      btn.textContent = '应用到当前房间';
+      btn.title = '将 RoomName 写入 Steam Lobby（需房主且已在房间内）';
+      btn.onclick = () => {
+        let v = e.value;
+        const input = ctl.querySelector('input, textarea');
+        if (input) v = input.value;
+        update(section, e.key, v, e);
+      };
+      row.appendChild(btn);
+      ctl.appendChild(row);
     }
     return ctl;
   }
@@ -175,7 +189,6 @@
     input.click();
   }
 
-  document.getElementById('cfg-refresh').onclick = () => load();
   document.getElementById('cfg-save').onclick = save;
   document.getElementById('cfg-export-cfg').onclick = () => download('/api/config/export.cfg', 'DT_Tools.cfg');
   document.getElementById('cfg-import-mem').onclick = () => importFile('memory');
@@ -183,5 +196,62 @@
   document.getElementById('cfg-reset-all').onclick = resetAll;
   searchEl.addEventListener('input', () => { filter = searchEl.value; render(); });
 
-  window.DTConfig = { load, setDirty, setActive: (on) => { if (on) load(); } };
+  let autoRefresh = true;
+  let panelActive = false;
+  let panelTimer = null;
+  const autoBtn = document.getElementById('cfg-autorefresh');
+
+  function syncAutoBtn() {
+    if (!autoBtn) return;
+    autoBtn.textContent = autoRefresh ? '自动刷新:开' : '自动刷新:关';
+    autoBtn.title = autoRefresh ? '点击关闭面板自动刷新' : '点击开启面板自动刷新';
+  }
+  syncAutoBtn();
+
+  function isEditingInPanel() {
+    const ae = document.activeElement;
+    if (!ae || !listEl.contains(ae)) return false;
+    const tag = (ae.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'select' || tag === 'textarea';
+  }
+
+  function stopPanelPoll() {
+    if (panelTimer) {
+      clearInterval(panelTimer);
+      panelTimer = null;
+    }
+  }
+
+  function startPanelPoll() {
+    stopPanelPoll();
+    if (!panelActive || !autoRefresh) return;
+    panelTimer = setInterval(() => {
+      if (!panelActive || !autoRefresh) return;
+      if (isEditingInPanel()) return;
+      load();
+    }, 3000);
+  }
+
+  if (autoBtn) {
+    autoBtn.onclick = () => {
+      autoRefresh = !autoRefresh;
+      syncAutoBtn();
+      if (autoRefresh) {
+        load();
+        startPanelPoll();
+      } else stopPanelPoll();
+    };
+  }
+
+  window.DTConfig = {
+    load,
+    setDirty,
+    setActive: (on) => {
+      panelActive = !!on;
+      if (panelActive) {
+        load();
+        startPanelPoll();
+      } else stopPanelPoll();
+    }
+  };
 })();
