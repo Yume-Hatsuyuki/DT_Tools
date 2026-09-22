@@ -25,6 +25,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(GameManagerEX __instance, ref float castingTime, Action callback)
         {
+            if (!FeatureGate.Enabled(typeof(ScanTimeFeature)))
+                return true;
+
             if (__instance.ScanningSlider != null)
                 return false;
 

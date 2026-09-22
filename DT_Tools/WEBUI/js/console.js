@@ -174,6 +174,12 @@
     }
   }
 
+
+  // 失焦收起命令栏（点日志区看日志时不挡视线；建议项用 mousedown+preventDefault 避免抢焦点）
+  inp.addEventListener('blur', () => {
+    hideSuggest();
+  });
+
   inp.addEventListener('keydown', e => {
     if (sugEl.classList.contains('open') && matches.length) {
       if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = (selIdx + 1) % matches.length; renderSuggest(); return; }

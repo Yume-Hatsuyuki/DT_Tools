@@ -1,6 +1,7 @@
 using global::System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using DT_Tools.Core;
 
 namespace DT_Tools.Features.Shop
 {
@@ -20,6 +21,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPostfix]
         private static void PostfixSetIsInit(ResourceManager __instance, bool value)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             if (!value)
                 return;
             try

@@ -19,6 +19,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(VoiceManager __instance, int playerId, string message, bool isDeadByHost)
         {
+            if (!FeatureGate.Enabled(typeof(GhostWhisperFeature)))
+                return true;
+
             Player player = Managers.Player?.GetPlayerCache(playerId);
             var item = new VoiceManager.ChatPayload
             {

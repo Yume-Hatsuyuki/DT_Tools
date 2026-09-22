@@ -9,6 +9,7 @@ using Server.Game;
 using Steamworks;
 using UnityEngine;
 using GamePlayer = Server.Game.Player;
+using DT_Tools.Core;
 
 namespace DT_Tools.Features.System
 {
@@ -19,6 +20,9 @@ namespace DT_Tools.Features.System
         [HarmonyPrefix]
         private static bool PrefixHandleEnterPlayer(GameRoom __instance, HostPeerSession session, C_ENTER_GAME pkt)
         {
+            if (!FeatureGate.Enabled(typeof(LobbyMaxPlayersFeature)))
+                return true;
+
             // 0.1.14b：已绑定非 Dummy 的重复 C_ENTER_GAME 忽略。
             if (session.Player != null && !session.Player.IsDummy)
             {

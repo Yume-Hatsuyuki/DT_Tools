@@ -23,6 +23,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static void Prefix(ref float deltaSpeed)
         {
+            if (!FeatureGate.Enabled(typeof(LobbySpeedFeature)))
+                return;
+
             if (Managers.Game.State == EGameState.Lobby)
                 deltaSpeed = LobbyDeltaSpeed.Value;
         }

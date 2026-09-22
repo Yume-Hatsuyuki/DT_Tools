@@ -24,6 +24,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixLoadAllArea(S_INIT_MAP pkt)
         {
+            if (!FeatureGate.Enabled(typeof(CanShowLieFeature)))
+                return;
+
             if (pkt?.AreaInfos != null && pkt.AreaInfos.Count > 0)
                 _areaCache = new List<AreaInitInfo>(pkt.AreaInfos);
         }
@@ -32,6 +35,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool PrefixCanShowLie(ref bool __result)
         {
+            if (!FeatureGate.Enabled(typeof(CanShowLieFeature)))
+                return true;
+
             UI_TrialEvent trial = (Managers.UI.SceneUI as UI_GameScene)?.TrialUI;
             if (Managers.Game.State == EGameState.Trial
                 && (trial == null || trial.State == ETrialState.Discuss)
@@ -48,6 +54,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool PrefixIsMyPlayerBlack(ref bool __result)
         {
+            if (!FeatureGate.Enabled(typeof(CanShowLieFeature)))
+                return true;
+
             __result = Managers.Player.MyPlayer != null;
             return false;
         }
@@ -56,6 +65,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static void PrefixBuildLieSection()
         {
+            if (!FeatureGate.Enabled(typeof(CanShowLieFeature)))
+                return;
+
             if (Managers.Player.MyPlayer == null || Managers.Clue.RoomObjectDict.Count != 0)
                 return;
             if (_areaCache == null || _areaCache.Count == 0)

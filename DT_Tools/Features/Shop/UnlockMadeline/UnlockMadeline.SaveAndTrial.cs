@@ -2,6 +2,7 @@ using global::System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
+using DT_Tools.Core;
 
 namespace DT_Tools.Features.Shop
 {
@@ -11,6 +12,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPostfix]
         private static void PostfixEnsureCharacterStats(SaveManager __instance)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
             if (data?.Stats?.CharacterPlayCounts == null)
                 return;
@@ -25,6 +29,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static void PrefixRecordGamePlayed(SaveManager __instance, int characterId)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             if (characterId != 101)
                 return;
             var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
@@ -38,6 +45,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static void PrefixRefreshProfile()
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             var field = AccessTools.Field(typeof(UI_InfomationPopup), "STANDING_POS_LIST");
             if (field == null)
                 return;
@@ -60,6 +70,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPostfix]
         private static void PostfixShowCutscene(UI_TrialEvent __instance, string characterName)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             if (characterName != "Madeline" && characterName != "Medelin")
                 return;
 

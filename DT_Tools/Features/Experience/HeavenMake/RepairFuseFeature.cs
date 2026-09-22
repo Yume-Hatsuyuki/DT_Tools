@@ -26,6 +26,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(Fusebox __instance, int index)
         {
+            if (!FeatureGate.Enabled(typeof(RepairFuseFeature)))
+                return true;
+
             if (__instance.Info?.StateList == null ||
                 __instance.Info.StateList.Count == 0 ||
                 __instance.Info.StateList[0] != 9999)

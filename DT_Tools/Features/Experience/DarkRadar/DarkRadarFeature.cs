@@ -36,7 +36,8 @@ namespace DT_Tools.Features.Experience
         section: "DarkRadar",
         description: "黑幕情报共享：白方/持刀者在平板地图上也能看到凶器刷新位置和可破坏电闸标记（原版仅黑幕 Dark 可见）。",
         defaultEnabled: false,
-        side: FeatureSide.Client)]
+        side: FeatureSide.Client,
+        author: "梦初雪")]
     internal static class DarkRadarFeature
     {
         private const float CheckInterval = 2f;
@@ -46,10 +47,24 @@ namespace DT_Tools.Features.Experience
         private static readonly HashSet<Vector2> _myFuseboxPins = new HashSet<Vector2>();
         private static float _nextCheck;
 
+        public static void OnDisabled()
+        {
+            ClearAllMyPins();
+            _nextCheck = 0f;
+        }
+
+        public static void OnEnabled()
+        {
+            _nextCheck = 0f;
+        }
+
         [HarmonyPatch(typeof(UI_GameTablet), "LateUpdate")]
         [HarmonyPostfix]
         private static void PostfixTabletLateUpdate()
         {
+            if (!FeatureGate.Enabled(typeof(DarkRadarFeature)))
+                return;
+
             if (Time.time < _nextCheck)
                 return;
             _nextCheck = Time.time + CheckInterval;

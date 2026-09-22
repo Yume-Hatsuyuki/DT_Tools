@@ -85,7 +85,7 @@ namespace DT_Tools.Console.Commands.Fusebox
         }
 
         /// <summary>
-        /// 收集已武装且完好的电闸（MissionType==-1 &&amp; StateList[0]==0），可用于拆电。
+        /// 收集已武装且完好的电闸（MissionType==-1 && StateList[0]==0），可用于拆电。
         /// 开局 StartFuseboxSabotage 随机武装 3 个；第 2 个被拉断后 ClearFuseboxSabotage
         /// 会解除剩余电闸的武装（MissionType 置 0）。
         /// </summary>

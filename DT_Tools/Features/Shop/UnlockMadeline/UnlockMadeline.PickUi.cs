@@ -5,6 +5,7 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using DT_Tools.Core;
 
 namespace DT_Tools.Features.Shop
 {
@@ -17,6 +18,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static bool PrefixRebuildPickList(UI_PickPopup __instance)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return true;
+
             var listField = Traverse.Create(__instance).Field<List<UI_PickSubItem>>("_list");
             List<UI_PickSubItem> list = listField.Value;
 
@@ -59,6 +63,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPostfix]
         private static void PostfixSetMainInfo(UI_PickPopup __instance, int characterId)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             if (characterId != 101)
                 return;
 
@@ -72,6 +79,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPostfix]
         private static void PostfixSetStanding(UI_PickPopup __instance, int characterId, bool animate)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockMadelineFeature)))
+                return;
+
             if (characterId != 101)
                 return;
 

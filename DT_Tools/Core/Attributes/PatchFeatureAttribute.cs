@@ -4,7 +4,8 @@ namespace DT_Tools.Core
 {
     /// <summary>
     /// 标记一个功能补丁类。
-    /// PatchLoader 扫描此特性：生成 [Section].Enabled，并按 DefaultEnabled 决定是否 Harmony.PatchAll。
+    /// PatchLoader 扫描此特性：生成 [Section].Enabled，并尝试 Harmony.PatchAll（失败则隔离该功能）。
+    /// Enabled 为运行时开关：补丁内通过 FeatureGate 门闩，局内修改立即生效，无需重启。
     /// 同段子项用 <see cref="ConfigFieldAttribute"/> 声明，由 ConfigBinder 自动 Bind。
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]

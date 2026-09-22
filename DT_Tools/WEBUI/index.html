@@ -10,6 +10,7 @@
 <div id="toolbar">
   <button class="tab active" data-tab="console">DT CONSOLE</button>
   <button class="tab" data-tab="config">DT CONFIG</button>
+  <button class="tab" data-tab="automation">AUTOMATION</button>
   <div id="steam-players" title="Steam 全球当前在线玩家数（每分钟刷新）">
     <span class="pulse"></span><span class="pl-label">当前有</span><span id="steam-players-count">--</span><span class="pl-label">名玩家正在游玩《Deadly Trick》</span>
   </div>
@@ -21,23 +22,52 @@
   <div id="bar-wrap">
     <div id="suggest"></div>
     <div id="bar">
-      <input id="input" placeholder="输入 / 查看命令，上下键选择，Enter 执行" autocomplete="off" spellcheck="false">
+      <input id="input" placeholder="输入 /help 查看帮助，上下键选择，Enter 执行" autocomplete="off" spellcheck="false">
       <button id="send">发送</button>
     </div>
   </div>
 </div>
 
 <div id="panel-config" class="panel">
-  <div id="cfg-toolbar">
-    <span id="cfg-dirty" class="dirty" style="display:none">● 未保存</span>
-    <input id="cfg-search" type="search" placeholder="搜索 Section / 键…">
-    <button class="btn" id="cfg-save">保存到 .cfg</button>
-    <button class="btn secondary" id="cfg-export-cfg">导出 .cfg</button>
-    <button class="btn secondary" id="cfg-import-mem">仅导入参数</button>
-    <button class="btn secondary" id="cfg-import-over">覆盖配置</button>
-    <button class="btn danger" id="cfg-reset-all">全部恢复默认</button>
+  <div class="panel-toolbar" id="cfg-toolbar">
+    <div class="toolbar-left">
+      <span id="cfg-dirty" class="dirty" style="display:none">● 未保存</span>
+      <span class="panel-note">仅补丁 / 系统配置 · 自动化请到 AUTOMATION</span>
+    </div>
+    <div class="toolbar-actions">
+      <input id="cfg-search" class="panel-search" type="search" placeholder="搜索 Section / 键…">
+      <button class="btn secondary" id="cfg-autorefresh" title="点击开关面板自动刷新">自动刷新:开</button>
+      <button class="btn" id="cfg-save">保存到 .cfg</button>
+      <button class="btn secondary" id="cfg-export-cfg">导出 .cfg</button>
+      <button class="btn secondary" id="cfg-import-mem">仅导入参数</button>
+      <button class="btn secondary" id="cfg-import-over">覆盖配置</button>
+      <button class="btn danger" id="cfg-reset-all">全部恢复默认</button>
+    </div>
   </div>
-  <div id="cfg-list"></div>
+  <div class="panel-list" id="cfg-list"></div>
+</div>
+
+<div id="panel-automation" class="panel">
+  <div class="panel-toolbar" id="auto-toolbar">
+    <div class="toolbar-left">
+      <span id="auto-dirty" class="dirty" style="display:none">● 未保存</span>
+      <label class="host-toggle" title="[Automation] Enabled">
+        <input type="checkbox" id="auto-host-enabled">
+        <span>总开关</span>
+      </label>
+      <span id="auto-host-hint" class="panel-note">总开关关闭时所有模块待机</span>
+    </div>
+    <div class="toolbar-actions">
+      <input id="auto-search" class="panel-search" type="search" placeholder="搜索模块 / 键…">
+      <button class="btn secondary" id="auto-autorefresh" title="点击开关面板自动刷新">自动刷新:开</button>
+      <button class="btn" id="auto-save">保存到 .cfg</button>
+      <button class="btn secondary" id="auto-export-cfg">导出 .cfg</button>
+      <button class="btn secondary" id="auto-import-mem">仅导入参数</button>
+      <button class="btn secondary" id="auto-import-over">覆盖配置</button>
+      <button class="btn danger" id="auto-reset-all">全部恢复默认</button>
+    </div>
+  </div>
+  <div class="panel-list" id="auto-list"></div>
 </div>
 
 <div id="toast"></div>
@@ -50,11 +80,16 @@ document.querySelectorAll('.tab').forEach(btn => {
     btn.classList.add('active');
     const id = 'panel-' + btn.dataset.tab;
     document.getElementById(id).classList.add('active');
-    if (btn.dataset.tab === 'config' && window.DTConfig) window.DTConfig.load();
+    if (window.DTConfig && window.DTConfig.setActive)
+      window.DTConfig.setActive(btn.dataset.tab === 'config');
+    if (window.DTAutomation && window.DTAutomation.setActive)
+      window.DTAutomation.setActive(btn.dataset.tab === 'automation');
   });
 });
 </script>
+<script src="/js/ui-common.js"></script>
 <script src="/js/console.js"></script>
 <script src="/js/config.js"></script>
+<script src="/js/automation.js"></script>
 </body>
 </html>

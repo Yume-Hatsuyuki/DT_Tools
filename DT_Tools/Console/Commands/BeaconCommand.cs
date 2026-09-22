@@ -10,7 +10,7 @@ using UnityEngine;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /beacon [x y | spawn &lt;#i&gt; | player &lt;#id&gt; | lobby | error]
+    /// /beacon [x y | spawn <#i> | player <#id> | lobby | error]
     ///
     /// 战略信标：掉皮掉肉不掉队！瞬移到指定坐标（跟随控制台 / 客户端）。
     ///

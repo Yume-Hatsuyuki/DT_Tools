@@ -20,6 +20,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static bool PrefixIsCharacterOwned(int dataId, ref bool __result)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockCharactersFeature)))
+                return true;
+
             if (dataId == 101)
                 return true;
 
@@ -32,6 +35,9 @@ namespace DT_Tools.Features.Shop
         [HarmonyPrefix]
         private static bool PrefixOwnedCharacterIds(ref IReadOnlyList<int> __result)
         {
+            if (!FeatureGate.Enabled(typeof(UnlockCharactersFeature)))
+                return true;
+
             var list = new List<int>(Define.DEFAULT_OWNED_CHARACTER_IDS);
             foreach (int id in Define.SHOP_CHARACTER_IDS)
                 list.Add(id);

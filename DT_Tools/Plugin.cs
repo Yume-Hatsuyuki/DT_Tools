@@ -1,6 +1,7 @@
 using System.IO;
 using BepInEx;
 using HarmonyLib;
+using DT_Tools.Automation;
 using DT_Tools.Console;
 using DT_Tools.Core;
 
@@ -28,12 +29,18 @@ namespace DT_Tools
                 Logger,
                 extraSections: new[]
                 {
-                    (WebConsoleSection, (System.Action)BindWebConsoleSection)
+                    (WebConsoleSection, (System.Action)BindWebConsoleSection),
+                    (AutomationHost.Section, (System.Action)BindAutomationSection),
                 });
 
             // 关闭自动保存后，首次运行需主动落盘生成 .cfg
             if (!File.Exists(Config.ConfigFilePath))
                 Config.Save();
+
+            // 自动化主线程 Tick（与 WebConsole 无关，始终挂载）
+            var autoGo = new UnityEngine.GameObject("DT_Automation");
+            UnityEngine.Object.DontDestroyOnLoad(autoGo);
+            autoGo.AddComponent<AutomationRunner>();
 
             if (WebConsole.CfgEnabled != null && WebConsole.CfgEnabled.Value)
             {
@@ -49,15 +56,14 @@ namespace DT_Tools
             if (result.FailedCount > 0)
             {
                 Logger.LogWarning(
-                    $"{PluginInfo.PLUGIN_GUID} 加载完成：成功 {result.EnabledCount}，" +
-                    $"跳过 {result.SkippedCount}，失败 {result.FailedCount}。" +
-                    "失败的功能已跳过，其余不受影响；请检查上方错误日志。");
+                    $"{PluginInfo.PLUGIN_GUID} 加载完成：挂载成功 {result.MountedCount}，" +
+                    $"失败 {result.FailedCount}。" +
+                    "失败的功能已跳过，其余不受影响；各功能 Enabled 可在局内热切换。");
             }
             else
             {
                 Logger.LogInfo(
-                    $"{PluginInfo.PLUGIN_GUID} 加载完成：已启用 {result.EnabledCount} 个功能" +
-                    $"（跳过 {result.SkippedCount}）。");
+                    $"{PluginInfo.PLUGIN_GUID} 加载完成：已挂载 {result.MountedCount} 个功能（Enabled 支持局内热切换）。");
             }
         }
 
@@ -67,7 +73,7 @@ namespace DT_Tools
                 WebConsoleSection,
                 "Enabled",
                 true,
-                "是否启用控制台 WebUI。");
+                "Author: 梦初雪\n"+"是否启用控制台 WebUI。");
 
             WebConsole.CfgPort = Config.Bind(
                 WebConsoleSection,
@@ -80,6 +86,11 @@ namespace DT_Tools
                 "Password",
                 "",
                 "访问密码。留空则不需要密码。");
+        }
+
+        private void BindAutomationSection()
+        {
+            AutomationHost.BindAndInit(Config, Logger);
         }
     }
 }

@@ -7,14 +7,14 @@ using Server.Game;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /luna_protect &lt;all|#playerId&gt;
+    /// /luna_protect <all|#playerId>
     ///
     /// 让指定玩家（或全体存活玩家）不可被 Black 直接杀害，即套用 Luna 的
     /// Catastrophe 护盾效果（仅房主、仅生存阶段、目标须存活）。
     ///
     /// 目标:
     ///   all           全体存活、非观战玩家（逐人广播）
-    ///   #&lt;playerId&gt;  指定玩家数字 ID
+    ///   #<playerId>  指定玩家数字 ID
     ///
     /// 实现原理：Luna 护盾不是 BUFF，而是客户端 MyPlayer.HasLunaShield 判定：
     /// 亮灯时，Luna 本人或客户端 LunaAbilityIds 名单内的玩家，

@@ -6,7 +6,7 @@ using Server.Game;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /kick #&lt;playerId&gt;
+    /// /kick #<playerId>
     ///
     /// 将指定玩家踢出当前房间（仅 Lobby 状态有效）。
     /// 内部直接调用 GameRoom.KickPlayer，与游戏内房主踢人按钮走同一套逻辑：

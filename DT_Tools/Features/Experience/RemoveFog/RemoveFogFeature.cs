@@ -18,6 +18,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix()
         {
+            if (!FeatureGate.Enabled(typeof(RemoveFogFeature)))
+                return true;
+
             Managers.Map.SetRoomShadowCasters(false);
             return false;
         }

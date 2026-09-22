@@ -6,7 +6,7 @@ using Server.Game;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /say &lt;all|#id&gt; &lt;text&gt;
+    /// /say <all|#id> <text>
     ///
     /// 给指定玩家或所有玩家发送文字（房主）。绕过原版聊天校验与冷却，直接向目标客户端
     /// 下发 S_CHAT_MESSAGE，复用游戏自带的文字显示链路。通道按当前阶段自动选择——
@@ -20,7 +20,7 @@ namespace DT_Tools.Console.Commands
     /// 【目标】
     ///   all          所有玩家（生存阶段 = 所有存活真人，对齐 Replicator.AliveReal；
     ///                大厅/裁判 = 房间全员，对齐原版 RelayNormalChat 的 Broadcast）——全员可见
-    ///   #&lt;playerId&gt;  仅该玩家可见（真·私密：直接单发目标 Session，其他黑/暗、白方、
+    ///   #<playerId>  仅该玩家可见（真·私密：直接单发目标 Session，其他黑/暗、白方、
     ///                房主本人均收不到；也不记录进 SecretChatLog，不会被重连/迁移重放）
     ///
     /// 【示例】
@@ -33,7 +33,7 @@ namespace DT_Tools.Console.Commands
     ///     效果等同“系统发言”（原版 DeviceChat/SecretChat 的 PlayerId 也是 0）。
     ///   - 文本经 GameRoom.SanitizeChat 过滤（去富文本、截断 100 字），与游戏聊天一致。
     ///   - 生存阶段的 Time 取 TimeManager.Instance.SurviveTime，避免被
-    ///     UI_SecretChatOverlay 按“过期消息”（&lt; SurvivalTime-3）丢弃。
+    ///     UI_SecretChatOverlay 按“过期消息”（< SurvivalTime-3）丢弃。
     ///   - 发送对象含房主本人（房主 Session 回环到本地客户端，可看到自己发的消息）。
     /// </summary>
     internal sealed class SayCommand : IConsoleCommand

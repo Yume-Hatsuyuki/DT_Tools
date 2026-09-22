@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using BepInEx.Configuration;
@@ -13,10 +12,6 @@ namespace DT_Tools.Core
     /// </summary>
     internal static class ConfigBinder
     {
-        /// <summary>
-        /// 为指定功能类型绑定所有 [ConfigField] 字段到同一 Section。
-        /// 调用前该 Section 的 Enabled 应已 Bind（由 PatchLoader 保证）。
-        /// </summary>
         public static void BindFields(ConfigFile config, Type featureType, string section)
         {
             if (config == null) throw new ArgumentNullException(nameof(config));
@@ -26,7 +21,7 @@ namespace DT_Tools.Core
             var fields = featureType
                 .GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                 .Where(f => f.IsStatic && Attribute.IsDefined(f, typeof(ConfigFieldAttribute)))
-                .OrderBy(f => f.MetadataToken); // 源码声明顺序，稳定
+                .OrderBy(f => f.MetadataToken);
 
             foreach (var field in fields)
             {
@@ -46,7 +41,6 @@ namespace DT_Tools.Core
                 object defaultValue = CoerceDefault(attr.Default, valueType);
                 var description = BuildDescription(attr, valueType);
 
-                // ConfigFile.Bind<T>(section, key, default, description)
                 var bindMethod = typeof(ConfigFile)
                     .GetMethods(BindingFlags.Public | BindingFlags.Instance)
                     .First(m =>
@@ -80,11 +74,14 @@ namespace DT_Tools.Core
             if (targetType.IsInstanceOfType(value))
                 return value;
 
-            // Attribute 里常写 0.3f / 1 / true；统一转换
             try
             {
                 if (targetType.IsEnum)
+                {
+                    if (value is string s)
+                        return Enum.Parse(targetType, s, ignoreCase: true);
                     return Enum.ToObject(targetType, value);
+                }
 
                 return Convert.ChangeType(value, targetType);
             }
@@ -99,9 +96,13 @@ namespace DT_Tools.Core
         {
             AcceptableValueBase acceptable = null;
 
+            // 注意：不要对枚举使用 AcceptableValueList<T>。
+            // BepInEx 的 AcceptableValueList<T> 约束 T : IEquatable<T>，
+            // Unity/Mono 上对 enum 做 MakeGenericType 会抛 Invalid generic arguments。
+            // 枚举选项改由 ConfigService 在导出 API 时用 Enum.GetNames 填充 Accepts。
+
             if (attr.HasMin || attr.HasMax)
             {
-                // 仅对 float/double/int 等常见数值建 Range；其余忽略 Min/Max
                 if (valueType == typeof(float))
                 {
                     float min = attr.HasMin ? attr.Min : float.MinValue;

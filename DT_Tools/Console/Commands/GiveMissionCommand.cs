@@ -14,7 +14,7 @@ using Server.Game;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /givemission &lt;任务类型&gt;
+    /// /givemission <任务类型>
     ///
     /// 给所有玩家派发特定任务。仅房主、且游戏处于生存阶段（Survive）时可用。
     ///

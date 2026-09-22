@@ -8,7 +8,7 @@ using Server.Game;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /kill &lt;all|#playerId&gt;
+    /// /kill <all|#playerId>
     ///
     /// 对指定/全体存活玩家执行颈环炸弹处决（仅房主、仅 Survive/Detective/Trial 阶段）。
     ///

@@ -7,17 +7,7 @@ using Steamworks;
 namespace DT_Tools.Console.Commands
 {
     /// <summary>
-    /// /players
-    ///
-    /// 列出当前房间内所有玩家的 PlayerId / SteamId / 昵称，并标注自己与房主。
-    ///
-    /// 数据来源:
-    ///   - 玩家列表:   Managers.Player.GetAllPlayers()
-    ///   - SteamId:    Managers.Player.GetRosterSteamId(playerId)
-    ///   - 房主判定:   本机为 Host 时 → GameRoom.Instance.Host
-    ///                 否则 → Lobby.HostSteamId 与 roster SteamId 对齐
-    ///
-    /// 纯读操作，不需要房主权限。
+    /// /list_players — 列出房间内玩家；同时 SetResult JSON。
     /// </summary>
     internal sealed class ListPlayersCommand : IConsoleCommand
     {
@@ -27,7 +17,6 @@ namespace DT_Tools.Console.Commands
         public string   Description => "列出所有玩家的 PlayerId / SteamId / 昵称，并标注房主。";
         public string   Author      => "梦初雪";
 
-        
         public bool RequireHost => false;
 
         public void Execute(string[] args, WebConsole console)
@@ -35,6 +24,7 @@ namespace DT_Tools.Console.Commands
             if (Managers.Player == null)
             {
                 console.Log("玩家管理器尚未初始化（可能还未进入房间）。", LogLevel.Warning);
+                console.SetResult("{\"ok\":false,\"error\":\"player manager not ready\",\"count\":0,\"players\":[]}");
                 return;
             }
 
@@ -42,13 +32,13 @@ namespace DT_Tools.Console.Commands
             if (players == null || players.Count == 0)
             {
                 console.Log("当前没有已知玩家。", LogLevel.Warning);
+                console.SetResult("{\"ok\":true,\"count\":0,\"hostId\":0,\"myId\":0,\"players\":[]}");
                 return;
             }
 
             int hostId = ResolveHostPlayerId();
             int myId   = Managers.Player.MyPlayerID;
 
-            // 按 PlayerId 升序，避免 roster 迭代顺序乱跳
             var ordered = players
                 .Where(p => p?.PublicInfo != null)
                 .OrderBy(p => p.PublicInfo.PlayerId)
@@ -56,6 +46,13 @@ namespace DT_Tools.Console.Commands
 
             var sb = new StringBuilder();
             sb.AppendLine("━━━ 玩家列表 ━━━");
+
+            var json = new StringBuilder();
+            json.Append("{\"ok\":true");
+            json.Append(",\"count\":").Append(ordered.Count);
+            json.Append(",\"hostId\":").Append(hostId);
+            json.Append(",\"myId\":").Append(myId);
+            json.Append(",\"players\":[");
 
             int count = 0;
             foreach (var player in ordered)
@@ -65,15 +62,25 @@ namespace DT_Tools.Console.Commands
                 string name    = player.Name ?? "(未命名)";
                 string steamStr = steamId != 0 ? steamId.ToString() : "未知";
 
+                bool isHost = pid == hostId;
+                bool isSelf = pid == myId;
+
                 string tag = "";
-                if (pid == hostId && pid == myId)
-                    tag = "  ← 房主·你";
-                else if (pid == hostId)
-                    tag = "  ← 房主";
-                else if (pid == myId)
-                    tag = "  ← 你";
+                if (isHost && isSelf) tag = "  ← 房主·你";
+                else if (isHost)      tag = "  ← 房主";
+                else if (isSelf)      tag = "  ← 你";
 
                 sb.AppendLine($"  #{pid,-4} {name,-16} steam_id={steamStr}{tag}");
+
+                if (count > 0) json.Append(',');
+                json.Append('{');
+                json.Append("\"playerId\":").Append(pid).Append(',');
+                json.Append("\"name\":").Append(JsonStr(name)).Append(',');
+                json.Append("\"steamId\":").Append(JsonStr(steamId != 0 ? steamId.ToString() : "")).Append(',');
+                json.Append("\"isHost\":").Append(isHost ? "true" : "false").Append(',');
+                json.Append("\"isSelf\":").Append(isSelf ? "true" : "false");
+                json.Append('}');
+
                 count++;
             }
 
@@ -81,15 +88,14 @@ namespace DT_Tools.Console.Commands
                 sb.AppendLine("（未能识别房主）");
 
             sb.Append($"共 {count} 名玩家");
+            json.Append("]}");
+
             console.Log(sb.ToString(), LogLevel.Info);
+            console.SetResult(json.ToString());
         }
 
-        /// <summary>
-        /// 优先用权威 Host 对象；客户端则用 Lobby.HostSteamId 对齐 roster。
-        /// </summary>
         private static int ResolveHostPlayerId()
         {
-            // 本机是 Host：GameRoom 上的 Host 最准
             if (Managers.Host != null && Managers.Host.IsHost)
             {
                 var host = GameRoom.Instance?.Host;
@@ -97,7 +103,6 @@ namespace DT_Tools.Console.Commands
                     return host.PublicInfo.PlayerId;
             }
 
-            // 客户端：用 Steam Lobby Owner 对齐 roster
             var lobby = Managers.Network?.Lobby;
             if (lobby == null || !lobby.InLobby || lobby.HostSteamId == CSteamID.Nil)
                 return 0;
@@ -119,6 +124,29 @@ namespace DT_Tools.Console.Commands
             }
 
             return 0;
+        }
+
+        private static string JsonStr(string s)
+        {
+            if (s == null) return "\"\"";
+            var sb = new StringBuilder("\"");
+            foreach (char c in s)
+            {
+                switch (c)
+                {
+                    case '\\': sb.Append("\\\\"); break;
+                    case '"':  sb.Append("\\\""); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
+                    default:
+                        if (c < 32) sb.AppendFormat("\\u{0:x4}", (int)c);
+                        else sb.Append(c);
+                        break;
+                }
+            }
+            sb.Append('"');
+            return sb.ToString();
         }
     }
 }

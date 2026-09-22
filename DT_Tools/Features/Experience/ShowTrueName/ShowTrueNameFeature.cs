@@ -24,6 +24,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixChangeMyPlayer(int playerId)
         {
+            if (!FeatureGate.Enabled(typeof(ShowTrueNameFeature)))
+                return;
+
             Player my = Managers.Player.MyPlayer;
             if (my?.NameTag == null || playerId != my.PublicInfo.PlayerId)
                 return;
@@ -37,6 +40,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPostfix]
         private static void PostfixDead()
         {
+            if (!FeatureGate.Enabled(typeof(ShowTrueNameFeature)))
+                return;
+
             if (!ShowWhileDead.Value)
                 return;
             Player my = Managers.Player.MyPlayer;

@@ -37,6 +37,9 @@ namespace DT_Tools.Features.Experience
         [HarmonyPrefix]
         private static bool Prefix(MyPlayer __instance)
         {
+            if (!FeatureGate.Enabled(typeof(SurviveSpeedFeature)))
+                return true;
+
             Traverse.Create(__instance).Method("UpdateMovePacket").GetValue();
 
             if (__instance.Controller != null)
