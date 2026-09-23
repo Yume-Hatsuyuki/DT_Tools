@@ -162,5 +162,6 @@ WEBUI/             前端静态资源
 ---
 
 ## MOD 制作交流群：1121341127
+内含免费教程，群U都是好人。
 
-![qrcode_1790070026689](images/qrcode_1790070026689.jpg)
+<img src="images/qrcode_1790070026689.jpg" width="250">
