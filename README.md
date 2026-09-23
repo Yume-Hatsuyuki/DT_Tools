@@ -158,3 +158,9 @@ WEBUI/             前端静态资源
 ```
 
 新增功能：在 `Features/<Domain>/` 增加带 `[PatchFeature]` / `[ConfigField]` 的类型即可，无需改注册表。
+
+---
+
+## MOD 制作交流群：1121341127
+
+![qrcode_1790070026689](images/qrcode_1790070026689.jpg)
