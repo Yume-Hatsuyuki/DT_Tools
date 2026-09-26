@@ -4,13 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DT Tools</title>
-<link rel="stylesheet" href="/css/app.css">
+<link rel="icon" type="image/png" href="/favicon/favicon-96x96.png?v=20260926" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg?v=20260926" />
+<link rel="shortcut icon" href="/favicon/favicon.ico?v=20260926" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=20260926" />
+<meta name="apple-mobile-web-app-title" content="DT_Tools" />
+<link rel="manifest" href="/favicon/site.webmanifest?v=20260926" />
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/pages.css">
 </head>
 <body>
 <div id="toolbar">
-  <button class="tab active" data-tab="console">DT CONSOLE</button>
-  <button class="tab" data-tab="config">DT CONFIG</button>
-  <button class="tab" data-tab="automation">AUTOMATION</button>
+  <button class="tab active" data-view="console">DT CONSOLE</button>
+  <button class="tab" data-view="config">DT CONFIG</button>
+  <button class="tab" data-view="automation">AUTOMATION</button>
   <div id="steam-players" title="Steam 全球当前在线玩家数（每分钟刷新）">
     <span class="pulse"></span><span class="pl-label">当前有</span><span id="steam-players-count">--</span><span class="pl-label">名玩家正在游玩《Deadly Trick》</span>
   </div>
@@ -22,7 +30,7 @@
   <div id="bar-wrap">
     <div id="suggest"></div>
     <div id="bar">
-      <input id="input" placeholder="输入 /help 查看帮助，上下键选择，Enter 执行" autocomplete="off" spellcheck="false">
+      <input id="input" placeholder="输入 / 唤出命令补全，↑↓ 翻历史，Enter 执行" autocomplete="off" spellcheck="false">
       <button id="send">发送</button>
     </div>
   </div>
@@ -32,7 +40,7 @@
   <div class="panel-toolbar" id="cfg-toolbar">
     <div class="toolbar-left">
       <span id="cfg-dirty" class="dirty" style="display:none">● 未保存</span>
-      <span class="panel-note">仅补丁 / 系统配置 · 自动化请到 AUTOMATION</span>
+      <span class="panel-note">功能与基础设施配置 · 自动化模块请到 AUTOMATION</span>
     </div>
     <div class="toolbar-actions">
       <input id="cfg-search" class="panel-search" type="search" placeholder="搜索 Section / 键…">
@@ -72,24 +80,6 @@
 
 <div id="toast"></div>
 
-<script>
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    const id = 'panel-' + btn.dataset.tab;
-    document.getElementById(id).classList.add('active');
-    if (window.DTConfig && window.DTConfig.setActive)
-      window.DTConfig.setActive(btn.dataset.tab === 'config');
-    if (window.DTAutomation && window.DTAutomation.setActive)
-      window.DTAutomation.setActive(btn.dataset.tab === 'automation');
-  });
-});
-</script>
-<script src="/js/ui-common.js"></script>
-<script src="/js/console.js"></script>
-<script src="/js/config.js"></script>
-<script src="/js/automation.js"></script>
+<script type="module" src="/js/main.js"></script>
 </body>
 </html>

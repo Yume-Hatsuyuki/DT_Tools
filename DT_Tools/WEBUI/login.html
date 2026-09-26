@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DT Console · 登录</title>
+<link rel="icon" type="image/png" href="/favicon/favicon-96x96.png?v=20260926" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg?v=20260926" />
+<link rel="shortcut icon" href="/favicon/favicon.ico?v=20260926" />
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png?v=20260926" />
+<meta name="apple-mobile-web-app-title" content="DT_Tools" />
+<link rel="manifest" href="/favicon/site.webmanifest?v=20260926" />
 <style>
   :root {
     --bg: #0c0c0c;
@@ -11,6 +17,7 @@
     --border: #2a2a2a;
     --text: #c8c8c8;
     --text-dim: #666;
+    --red: #ff4d6d;
     --green: #4e9a06;
     --green-bright: #8ae234;
   }
@@ -72,6 +79,15 @@
     border-radius: 4px;
   }
   button:hover { background: var(--green-bright); }
+  /* 内联错误提示（取代 alert） */
+  #err {
+    min-height: 18px;
+    font-size: 12px;
+    color: var(--red);
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: "Cascadia Code", "Consolas", monospace;
+  }
 </style>
 </head>
 <body>
@@ -79,16 +95,35 @@
   <h2>DT CONSOLE</h2>
   <p class="sub">请输入访问密码</p>
   <input type="password" id="p" placeholder="密码" autofocus>
-  <button onclick="login()">登录</button>
+  <div id="err"></div>
+  <button id="btn">登录</button>
 </div>
-<script>
-async function login(){
-  const v = document.getElementById('p').value;
-  const r = await fetch('/login?token='+encodeURIComponent(v),{method:'POST',body:v});
-  if(await r.text()==='ok') location.href='/';
-  else alert('密码错误');
-}
-document.getElementById('p').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
+<script type="module">
+  // 密码只走 body（不进 URL / 浏览器历史）；错误内联展示
+  const err = document.getElementById('err');
+  const input = document.getElementById('p');
+
+  async function login() {
+    const v = input.value;
+    if (!v) { err.textContent = '请输入密码'; return; }
+    document.getElementById('btn').disabled = true;
+    err.textContent = '';
+    try {
+      const r = await fetch('/login', { method: 'POST', body: v });
+      if (r.ok && await r.text() === 'ok') {
+        location.href = '/';
+        return;
+      }
+      err.textContent = r.status === 401 ? '密码错误' : '登录失败（HTTP ' + r.status + '）';
+    } catch {
+      err.textContent = '无法连接服务器';
+    } finally {
+      document.getElementById('btn').disabled = false;
+    }
+  }
+
+  document.getElementById('btn').addEventListener('click', login);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 </script>
 </body>
 </html>

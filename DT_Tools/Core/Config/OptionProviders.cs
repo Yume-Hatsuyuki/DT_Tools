@@ -3,32 +3,17 @@ using System.Collections.Generic;
 
 namespace DT_Tools.Core
 {
-    /// <summary>下拉选项：value 是写回配置的原始值，label 是给人看的文字。</summary>
-    internal readonly struct ConfigOption
-    {
-        public readonly string Value;
-        public readonly string Label;
-
-        public ConfigOption(string value, string label = null)
-        {
-            Value = value ?? "";
-            Label = string.IsNullOrEmpty(label) ? Value : label;
-        }
-    }
-
     /// <summary>
-    /// 动态选项注册表。
+    /// 动态下拉选项注册表。
     ///
-    /// 用法（在模块 BindConfig 里，紧跟 config.Bind 之后）：
-    ///     OptionProviders.Bind(Section, "CharacterId", CharacterCatalog.Options);
+    /// 用法（在功能的 OnLoaded 钩子里）：
+    ///     OptionProviders.Bind(Engine.SectionOf&lt;AutoSpawnPointModule&gt;(), "SpawnIndex", AutoSpawnPointLogic.SpawnOptions);
     ///
-    /// 之后 ConfigService 导出该配置项时，会自动调用提供者并把结果放进 accepts.options，
-    /// 前端只要看到 accepts.options 就渲染下拉——API 层与前端都不再认识任何具体字段名或模块 ID。
-    ///
-    /// 提供者在每次导出时调用（而非缓存），因此地图/角色表晚于插件加载就绪也没问题；
+    /// 配置导出 API 看到提供者就把结果放进 accepts.options，前端据此渲染下拉。
+    /// 提供者在每次导出时调用（不缓存），因此地图/角色表晚于插件加载就绪也没问题；
     /// 数据未就绪时返回空列表即可，前端会自动退回输入框。
     /// </summary>
-    internal static class OptionProviders
+    public static class OptionProviders
     {
         private static readonly Dictionary<(string Section, string Key), Func<IReadOnlyList<ConfigOption>>> Map =
             new Dictionary<(string, string), Func<IReadOnlyList<ConfigOption>>>();
@@ -44,7 +29,7 @@ namespace DT_Tools.Core
 
         /// <summary>
         /// 取选项。未绑定返回 null（区别于"已绑定但当前为空"的空列表，
-        /// 调用方据此决定是否回退到枚举 / AcceptableValues）。
+        /// 调用方据此决定是否回退到枚举 / 数值范围）。
         /// </summary>
         public static IReadOnlyList<ConfigOption> TryGet(string section, string key)
         {
@@ -52,12 +37,13 @@ namespace DT_Tools.Core
                 return null;
             try
             {
-                return provider() ?? System.Array.Empty<ConfigOption>();
+                return provider() ?? Array.Empty<ConfigOption>();
             }
-            catch
+            catch (Exception ex)
             {
-                // 游戏数据未就绪等：视为暂无选项，不能让一个提供者拖垮整个配置列表
-                return System.Array.Empty<ConfigOption>();
+                // 游戏数据未就绪等：视为暂无选项，一个提供者不能拖垮整个配置列表
+                Log.Warn("Core", $"选项提供者 {section}.{key} 失败：{ex.Message}");
+                return Array.Empty<ConfigOption>();
             }
         }
     }

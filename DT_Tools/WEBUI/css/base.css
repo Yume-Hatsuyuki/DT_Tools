@@ -1,0 +1,39 @@
+/* 设计令牌与全局基底（原 app.css 基底段） */
+:root {
+  --bg: #070b12;
+  --bg-panel: rgba(12, 18, 32, 0.82);
+  --bg-input: rgba(8, 14, 26, 0.75);
+  --bg-card: rgba(14, 22, 40, 0.55);
+  --border: rgba(0, 240, 255, 0.14);
+  --border-strong: rgba(0, 240, 255, 0.35);
+  --text: #c8d6e5;
+  --text-dim: #5c6b7e;
+  --cyan: #00f0ff;
+  --cyan-dim: rgba(0, 240, 255, 0.55);
+  --magenta: #ff2d95;
+  --green: #3dff9a;
+  --green-bright: #7dffc0;
+  --amber: #ffc14a;
+  --red: #ff4d6d;
+  --glass: blur(14px) saturate(140%);
+  --radius: 10px;
+  --font-ui: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", "Consolas", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(0, 240, 255, 0.08), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(255, 45, 149, 0.06), transparent 50%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}

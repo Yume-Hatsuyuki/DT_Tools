@@ -4,14 +4,27 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using BepInEx.Configuration;
+using DT_Tools.Core.Attributes;
+using Newtonsoft.Json;
 
 namespace DT_Tools.Core
 {
     /// <summary>
     /// 配置枚举与读写（内存优先；Save / overwrite 才落盘）。
+    /// 导入解析用 Newtonsoft（JToken），禁止手写逐字符扫描。
     /// </summary>
-    internal static class ConfigService
+    public static class ConfigService
     {
+        public sealed class SectionDto
+        {
+            public string Section;
+
+            /// <summary>段落分组："automation"（自动化总开关+各模块，AUTOMATION 页）| "feature"（其余，CONFIG 页）。前端据此分流，不认识任何段名。</summary>
+            public string Group;
+
+            public List<EntryDto> Entries = new List<EntryDto>();
+        }
+
         public sealed class EntryDto
         {
             public string Section;
@@ -23,12 +36,6 @@ namespace DT_Tools.Core
             public object Accepts;
         }
 
-        public sealed class SectionDto
-        {
-            public string Section;
-            public List<EntryDto> Entries = new List<EntryDto>();
-        }
-
         public sealed class ImportResult
         {
             public string Mode;
@@ -37,6 +44,8 @@ namespace DT_Tools.Core
             public List<(string Section, string Key, string Error)> Errors =
                 new List<(string, string, string)>();
         }
+
+        // ---- 枚举 ----
 
         public static List<SectionDto> List(ConfigFile config)
         {
@@ -50,7 +59,7 @@ namespace DT_Tools.Core
 
                 if (!bySection.TryGetValue(def.Section, out var sec))
                 {
-                    sec = new SectionDto { Section = def.Section };
+                    sec = new SectionDto { Section = def.Section, Group = ClassifyGroup(def.Section) };
                     bySection[def.Section] = sec;
                 }
 
@@ -60,7 +69,7 @@ namespace DT_Tools.Core
             foreach (var sec in bySection.Values)
             {
                 sec.Entries = sec.Entries
-                    .OrderBy(e => e.Key == "Enabled" ? 0 : 1)
+                    .OrderBy(e => e.Key == Engine.EnabledKey ? 0 : 1)
                     .ThenBy(e => e.Key, StringComparer.Ordinal)
                     .ToList();
             }
@@ -69,6 +78,27 @@ namespace DT_Tools.Core
                 .OrderBy(s => s.Section, StringComparer.Ordinal)
                 .ToList();
         }
+
+        /// <summary>
+        /// 段落分组：全组判定零段名字符串——基础设施段查装载期收集的
+        /// [ConfigSection(Group=…)] 元数据（Engine.GroupOfSection），自动化模块段查
+        /// Engine.AutomationModules 元数据，其余（补丁功能 / WebConsole 基础设施）→ "feature"。
+        /// 前端按此分流显示，禁止硬编码段名。
+        /// </summary>
+        private static string ClassifyGroup(string section)
+        {
+            string group = Engine.GroupOfSection(section);
+            if (group != null)
+                return group;
+            foreach (var module in Engine.AutomationModules)
+            {
+                if (string.Equals(module.Section, section, StringComparison.Ordinal))
+                    return ConfigSectionAttribute.GroupAutomation;
+            }
+            return "feature";
+        }
+
+        // ---- 更新 / 保存 / 重置 ----
 
         public static (bool ok, string error, object value) Update(
             ConfigFile config, string section, string key, string rawValue)
@@ -117,26 +147,18 @@ namespace DT_Tools.Core
                         n = 1;
                     }
                 }
-                catch { }
-                return n;
-            }
-
-            if (!string.IsNullOrEmpty(section))
-            {
-                foreach (ConfigDefinition def in config.Keys)
+                catch
                 {
-                    if (!string.Equals(def.Section, section, StringComparison.Ordinal))
-                        continue;
-                    var entry = config[def];
-                    if (entry == null) continue;
-                    entry.BoxedValue = entry.DefaultValue;
-                    n++;
+                    // 段/键不存在：按 0 处理
                 }
                 return n;
             }
 
             foreach (ConfigDefinition def in config.Keys)
             {
+                if (!string.IsNullOrEmpty(section) &&
+                    !string.Equals(def.Section, section, StringComparison.Ordinal))
+                    continue;
                 var entry = config[def];
                 if (entry == null) continue;
                 entry.BoxedValue = entry.DefaultValue;
@@ -144,6 +166,8 @@ namespace DT_Tools.Core
             }
             return n;
         }
+
+        // ---- 导出 / 导入 ----
 
         public static string ExportCfg(ConfigFile config)
         {
@@ -194,11 +218,79 @@ namespace DT_Tools.Core
         public static ImportResult ImportJson(ConfigFile config, string json, string mode)
         {
             var result = new ImportResult { Mode = mode ?? "memory" };
+
             foreach (var (section, key, value) in ParseImportPairs(json ?? ""))
                 ApplyImportPair(config, result, section, key, value);
+
             if (string.Equals(result.Mode, "overwrite", StringComparison.OrdinalIgnoreCase))
                 config.Save();
             return result;
+        }
+
+        /// <summary>
+        /// 导入 JSON 兼容两种形状（Newtonsoft 解析）：
+        ///   [{ "section":…, "entries":[{ "key":…, "value":… }]}]  —— 配置列表导出格式
+        ///   [{ "section":…, "key":…, "value":… }]                 —— 扁平对
+        /// </summary>
+        private static IEnumerable<(string Section, string Key, string Value)> ParseImportPairs(string json)
+        {
+            var list = new List<(string, string, string)>();
+            if (Json.TryFrom<List<ImportSectionDto>>(json, out var sections) && sections != null)
+            {
+                foreach (var sec in sections)
+                {
+                    if (sec?.Entries == null) continue;
+                    foreach (var e in sec.Entries)
+                    {
+                        if (string.IsNullOrEmpty(sec.Section) || string.IsNullOrEmpty(e?.Key)) continue;
+                        list.Add((sec.Section, e.Key, NormalizeRaw(e.Value)));
+                    }
+                }
+                if (list.Count > 0)
+                    return list;
+            }
+
+            if (Json.TryFrom<List<ImportPairDto>>(json, out var pairs) && pairs != null)
+            {
+                foreach (var p in pairs)
+                {
+                    if (string.IsNullOrEmpty(p?.Section) || string.IsNullOrEmpty(p.Key)) continue;
+                    list.Add((p.Section, p.Key, NormalizeRaw(p.Value)));
+                }
+            }
+            return list;
+        }
+
+        private sealed class ImportSectionDto
+        {
+            [JsonProperty("section")] public string Section;
+            [JsonProperty("entries")] public List<ImportEntryDto> Entries;
+        }
+
+        private sealed class ImportEntryDto
+        {
+            [JsonProperty("key")] public string Key;
+            [JsonProperty("value")] public object Value;
+        }
+
+        private sealed class ImportPairDto
+        {
+            [JsonProperty("section")] public string Section;
+            [JsonProperty("key")] public string Key;
+            [JsonProperty("value")] public object Value;
+        }
+
+        /// <summary>JSON 反序列化出的 object 值 → 配置更新用的原始字符串（与导出格式互逆）。</summary>
+        private static string NormalizeRaw(object value)
+        {
+            switch (value)
+            {
+                case null: return null;
+                case string s: return s;
+                case bool b: return b ? "true" : "false";
+                case IFormattable f: return f.ToString(null, CultureInfo.InvariantCulture);
+                default: return value.ToString();
+            }
         }
 
         private static void ApplyImportPair(
@@ -222,145 +314,7 @@ namespace DT_Tools.Core
             }
         }
 
-        private static IEnumerable<(string Section, string Key, string Value)> ParseImportPairs(string json)
-        {
-            var list = new List<(string, string, string)>();
-            int pos = 0;
-            while (pos < json.Length)
-            {
-                int sIdx = json.IndexOf("\"section\"", pos, StringComparison.Ordinal);
-                if (sIdx < 0) break;
-                if (!TryExtractStringAfter(json, sIdx, out string section, out int afterSec))
-                {
-                    pos = sIdx + 9;
-                    continue;
-                }
-
-                int entriesIdx = json.IndexOf("\"entries\"", afterSec, StringComparison.Ordinal);
-                int nextSec = json.IndexOf("\"section\"", afterSec, StringComparison.Ordinal);
-
-                if (entriesIdx >= 0 && (nextSec < 0 || entriesIdx < nextSec))
-                {
-                    int arrStart = json.IndexOf('[', entriesIdx);
-                    int arrEnd = FindMatchingBracket(json, arrStart);
-                    if (arrStart >= 0 && arrEnd > arrStart)
-                    {
-                        string arr = json.Substring(arrStart, arrEnd - arrStart + 1);
-                        int p2 = 0;
-                        while (p2 < arr.Length)
-                        {
-                            int kIdx = arr.IndexOf("\"key\"", p2, StringComparison.Ordinal);
-                            if (kIdx < 0) break;
-                            if (!TryExtractStringAfter(arr, kIdx, out string key, out int afterKey))
-                            {
-                                p2 = kIdx + 5;
-                                continue;
-                            }
-                            int vIdx = arr.IndexOf("\"value\"", afterKey, StringComparison.Ordinal);
-                            if (vIdx < 0)
-                            {
-                                p2 = afterKey;
-                                continue;
-                            }
-                            if (!TryExtractRawAfter(arr, vIdx, out string val, out int afterVal))
-                            {
-                                p2 = vIdx + 7;
-                                continue;
-                            }
-                            list.Add((section, key, val));
-                            p2 = afterVal;
-                        }
-                        pos = arrEnd + 1;
-                        continue;
-                    }
-                }
-
-                int k2 = json.IndexOf("\"key\"", afterSec, StringComparison.Ordinal);
-                int v2 = json.IndexOf("\"value\"", afterSec, StringComparison.Ordinal);
-                if (k2 >= 0 && v2 >= 0 && (nextSec < 0 || k2 < nextSec))
-                {
-                    if (TryExtractStringAfter(json, k2, out string key, out _) &&
-                        TryExtractRawAfter(json, v2, out string val, out int afterV))
-                    {
-                        list.Add((section, key, val));
-                        pos = afterV;
-                        continue;
-                    }
-                }
-                pos = afterSec;
-            }
-            return list;
-        }
-
-        private static int FindMatchingBracket(string s, int openIdx)
-        {
-            if (openIdx < 0 || openIdx >= s.Length || s[openIdx] != '[') return -1;
-            int depth = 0;
-            for (int i = openIdx; i < s.Length; i++)
-            {
-                if (s[i] == '[') depth++;
-                else if (s[i] == ']')
-                {
-                    depth--;
-                    if (depth == 0) return i;
-                }
-            }
-            return -1;
-        }
-
-        private static bool TryExtractStringAfter(string json, int keyIdx, out string value, out int end)
-        {
-            value = null;
-            end = keyIdx;
-            int colon = json.IndexOf(':', keyIdx);
-            if (colon < 0) return false;
-            int i = colon + 1;
-            while (i < json.Length && char.IsWhiteSpace(json[i])) i++;
-            if (i >= json.Length || json[i] != '"') return false;
-            i++;
-            var sb = new StringBuilder();
-            while (i < json.Length)
-            {
-                char c = json[i++];
-                if (c == '\\' && i < json.Length)
-                {
-                    char n = json[i++];
-                    sb.Append(n switch
-                    {
-                        'n' => '\n',
-                        'r' => '\r',
-                        't' => '\t',
-                        '"' => '"',
-                        '\\' => '\\',
-                        _ => n
-                    });
-                }
-                else if (c == '"') break;
-                else sb.Append(c);
-            }
-            value = sb.ToString();
-            end = i;
-            return true;
-        }
-
-        private static bool TryExtractRawAfter(string json, int keyIdx, out string value, out int end)
-        {
-            value = null;
-            end = keyIdx;
-            int colon = json.IndexOf(':', keyIdx);
-            if (colon < 0) return false;
-            int i = colon + 1;
-            while (i < json.Length && char.IsWhiteSpace(json[i])) i++;
-            if (i >= json.Length) return false;
-            if (json[i] == '"')
-                return TryExtractStringAfter(json, keyIdx, out value, out end);
-            int start = i;
-            while (i < json.Length && json[i] != ',' && json[i] != '}' && json[i] != ']')
-                i++;
-            value = json.Substring(start, i - start).Trim();
-            end = i;
-            return value.Length > 0;
-        }
+        // ---- DTO / 解析 ----
 
         private static EntryDto ToDto(ConfigDefinition def, ConfigEntryBase entry)
         {
@@ -369,19 +323,26 @@ namespace DT_Tools.Core
                 Section = def.Section,
                 Key = def.Key,
                 Type = entry.SettingType.Name,
-                Value = entry.BoxedValue,
-                Default = entry.DefaultValue,
+                Value = DisplayValue(entry.BoxedValue),
+                Default = DisplayValue(entry.DefaultValue),
                 Description = entry.Description?.Description ?? "",
                 Accepts = ExtractAccepts(def, entry)
             };
         }
 
         /// <summary>
+        /// 枚举值序列化为成员名（accepts.options 用的就是名称；裸 BoxedValue 会被
+        /// JSON 写成数字，前端下拉匹配不上，出现「0 (未在列表中)」）。
+        /// </summary>
+        private static object DisplayValue(object value)
+            => value is Enum e ? Enum.GetName(e.GetType(), e) ?? e.ToString() : value;
+
+        /// <summary>
         /// 把三种"可选值来源"归一成同一份结构，前端只需认这一种协议：
         ///   options : [{value,label}]  —— 下拉（label 给人看，value 写回配置）
         ///   values  : [string]         —— options 的纯值列表（兼容旧前端）
         ///   min/max : 数值范围
-        /// 来源优先级：OptionProviders（动态） > 枚举 > AcceptableValueList。
+        /// 来源优先级：OptionProviders（动态） > 枚举 > AcceptableValueList/Range。
         /// </summary>
         private static object ExtractAccepts(ConfigDefinition def, ConfigEntryBase entry)
         {
@@ -492,7 +453,10 @@ namespace DT_Tools.Core
                     }
                 }
             }
-            catch { }
+            catch
+            {
+                // 校验器不可用时放行（与旧版一致）
+            }
             return true;
         }
 
