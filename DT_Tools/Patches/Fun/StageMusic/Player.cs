@@ -10,17 +10,17 @@ using UnityEngine.Networking;
 namespace DT_Tools.Patches.Fun.StageMusic
 {
     /// <summary>
-    /// 播放器（单播放槽）：同 URI 播放中不重播（连杀防重复）、新触发停旧播新
+    /// 阶段音乐播放器（单播放槽）：同 URI 播放中不重播（连杀防重复）、新触发停旧播新
     /// （切阶段只保留一首）、限长到点停止（-1/0 不限）。音频按 URI 缓存，
     /// 配置指纹变化时全部销毁重建（资源释放）。麦克风广播：播放时提取 PCM，
     /// 由 MicInjectPatch 在语音编码前混入（见 Patch.MicInject）。
+    /// 控制台点播已迁至 Game/AudioPlayback（独立引擎，互不共享状态）。
     /// </summary>
     internal static class StageMusicPlayer
     {
         private static AudioSource _source;
         private static Coroutine _stopCo;
         private static string _playingUri;
-        private static bool _manualHold;   // 手动点播独占播放槽：期间忽略阶段触发，结束/限长后恢复阶段音乐
         private static float _currentVolume = 1f;   // 当前播放会话的音量（MixIntoMic 读取，随每次播放调用刷新）
 
         private static readonly Dictionary<string, AudioClip> _clips = new Dictionary<string, AudioClip>();
@@ -116,9 +116,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
         /// <summary>按阶段播放：曲目/音量/时长上限均取该阶段独立配置，来源按 TrackSource 解析。</summary>
         public static void Play(MusicStage stage)
         {
-            if (_manualHold)
-                return;   // 手动点播独占播放槽（受其自身时长限制），期间忽略阶段触发
-
             string raw = TrackOf(stage)?.Trim() ?? "";
             if (raw.Length == 0)
             {
@@ -128,36 +125,15 @@ namespace DT_Tools.Patches.Fun.StageMusic
             string uri = ResolveUri(raw);
             if (uri == null)
                 return;   // 阶段解析失败：不打断已有播放（可能是另一首正常曲目）
-            PlayInternal(uri, Mathf.Clamp01(VolumeOf(stage)), MaxSecondsOf(stage), exclusive: false);
+            PlayInternal(uri, Mathf.Clamp01(VolumeOf(stage)), MaxSecondsOf(stage));
         }
 
         /// <summary>
-        /// 手动点播（/play_audio 专用）：来源按前缀自动识别在线/本地（见 ResolveManualUri），
-        /// 音量/时长上限由调用方显式传入，完全不读取任何阶段的 [Config] 字段——
-        /// 与 StageMusic 的阶段配置解耦（见 Commands/PlayAudio；默认值由该命令的 Args 决定，
-        /// 本方法不设默认）。
-        /// </summary>
-        public static void PlayManual(string raw, float volume, float maxSeconds)
-        {
-            string uri = ResolveManualUri(raw);
-            if (uri == null)
-            {
-                StopCurrent();
-                return;
-            }
-            PlayInternal(uri, Mathf.Clamp01(volume), maxSeconds, exclusive: true);
-        }
-
-        /// <summary>
-        /// 播放核心（uri 已解析）：同 URI 播放中不重播；exclusive=true（手动点播）独占播放槽，
-        /// 期间阶段触发被忽略，结束/限长后自动恢复当前阶段音乐；
+        /// 播放核心（uri 已解析）：同 URI 播放中不重播，新触发停旧播新；
         /// 麦克风广播遵循 MicBroadcast 配置与静音状态（注入点与游戏阶段无关，全阶段可混入）。
         /// </summary>
-        private static void PlayInternal(string uri, float volume, float maxSeconds, bool exclusive)
+        private static void PlayInternal(string uri, float volume, float maxSeconds)
         {
-            if (exclusive)
-                _manualHold = true;   // 独占：先置位，阶段触发在点播期间被忽略
-
             if (_playingUri == uri && _source != null && _source.isPlaying)
                 return;          // 同曲目播放中：连杀/重复触发不重播
 
@@ -174,11 +150,10 @@ namespace DT_Tools.Patches.Fun.StageMusic
             CoroutineHost.Start(CoLoadAndPlay(uri));
         }
 
-        /// <summary>停止当前播放（/stop_music 命令与阶段切换共用），并解除手动点播独占。</summary>
+        /// <summary>停止当前阶段音乐（阶段切换触发与未配置阶段共用）。</summary>
         public static void StopCurrent()
         {
             _playingUri = null;
-            _manualHold = false;
             MixActive = false;
             if (_stopCo != null)
             {
@@ -245,38 +220,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
             _stopCo = null;
             if (_source != null && _source.isPlaying)
                 _source.Stop();
-
-            if (_manualHold)
-            {
-                // 手动点播到限：解除独占并按当前阶段恢复阶段音乐（未配置阶段自动静默）
-                _manualHold = false;
-                ResumeStageMusic();
-            }
-        }
-
-        /// <summary>按当前游戏状态恢复阶段音乐（阶段未配置曲目则保持静默）。</summary>
-        private static void ResumeStageMusic()
-        {
-            var state = Managers.Game != null ? Managers.Game.State : EGameState.NoneState;
-            Log.Info<StageMusicFeature>($"手动点播结束，恢复阶段音乐（{state}）");
-            switch (state)
-            {
-                case EGameState.Lobby:
-                    Play(MusicStage.Lobby);
-                    break;
-                case EGameState.Survive:
-                    Play(MusicStage.Survive);
-                    break;
-                case EGameState.Detective:
-                    Play(MusicStage.Detective);
-                    break;
-                case EGameState.Trial:
-                    Play(MusicStage.Trial);
-                    break;
-                case EGameState.TotalResult:
-                    Play(MusicStage.Victory);
-                    break;
-            }
         }
 
         // ── 配置缓存指纹 ──
@@ -321,19 +264,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 }
                 return raw;
             }
-            return ResolveLocalUri(raw);
-        }
-
-        /// <summary>
-        /// URI 解析（/play_audio 点播用，Commands/PlayAudio 调用）：按前缀自动判断
-        /// 在线/本地，不读取 TrackSource——命令是一次性交互输入，不存在本地文件名
-        /// 恰好以 http 开头导致误判的持久化配置场景，与阶段配置解耦。
-        /// </summary>
-        public static string ResolveManualUri(string raw)
-        {
-            if (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
-                || raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                return raw;
             return ResolveLocalUri(raw);
         }
 

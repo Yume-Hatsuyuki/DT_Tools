@@ -16,10 +16,10 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
         Author = "梦初雪")]
     public sealed class SabotageButtonUnlockFeature
     {
-        [Config("锁门按钮额外放行：Black=仅黑方；White=仅白板；All=所有身份。")]
+        [Config("锁门按钮额外放行：Black=仅黑方；White=仅白板；Dark=仅黑幕（原版档位，不额外放行）；All=所有身份。")]
         public static SabotageMode LockDoorMode = SabotageMode.Black;
 
-        [Config("拆电源按钮额外放行：Black=仅黑方；White=仅白板；All=所有身份。")]
+        [Config("拆电源按钮额外放行：Black=仅黑方；White=仅白板；Dark=仅黑幕（原版档位，不额外放行）；All=所有身份。")]
         public static SabotageMode BreakPowerMode = SabotageMode.Black;
     }
 }

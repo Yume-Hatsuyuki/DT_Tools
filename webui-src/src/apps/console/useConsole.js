@@ -67,15 +67,22 @@ function startLogSource() {
   if (typeof EventSource === 'undefined') { startPolling(); return; }
   const es = new EventSource(API.logStreamUrl);
 
-  let lastEvent = Date.now();
+  // 看门狗只看 EventSource.readyState：服务端无增量时发的是 SSE 注释行心跳
+  // （": ping"），浏览器不会为注释行派发 message 事件——若按"多久没消息"判断，
+  // 静默期会被误判成离线（任务栏永远"连接中…"的根源）。OPEN 即在线，
+  // 服务端断开后浏览器进入自动重连（CONNECTING）或放弃（CLOSED），状态自然翻转。
   const watchdog = setInterval(() => {
-    if (es.readyState === EventSource.OPEN && Date.now() - lastEvent > 3000)
-      conn.online = false;
+    if (es.readyState === EventSource.CLOSED) {
+      clearInterval(watchdog);
+      es.close();
+      startPolling();
+      return;
+    }
+    conn.online = es.readyState === EventSource.OPEN;
   }, 2000);
 
-  es.onopen = () => { lastEvent = Date.now(); conn.online = true; };
+  es.onopen = () => { conn.online = true; };
   es.onmessage = (ev) => {
-    lastEvent = Date.now();
     try {
       const batch = JSON.parse(ev.data);
       if (Array.isArray(batch)) batch.forEach(appendServerEntry);
@@ -142,11 +149,22 @@ async function send(raw) {
   appendResult(r);
 }
 
+/** 终端本地输出（内置命令用，不进后端日志）。支持多行文本。 */
+function print(text, color) {
+  for (const line of String(text).split('\n'))
+    pushEntry('', color || 'var(--text-0)', line);
+}
+
+/** 终端清屏：只清本地视图，不动服务端环形缓冲。 */
+function clearEntries() {
+  entries.splice(0, entries.length);
+}
+
 export function useConsole() {
   if (!started) {
     started = true;
     startLogSource();
     loadCommands();
   }
-  return { entries, commands, conn, send, historyUp, historyDown };
+  return { entries, commands, conn, send, print, clearEntries, historyUp, historyDown };
 }

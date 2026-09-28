@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 
 namespace DT_Tools
 {
-    [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+    [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
         private void Awake()
@@ -22,7 +22,7 @@ namespace DT_Tools
             // （WireLifecycle）在此安全触碰 Unity API
             CoroutineHost.EnsureCreated();
 
-            var result = Engine.Load(new Harmony(PluginInfo.PLUGIN_GUID), Config, Logger);
+            var result = Engine.Load(new Harmony(MyPluginInfo.PLUGIN_GUID), Config, Logger);
             CommandRegistry.Load();
 
             // 关闭自动保存后，首次运行需主动落盘生成 .cfg
@@ -49,13 +49,13 @@ namespace DT_Tools
             if (result.FailedCount > 0)
             {
                 Logger.LogWarning(
-                    $"{PluginInfo.PLUGIN_GUID} 加载完成：挂载成功 {result.MountedCount}，失败 {result.FailedCount}。" +
+                    $"{MyPluginInfo.PLUGIN_GUID} 加载完成：挂载成功 {result.MountedCount}，失败 {result.FailedCount}。" +
                     "失败的功能已跳过，其余不受影响；各功能 Enabled 可在局内热切换。");
             }
             else
             {
                 Logger.LogInfo(
-                    $"{PluginInfo.PLUGIN_GUID} 加载完成：补丁功能 {result.MountedCount} 个，" +
+                    $"{MyPluginInfo.PLUGIN_GUID} 加载完成：补丁功能 {result.MountedCount} 个，" +
                     $"自动化模块 {result.ModuleCount} 个，命令 {CommandRegistry.All.Count} 条" +
                     "（Enabled 支持局内热切换）。");
             }

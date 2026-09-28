@@ -70,24 +70,33 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             int maxLive = Mathf.Clamp(MotionAfterimageFeature.MaxPerPlayer, 1, 24);
 
             HashSet<int> liveIds = new HashSet<int>();
-
-            // 自己已死：不再刷活体残影（死亡定格由 OnLocalPlayerDead / Despawn 负责）
+            int myId = Managers.Player.MyPlayer?.PublicInfo?.PlayerId ?? int.MinValue;
             bool selfAlive = Managers.Game.IsAlive;
+
+            // 自己已死（幽灵）：禁止再刷活体残影，并立刻清掉残留的蓝色生前残影
+            // 否则幽灵移动时会拖一串「生前形象」蓝影
+            if (!selfAlive && myId != int.MinValue &&
+                MotionAfterimageState.Tracks.TryGetValue(myId, out AfterimageTrack selfTrack))
+            {
+                ClearLiveOnly(selfTrack);
+            }
+
             if (MotionAfterimageFeature.IncludeSelf && selfAlive && Managers.Player.MyPlayer != null)
             {
                 SampleAndMaybeSpawn(Managers.Player.MyPlayer, now, interval, fade, maxLive);
-                if (Managers.Player.MyPlayer.PublicInfo != null)
-                    liveIds.Add(Managers.Player.MyPlayer.PublicInfo.PlayerId);
+                liveIds.Add(myId);
             }
 
             if (Managers.Player.Players != null)
             {
-                int myId = Managers.Player.MyPlayer?.PublicInfo?.PlayerId ?? int.MinValue;
                 foreach (Player p in Managers.Player.Players.Values)
                 {
                     if (p == null || p.PublicInfo == null)
                         continue;
                     if (p.PublicInfo.PlayerId == myId)
+                        continue;
+                    // 他人若已是幽灵态，不刷活体蓝影（黑定格由 Despawn 负责）
+                    if (p.PublicInfo.IsGhost)
                         continue;
 
                     SampleAndMaybeSpawn(p, now, interval, fade, maxLive);
@@ -125,21 +134,17 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
         }
 
         /// <summary>
-        /// 自己死亡（S_DEAD → Game.Dead）：刷新 Last* 后定格黑色最后一帧。
+        /// 自己死亡（S_DEAD → Game.Dead）：
+        /// 1) 必清自己的活体蓝影（避免幽灵拖着生前形象残影）；
+        /// 2) 按配置定格黑色最后一帧。
         /// </summary>
         public static void OnLocalPlayerDead()
         {
             if (!Engine.Enabled<MotionAfterimageFeature>())
                 return;
-            if (!MotionAfterimageFeature.ShowDeathResidual)
-                return;
-            if (!MotionAfterimageFeature.IncludeSelfDeathResidual)
-                return;
-            if (!IsMapPhaseActive())
-                return;
 
             MyPlayer me = Managers.Player?.MyPlayer;
-            if (me == null || me.PublicInfo == null || me.CharData == null)
+            if (me == null || me.PublicInfo == null)
                 return;
 
             int id = me.PublicInfo.PlayerId;
@@ -149,16 +154,31 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                 MotionAfterimageState.Tracks[id] = track;
             }
 
-            track.LastPos = me.transform != null ? me.transform.position : (UnityEngine.Vector3)me.Position;
-            track.LastLookLeft = me.LookLeft;
-            track.LastCharacterIdLive = me.CharData.DataId;
+            // 无论是否留黑定格，先清掉蓝色活体残影
+            ClearLiveOnly(track);
+
+            if (me.CharData != null)
+            {
+                track.LastPos = me.transform != null ? me.transform.position : (UnityEngine.Vector3)me.Position;
+                track.LastLookLeft = me.LookLeft;
+                track.LastCharacterIdLive = me.CharData.DataId;
+            }
+
+            if (!MotionAfterimageFeature.ShowDeathResidual)
+                return;
+            if (!MotionAfterimageFeature.IncludeSelfDeathResidual)
+                return;
+            if (!IsMapPhaseActive())
+                return;
+            if (track.LastCharacterIdLive == 0)
+                return;
 
             PlaceDeathResidual(track);
         }
 
         /// <summary>
         /// 只保留「最后一次 Despawn」的黑色定格：先删旧再新建。
-        /// 非 Survive/Detective 直接忽略；Hide 不走此路径。
+        /// 无采样历史时从 PlayerCache 补全角色/坐标（幽灵视角下他人死亡也能定格）。
         /// 自己通常不走 Despawn（客户端忽略 S_DESPAWN self），见 OnLocalPlayerDead。
         /// </summary>
         public static void OnPlayerDespawned(int playerId)
@@ -177,14 +197,50 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                 return;
 
             if (!MotionAfterimageState.Tracks.TryGetValue(playerId, out AfterimageTrack track))
-                return;
+            {
+                track = new AfterimageTrack();
+                MotionAfterimageState.Tracks[playerId] = track;
+            }
 
             ClearLiveOnly(track);
+            TryFillTrackFromCache(playerId, track);
 
             if (track.LastCharacterIdLive == 0)
                 return;
 
             PlaceDeathResidual(track);
+        }
+
+        /// <summary>Despawn 后 Players 已移除，从 Cache 取最后坐标与角色。</summary>
+        private static void TryFillTrackFromCache(int playerId, AfterimageTrack track)
+        {
+            if (Managers.Player == null)
+                return;
+
+            Player cached = null;
+            try
+            {
+                cached = Managers.Player.GetPlayerCache(playerId);
+            }
+            catch (global::System.Exception)
+            {
+                cached = null;
+            }
+
+            if (cached == null)
+                return;
+
+            if (cached.transform != null)
+                track.LastPos = cached.transform.position;
+            else if (cached.PublicInfo != null)
+                track.LastPos = new Vector3(cached.Position.x, cached.Position.y, 0f);
+
+            track.LastLookLeft = cached.LookLeft;
+
+            if (cached.CharData != null)
+                track.LastCharacterIdLive = cached.CharData.DataId;
+            else if (cached.PublicInfo != null && cached.PublicInfo.CharacterId != 0)
+                track.LastCharacterIdLive = cached.PublicInfo.CharacterId;
         }
 
         /// <summary>同一 track 只留一个黑色定格（先删再建）。</summary>
@@ -341,7 +397,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             go = null;
             anim = null;
 
-            Transform parent = ResolveParent();
+            Transform parent = ResolveParent(preferStableRoot: isDeath);
             if (parent == null)
             {
                 LogOnceFail("parent 为空（Root/DeviceRoot 均不可用）");
@@ -471,8 +527,15 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             return null;
         }
 
-        private static Transform ResolveParent()
+        private static Transform ResolveParent(bool preferStableRoot = false)
         {
+            // 死亡定格挂到自有 Root，避免幽灵阶段 Device 显隐影响
+            if (preferStableRoot)
+            {
+                EnsureRoot();
+                return MotionAfterimageState.Root;
+            }
+
             if (Managers.Device != null && Managers.Device.DeviceRoot != null)
                 return Managers.Device.DeviceRoot;
 

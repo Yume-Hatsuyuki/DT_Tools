@@ -6,8 +6,6 @@
     <Description>Deadly Trick Plugin</Description>
     <Version>1.0.7.1</Version>
     <LangVersion>latest</LangVersion>
-    <!-- ConfigField fields assigned by ConfigBinder reflection -->
-    <NoWarn>$(NoWarn);CS0649</NoWarn>
     <TargetName>$(AssemblyName)_$(Configuration)_$(Version)</TargetName>
     <!-- 相对 csproj 所在目录，上一级的 libs -->
     <GameManaged Condition="'$(GameManaged)' == ''">$(MSBuildThisFileDirectory)..\libs</GameManaged>
@@ -17,7 +15,7 @@
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="HarmonyX" Version="2.*" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
   </ItemGroup>
 
   <ItemGroup>

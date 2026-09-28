@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, provide } from 'vue';
 import IconMinus from '~icons/tabler/minus';
 import IconSquare from '~icons/tabler/square';
 import IconSquaresDiagonal from '~icons/tabler/squares-diagonal';
@@ -9,6 +9,13 @@ const props = defineProps({
   win: { type: Object, required: true },
 });
 const emit = defineEmits(['close', 'focus', 'minimize', 'toggle-maximize', 'update-geometry']);
+
+// 给窗口内应用（如终端的 exit 内置命令）一个受控的自我操作通道
+provide('winApi', {
+  close: () => emit('close'),
+  minimize: () => emit('minimize'),
+  toggleMaximize: () => emit('toggle-maximize'),
+});
 
 const MIN_W = 360;
 const MIN_H = 240;
@@ -34,7 +41,7 @@ function onTitlebarPointerDown(e) {
   const startWinX = props.win.x, startWinY = props.win.y;
   const onMove = (ev) => {
     emit('update-geometry', {
-      x: startWinX + (ev.clientX - startX),
+      x: Math.max(0, startWinX + (ev.clientX - startX)),
       y: Math.max(0, startWinY + (ev.clientY - startY)),
     });
   };
@@ -46,16 +53,41 @@ function onTitlebarPointerDown(e) {
   window.addEventListener('pointerup', onUp);
 }
 
-function onResizePointerDown(e) {
+/**
+ * 八方向缩放：n/s/e/w 四边 + 四角。统一走一份几何计算——
+ * 各方向决定 x/y/w/h 中哪些量跟随鼠标，其余保持；越界按最小尺寸回推。
+ */
+const DIRS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
+
+function onResizePointerDown(dir, e) {
   e.stopPropagation();
   emit('focus');
+  if (props.win.maximized) return;
   const startX = e.clientX, startY = e.clientY;
-  const startW = props.win.w, startH = props.win.h;
+  const s = { x: props.win.x, y: props.win.y, w: props.win.w, h: props.win.h };
+  const goEast = dir.includes('e');
+  const goWest = dir.includes('w');
+  const goSouth = dir.includes('s');
+  const goNorth = dir.includes('n');
+
   const onMove = (ev) => {
-    emit('update-geometry', {
-      w: Math.max(MIN_W, startW + (ev.clientX - startX)),
-      h: Math.max(MIN_H, startH + (ev.clientY - startY)),
-    });
+    const dx = ev.clientX - startX;
+    const dy = ev.clientY - startY;
+    const patch = {};
+    if (goEast) patch.w = Math.max(MIN_W, s.w + dx);
+    if (goSouth) patch.h = Math.max(MIN_H, s.h + dy);
+    if (goWest) {
+      // 宽度到最小值后继续向右拖：窗口跟着右移，保持光标下的边不"脱手"
+      const w = Math.max(MIN_W, s.w - dx);
+      patch.w = w;
+      patch.x = s.x + (s.w - w);
+    }
+    if (goNorth) {
+      const h = Math.max(MIN_H, s.h - dy);
+      patch.h = h;
+      patch.y = Math.max(0, s.y + (s.h - h));
+    }
+    emit('update-geometry', patch);
   };
   const onUp = () => {
     window.removeEventListener('pointermove', onMove);
@@ -89,7 +121,15 @@ function onResizePointerDown(e) {
     <div class="win-body">
       <slot />
     </div>
-    <div v-if="!win.maximized" class="win-resize" @pointerdown="onResizePointerDown" />
+    <template v-if="!win.maximized">
+      <div
+        v-for="dir in DIRS"
+        :key="dir"
+        class="win-rz"
+        :class="'rz-' + dir"
+        @pointerdown="onResizePointerDown(dir, $event)"
+      />
+    </template>
   </div>
 </template>
 
@@ -121,6 +161,7 @@ function onResizePointerDown(e) {
   user-select: none;
   flex-shrink: 0;
 }
+.win:active .win-titlebar { cursor: grabbing; }
 .win-icon { width: 16px; height: 16px; color: var(--accent-cyan); flex-shrink: 0; }
 .win-title {
   font-size: 12.5px;
@@ -157,22 +198,15 @@ function onResizePointerDown(e) {
   color: var(--text-0);
 }
 
-.win-resize {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 16px;
-  height: 16px;
-  cursor: nwse-resize;
-}
-.win-resize::after {
-  content: '';
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid var(--line-strong);
-  border-bottom: 2px solid var(--line-strong);
-}
+/* 八方向缩放柄：贴边热区 + hover 高亮（Kali 蓝），四角比边更宽以易命中 */
+.win-rz { position: absolute; z-index: 10; }
+.win-rz:hover { background: rgba(39, 127, 255, 0.25); }
+.rz-n { left: 10px; right: 10px; top: 0; height: 5px; cursor: ns-resize; }
+.rz-s { left: 10px; right: 10px; bottom: 0; height: 5px; cursor: ns-resize; }
+.rz-e { top: 10px; bottom: 10px; right: 0; width: 5px; cursor: ew-resize; }
+.rz-w { top: 10px; bottom: 10px; left: 0; width: 5px; cursor: ew-resize; }
+.rz-ne { right: 0; top: 0; width: 12px; height: 12px; cursor: nesw-resize; border-top-right-radius: var(--win-radius); }
+.rz-nw { left: 0; top: 0; width: 12px; height: 12px; cursor: nwse-resize; border-top-left-radius: var(--win-radius); }
+.rz-se { right: 0; bottom: 0; width: 12px; height: 12px; cursor: nwse-resize; border-bottom-right-radius: var(--win-radius); }
+.rz-sw { left: 0; bottom: 0; width: 12px; height: 12px; cursor: nesw-resize; border-bottom-left-radius: var(--win-radius); }
 </style>

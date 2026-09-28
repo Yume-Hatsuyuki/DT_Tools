@@ -16,7 +16,7 @@ namespace DT_Tools.Patches.System.DoorLockServer
         Author = "梦初雪")]
     public sealed class DoorLockServerFeature
     {
-        [Config("锁门额外放行身份：Black=仅黑方；White=仅白板；All=所有身份。")]
+        [Config("锁门额外放行身份：Black=仅黑方；White=仅白板；Dark=仅黑幕（原版档位，不额外放行）；All=所有身份。")]
         public static LockDoorMode Mode = LockDoorMode.Black;
     }
 }

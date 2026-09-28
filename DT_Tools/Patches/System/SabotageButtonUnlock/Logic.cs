@@ -57,6 +57,28 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
         }
 
         /// <summary>
+        /// 输入分发放行（Patch.Input 三处入口共用）：放行设备的 Special 键/杀按钮
+        /// 优先触发破坏（与已亮出的提示一致），返回 true 表示已接管本次输入。
+        /// 文案经 GetInteractSabotageMessageBase（显示层补丁已按档位接管：白板走
+        /// EvaluateMessage、黑方走原版）——文案为空（如门已锁）时不接管，走原版行为。
+        /// </summary>
+        public static bool TryDispatchExtended(MyPlayer my)
+        {
+            if (my == null || my.Color == EPlayerColor.Dark)
+                return false;    // 黑幕走原版链（含手武器优先判定）
+            var dev = my.InteractDevice;
+            if (dev == null || !ColorAllowedForDevice(dev.DeviceType, my.Color))
+                return false;
+            if (!Managers.Game.IsAlive || dev.InteractSabotageCooltime > 0)
+                return false;    // 死亡/冷却中：走原版（提示栏此时显示倒计时）
+            string msg = dev.GetInteractSabotageMessageBase(my.InteractDeviceIndex);
+            if (string.IsNullOrEmpty(msg))
+                return false;    // 无文案（门已锁/设备态不符）→ 原版行为
+            dev.UseSabotageBase(my.InteractDeviceIndex);
+            return true;
+        }
+
+        /// <summary>
         /// UI_GameScene.ShowInteractSabotageText 整替（私有方法，字符串定位：
         /// 0.1.15b UI_GameScene.cs:1355-1400）：原版 flag 基础上按档位扩展
         /// Door/Fusebox 的放行分支，其余 UI 写入逐句保持原版。

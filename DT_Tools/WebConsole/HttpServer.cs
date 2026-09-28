@@ -23,23 +23,48 @@ namespace DT_Tools.WebConsole
             _router = router ?? throw new ArgumentNullException(nameof(router));
         }
 
-        public void Start(int port)
+        public void Start(string listenIp, int port)
         {
+            string ip = NormalizeIp(listenIp);
             _listener = new HttpListener();
-            _listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+            _listener.Prefixes.Add($"http://{ip}:{port}/");
             try
             {
                 _listener.Start();
                 _running = true;
                 _thread = new Thread(Loop) { IsBackground = true, Name = "DT_WebConsole" };
                 _thread.Start();
-                Log.Info("WebConsole", $"已启动 → http://127.0.0.1:{port}/");
+                Log.Info("WebConsole", $"已启动 → http://{ip}:{port}/");
             }
             catch (Exception ex)
             {
                 // 堆栈进 BepInEx 主日志（端口占用/权限不足等常见原因需可诊断）
-                Log.Exception("WebConsole", ex, $"启动失败（端口 {port}）");
+                Log.Exception("WebConsole", ex, $"启动失败（监听 {listenIp}:{port}）");
             }
+        }
+
+        /// <summary>
+        /// 归一化监听地址："0.0.0.0"/"any"/"*" → "*"（IPv4 全网卡）；"::" → "[::]"（IPv6 全网卡，
+        /// 通常双栈同时收 v4）；具体地址按 IPAddress 校验——IPv6 必须加方括号才是合法的
+        /// HttpListener 前缀（如 http://[::1]:19450/）；localhost 原样；非法值回退 127.0.0.1 并告警。
+        /// Unity(Mono) 的 HttpListener 不做 Windows URL ACL 校验，任意前缀可直接监听。
+        /// </summary>
+        private static string NormalizeIp(string raw)
+        {
+            string ip = (raw ?? "").Trim();
+            if (ip.Length == 0
+                || ip.Equals("0.0.0.0", StringComparison.OrdinalIgnoreCase)
+                || ip.Equals("any", StringComparison.OrdinalIgnoreCase)
+                || ip == "*")
+                return "*";
+            if (ip.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+                return "localhost";
+            if (System.Net.IPAddress.TryParse(ip, out var parsed))
+                return parsed.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
+                    ? $"[{ip}]"
+                    : ip;
+            Log.Warn("WebConsole", $"ListenIp 无效: \"{raw}\"，回退 127.0.0.1");
+            return "127.0.0.1";
         }
 
         public void Stop()

@@ -42,6 +42,9 @@ export const API = {
   // 文件选择（尽力而为的原生对话框，见 FilePickerApi 后端注释）
   pickFile: () => request('/api/pick-file'),
 
+  // 桌面壳系统操作
+  gameExit: () => post('/api/game/exit'),
+
   // 配置
   configList: () => request('/api/config/list'),
   configUpdate: (section, key, value) => post('/api/config/update', { section, key, value }),

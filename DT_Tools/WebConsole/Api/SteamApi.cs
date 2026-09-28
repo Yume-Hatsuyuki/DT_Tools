@@ -89,13 +89,13 @@ namespace DT_Tools.WebConsole.Api
         private sealed class SteamResponse
         {
             [Newtonsoft.Json.JsonProperty("response")]
-            public SteamPlayerCount Response;
+            public SteamPlayerCount Response = null;
         }
 
         private sealed class SteamPlayerCount
         {
             [Newtonsoft.Json.JsonProperty("player_count")]
-            public int PlayerCount;
+            public int PlayerCount = 0;
         }
     }
 }

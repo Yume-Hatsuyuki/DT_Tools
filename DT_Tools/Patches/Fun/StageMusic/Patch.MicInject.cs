@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using DT_Tools.Core;
+using DT_Tools.Game;
 using HarmonyLib;
 using NAudio.Wave;
 namespace DT_Tools.Patches.Fun.StageMusic
@@ -56,8 +57,13 @@ namespace DT_Tools.Patches.Fun.StageMusic
 
         private static void MicPrefix(ArraySegment<float> __0, WaveFormat __1)
         {
-            if (__1 != null)
+            if (__1 == null)
+                return;
+            if (StageMusicFeature.MicBroadcast)
                 StageMusicPlayer.MixIntoMic(__0, __1.SampleRate);
+            // 控制台点播（Game/AudioPlayback）与阶段音乐共用本注入点；
+            // 点播是否可广播同样受 MicBroadcast 总闸约束（钩子由本功能挂载）
+            AudioPlayback.MixIntoMic(__0, __1.SampleRate);
         }
     }
 }

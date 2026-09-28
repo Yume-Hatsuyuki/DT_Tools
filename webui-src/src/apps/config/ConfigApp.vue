@@ -2,8 +2,10 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { API } from '../../api.js';
 import { useConfigToolbar } from '../../composables/useConfigToolbar.js';
-import SectionGrid from './SectionGrid.vue';
+import { useSectionMeta } from '../../composables/useSectionMeta.js';
+import FolderGrid from '../common/FolderGrid.vue';
 import SectionDetail from './SectionDetail.vue';
+import { sectionMatches } from './configUtils.js';
 import IconDeviceFloppy from '~icons/tabler/device-floppy';
 import IconDownload from '~icons/tabler/download';
 import IconUpload from '~icons/tabler/upload';
@@ -12,8 +14,9 @@ import IconTrash from '~icons/tabler/trash';
 
 const sections = ref([]);
 const query = ref('');
-const openSection = ref(null);   // 展开中的段名，null=网格视图
+const openSection = ref(null);   // 展开中的段名，null=文件夹网格视图
 const editingField = ref(false);
+const sectionMeta = useSectionMeta();
 
 async function reload() {
   const list = await API.configList();
@@ -29,7 +32,10 @@ const { dirty, autoRefresh, toast, showToast, save, exportCfg, importFile, reset
   = useConfigToolbar({ flag: 'config', reload, isEditing: () => editingField.value || !!openSection.value });
 
 const currentSection = ref(null);
-function openDetail(sec) {
+/** FolderGrid 抛出的是磁贴摘要 {key,label,count,enabled}，需按 key 找回完整段对象。 */
+function openDetail(item) {
+  const sec = sections.value.find(s => s.section === item.key);
+  if (!sec) return;
   currentSection.value = sec;
   openSection.value = sec.section;
 }
@@ -40,6 +46,34 @@ function backToGrid() {
 
 function onUpdated() { dirty.value = true; }
 function onToast(t) { showToast(t.text, t.error); }
+
+/**
+ * 目录职责分离：本页只显示功能段（group=feature）。
+ * 自动化段（总开关 + 各模块，group=automation）归"自动化"应用展示——
+ * 分组字段由后端 ConfigService.ClassifyGroup 给出，前端不硬编码段名。
+ */
+const featureSections = computed(() => sections.value.filter(s => s.group !== 'automation'));
+
+const folderItems = computed(() =>
+  featureSections.value
+    .filter(s => {
+      const q = query.value.trim().toLowerCase();
+      if (!q) return true;
+      const alias = (sectionMeta.displayName(s.section) || '').toLowerCase();
+      return alias.includes(q) || sectionMatches(s, q);
+    })
+    .map(s => ({
+      key: s.section,
+      label: s.section,
+      count: (s.entries || []).length,
+      enabled: enabledOf(s),
+    }))
+);
+
+function enabledOf(section) {
+  const e = (section.entries || []).find(en => en.key === 'Enabled');
+  return e ? !!e.value : null;
+}
 
 onMounted(async () => {
   await reload();
@@ -52,8 +86,10 @@ onUnmounted(stopAutoRefresh);
   <div class="config-app">
     <div class="toolbar">
       <div class="toolbar-left">
-        <input v-if="!openSection" v-model="query" class="search" type="search" placeholder="搜索段名 / 字段…">
-        <span v-else class="breadcrumb">全部配置 / <b>{{ openSection }}</b></span>
+        <input v-if="!openSection" v-model="query" class="search" type="search" placeholder="搜索文件夹 / 字段…">
+        <span v-else class="breadcrumb">
+          全部配置 / <b :title="openSection">{{ sectionMeta.displayName(openSection) || openSection }}</b>
+        </span>
       </div>
       <div class="toolbar-right">
         <span v-if="dirty" class="dirty-mark" title="有未保存的更改">●未保存</span>
@@ -70,7 +106,7 @@ onUnmounted(stopAutoRefresh);
 
     <div v-if="toast" class="toast" :class="{ error: toast.error }">{{ toast.text }}</div>
 
-    <SectionGrid v-if="!openSection" :sections="sections" :query="query" @open="openDetail" />
+    <FolderGrid v-if="!openSection" :items="folderItems" @open="openDetail" />
     <SectionDetail
       v-else-if="currentSection"
       :section="currentSection"

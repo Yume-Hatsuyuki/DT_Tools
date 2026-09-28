@@ -1,6 +1,8 @@
 # AGENTS.md — DT_Tools 工作守则
 
-Deadly Trick 游戏的 BepInEx 5 插件（C# / netstandard2.1 / HarmonyX）。**本文件是唯一的架构与操作契约**（原 `DESIGN.md` 已并入并删除，迁移阶段性文档不再保留）。改目录结构、角色模板或 API 协议前先读这里，改完顺手更新本文件。
+Deadly Trick 游戏的 BepInEx 5 插件（C# / netstandard2.1 / HarmonyX）。
+**本文件是唯一的架构与操作契约**。
+改目录结构、角色模板或 API 协议前先读这里，改完顺手更新本文件。
 
 正式版本以 `DT_Tools/DT_Tools.csproj` 的 `<Version>` 为准（当前 **1.0.7.1**）；本文件及注释中不重复写死版本号。
 
@@ -11,6 +13,7 @@ Deadly Trick 游戏的 BepInEx 5 插件（C# / netstandard2.1 / HarmonyX）。**
 |           目录            |         性质         |                    用途                     |
 | ------------------------- | -------------------- | ------------------------------------------ |
 | `DT_Tools/`               | **唯一可修改的项目** | 插件源码 + `DT_Tools.csproj`                 |
+| `webui-src/`              | **前端源码工程**     | Vue 3 + Vite 桌面壳 WebUI 源码（见 §8.1）    |
 | `0.1.15b/`(版本可能有差异) | 只读                 | 游戏反编译源码。**一切游戏 API 的核对基准**。   |
 | `libs/`                   | 只读                 | 游戏程序集，编译引用源                        |
 | `Assets/`                 | 只读                 | `AssetRipper`解包资源文件                    |
@@ -18,14 +21,15 @@ Deadly Trick 游戏的 BepInEx 5 插件（C# / netstandard2.1 / HarmonyX）。**
 ## 2. 构建与验证
 
 ```bash
-dotnet build DT_Tools/DT_Tools.csproj
+dotnet build DT_Tools/DT_Tools.csproj        # 后端插件
+cd webui-src && npm run build                # 前端（产物直出 DT_Tools/WebUI，勿手改产物）
 ```
 
-- 环境：.NET SDK 7.0.410；NuGet 源 `nuget.bepinex.dev`（BepInEx.Core 5.4.21 是占位包，真实 DLL 来自 BepInEx.BaseLib 5.4.20）。
-- **完成标准 = 0 警告 0 错误**。产物：`bin/Debug/netstandard2.1/DT_Tools_Debug_<版本>.dll`。
+- 环境：.NET SDK 7.0.410；NuGet 源 `nuget.bepinex.dev`（BepInEx.Core 5.4.21 是占位包，真实 DLL 来自 BepInEx.BaseLib 5.4.20）。前端：Node + npm（依赖见 `webui-src/package.json`）。
+- **完成标准 = 0 警告 0 错误**。产物：`bin/<配置>/netstandard2.1/DT_Tools_<配置>_<版本>.dll`（同目录 WebUI/ 即完整可部署内容）。
 - 多代理并行作业时**禁止运行构建**（共享 `obj/` 会互相干扰），由集成者统一构建修复。
 - 游戏内运行验证只能由用户执行（复制 DLL + WEBUI 到游戏 `BepInEx/plugins/DT_Tools/`）；首次启动自动生成全新 .cfg。
-- CI：`.github/workflows/build.yml`（push/PR 编译校验，不发布）+ `release.yml`（打 `vMAJOR.MINOR.PATCH[.BUILD]` tag 或手动触发 → 编译并发 GitHub Release）。
+- CI：`.github/workflows/build.yml`（push/PR：WebUI 必建并传产物；后端仅当仓库带 `libs/` 才编译，普通仓库自动跳过）+ `release.yml`（打 `vMAJOR.MINOR.PATCH[.BUILD]` tag 或手动触发 → 构建 WebUI[+DLL] → 发 GitHub Release）。
 
 ## 3. 目录与命名空间
 
@@ -47,7 +51,7 @@ DT_Tools/
   Commands/               # 控制台命令：ICommand / CommandContext / CommandResult / CommandRegistry + <域>/<命令>/
   Automation/             # 自动化模块：Host.cs / Runner.cs + <模块>/
   WebConsole/             # HTTP 服务器：WebConsole / HttpServer / Router / Auth / StaticFiles / Api/*
-  WEBUI/                  # 前端（零构建 ES modules，与后端 API 契约同步，见 §7）
+  WebUI/                  # 前端（零构建 ES modules，与后端 API 契约同步，见 §7）
 ```
 
 规则：
@@ -106,20 +110,32 @@ DT_Tools/
 
 ## 8. WebUI 契约（改 API 或前端前必读）
 
-前端（`DT_Tools/WEBUI/`，零构建 ES modules）与后端 API 形状互为活契约，任何一侧改动必须同步另一侧：
+前端（源码 `webui-src/`，Vue 3 桌面壳；构建产物 `DT_Tools/WebUI/` 由 StaticFiles 白名单服务）与后端 API 形状互为活契约，任何一侧改动必须同步另一侧：
 
-- `POST /api/run` body = **原始命令文本**（如 `/kill #3`），非 JSON；响应 = CommandResult 信封。
-- `GET /api/log?since=N` → `[{seq, time, color, msg}]` 数组；`GET /api/log/stream?since=N` → SSE（400ms 增量批，前端优先、轮询降级）。
+- `POST /api/run` body = **原始命令文本**（如 `/kill #3` 或 `kill #3`，后端剥前导 `/`/`!`），非 JSON；响应 = CommandResult 信封。
+- `GET /api/log?since=N` → `[{seq, time, color, msg}]` 数组；`GET /api/log/stream?since=N` → SSE（400ms 增量批，无增量发 `: ping` 注释心跳，前端看门狗按 `EventSource.readyState` 判在线，**不能**按"多久没消息"判——注释心跳不触发 message 事件）。
 - `GET /api/commands` → `[{name, aliases, usage, description, author}]`。
-- 配置项字段：`key/type/value/default/description/accepts`；`accepts` = `{options:[...]}`（下拉）或 `{min,max}`（范围）；段级字段 `group` = `"automation"|"feature"`（**前端禁止硬编码段名**）。
+- 配置项字段：`key/type/value/default/description/accepts`；`accepts` = `{options:[...]}`（下拉）或 `{min,max}`（范围）；段级字段 `group` = `"automation"|"feature"`（**前端禁止硬编码段名**；配置页只显示 `feature`，`automation` 归自动化页）。
+- 段/模块日志：`GET /api/config/section/{段名}/log` 与 `GET /api/automation/modules/{id}/log` → `{ok, section/id, seq, lines:["HH:mm:ss [LEVEL] msg"]}` **对象（不是数组）**；`POST …/log/clear` 清空。
+- 桌面壳系统操作：`POST /api/game/exit` → `{ok}`，后端投递主线程执行 `Application.Quit()`（用户确认在前端做）。
 - 鉴权：`Password` 为空 = 不鉴权；非空 = `POST /login` 校验后发随机 token cookie（`dt_token`）；插件重启 token 轮换，前端 401 统一跳登录。
-- 前端铁律：视图代码禁止裸 fetch 与字面量 API 路径（一律走 `js/api.js`）；动态文本进 DOM 必须 `textContent` 或 `esc()`；登录页样式必须自包含。
+- 监听与线程模型：`ListenIp` 配置监听地址（默认 `127.0.0.1`；`0.0.0.0`/`*` = 全部 IPv4；`::` = 全部 IPv6（通常双栈同收）；具体 IPv6 地址自动加方括号成合法前缀；Unity(Mono) HttpListener 无 URL ACL 限制）；`RunInBackground` 开启时插件强制 `Application.runInBackground=true`——游戏失焦后主线程停摆会让**所有** /api/run 统一 5 秒超时（远程/后台使用的第一嫌疑，超时必写 Warn 日志）。命令泵内未预期异常兜底回 `command error`，不吞挂起请求。
+- 前端铁律：视图代码禁止裸 fetch 与字面量 API 路径（一律走 `src/api.js`）；动态文本进 DOM 必须 `textContent` 或 `esc()`；登录页样式必须自包含。
+- 桌面壳本地状态（备忘录重命名/自定义图标/壁纸/用户名主机名头像）全部存浏览器 localStorage，**不进后端配置**——新终端内置命令 `whoami/hostname/user` 是前端本地命令，不进 `/api/commands`。
+
+### 8.1 前端工程（webui-src/）
+
+- Vue 3 + Vite，`npm run build` 产物直出 `../DT_Tools/WebUI/`（无 hash 文件名，依赖后端 no-cache 头破缓存）；**产物目录禁止手改**——日常构建走 `dotnet build`（csproj 的 BuildWebUI 目标自动增量构建并拷贝到输出目录，见 §2）。
+- 结构：`src/desktop/`（桌面壳：Desktop/Window/Taskbar/DesktopIcon，八方向缩放窗口 + 多实例窗口管理）、`src/apps/`（应用窗口：console=旧版控制台、terminal=Kali 风格新终端（内置命令见上）、config=功能配置、automation=自动化；跨应用共享组件在 `apps/common/`：FolderGrid/LogPanel/EntryList/CropperHost）、`src/composables/`（全局单例状态：窗口管理/连接状态/日志流/身份/壁纸/备忘录/裁切）。
+- 两套控制台共享 `useConsole` 日志流单例（同一份 entries/连接状态）；日志流由 Desktop 挂载即启动，连接状态不依赖控制台窗口是否打开。
+- 图片导入（应用/文件夹图标、头像、壁纸）统一走 `useCropper` 裁切（256×256 输出，壁纸另行压缩 ≤1920px JPEG）。
+- 图标使用 unplugin-icons + tabler 集（注意：tabler **没有** `brand-kali`，Kali 风图标用 `dragon`）。
 
 ## 9. 禁止事项清单
 
 - 禁止修改 `0.1.15b/`、`libs/`、`Assets/`。
 - 禁止在代码中引入段名/键名字符串、`ConfigEntry<T>` 字段、`Debug.Log`、手拼 JSON。
-- 禁止让 Patches/Commands/Automation 之间产生新的横向依赖（公共逻辑上浮 Core 或 Game）；例外：命令域引用功能的公开静态状态/方法（如 `StageMusicPlayer.StopCurrent`）。
+- 禁止让 Patches/Commands/Automation 之间产生新的横向依赖（公共逻辑上浮 Core 或 Game）；例外：命令域引用功能的公开静态状态/方法（如 `DarkRadar` 相关公开状态）。
 - 禁止未经 0.1.15b 核对就写下任何 `typeof(X)` / 反射字符串 / Traverse 成员名。
 - 禁止在多代理并行作业时运行 `dotnet build`。
 - 禁止重新引入全局作者常量/兜底——作者逐功能/模块/命令显式声明，未声明按「佚名」署名。

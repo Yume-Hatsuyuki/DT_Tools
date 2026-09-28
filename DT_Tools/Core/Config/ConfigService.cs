@@ -263,21 +263,21 @@ namespace DT_Tools.Core
 
         private sealed class ImportSectionDto
         {
-            [JsonProperty("section")] public string Section;
-            [JsonProperty("entries")] public List<ImportEntryDto> Entries;
+            [JsonProperty("section")] public string Section = null;
+            [JsonProperty("entries")] public List<ImportEntryDto> Entries = null;
         }
 
         private sealed class ImportEntryDto
         {
-            [JsonProperty("key")] public string Key;
-            [JsonProperty("value")] public object Value;
+            [JsonProperty("key")] public string Key = null;
+            [JsonProperty("value")] public object Value = null;
         }
 
         private sealed class ImportPairDto
         {
-            [JsonProperty("section")] public string Section;
-            [JsonProperty("key")] public string Key;
-            [JsonProperty("value")] public object Value;
+            [JsonProperty("section")] public string Section = null;
+            [JsonProperty("key")] public string Key = null;
+            [JsonProperty("value")] public object Value = null;
         }
 
         /// <summary>JSON 反序列化出的 object 值 → 配置更新用的原始字符串（与导出格式互逆）。</summary>

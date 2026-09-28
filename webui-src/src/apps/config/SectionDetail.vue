@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { API } from '../../api.js';
+import { useSectionMeta } from '../../composables/useSectionMeta.js';
 import { sectionMeta, splitDesc } from './configUtils.js';
-import EntryControl from './EntryControl.vue';
+import EntryList from '../common/EntryList.vue';
+import LogPanel from '../common/LogPanel.vue';
 import IconArrowLeft from '~icons/tabler/arrow-left';
 import IconRotateClockwise2 from '~icons/tabler/rotate-clockwise-2';
 import IconHistory from '~icons/tabler/history';
@@ -13,6 +15,7 @@ const props = defineProps({
 const emit = defineEmits(['back', 'updated', 'toast']);
 
 const meta = computed(() => sectionMeta(props.section));
+const sectionMetaStore = useSectionMeta();
 const fieldQuery = ref('');
 const filteredEntries = computed(() => {
   const q = fieldQuery.value.trim().toLowerCase();
@@ -22,9 +25,8 @@ const filteredEntries = computed(() => {
     (e.key || '').toLowerCase().includes(q) || (e.description || '').toLowerCase().includes(q));
 });
 
-function entryText(e) {
-  return splitDesc(e.description).text;
-}
+/** 备忘录级显示名（WebUI 层，不触配置）。 */
+const alias = computed(() => sectionMetaStore.displayName(props.section.section));
 
 async function commitEntry(entry, value) {
   const j = await API.configUpdate(props.section.section, entry.key, value);
@@ -44,18 +46,6 @@ async function resetSection() {
 }
 
 const logOpen = ref(false);
-const logText = ref('');
-async function toggleLog() {
-  logOpen.value = !logOpen.value;
-  if (logOpen.value) {
-    const r = await API.sectionLog(props.section.section);
-    logText.value = Array.isArray(r) ? r.map(l => l.time + '  ' + l.msg).join('\n') : (r.error || '无日志');
-  }
-}
-async function clearLog() {
-  await API.sectionLogClear(props.section.section);
-  logText.value = '';
-}
 </script>
 
 <template>
@@ -63,33 +53,26 @@ async function clearLog() {
     <div class="detail-header">
       <button class="back-btn" @click="emit('back')"><IconArrowLeft /> 全部配置</button>
       <div class="detail-title">
-        <span class="bracket-name">[{{ section.section }}]</span>
+        <span class="bracket-name" :title="section.section">[{{ alias || section.section }}]</span>
         <span v-if="meta.side" class="badge">{{ meta.side }}</span>
         <span v-if="meta.author" class="author">by {{ meta.author }}</span>
       </div>
       <div class="detail-actions">
         <input v-model="fieldQuery" class="field-search" type="search" placeholder="搜索字段…">
-        <button class="icon-btn" title="查看本段日志" @click="toggleLog"><IconHistory /></button>
+        <button class="icon-btn" :class="{ active: logOpen }" title="本段日志" @click="logOpen = !logOpen"><IconHistory /></button>
         <button class="icon-btn" title="恢复本段默认" @click="resetSection"><IconRotateClockwise2 /></button>
       </div>
     </div>
 
     <div v-if="logOpen" class="section-log">
-      <pre>{{ logText || '（无日志）' }}</pre>
-      <button class="btn-xs" @click="clearLog">清空日志</button>
+      <LogPanel
+        :fetch="() => API.sectionLog(props.section.section)"
+        :clear="async () => { await API.sectionLogClear(props.section.section); }"
+      />
     </div>
 
     <div class="fields">
-      <div v-for="e in filteredEntries" :key="e.key" class="field-row">
-        <div class="field-meta">
-          <span class="field-key">{{ e.key }}</span>
-          <span v-if="entryText(e)" class="field-desc">{{ entryText(e) }}</span>
-        </div>
-        <div class="field-control">
-          <EntryControl :entry="e" @commit="v => commitEntry(e, v)" />
-        </div>
-      </div>
-      <div v-if="!filteredEntries.length" class="empty">无匹配字段。</div>
+      <EntryList :entries="filteredEntries" @commit="commitEntry" />
     </div>
   </div>
 </template>
@@ -151,45 +134,11 @@ async function clearLog() {
   color: var(--text-1);
   cursor: pointer;
 }
-.icon-btn:hover { color: var(--text-0); border-color: var(--line-strong); }
+.icon-btn:hover, .icon-btn.active { color: var(--text-0); border-color: var(--line-strong); }
+.icon-btn.active { color: var(--accent-cyan); border-color: var(--accent-cyan-dim); }
 .icon-btn svg { width: 14px; height: 14px; }
 
-.section-log {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-1);
-}
-.section-log pre {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-1);
-  max-height: 140px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  margin-bottom: 8px;
-}
-.btn-xs {
-  font-size: 11px;
-  padding: 3px 9px;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  color: var(--text-1);
-  cursor: pointer;
-}
+.section-log { padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--surface-1); }
 
-.fields { flex: 1; overflow-y: auto; padding: 6px 16px 20px; }
-.field-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--line);
-}
-.field-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.field-key { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-0); }
-.field-desc { font-size: 11.5px; color: var(--text-2); line-height: 1.5; }
-.field-control { flex-shrink: 0; min-width: 160px; display: flex; justify-content: flex-end; }
-
-.empty { text-align: center; color: var(--text-2); padding: 40px 0; font-size: 12.5px; }
+.fields { flex: 1; overflow-y: auto; }
 </style>

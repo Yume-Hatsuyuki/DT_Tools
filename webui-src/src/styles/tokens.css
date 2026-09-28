@@ -1,45 +1,51 @@
 /*
-  设计令牌。延续旧版 WebUI 的青/品红赛博基调（游戏本身是悬疑推理向恐怖题材，
-  这套配色已经是为这个项目做出的选择，不是套壳默认值），在此基础上加深背景、
-  收紧强调色使用场景，把"桌面壳"跟"应用内容"用色区分开——桌面壳用青，
-  应用窗口内容区用更克制的中性色，避免满屏荧光。
+  设计令牌 —— Kali Linux 主题（用户指定参考 0l1v3rr.github.io 的 Kali 终端风）。
+  深蓝底 + 亮蓝强调：底色取该站的 kali-gray-dark(#13141a) 向深蓝偏移，
+  强调色取 kali-blue(rgb 39 127 255 / 按钮 rgb 36 113 243)、
+  辅助绿取 kali-green(rgb 71 212 185)，等宽字体用其同款 Fira Code。
+  历史变量名（accent-cyan 等）保留不变——日志颜色协议(color=cyan/white/red/orange)
+  与大量样式都挂在这些名字上，改名无收益；换成 Kali 蓝后名字只是历史包袱。
 */
 :root {
-  /* 桌面壳 */
-  --desktop-bg-0: #05070c;
-  --desktop-bg-1: #080c14;
-  --desktop-grid-line: rgba(0, 240, 255, 0.035);
-  --taskbar-bg: rgba(8, 12, 20, 0.92);
-  --taskbar-border: rgba(0, 240, 255, 0.16);
+  /* 桌面壳：默认壁纸为 CSS 复刻的 Kali 亮蓝渐变（useWallpaper 'kali-blue'），
+     此处是样式加载前的兜底色 */
+  --desktop-bg-0: #3d7fd8;
+  --desktop-bg-1: #47a3d2;
+  --desktop-grid-line: rgba(255, 255, 255, 0.05);
+  --taskbar-bg: rgba(12, 16, 28, 0.9);
+  --taskbar-border: rgba(39, 127, 255, 0.35);
 
-  /* 强调色 */
-  --accent-cyan: #00e5ff;
-  --accent-cyan-dim: rgba(0, 229, 255, 0.5);
-  --accent-magenta: #ff2d95;
-  --accent-green: #3dff9a;
-  --accent-amber: #ffc14a;
-  --accent-red: #ff4d6d;
+  /* 强调色（Kali 亮蓝为主调） */
+  --accent-cyan: #277fff;
+  --accent-cyan-dim: rgba(39, 127, 255, 0.5);
+  --accent-magenta: #b18aff;
+  --accent-green: #47d4b9;
+  --accent-amber: #f5c542;
+  --accent-red: #ff5252;
+  --kali-red: #ec0101;                 /* Kali 提示符用户段红（参考站 text-kali-red） */
+  --accent-blue-btn: #2471f3;          /* 实心按钮底色（kali-blue-bg） */
 
-  /* 窗口 chrome */
-  --win-bg: rgba(11, 15, 24, 0.97);
-  --win-border: rgba(255, 255, 255, 0.08);
-  --win-border-active: rgba(0, 229, 255, 0.28);
-  --win-titlebar: rgba(6, 9, 16, 0.98);
-  --win-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  --win-radius: 10px;
+  /* 窗口 chrome：参考站终端窗口的深蓝黑（#10141f 系，带蓝调而非中性黑） */
+  --win-bg: rgba(16, 20, 33, 0.97);
+  --win-border: rgba(120, 170, 255, 0.10);
+  --win-border-active: rgba(39, 127, 255, 0.5);
+  --win-titlebar: rgba(12, 15, 27, 0.98);
+  --win-shadow: 0 24px 60px -14px rgba(6, 12, 32, 0.65), 0 0 0 1px rgba(39, 127, 255, 0.07);
+  --menu-shadow: 0 16px 48px -10px rgba(5, 10, 28, 0.7), 0 0 0 1px rgba(39, 127, 255, 0.08);
+  --win-radius: 8px;
 
-  /* 文字与内容区中性色（应用内部主用这套，不是青色） */
-  --text-0: #e8edf4;
-  --text-1: #aab4c4;
-  --text-2: #667284;
-  --surface-0: #0d121c;
-  --surface-1: #131a27;
-  --surface-2: #1a2333;
-  --line: rgba(255, 255, 255, 0.07);
-  --line-strong: rgba(255, 255, 255, 0.14);
+  /* 文字与内容区中性色：整体偏蓝的深色系（应用内部主用这套） */
+  --text-0: #f2f4f8;
+  --text-1: #b6bfce;
+  --text-2: #7b869b;
+  --surface-0: #121724;
+  --surface-1: #171e30;
+  --surface-2: #1e2840;
+  --line: rgba(140, 180, 255, 0.09);
+  --line-strong: rgba(140, 180, 255, 0.18);
 
   --font-ui: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+  --font-mono: "Fira Code", "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -61,7 +67,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: var(--accent-cyan); color: #04070c; }
+::selection { background: var(--accent-cyan); color: #fff; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }

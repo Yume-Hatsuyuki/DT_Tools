@@ -9,7 +9,7 @@
 ```bash
 npm install        # 首次拉取依赖
 npm run dev        # 本地开发服务器（http://localhost:5173，热更新）
-npm run build      # 生产构建 → 直接输出到 ../DT_Tools/WEBUI
+npm run build      # 生产构建 → 直接输出到 ../DT_Tools/WebUI
 ```
 
 **每次改完 WebUI 代码，必须跑一次 `npm run build`**，产物才会进 `DT_Tools/WEBUI/`，插件打包时才带得上最新版本。`npm run dev` 只用于本地调试观察效果，不影响插件实际打包内容。

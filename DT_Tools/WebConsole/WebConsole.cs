@@ -23,8 +23,21 @@ namespace DT_Tools.WebConsole
         private const int RunTimeoutMs = 5000;
 
         private readonly Queue<PendingRequest> _pending = new Queue<PendingRequest>();
+        private readonly Queue<Action> _actions = new Queue<Action>();
         private readonly object _pendLock = new object();
         private HttpServer _server;
+
+        /// <summary>
+        /// 供 API 层（HTTP 线程）把需要 Unity API 的动作投递到主线程执行，
+        /// 与 /api/run 的命令队列共用同一把锁与 Update() 泵。
+        /// </summary>
+        public static void Post(Action action)
+        {
+            var self = Instance;
+            if (self == null || action == null) return;
+            lock (self._pendLock)
+                self._actions.Enqueue(action);
+        }
 
         /// <summary>由 Plugin 在启用 WebConsole 时调用（读取 WebConsoleOptions 已由引擎绑定）。</summary>
         public void Init(ManualLogSource log)
@@ -42,7 +55,26 @@ namespace DT_Tools.WebConsole
             RegisterRoutes(router, auth);
 
             _server = new HttpServer(router);
-            _server.Start(WebConsoleOptions.Port);
+            _server.Start(WebConsoleOptions.ListenIp, WebConsoleOptions.Port);
+            ApplyRuntimeToggles();
+        }
+
+        /// <summary>
+        /// 远程/后台使用的前置条件：游戏窗口失焦时 Unity 默认可能暂停主线程（玩家循环停摆），
+        /// 队列泵随之停转——表现为所有 /api/run 统一 5 秒超时。按配置强制开启后台运行。
+        /// 非回环监听 + 空密码时给出暴露面警告。
+        /// </summary>
+        private void ApplyRuntimeToggles()
+        {
+            if (WebConsoleOptions.RunInBackground && !Application.runInBackground)
+            {
+                Application.runInBackground = true;
+                Log.Info("WebConsole", "已开启 Unity 后台运行（RunInBackground）：游戏窗口失焦时 WebUI 命令仍会执行。");
+            }
+            string ip = WebConsoleOptions.ListenIp.Trim();
+            bool loopback = ip == "127.0.0.1" || ip == "::1" || ip == "localhost";
+            if (!loopback && string.IsNullOrEmpty(WebConsoleOptions.Password))
+                Log.Warn("WebConsole", "监听地址为非回环 IP 且未设置访问密码——局域网内任何人都可以操作 WebUI，建议在配置中设置 Password。");
         }
 
         private void RegisterRoutes(Router router, Auth auth)
@@ -63,6 +95,7 @@ namespace DT_Tools.WebConsole
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
             router.Add("GET", "/api/pick-file", Api.FilePickerApi.Handle);
+            router.Add("POST", "/api/game/exit", Api.SystemApi.HandleExit);
         }
 
         private void OnDestroy()
@@ -88,9 +121,15 @@ namespace DT_Tools.WebConsole
 
             // 超时保护：主线程卡死时不无限挂起 HTTP 线程
             if (pending.Done.Wait(RunTimeoutMs))
+            {
                 HttpServer.WriteJson(ctx.Response, CommandResult.Success(pending.Result));
+            }
             else
+            {
+                // 超时必留痕：最常见原因是游戏窗口失焦后主线程停摆（RunInBackground 被关）
+                Log.Warn("WebConsole", $"命令 {RunTimeoutMs / 1000} 秒未被执行（主线程卡顿或失焦停摆？）：{pending.Command}");
                 HttpServer.WriteJson(ctx.Response, CommandResult.Fail("timeout"));
+            }
 
             pending.Done.Dispose();
         }
@@ -102,8 +141,18 @@ namespace DT_Tools.WebConsole
                 PendingRequest pending;
                 lock (_pendLock)
                 {
-                    if (_pending.Count == 0) break;
-                    pending = _pending.Dequeue();
+                    if (_pending.Count == 0 && _actions.Count == 0) break;
+                    if (_pending.Count > 0)
+                    {
+                        pending = _pending.Dequeue();
+                    }
+                    else
+                    {
+                        var action = _actions.Dequeue();
+                        // API 投递的动作自带 try/catch 兜底，这里不再包裹以免吞掉调用方语义
+                        action();
+                        continue;
+                    }
                 }
                 ExecuteOnMainThread(pending);
             }
@@ -112,30 +161,38 @@ namespace DT_Tools.WebConsole
         private void ExecuteOnMainThread(PendingRequest pending)
         {
             string raw = pending.Command ?? "";
-
-            // 去掉前导 / 或 !
-            if (raw.StartsWith("/") || raw.StartsWith("!"))
-                raw = raw.Substring(1);
-
-            if (string.IsNullOrWhiteSpace(raw))
+            try
             {
-                Complete(pending, CommandResult.Fail("empty command"));
-                return;
-            }
+                // 去掉前导 / 或 !
+                if (raw.StartsWith("/") || raw.StartsWith("!"))
+                    raw = raw.Substring(1);
 
-            var parts = raw.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (!CommandRegistry.TryGet(parts[0], out var command))
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    Complete(pending, CommandResult.Fail("empty command"));
+                    return;
+                }
+
+                var parts = raw.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (!CommandRegistry.TryGet(parts[0], out var command))
+                {
+                    Log.Warn("WebConsole", $"未知命令: {parts[0]}");
+                    Complete(pending, CommandResult.Fail("unknown command"));
+                    return;
+                }
+
+                string[] args = parts.Length > 1
+                    ? parts.Skip(1).ToArray()
+                    : Array.Empty<string>();
+
+                Complete(pending, CommandRegistry.Execute(command, args));
+            }
+            catch (Exception ex)
             {
-                Log.Warn("WebConsole", $"未知命令: {parts[0]}");
-                Complete(pending, CommandResult.Fail("unknown command"));
-                return;
+                // 泵内未预期异常不能吞掉挂起请求——否则 HTTP 线程必然白等 5 秒超时
+                Log.Exception("WebConsole", ex, $"命令主线程执行异常: {raw}");
+                Complete(pending, CommandResult.Fail("command error"));
             }
-
-            string[] args = parts.Length > 1
-                ? parts.Skip(1).ToArray()
-                : Array.Empty<string>();
-
-            Complete(pending, CommandRegistry.Execute(command, args));
         }
 
         private static void Complete(PendingRequest pending, CommandResult result)
