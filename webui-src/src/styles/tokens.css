@@ -1,0 +1,69 @@
+/*
+  设计令牌。延续旧版 WebUI 的青/品红赛博基调（游戏本身是悬疑推理向恐怖题材，
+  这套配色已经是为这个项目做出的选择，不是套壳默认值），在此基础上加深背景、
+  收紧强调色使用场景，把"桌面壳"跟"应用内容"用色区分开——桌面壳用青，
+  应用窗口内容区用更克制的中性色，避免满屏荧光。
+*/
+:root {
+  /* 桌面壳 */
+  --desktop-bg-0: #05070c;
+  --desktop-bg-1: #080c14;
+  --desktop-grid-line: rgba(0, 240, 255, 0.035);
+  --taskbar-bg: rgba(8, 12, 20, 0.92);
+  --taskbar-border: rgba(0, 240, 255, 0.16);
+
+  /* 强调色 */
+  --accent-cyan: #00e5ff;
+  --accent-cyan-dim: rgba(0, 229, 255, 0.5);
+  --accent-magenta: #ff2d95;
+  --accent-green: #3dff9a;
+  --accent-amber: #ffc14a;
+  --accent-red: #ff4d6d;
+
+  /* 窗口 chrome */
+  --win-bg: rgba(11, 15, 24, 0.97);
+  --win-border: rgba(255, 255, 255, 0.08);
+  --win-border-active: rgba(0, 229, 255, 0.28);
+  --win-titlebar: rgba(6, 9, 16, 0.98);
+  --win-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --win-radius: 10px;
+
+  /* 文字与内容区中性色（应用内部主用这套，不是青色） */
+  --text-0: #e8edf4;
+  --text-1: #aab4c4;
+  --text-2: #667284;
+  --surface-0: #0d121c;
+  --surface-1: #131a27;
+  --surface-2: #1a2333;
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
+  --font-ui: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  color: var(--text-0);
+  background: var(--desktop-bg-0);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent-cyan); color: #04070c; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan-dim); }

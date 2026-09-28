@@ -6,8 +6,8 @@ using System.Reflection;
 namespace DT_Tools.WebConsole
 {
     /// <summary>
-    /// WEBUI 静态资源服务：白名单（index/login/css/js）+ Mime 表 + 防目录穿越。
-    /// WEBUI 缺失时页面返回 503，API 不受影响。
+    /// WebUI 静态资源服务：白名单（index/login/css/js）+ Mime 表 + 防目录穿越。
+    /// WebUI 缺失时页面返回 503，API 不受影响。
     /// </summary>
     public static class StaticFiles
     {
@@ -20,7 +20,7 @@ namespace DT_Tools.WebConsole
             {
                 if (_webRoot != null) return _webRoot;
                 string pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                _webRoot = Path.Combine(pluginDir ?? "", "WEBUI");
+                _webRoot = Path.Combine(pluginDir ?? "", "WebUI");
                 return _webRoot;
             }
         }
@@ -36,6 +36,7 @@ namespace DT_Tools.WebConsole
             if (!(path == "/index.html" || path == "/login.html" ||
                   path.StartsWith("/css/", StringComparison.Ordinal) ||
                   path.StartsWith("/js/", StringComparison.Ordinal) ||
+                  path.StartsWith("/assets/", StringComparison.Ordinal) ||
                   path.StartsWith("/favicon/", StringComparison.Ordinal)))
                 return false;
 
@@ -45,9 +46,9 @@ namespace DT_Tools.WebConsole
                 if (!_warnedMissing)
                 {
                     _warnedMissing = true;
-                    Log.Warn("WebConsole", $"WEBUI 目录缺失: {root}；页面返回 503，API 仍可用。");
+                    Log.Warn("WebConsole", $"WebUI 目录缺失: {root}；页面返回 503，API 仍可用。");
                 }
-                HttpServer.WriteText(resp, 503, "WEBUI missing; API still available.");
+                HttpServer.WriteText(resp, 503, "WebUI missing; API still available.");
                 return true;
             }
 
@@ -61,7 +62,7 @@ namespace DT_Tools.WebConsole
 
             if (!File.Exists(full))
             {
-                HttpServer.WriteText(resp, 503, "WEBUI file missing; API still available.");
+                HttpServer.WriteText(resp, 503, "WebUI file missing; API still available.");
                 return true;
             }
 
@@ -85,7 +86,7 @@ namespace DT_Tools.WebConsole
                 if (!_warnedMissing)
                 {
                     _warnedMissing = true;
-                    Log.Warn("WebConsole", $"WEBUI/login.html 缺失: {full}");
+                    Log.Warn("WebConsole", $"WebUI/login.html 缺失: {full}");
                 }
                 return false;
             }
@@ -112,6 +113,8 @@ namespace DT_Tools.WebConsole
                 ".svg" => "image/svg+xml",
                 ".ico" => "image/x-icon",
                 ".webmanifest" => "application/manifest+json",
+                ".woff2" => "font/woff2",
+                ".woff" => "font/woff",
                 _ => "application/octet-stream"
             };
         }

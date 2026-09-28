@@ -62,6 +62,7 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/automation/host", Api.AutomationApi.HandleHost);
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
+            router.Add("GET", "/api/pick-file", Api.FilePickerApi.Handle);
         }
 
         private void OnDestroy()

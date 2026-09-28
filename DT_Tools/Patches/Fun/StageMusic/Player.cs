@@ -21,10 +21,13 @@ namespace DT_Tools.Patches.Fun.StageMusic
         private static Coroutine _stopCo;
         private static string _playingUri;
         private static bool _manualHold;   // 手动点播独占播放槽：期间忽略阶段触发，结束/限长后恢复阶段音乐
+        private static float _currentVolume = 1f;   // 当前播放会话的音量（MixIntoMic 读取，随每次播放调用刷新）
 
         private static readonly Dictionary<string, AudioClip> _clips = new Dictionary<string, AudioClip>();
         private static string _configFingerprint = "\0";
         private static bool _loading;
+        private static float _pendingVolume = 1f;      // 异步加载期间暂存本次播放的音量/时长（加载完成后交给 StartPlayback）
+        private static float _pendingMaxSeconds = -1f;
 
         // ── 麦克风混音状态（MicInjectPatch 读取）──
         internal static float[] MixSamples;
@@ -45,14 +48,76 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 case MusicStage.Trial: return StageMusicFeature.TrialTrack;
                 case MusicStage.Execution: return StageMusicFeature.ExecutionTrack;
                 case MusicStage.Victory: return StageMusicFeature.VictoryTrack;
+                case MusicStage.PickCharacter: return StageMusicFeature.PickCharacterTrack;
+                case MusicStage.Discuss: return StageMusicFeature.DiscussTrack;
+                case MusicStage.VotePhase: return StageMusicFeature.VotePhaseTrack;
+                case MusicStage.VoteResult: return StageMusicFeature.VoteResultTrack;
+                case MusicStage.Replay: return StageMusicFeature.ReplayTrack;
+                case MusicStage.DiscoverCorpse: return StageMusicFeature.DiscoverCorpseTrack;
+                case MusicStage.SelfDead: return StageMusicFeature.SelfDeadTrack;
+                case MusicStage.EndingCutscene: return StageMusicFeature.EndingCutsceneTrack;
+                case MusicStage.BlackSuccession: return StageMusicFeature.BlackSuccessionTrack;
                 default: return "";
             }
         }
 
+        /// <summary>阶段独立音量（0~1）。</summary>
+        private static float VolumeOf(MusicStage stage)
+        {
+            switch (stage)
+            {
+                case MusicStage.Kill: return StageMusicFeature.KillVolume;
+                case MusicStage.GiveKnife: return StageMusicFeature.GiveKnifeVolume;
+                case MusicStage.Lobby: return StageMusicFeature.LobbyVolume;
+                case MusicStage.Survive: return StageMusicFeature.SurviveVolume;
+                case MusicStage.Detective: return StageMusicFeature.DetectVolume;
+                case MusicStage.Trial: return StageMusicFeature.TrialVolume;
+                case MusicStage.Execution: return StageMusicFeature.ExecutionVolume;
+                case MusicStage.Victory: return StageMusicFeature.VictoryVolume;
+                case MusicStage.PickCharacter: return StageMusicFeature.PickCharacterVolume;
+                case MusicStage.Discuss: return StageMusicFeature.DiscussVolume;
+                case MusicStage.VotePhase: return StageMusicFeature.VotePhaseVolume;
+                case MusicStage.VoteResult: return StageMusicFeature.VoteResultVolume;
+                case MusicStage.Replay: return StageMusicFeature.ReplayVolume;
+                case MusicStage.DiscoverCorpse: return StageMusicFeature.DiscoverCorpseVolume;
+                case MusicStage.SelfDead: return StageMusicFeature.SelfDeadVolume;
+                case MusicStage.EndingCutscene: return StageMusicFeature.EndingCutsceneVolume;
+                case MusicStage.BlackSuccession: return StageMusicFeature.BlackSuccessionVolume;
+                default: return 1f;
+            }
+        }
+
+        /// <summary>阶段独立时长上限（秒）。-1/0 = 不限。</summary>
+        private static float MaxSecondsOf(MusicStage stage)
+        {
+            switch (stage)
+            {
+                case MusicStage.Kill: return StageMusicFeature.KillMaxSeconds;
+                case MusicStage.GiveKnife: return StageMusicFeature.GiveKnifeMaxSeconds;
+                case MusicStage.Lobby: return StageMusicFeature.LobbyMaxSeconds;
+                case MusicStage.Survive: return StageMusicFeature.SurviveMaxSeconds;
+                case MusicStage.Detective: return StageMusicFeature.DetectMaxSeconds;
+                case MusicStage.Trial: return StageMusicFeature.TrialMaxSeconds;
+                case MusicStage.Execution: return StageMusicFeature.ExecutionMaxSeconds;
+                case MusicStage.Victory: return StageMusicFeature.VictoryMaxSeconds;
+                case MusicStage.PickCharacter: return StageMusicFeature.PickCharacterMaxSeconds;
+                case MusicStage.Discuss: return StageMusicFeature.DiscussMaxSeconds;
+                case MusicStage.VotePhase: return StageMusicFeature.VotePhaseMaxSeconds;
+                case MusicStage.VoteResult: return StageMusicFeature.VoteResultMaxSeconds;
+                case MusicStage.Replay: return StageMusicFeature.ReplayMaxSeconds;
+                case MusicStage.DiscoverCorpse: return StageMusicFeature.DiscoverCorpseMaxSeconds;
+                case MusicStage.SelfDead: return StageMusicFeature.SelfDeadMaxSeconds;
+                case MusicStage.EndingCutscene: return StageMusicFeature.EndingCutsceneMaxSeconds;
+                case MusicStage.BlackSuccession: return StageMusicFeature.BlackSuccessionMaxSeconds;
+                default: return -1f;
+            }
+        }
+
+        /// <summary>按阶段播放：曲目/音量/时长上限均取该阶段独立配置，来源按 TrackSource 解析。</summary>
         public static void Play(MusicStage stage)
         {
             if (_manualHold)
-                return;   // 手动点播独占播放槽（受 MaxSeconds 限长），期间忽略阶段触发
+                return;   // 手动点播独占播放槽（受其自身时长限制），期间忽略阶段触发
 
             string raw = TrackOf(stage)?.Trim() ?? "";
             if (raw.Length == 0)
@@ -60,24 +125,38 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 StopCurrent();   // 切到未配置阶段：只保留一首的原则下停掉旧曲
                 return;
             }
-            PlayManual(raw);
+            string uri = ResolveUri(raw);
+            if (uri == null)
+                return;   // 阶段解析失败：不打断已有播放（可能是另一首正常曲目）
+            PlayInternal(uri, Mathf.Clamp01(VolumeOf(stage)), MaxSecondsOf(stage), exclusive: false);
         }
 
         /// <summary>
-        /// 手动点播（/play_audio 与阶段触发共用）：同 URI 播放中不重播；
-        /// 点播期间独占播放槽（阶段触发被忽略），结束/限长后自动恢复当前阶段音乐；
-        /// 麦克风广播遵循 MicBroadcast 配置与静音状态（注入点与游戏阶段无关，全阶段可混入）。
+        /// 手动点播（/play_audio 专用）：来源按前缀自动识别在线/本地（见 ResolveManualUri），
+        /// 音量/时长上限由调用方显式传入，完全不读取任何阶段的 [Config] 字段——
+        /// 与 StageMusic 的阶段配置解耦（见 Commands/PlayAudio；默认值由该命令的 Args 决定，
+        /// 本方法不设默认）。
         /// </summary>
-        public static void PlayManual(string raw)
+        public static void PlayManual(string raw, float volume, float maxSeconds)
         {
-            string uri = ResolveUri(raw);
+            string uri = ResolveManualUri(raw);
             if (uri == null)
             {
                 StopCurrent();
                 return;
             }
+            PlayInternal(uri, Mathf.Clamp01(volume), maxSeconds, exclusive: true);
+        }
 
-            _manualHold = true;   // 独占：先置位，阶段触发在点播期间被忽略
+        /// <summary>
+        /// 播放核心（uri 已解析）：同 URI 播放中不重播；exclusive=true（手动点播）独占播放槽，
+        /// 期间阶段触发被忽略，结束/限长后自动恢复当前阶段音乐；
+        /// 麦克风广播遵循 MicBroadcast 配置与静音状态（注入点与游戏阶段无关，全阶段可混入）。
+        /// </summary>
+        private static void PlayInternal(string uri, float volume, float maxSeconds, bool exclusive)
+        {
+            if (exclusive)
+                _manualHold = true;   // 独占：先置位，阶段触发在点播期间被忽略
 
             if (_playingUri == uri && _source != null && _source.isPlaying)
                 return;          // 同曲目播放中：连杀/重复触发不重播
@@ -85,11 +164,13 @@ namespace DT_Tools.Patches.Fun.StageMusic
             EnsureConfigCache();
             if (_clips.TryGetValue(uri, out var cached) && cached != null)
             {
-                StartPlayback(uri, cached);
+                StartPlayback(uri, cached, volume, maxSeconds);
                 return;
             }
             if (_loading)
                 return;
+            _pendingVolume = volume;
+            _pendingMaxSeconds = maxSeconds;
             CoroutineHost.Start(CoLoadAndPlay(uri));
         }
 
@@ -130,10 +211,10 @@ namespace DT_Tools.Patches.Fun.StageMusic
             }
             _clips[uri] = clip;
             Log.Info<StageMusicFeature>($"音频就绪: {clip.length:F1} 秒 ({uri})");
-            StartPlayback(uri, clip);
+            StartPlayback(uri, clip, _pendingVolume, _pendingMaxSeconds);
         }
 
-        private static void StartPlayback(string uri, AudioClip clip)
+        private static void StartPlayback(string uri, AudioClip clip, float volume, float maxSeconds)
         {
             var src = EnsureSource();
             if (src == null)
@@ -145,17 +226,17 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 _stopCo = null;
             }
             _playingUri = uri;
+            _currentVolume = volume;
             src.Stop();
             src.clip = clip;
-            src.volume = Mathf.Clamp01(StageMusicFeature.Volume);
+            src.volume = volume;
             src.Play();
             Log.Info<StageMusicFeature>($"阶段音乐播放: {uri}");
 
             PrepareMicMix(clip);
 
-            float limit = StageMusicFeature.MaxSeconds;
-            if (limit > 0f)
-                _stopCo = CoroutineHost.Start(CoStopAfter(limit));
+            if (maxSeconds > 0f)
+                _stopCo = CoroutineHost.Start(CoStopAfter(maxSeconds));
         }
 
         private static IEnumerator CoStopAfter(float seconds)
@@ -224,8 +305,9 @@ namespace DT_Tools.Patches.Fun.StageMusic
         }
 
         /// <summary>
-        /// URI 解析：来源由 TrackSource 统一指定（不再按 http 前缀猜测，避免本地文件
-        /// 命名含 http 字样时被误判）。Http 要求 http(s):// 前缀；Local 转为 file:/// URI。
+        /// URI 解析（阶段音乐用）：来源由 TrackSource 统一指定（不再按 http 前缀猜测，
+        /// 避免本地文件命名含 http 字样时被误判）。Http 要求 http(s):// 前缀；
+        /// Local 转为 file:/// URI。
         /// </summary>
         private static string ResolveUri(string raw)
         {
@@ -239,6 +321,24 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 }
                 return raw;
             }
+            return ResolveLocalUri(raw);
+        }
+
+        /// <summary>
+        /// URI 解析（/play_audio 点播用，Commands/PlayAudio 调用）：按前缀自动判断
+        /// 在线/本地，不读取 TrackSource——命令是一次性交互输入，不存在本地文件名
+        /// 恰好以 http 开头导致误判的持久化配置场景，与阶段配置解耦。
+        /// </summary>
+        public static string ResolveManualUri(string raw)
+        {
+            if (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                || raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return raw;
+            return ResolveLocalUri(raw);
+        }
+
+        private static string ResolveLocalUri(string raw)
+        {
             try
             {
                 string full = Path.GetFullPath(raw);
@@ -314,7 +414,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             if (comms != null && comms.IsMuted)
                 return;    // 麦克风静音：仅本地收听，不广播
 
-            float vol = Mathf.Clamp01(StageMusicFeature.Volume);
+            float vol = _currentVolume;
             double elapsed = Time.realtimeSinceStartup - MixStartRealtime;
             long head = (long)(elapsed * outputRate);
             for (int i = 0; i < buffer.Count; i++)

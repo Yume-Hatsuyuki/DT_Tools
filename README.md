@@ -145,19 +145,9 @@ Deadly Trick/winhttp.dll
 
 ---
 
-## 开发（欢迎更多开发者提交思路和PR）
+## 开发（欢迎更多开发者提交PR，玩家提交思路）
 
-目录与约定见仓库根目录 [AGENTS.md](AGENTS.md)（若随源码分发）。
-
-```text
-Plugin.cs          入口
-Core/              配置绑定、补丁加载、Config API 后端
-Features/          按领域划分的功能补丁
-Console/           Web 宿主、HTTP、命令
-WEBUI/             前端静态资源
-```
-
-新增功能：在 `Features/<Domain>/` 增加带 `[PatchFeature]` / `[ConfigField]` 的类型即可，无需改注册表。
+目录与约定见仓库根目录 [AGENTS.md](AGENTS.md)。
 
 ---
 

@@ -1,0 +1,21 @@
+{
+  "name": "dt-tools-webui",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "DT_Tools WebUI —「桌面」壳 + 应用窗口。构建产物拷贝进 ../DT_Tools/WebUI，由 BepInEx 内置的 HttpServer/StaticFiles 提供服务。",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@iconify-json/tabler": "^1.2.13",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "unplugin-icons": "^0.20.2",
+    "vite": "^6.0.7"
+  }
+}
