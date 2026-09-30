@@ -58,7 +58,9 @@ namespace DT_Tools.Core
 
             var result = new LoadResult();
             FeatureLoader.Discover(typeof(Engine).Assembly, out var features, out var modules, out var infra);
-            foreach (var m in modules)
+            // 模块元数据按段名排序：WebUI 自动化卡片按此顺序渲染，
+            // 不能继承 GetTypes() 的未定义反射顺序
+            foreach (var m in modules.OrderBy(m => m.Section, StringComparer.Ordinal))
             {
                 ModuleInfos.Add(new ModuleInfo
                 {
@@ -97,6 +99,16 @@ namespace DT_Tools.Core
                     FeatureLoader.Mount(harmony, f);
                     result.MountedCount++;
                     Log.Info(f.Section, $"补丁已挂载（{f.Side}），Enabled={EnabledOf(f.Type)}");
+                    // OnPatched 与挂载分开隔离：它抛异常时补丁已挂载成功且 Enabled 门闩
+                    // 仍生效，不能与"挂载失败（已跳过）"混为一谈误导排障
+                    try
+                    {
+                        FeatureLoader.InvokeStaticIfPresent(f.Type, "OnPatched");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Exception(f.Section, ex, "OnPatched 失败（补丁已挂载，门闩仍生效）");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -109,9 +121,20 @@ namespace DT_Tools.Core
                 Log.Info(m.Section, $"自动化模块就绪：{m.DisplayName}（Enabled={EnabledOf(m.Type)}）");
             result.ModuleCount = ModuleInfos.Count;
 
-            // OnLoaded：配置绑定完成后调用（OptionProviders 注册等）
+            // OnLoaded：配置绑定完成后调用（OptionProviders 注册等）。
+            // 逐类型隔离：此时 Harmony 补丁已挂载（不可逆），单个 OnLoaded 抛异常不能
+            // 中断装配链导致插件半装配失效——与上方 Mount 循环同级的失败隔离。
             foreach (var type in Sections.Keys.ToArray())
-                FeatureLoader.InvokeStaticIfPresent(type, "OnLoaded");
+            {
+                try
+                {
+                    FeatureLoader.InvokeStaticIfPresent(type, "OnLoaded");
+                }
+                catch (Exception ex)
+                {
+                    Log.Exception(SectionOf(type), ex, "OnLoaded 失败（已跳过，其余功能不受影响）");
+                }
+            }
 
             return result;
         }
@@ -146,7 +169,7 @@ namespace DT_Tools.Core
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(module.Section, $"Tick 失败：{ex.GetType().Name}: {ex.Message}");
+                    Log.Exception(module.Section, ex, "Tick 失败");
                 }
             }
         }

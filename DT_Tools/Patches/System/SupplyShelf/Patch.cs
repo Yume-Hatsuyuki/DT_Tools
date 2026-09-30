@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DT_Tools.Core;
+using DT_Tools.Game;
 using HarmonyLib;
 
 namespace DT_Tools.Patches.System.SupplyShelf
@@ -17,7 +18,7 @@ namespace DT_Tools.Patches.System.SupplyShelf
             if (!Engine.Enabled<SupplyShelfFeature>())
                 return true;
 
-            List<Server.Game.Storage> storages = SupplyShelfLogic.GetStorages(__instance);
+            List<Server.Game.Storage> storages = Devices.GetStorages(__instance);
             if (storages == null)
             {
                 Log.Error<SupplyShelfFeature>("_storages 为空，回退原版 InitStorage");

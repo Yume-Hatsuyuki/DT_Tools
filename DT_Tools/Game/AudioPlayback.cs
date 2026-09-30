@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using DT_Tools.Core;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -36,6 +35,8 @@ namespace DT_Tools.Game
         private static long _loadGeneration;   // 加代替换计数：新点播使旧加载协程的结果作废
 
         private static readonly Dictionary<string, AudioClip> _clips = new Dictionary<string, AudioClip>();
+        private static readonly Queue<string> _clipOrder = new Queue<string>();   // 插入序，供上限淘汰
+        private const int CacheCap = 32;   // 缓存上限：长会话点播不至无限累积
         private static bool _loading;
         private static float _pendingVolume = 1f;
         private static float _pendingMaxSeconds = -1f;
@@ -76,7 +77,7 @@ namespace DT_Tools.Game
         }
 
         /// <summary>来源解析：Local 强制本地路径、Online 强制 http(s)、Auto 按前缀识别。</summary>
-        public static string ResolveUri(string raw, AudioPlaybackSource kind)
+        private static string ResolveUri(string raw, AudioPlaybackSource kind)
         {
             string trimmed = raw?.Trim() ?? "";
             if (trimmed.Length == 0)
@@ -94,7 +95,7 @@ namespace DT_Tools.Game
                         Log.Warn(Tag, "local 指定了在线链接: " + trimmed);
                         return null;
                     }
-                    return ResolveLocalUri(trimmed);
+                    return AudioMix.LocalFileUri(trimmed, Tag);
                 case AudioPlaybackSource.Online:
                     if (!isHttp)
                     {
@@ -103,7 +104,7 @@ namespace DT_Tools.Game
                     }
                     return trimmed;
                 default:   // Auto
-                    return isHttp ? trimmed : ResolveLocalUri(trimmed);
+                    return isHttp ? trimmed : AudioMix.LocalFileUri(trimmed, Tag);
             }
         }
 
@@ -146,10 +147,33 @@ namespace DT_Tools.Game
                 yield break;
             }
             _clips[uri] = clip;
+            if (!_clipOrder.Contains(uri))
+                _clipOrder.Enqueue(uri);
+            EvictCacheOverflow();
             Log.Info(Tag, $"音频就绪: {clip.length:F1} 秒 ({uri})");
             if (generation != _loadGeneration)
                 yield break;
             StartPlayback(uri, clip, _pendingVolume, _pendingMaxSeconds);
+        }
+
+        /// <summary>缓存上限淘汰：超过 CacheCap 时按插入序销毁最旧片段，正在播放的挪到队尾豁免。</summary>
+        private static void EvictCacheOverflow()
+        {
+            while (_clipOrder.Count > CacheCap)
+            {
+                string oldest = _clipOrder.Peek();
+                if (oldest == _playingUri && _clipOrder.Count == 1)
+                    break;
+                _clipOrder.Dequeue();
+                if (oldest == _playingUri)
+                {
+                    _clipOrder.Enqueue(oldest);   // 播放中豁免，挪到队尾
+                    continue;
+                }
+                if (_clips.TryGetValue(oldest, out var old) && old != null)
+                    UnityEngine.Object.Destroy(old);
+                _clips.Remove(oldest);
+            }
         }
 
         private static void StartPlayback(string uri, AudioClip clip, float volume, float maxSeconds)
@@ -189,23 +213,7 @@ namespace DT_Tools.Game
         }
 
         private static string ResolveLocalUri(string raw)
-        {
-            try
-            {
-                string full = Path.GetFullPath(raw);
-                if (!File.Exists(full))
-                {
-                    Log.Warn(Tag, "本地音频不存在: " + full);
-                    return null;
-                }
-                return new Uri(full).AbsoluteUri;
-            }
-            catch (Exception ex)
-            {
-                Log.Warn(Tag, "本地路径无效: " + ex.Message);
-                return null;
-            }
-        }
+            => AudioMix.LocalFileUri(raw, Tag);
 
         private static AudioSource EnsureSource()
         {
@@ -225,30 +233,13 @@ namespace DT_Tools.Game
         private static void PrepareMicMix(AudioClip clip)
         {
             MixActive = false;
-            try
-            {
-                int channels = clip.channels;
-                var all = new float[clip.samples * channels];
-                clip.GetData(all, 0);
-                int frames = clip.samples;
-                var mono = new float[frames];
-                for (int i = 0; i < frames; i++)
-                {
-                    float sum = 0f;
-                    for (int c = 0; c < channels; c++)
-                        sum += all[i * channels + c];
-                    mono[i] = sum / channels;
-                }
-                MixSamples = mono;
-                MixSampleRate = clip.frequency;
-                MixStartRealtime = Time.realtimeSinceStartup;
-                MixActive = true;
-            }
-            catch (Exception ex)
-            {
-                Log.Warn(Tag, "麦克风混音准备失败: " + ex.Message);
-                MixActive = false;
-            }
+            var mono = AudioMix.ExtractMono(clip, Tag);
+            if (mono == null)
+                return;
+            MixSamples = mono;
+            MixSampleRate = clip.frequency;
+            MixStartRealtime = Time.realtimeSinceStartup;
+            MixActive = true;
         }
 
         /// <summary>
@@ -257,33 +248,8 @@ namespace DT_Tools.Game
         /// </summary>
         public static void MixIntoMic(ArraySegment<float> buffer, int outputRate)
         {
-            if (!MixActive)
-                return;
-            var comms = Managers.Voice?.Comms;
-            if (comms != null && comms.IsMuted)
-                return;    // 麦克风静音：仅本地收听，不广播
-
-            float vol = _currentVolume;
-            double elapsed = Time.realtimeSinceStartup - MixStartRealtime;
-            long head = (long)(elapsed * outputRate);
-            for (int i = 0; i < buffer.Count; i++)
-            {
-                long pos = head + i;
-                if (pos >= MixSamples.Length)
-                {
-                    MixActive = false;   // 音乐播完，停止混入
-                    return;
-                }
-                int idx = (int)(pos * MixSampleRate / outputRate);
-                if (idx >= MixSamples.Length)
-                {
-                    MixActive = false;
-                    return;
-                }
-                int offset = buffer.Offset + i;
-                float mixed = buffer.Array[offset] + MixSamples[idx] * vol;
-                buffer.Array[offset] = Mathf.Clamp(mixed, -1f, 1f);
-            }
+            MixActive = AudioMix.MixInto(MixSamples, MixSampleRate, MixStartRealtime,
+                _currentVolume, MixActive, buffer, outputRate);
         }
     }
 }

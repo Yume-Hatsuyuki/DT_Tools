@@ -30,7 +30,7 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
             __instance.CorpseMetas.Clear();                     // 0.1.15b GameRoom.cs:125
             __instance.RoundStartPlayerCount = __instance.Players.Count;  // 0.1.15b GameRoom.cs:129
             Log.Info<LobbyMaxPlayersFeature>(
-                $"[Kill] 라운드 시작 인원 {__instance.RoundStartPlayerCount}명 → 블랙 살인 한도 {__instance.BlackKillLimit}회 (LobbyMaxPlayers cyclic spawn)");
+                $"本局人数 {__instance.RoundStartPlayerCount} → 黑幕击杀上限 {__instance.BlackKillLimit} 次（出生点循环复用）");
 
             foreach (Server.Game.Player player in __instance.Players)
                 player.Clear();                                 // 0.1.15b Player.cs:706
@@ -44,7 +44,7 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
                 PosInfo fallback = Managers.Data.MapData.ErrorPos ?? Managers.Data.MapData.LobbyPos;
                 if (fallback == null)
                     fallback = new PosInfo { X = 0f, Y = 0f };
-                Log.Warn<LobbyMaxPlayersFeature>("StartPosList empty, using ErrorPos/LobbyPos fallback");
+                Log.Warn<LobbyMaxPlayersFeature>("StartPosList 为空，回退 ErrorPos/LobbyPos 出生点");
                 foreach (Server.Game.Player player in __instance.Players)
                     player.GameStart(fallback);                 // 0.1.15b Player.cs:623
             }
@@ -57,7 +57,7 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
 
                 if (n > list.Count)
                     Log.Info<LobbyMaxPlayersFeature>(
-                        $"[LobbyMaxPlayers] Players={n} > StartPos={list.Count}, cyclic reuse");
+                        $"玩家数 {n} 超过出生点数 {list.Count}，出生点循环复用");
             }
 
             // 客户端全局命名空间另有 DeviceManager，必须用 Server.Game 全名

@@ -1,10 +1,10 @@
 using DT_Tools.Core.Attributes;
-using DT_Tools.Patches.System.RandomItems;
+using DT_Tools.Game;
 
 namespace DT_Tools.Patches.System.FishingPond
 {
     /// <summary>
-    /// 许愿鱼池：从扩展道具池随机出道具（与货架共用 Patches/System/RandomItems 池）。
+    /// 许愿鱼池：从扩展道具池随机出道具（与货架共用 Game.ItemPools 池）。
     /// </summary>
     [PatchFeature(
         "许愿鱼池：从扩展池随机出道具。用 Mode 选择正常版（含武器）或安全版（不含武器）。",

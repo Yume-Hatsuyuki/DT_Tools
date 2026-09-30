@@ -23,21 +23,14 @@ namespace DT_Tools.Commands.ReportCorpse
     /// </summary>
     internal static class ReportCorpseLogic
     {
-        /// <summary>本机已进入对局（MyPlayer 已生成、到 Host 的网络链路存在）。</summary>
+        /// <summary>本机已进入对局（MyPlayer 已生成、到 Host 的网络链路存在）。身份校验统一走 Game.LocalPlayer。</summary>
         public static bool TryGetLocalContext(out DeviceManager device, out string code, out string text)
         {
             device = null;
-            var my = Managers.Player?.MyPlayer;
-            if (my == null || my.PrivateInfo == null)
+            if (!LocalPlayer.TryGetPlayer(out _, out string identityError))
             {
                 code = "not in game";
-                text = "本机玩家尚未进入对局（大厅/加载中不可用）。";
-                return false;
-            }
-            if (Managers.Network == null || Managers.Network.GameServer == null)
-            {
-                code = "not in game";
-                text = "未连接到 Host（GameServer 链路为空），无法发送 C_ 包。";
+                text = identityError;
                 return false;
             }
             device = Managers.Device;

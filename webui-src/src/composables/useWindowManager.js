@@ -87,7 +87,7 @@ export function useWindowManager() {
     if (w) w.minimized = true;
   }
 
-  /** 任务栏标签点击：未聚焦→聚焦；已聚焦→最小化（Windows 习惯）。 */
+  /** 顶栏标签 / Dock 图标点击：未聚焦→聚焦；已聚焦（最上层）→最小化。 */
   function toggleFocus(id) {
     const top = windows.reduce((a, b) => (!a || b.z > a.z ? b : a), null);
     const w = windows.find(w => w.id === id);
@@ -116,5 +116,35 @@ export function useWindowManager() {
     saveLayout();
   }
 
-  return { windows, open, close, focus, minimize, toggleFocus, toggleMaximize, updateGeometry };
+  // ---- Dock 右键菜单的批量窗口操作 ----
+
+  // 进入"已显示桌面"前的各窗口最小化快照（按窗口 id），再次触发时按快照还原
+  let preShow = null;
+
+  /** 「显示桌面」：有可见窗口→全部最小化（记快照）；全最小化→按快照还原。 */
+  function showDesktop() {
+    const anyVisible = windows.some(w => !w.minimized);
+    if (anyVisible) {
+      preShow = new Map(windows.map(w => [w.id, w.minimized]));
+      for (const w of windows) w.minimized = true;
+    } else {
+      for (const w of windows) w.minimized = preShow ? preShow.get(w.id) === true : false;
+      preShow = null;
+    }
+  }
+
+  /** 「最小化所有进程」：单向全部最小化（快照照记，之后"显示桌面"可整批还原）。 */
+  function minimizeAll() {
+    preShow = new Map(windows.map(w => [w.id, w.minimized]));
+    for (const w of windows) w.minimized = true;
+  }
+
+  /** 「关闭所有进程」：一次性关掉全部窗口（可随时从 Dock 重新打开，几何布局照常保留）。 */
+  function closeAll() {
+    preShow = null;
+    windows.splice(0, windows.length);
+    saveLayout();
+  }
+
+  return { windows, open, close, focus, minimize, toggleFocus, toggleMaximize, updateGeometry, showDesktop, minimizeAll, closeAll };
 }

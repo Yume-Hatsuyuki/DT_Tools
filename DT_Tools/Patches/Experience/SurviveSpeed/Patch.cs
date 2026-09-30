@@ -23,22 +23,15 @@ namespace DT_Tools.Patches.Experience.SurviveSpeed
     {
         /// <summary>UpdateMovePacket() 私有：0.1.15b MyPlayer.cs:1955。</summary>
         private static readonly Action<MyPlayer> UpdateMovePacketOf =
-            Bind<Action<MyPlayer>>(typeof(MyPlayer), "UpdateMovePacket");
+            Reflect.Bind<Action<MyPlayer>>(typeof(MyPlayer), "UpdateMovePacket");
 
         /// <summary>FixedUpdateMove(float deltaSpeed) 私有：0.1.15b MyPlayer.cs:1869。</summary>
         private static readonly Action<MyPlayer, float> FixedUpdateMoveOf =
-            Bind<Action<MyPlayer, float>>(typeof(MyPlayer), "FixedUpdateMove", new[] { typeof(float) });
+            Reflect.Bind<Action<MyPlayer, float>>(typeof(MyPlayer), "FixedUpdateMove", new[] { typeof(float) });
 
         /// <summary>FixedKnockbackPlayer() 私有：0.1.15b MyPlayer.cs:1943。</summary>
         private static readonly Action<MyPlayer> FixedKnockbackPlayerOf =
-            Bind<Action<MyPlayer>>(typeof(MyPlayer), "FixedKnockbackPlayer");
-
-        /// <summary>按名取私有实例方法并绑定为开放实例委托（游戏方法缺失时返回 null，前缀退回原版）。</summary>
-        private static T Bind<T>(Type owner, string name, Type[] parameters = null) where T : Delegate
-        {
-            MethodInfo mi = AccessTools.Method(owner, name, parameters);
-            return mi == null ? null : (T)Delegate.CreateDelegate(typeof(T), null, mi);
-        }
+            Reflect.Bind<Action<MyPlayer>>(typeof(MyPlayer), "FixedKnockbackPlayer");
 
         private static bool Prefix(MyPlayer __instance)
         {

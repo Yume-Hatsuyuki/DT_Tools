@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DT_Tools.Core;
+using DT_Tools.Game;
 using DT_Tools.Patches.System.SupplyShelf;
 using Protocol;
 
@@ -10,6 +11,8 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
     /// 必出与补货逻辑。
     /// 兜底道具集中于此（FallbackItems）：BELL(3009) / AIRHORN(3008)，与原版 InitStorage
     /// 的内建投放池一致（0.1.15b DeviceManager.cs:353）；Define 常量：Define.cs:746 / :744。
+    /// 对 SupplyShelf 的依赖仅剩两处公开面：Engine.Enabled&lt;SupplyShelfFeature&gt;() 判定与
+    /// Mode 配置读值（决定补货池语义）；货架读取走 Game.Devices，池表走 Game.ItemPools。
     /// </summary>
     internal static class SupplyShelfRefillLogic
     {
@@ -27,7 +30,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
             if (guaranteed <= 0)
                 return;
 
-            List<Server.Game.Storage> storages = SupplyShelfLogic.GetStorages(dm);
+            List<Server.Game.Storage> storages = Devices.GetStorages(dm);
             if (storages == null || storages.Count == 0)
                 return;
 
@@ -161,11 +164,11 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
                 $"scheduled storage={storageId} slot={slot} itemId={refillId} after={interval}s");
         }
 
-        /// <summary>补货池：货架随机道具开启时沿用其扩展池，否则兜底 BELL/AIRHORN。</summary>
+        /// <summary>补货池：货架随机道具开启时沿用其扩展池（按 SupplyShelf.Mode 语义），否则兜底 BELL/AIRHORN。</summary>
         private static int PickRefillItemId()
         {
             int[] pool = Engine.Enabled<SupplyShelfFeature>()
-                ? SupplyShelfFeature.ItemPool
+                ? ItemPools.ForMode(SupplyShelfFeature.Mode)
                 : FallbackItems;
             return pool[Util.GetRandomNumber(0, pool.Length)];
         }
@@ -173,7 +176,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
         private static Server.Game.Storage FindStorage(int id)
         {
             List<Server.Game.Storage> list =
-                SupplyShelfLogic.GetStorages(Server.Game.DeviceManager.Instance);
+                Devices.GetStorages(Server.Game.DeviceManager.Instance);
             return list?.FirstOrDefault(s => s.ID == id);
         }
 

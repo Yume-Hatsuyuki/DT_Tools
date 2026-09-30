@@ -51,10 +51,18 @@ namespace DT_Tools.WebConsole
         {
             if (Disabled)
                 return true;
-
             var req = ctx.Request;
-            string queryToken = req.QueryString["token"] ?? "";
-            string cookieToken = req.Cookies["dt_token"]?.Value ?? "";
+            return CheckToken(req.Cookies["dt_token"]?.Value ?? "", req.QueryString["token"] ?? "");
+        }
+
+        /// <summary>
+        /// 裸凭据校验：WebSocket 独立通道（WsServer）没有 HttpListenerContext，
+        /// 由它从原始握手头解析出 cookie/token 后调用，语义与 Check 完全一致。
+        /// </summary>
+        public bool CheckToken(string cookieToken, string queryToken)
+        {
+            if (Disabled)
+                return true;
             return FixedTimeEquals(queryToken, _token) || FixedTimeEquals(cookieToken, _token);
         }
 

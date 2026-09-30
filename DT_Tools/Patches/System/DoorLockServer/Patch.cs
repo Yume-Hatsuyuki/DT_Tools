@@ -1,4 +1,5 @@
 using DT_Tools.Core;
+using DT_Tools.Game;
 using HarmonyLib;
 using Protocol;
 using Server.Game;
@@ -10,6 +11,8 @@ namespace DT_Tools.Patches.System.DoorLockServer
     /// 原方法体只有锁门一个分支（开关门走 Interact 通道），按 LockDoorMode 放行后
     /// 逐句复刻原版锁门序列（CanSabotage=false → 40s 恢复任务 → S_COOLTIME_SABOTAGE
     /// → StateList[2]=0 → LockDoor → 1s 后 TickDoor 启动自动解锁倒计时）。
+    /// 放行的白方锁门成功后按 LockDoorClue 写真实身份线索（Game/SabotageClue.AddClue，
+    /// 原由 WhiteSabotageClue 的前后缀对状态做差推锁门成功，放行点本就知情，直接写）。
     /// 模式未放行的颜色放行原版（Dark 走原版；其余被原版静默拒绝，与未启用一致）。
     /// </summary>
     [HarmonyPatch(typeof(Server.Game.Door), nameof(Server.Game.Door.HandleEvent))]
@@ -49,6 +52,11 @@ namespace DT_Tools.Patches.System.DoorLockServer
             {
                 tickDoor?.Invoke(__instance, null);
             });
+            bool writeClue = player.Color == EPlayerColor.White && DoorLockServerFeature.LockDoorClue;
+            if (writeClue)
+                SabotageClue.AddClue(__instance, player);   // 白方留真实身份线索；黑幕/黑方锁门不记
+            Log.Info<DoorLockServerFeature>(
+                $"放行锁门：{player.Name}(pid={player.PublicInfo.PlayerId},{player.Color}) 门={__instance.ID} 房间={__instance.RoomID}{(writeClue ? "（已留痕）" : "")}");
             return false;
         }
     }

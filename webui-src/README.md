@@ -40,10 +40,6 @@ public/
 默认图标来自 [Tabler Icons](https://tabler.io/icons)（MIT 协议），通过 `unplugin-icons` +
 `@iconify-json/tabler` 在构建期内联为 SVG，运行时不依赖任何在线 CDN。
 
-**没有选用 Papirus**（更贴近传统 Linux 桌面图标观感的那套）——它是 GPL-3.0，如果把它的
-图标文件打进插件分发出去，理论上会牵连整个插件都要用 GPL 协议放出，所以换了同样风格但
-协议干净的 Tabler。
-
 桌面图标支持右键「导入自定义图标…」，用户选的图片会转成 dataURL 存 `localStorage`
 （键名 `dt_desktop_custom_icons_v1`），跨会话保留；右键「恢复默认图标」清除。
 

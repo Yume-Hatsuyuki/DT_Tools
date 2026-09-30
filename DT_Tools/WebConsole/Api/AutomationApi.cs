@@ -29,6 +29,7 @@ namespace DT_Tools.WebConsole.Api
                     side = FormatSide(m.Side),
                     author = string.IsNullOrEmpty(m.Author) ? "佚名" : m.Author,
                     enabled = Engine.EnabledOf(m.Type),
+                    enabledKey = Engine.EnabledKey,
                     entries = sections.TryGetValue(m.Section, out var sec)
                         ? sec.Entries.Select(EntryDto)
                         : Enumerable.Empty<object>(),

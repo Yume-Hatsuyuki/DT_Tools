@@ -1,5 +1,7 @@
 using DummyClient;
+using DT_Tools.Core;
 using DT_Tools.Game;
+using DT_Tools.Patches.System.LobbyMaxPlayers;
 using Server.Game;
 using Steamworks;
 
@@ -10,9 +12,9 @@ namespace DT_Tools.Commands.RoomCode
     {
         /// <summary>
         /// 读取房间号 / 人数 / 上限。失败返回 false（提示与错误码已给出）。
-        /// 注意：max 当前取原版常量 SteamLobbyManager.MaxMembers（0.1.15b
-        /// DummyClient/SteamLobbyManager.cs:10，值为 8）；LobbyMaxPlayers 补丁迁移后
-        /// （Patches/System/LobbyMaxPlayers）应改用补丁生效值。
+        /// max：LobbyMaxPlayers 开启时用其生效进房上限（命令域引用功能公开状态，
+        /// §9 允许的例外），否则原版常量 SteamLobbyManager.MaxMembers（0.1.15b
+        /// DummyClient/SteamLobbyManager.cs:10，值为 8）。
         /// </summary>
         public static bool TryRead(
             out string code,
@@ -47,7 +49,9 @@ namespace DT_Tools.Commands.RoomCode
             var lobby = Managers.Network.Lobby;
             isHost = HostGuard.IsHost;
             current = CurrentCount(isHost, lobby);
-            max = SteamLobbyManager.MaxMembers;
+            max = Engine.Enabled<LobbyMaxPlayersFeature>()
+                ? LobbyMaxPlayersFeature.MaxMembers
+                : SteamLobbyManager.MaxMembers;
             steamLimit = TryGetSteamLimit(lobby);
 
             errCode = null;

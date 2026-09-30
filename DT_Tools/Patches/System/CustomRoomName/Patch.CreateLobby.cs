@@ -11,6 +11,8 @@ namespace DT_Tools.Patches.System.CustomRoomName
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]
     internal static class CustomRoomNameCreateLobbyPatch
     {
+        // 顺序契约见 CustomRoomCode.CreateLobby 注释：改参 Prefix 先于整替 Prefix
+        [HarmonyPriority(500)]
         private static void Prefix(ref string roomName)
         {
             if (!Engine.Enabled<CustomRoomNameFeature>())

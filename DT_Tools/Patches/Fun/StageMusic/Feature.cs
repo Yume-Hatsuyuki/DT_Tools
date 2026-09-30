@@ -13,11 +13,12 @@ namespace DT_Tools.Patches.Fun.StageMusic
     /// 主菜单/房内大厅：UI_LobbyScene.OnEnable（:1961）+ StartLobby（:446）；
     /// 审判子阶段：UI_TrialEvent.StartState（:1652，覆盖讨论/投票/唱票/回放四子阶段，
     /// TrialResult 子阶段沿用上面更精确的处刑触发，不重复挂载）；
-    /// 发现尸体：Handle_S_DISCOVER_CORPSE（:820，全员广播）；
-    /// 自己死亡：Handle_S_NOTIFY_DEAD（:585，仅本机受害者）；
+    /// 发现尸体：Handle_S_DISCOVER_CORPSE（:820，仅发现者本人，Server.Game/Corpse.cs:349）；
+    /// 自己死亡：Handle_S_DEAD（PacketHandler.cs:391，仅死者本人——S_DEAD 只发死者
+    /// Server.Game/Player.cs:827；S_NOTIFY_DEAD 实为灵媒知晓通知，不能用作本机死亡信号）；
     /// 结局动画：Handle_S_ENDING_CAMERA（:591，仅 IsEnd=true 时触发）；
-    /// 黑幕继承：Handle_S_NOTIFY_BLACK（:481，仅 ByHand=false 即非递刀的系统指定新黑幕，
-    /// 仅新黑幕本人；ByHand=true 是递刀，已由 GiveKnife 覆盖，不重复）。
+    /// 黑幕继承：Handle_S_NOTIFY_BLACK（:481，ByHand=false 非递刀时按客户端 Dark 分支
+    /// 判定——收包瞬间本机颜色仍为 Dark 且存活；递刀 ByHand=true 已由 GiveKnife 覆盖）。
     /// 单播放槽治理：同曲目播放中不重播（连杀防重复）、切阶段只保留一首、限长到点停止。
     /// 原版 BGM 可选静音（各阶段原版会播 DetectiveBGM/TrialMainBGM/Beta_Result_BGM 等，
     /// 含主菜单 MainTitleBGM）。麦克风广播见 MicInject（实验性，失败自动降级仅本地）。
@@ -159,7 +160,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
         [Config("回放子阶段音乐时长上限（秒）。-1 或 0=不限，到点自动停止。", Min = -1, Max = 600)]
         public static int ReplayMaxSeconds = -1;
 
-        [Config("发现尸体音乐（任意玩家举报/发现尸体时，全员播放）。留空=该阶段不播放。")]
+        [Config("发现尸体音乐（本机发现尸体时播放——服务端只发给发现者本人）。留空=该阶段不播放。")]
         public static string DiscoverCorpseTrack = "";
 
         [Config("发现尸体音乐音量。", Min = 0f, Max = 1f)]
@@ -186,7 +187,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
         [Config("结局动画音乐时长上限（秒）。-1 或 0=不限，到点自动停止。", Min = -1, Max = 600)]
         public static int EndingCutsceneMaxSeconds = -1;
 
-        [Config("黑幕继承音乐（原黑幕死亡后系统指定新黑幕，仅新黑幕本人播放；区别于递刀——递刀是主动交接）。留空=该阶段不播放。")]
+        [Config("黑幕继承音乐（非递刀方式出现新黑幕时，黑幕侧本地播放；递刀交接由递刀音乐覆盖）。留空=该阶段不播放。")]
         public static string BlackSuccessionTrack = "";
 
         [Config("黑幕继承音乐音量。", Min = 0f, Max = 1f)]
@@ -213,6 +214,12 @@ namespace DT_Tools.Patches.Fun.StageMusic
         private static void OnEnabled()
         {
             StageMusicMicInject.TryMount();
+        }
+
+        /// <summary>运行时关闭：停播并销毁 AudioSource 与音频缓存、复位混音状态（有持续音频/对象副作用必须清理）。</summary>
+        private static void OnDisabled()
+        {
+            StageMusicPlayer.Shutdown();
         }
     }
 }

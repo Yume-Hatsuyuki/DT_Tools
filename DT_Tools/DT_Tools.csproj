@@ -4,12 +4,28 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>DT_Tools</AssemblyName>
     <Description>Deadly Trick Plugin</Description>
-    <Version>1.0.7.1</Version>
+    <Version>1.0.7.6</Version>
     <LangVersion>latest</LangVersion>
     <TargetName>$(AssemblyName)_$(Configuration)_$(Version)</TargetName>
     <!-- 相对 csproj 所在目录，上一级的 libs -->
     <GameManaged Condition="'$(GameManaged)' == ''">$(MSBuildThisFileDirectory)..\libs</GameManaged>
+    <!-- WebUI 前端源码工程（Vue 3 + Vite + npm），构建产物直出 DT_Tools/WebUI -->
+    <WebUISrc Condition="'$(WebUISrc)' == ''">$(MSBuildThisFileDirectory)..\webui-src</WebUISrc>
   </PropertyGroup>
+
+  <!--
+    前端增量构建（AGENTS.md §2）：源码晚于产物时经 npm 重建，产物直出 DT_Tools/WebUI，
+    再随下方 None 项拷进输出目录。SkipWebUIBuild=true 整体跳过（CI 已显式构建前端、
+    或多代理并行作业禁止构建时使用）。需要 Node/npm 环境。
+  -->
+  <Target Name="BuildWebUI"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(SkipWebUIBuild)' != 'true'"
+          Inputs="$(WebUISrc)\package.json;$(WebUISrc)\package-lock.json;$(WebUISrc)\vite.config.js;$(WebUISrc)\index.html;$(WebUISrc)\src\**"
+          Outputs="$(MSBuildThisFileDirectory)WebUI\js\app.js">
+    <Exec WorkingDirectory="$(WebUISrc)" Command="npm ci" Condition="!Exists('$(WebUISrc)\node_modules')" />
+    <Exec WorkingDirectory="$(WebUISrc)" Command="npm run build" />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />

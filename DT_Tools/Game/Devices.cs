@@ -1,13 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using Data;
+using HarmonyLib;
 using Protocol;
 
 namespace DT_Tools.Game
 {
     /// <summary>
-    /// 本机设备缓存查询。设备状态经 S_INIT_MAP / S_MODIFY_DEVICE 全员广播，
-    /// 任何客户端的缓存都是实时的（数据源对齐，无 Host 特权）。
+    /// 设备访问助手：本机缓存查询（设备状态经 S_INIT_MAP / S_MODIFY_DEVICE 全员广播，
+    /// 任何客户端的缓存都是实时的，数据源对齐无 Host 特权）+ 房主侧服务端货架读取
+    /// （SupplyShelf / SupplyShelfRefill 共用，原 SupplyShelf 私有 Logic 上浮）。
     /// </summary>
     public static class Devices
     {
@@ -41,5 +43,10 @@ namespace DT_Tools.Game
                             && f.Info.StateList.Count > 0
                             && f.Info.StateList[0] == FuseboxStateIntact)
                 .ToList();
+
+        /// <summary>服务端设备管理器的全部货架（私有字段 _storages，0.1.15b DeviceManager.cs:32）。房主侧功能用。</summary>
+        public static List<Server.Game.Storage> GetStorages(Server.Game.DeviceManager dm)
+            => Traverse.Create(dm).Field("_storages").GetValue<List<Server.Game.Storage>>();
     }
 }
+

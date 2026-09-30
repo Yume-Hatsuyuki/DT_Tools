@@ -32,10 +32,25 @@ function post(path, body) {
 }
 
 export const API = {
-  // 控制台
-  run: (cmd) => request('/api/run', { method: 'POST', body: cmd }),
+  // 控制台：sessionId（可选）随头携带，后端把该命令执行期间的日志标记回这个会话，
+  // 各控制台窗口只显示自己会话的输出（日志应用看全量）
+  run: (cmd, sessionId) => request('/api/run', {
+    method: 'POST',
+    headers: sessionId ? { 'X-DT-Session': sessionId } : undefined,
+    body: cmd,
+  }),
   logSince: (seq) => request('/api/log?since=' + seq),
-  logStreamUrl: '/api/log/stream',
+  /** 运行时能力发现（WebSocket 实时流独立端口；0=实时流禁用）。 */
+  meta: () => request('/api/meta'),
+  /**
+   * 实时日志 WebSocket。wsPort 来自 /api/meta（Mono 的 HttpListener 不支持升级，
+   * 插件在独立端口自管 WS 通道）；wsPort 为空时退回同源路径（旧插件行为，
+   * 会快速 501 → 走轮询兜底）。断线重连时调用方追加 ?since=seq 续传。
+   */
+  wsLogUrl: (wsPort) =>
+    (location.protocol === 'https:' ? 'wss://' : 'ws://')
+    + (wsPort ? location.hostname + ':' + wsPort : location.host)
+    + '/api/log/ws',
   commands: () => request('/api/commands'),
   steamPlayers: () => request('/api/steam/players'),
 

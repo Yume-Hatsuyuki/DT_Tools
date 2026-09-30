@@ -10,9 +10,9 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
     /// UseSabotageBase 的入口有三处，且都硬编码只认 Dark（或限 ChatDevice/Corpse/
     /// 销毁证据的 Black 分支）——0.1.15b MyPlayer.cs:1660-1699（InputInteract）、
     /// MyPlayer.cs:1256-1290（UpdateCarry）、UI_GameScene.cs:2041-2066（OnClickKillButton）。
-    /// 本补丁在三处入口前拦截：档位放行的设备（Door/Fusebox）且提示激活时，
-    /// 由任何放行颜色触发 UseSabotageBase（门发包 / 电闸开弹窗）；其余情况原样放行，
-    /// 黑方的武器/暗招/销毁证据优先级在非放行设备上不受影响。
+    /// 本补丁在三处入口前拦截：档位放行的设备（Door/Fusebox/销毁证据目标）且提示激活时，
+    /// 由任何放行颜色触发 UseSabotageBase（门发包 / 电闸开弹窗 / 销毁证据读条）；
+    /// 其余情况原样放行，黑方的武器/暗招/销毁证据优先级在非放行设备上不受影响。
     /// 放行设备上破坏优先于武器/暗招——与屏幕上已亮出的"锁门/破坏 [Q]"提示一致。
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "InputInteract")]

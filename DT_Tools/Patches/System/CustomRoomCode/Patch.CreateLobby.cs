@@ -13,6 +13,10 @@ namespace DT_Tools.Patches.System.CustomRoomCode
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]
     internal static class CustomRoomCodeCreateLobbyPatch
     {
+        // CreateLobby 三补丁顺序契约：改参 Prefix（本补丁与 CustomRoomName）必须先于
+        // LobbyMaxPlayers 的整替 Prefix（它按值读取 roomCode/roomName 填 pending 字段）——
+        // 显式优先级固定顺序，不再依赖 Section 字典序挂载顺序的巧合
+        [HarmonyPriority(500)]
         private static void Prefix(ref string roomCode)
         {
             if (!Engine.Enabled<CustomRoomCodeFeature>())

@@ -20,7 +20,6 @@ const hostEnabled = ref(false);
 const modules = ref([]);
 const loadError = ref('');
 const query = ref('');
-const editingField = ref(false);
 const openModuleId = ref(null);   // 展开中的模块 id，null=文件夹网格视图
 const logOpen = ref(false);
 const sectionMeta = useSectionMeta();
@@ -40,7 +39,7 @@ async function reload() {
 }
 
 const { dirty, autoRefresh, toast, showToast, save, exportCfg, importFile, resetAll, startAutoRefresh, stopAutoRefresh }
-  = useConfigToolbar({ flag: 'automation', reload, isEditing: () => editingField.value || !!openModuleId.value });
+  = useConfigToolbar({ flag: 'automation', reload, isEditing: () => !!openModuleId.value });
 
 const currentModule = ref(null);
 function openDetail(item) {
@@ -103,14 +102,16 @@ async function resetModule() {
   if (!confirm(`恢复模块 [${m.section}] 全部默认值？（仅做临时调整，如需持久化请使用保存功能。）`)) return;
   const j = await API.configReset(m.section);
   if (j.unauthorized) return;
-  if (j.ok) { dirty.value = true; showToast(`已重置 ${j.reset} 项`); }
+  // 模块详情打开期间自动刷新被 isEditing 抑制，重置后必须主动 reload 否则一直显示旧值
+  if (j.ok) { dirty.value = true; showToast(`已重置 ${j.reset} 项`); await reload(); }
   else showToast(j.error || '重置失败', true);
 }
 
 const modMeta = computed(() => {
   const m = currentModule.value;
   if (!m) return { author: '', side: '', desc: '' };
-  const enabledEntry = (m.entries || []).find(e => e.key === 'Enabled');
+  // 开关键名走协议字段（后端 Engine.EnabledKey），不硬编码 'Enabled'
+  const enabledEntry = (m.entries || []).find(e => e.key === (m.enabledKey || 'Enabled'));
   const parsed = enabledEntry ? splitDesc(enabledEntry.description) : { author: '', side: '', text: '' };
   return {
     author: m.author || parsed.author,

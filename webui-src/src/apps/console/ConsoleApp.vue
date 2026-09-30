@@ -1,13 +1,72 @@
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue';
-import { useConsole } from './useConsole.js';
+import { ref, computed, watch, nextTick, onUnmounted } from 'vue';
+import { useCommandInput, newSessionId } from './useCommandInput.js';
+import { useLogStream } from '../../composables/useLogStream.js';
+import SuggestPopup from '../common/SuggestPopup.vue';
 import JsonBlock from './JsonBlock.vue';
 
-const { entries, commands, send, historyUp, historyDown } = useConsole();
+/**
+ * 旧版控制台（/命令 + 发送按钮）。
+ * 会话隔离：本窗口只显示自己执行的命令产生的日志（后端按 X-DT-Session 标记
+ * 回流），不再打印全部日志——全量日志归「日志」应用，两套控制台互不干扰。
+ */
+const { commands, historyUp, historyDown, runCommand } = useCommandInput('console');
+const mySession = newSessionId();
+const LEVEL_COLOR = {
+  WARN: 'var(--accent-amber)',
+  ERROR: 'var(--accent-red)',
+  FATAL: 'var(--accent-red)',
+  DEBUG: 'var(--text-2)',
+  CMD: 'var(--accent-cyan)',
+};
+
+// ── 本窗口条目（本地视图，清屏只清这里）──
+
+let uid = 0;
+const entries = ref([]);
+const MAX_ENTRIES = 2000;
+const TRIM_STEP = 400;
+
+function pushLocal(e) {
+  entries.value.push(e);
+  // 批量截断：逐条 shift 会每次扰动 DOM 与选区，这是"控制台一直刷新"的帮凶之一
+  if (entries.value.length > MAX_ENTRIES) entries.value.splice(0, TRIM_STEP);
+}
+
+// ── 吸底滚动：仅当本就贴底且没有进行中的文本选择时才跟随 ──
+
+const logEl = ref(null);
+const stick = ref(true);
+
+function onScroll() {
+  const el = logEl.value;
+  stick.value = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+}
+function selecting() {
+  const sel = document.getSelection();
+  return !!sel && !sel.isCollapsed && logEl.value && logEl.value.contains(sel.anchorNode);
+}
+async function maybeScroll() {
+  if (!stick.value || selecting()) return;
+  await nextTick();
+  if (stick.value && logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight;
+}
+
+// ── 订阅全局日志流：只收本会话条目 ──
+
+const stream = useLogStream();
+function onStreamEntry(e) {
+  if (e.session !== mySession) return;
+  pushLocal(e);
+  maybeScroll();
+}
+stream.replay(onStreamEntry);   // 补齐窗口打开前的本会话日志
+onUnmounted(stream.onEntry(onStreamEntry));
+
+// ── 补全（旧版形态：整条输入是单个 token 时弹层）──
 
 const input = ref('');
 const inputEl = ref(null);
-const logEl = ref(null);
 const selIdx = ref(-1);
 const suggestOpen = ref(false);
 
@@ -26,10 +85,21 @@ const matches = computed(() => {
   });
 });
 
+// 历史翻找填充的输入不弹补全弹层（historyNav 消费一次）：填的是已知完整命令，
+// 弹层反而把后续 ↑↓ 劫持成候选切换，历史导航就此失灵（新版终端同款修法）
+let historyNav = false;
 watch(matches, (m) => {
+  if (historyNav) { historyNav = false; suggestOpen.value = false; return; }
   suggestOpen.value = m.length > 0 && input.value.length > 0;
   if (suggestOpen.value) selIdx.value = 0;
 });
+
+/** 历史翻找写入输入框；值没变（已到翻找边界）不动标记，避免吞掉下一次键入的弹层。 */
+function fillFromHistory(v) {
+  if (v === input.value) return;
+  historyNav = true;
+  input.value = v;
+}
 
 function applyMatch(idx) {
   const c = matches.value[idx];
@@ -38,21 +108,29 @@ function applyMatch(idx) {
   suggestOpen.value = false;
   inputEl.value && inputEl.value.focus();
 }
+function onHover(i) {
+  selIdx.value = i;
+}
+
+async function appendResult(r) {
+  if (!r || r.unauthorized) return;
+  if (r.ok === false) {
+    pushLocal({ id: ++uid, time: '', level: 'ERROR', tag: '', msg: '✕ ' + (r.error || '执行失败') });
+  } else if (r.data != null) {
+    pushLocal({ id: ++uid, time: '', json: JSON.stringify(r.data, null, 2) });
+  }
+  maybeScroll();
+}
 
 async function submit() {
   const v = input.value;
   if (!v.trim()) return;
   input.value = '';
   suggestOpen.value = false;
-  await send(v);
-  await scrollToEnd();
+  pushLocal({ id: ++uid, time: '', level: 'CMD', tag: '', msg: '> ' + v });
+  maybeScroll();
+  appendResult(await runCommand(v, mySession));
 }
-
-async function scrollToEnd() {
-  await nextTick();
-  if (logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight;
-}
-watch(entries, scrollToEnd, { deep: false });
 
 function onKeydown(e) {
   if (suggestOpen.value && matches.value.length) {
@@ -66,39 +144,28 @@ function onKeydown(e) {
     if (e.key === 'Escape') { suggestOpen.value = false; return; }
   }
   if (e.key === 'Enter') { e.preventDefault(); submit(); return; }
-  if (e.key === 'ArrowUp' && !suggestOpen.value) { e.preventDefault(); input.value = historyUp(input.value); return; }
-  if (e.key === 'ArrowDown' && !suggestOpen.value) { e.preventDefault(); input.value = historyDown(); }
+  if (e.key === 'ArrowUp' && !suggestOpen.value) { e.preventDefault(); fillFromHistory(historyUp(input.value)); return; }
+  if (e.key === 'ArrowDown' && !suggestOpen.value) { e.preventDefault(); fillFromHistory(historyDown()); }
 }
 </script>
 
 <template>
   <div class="console-app">
-    <div ref="logEl" class="log">
+    <div ref="logEl" class="log" @scroll="onScroll">
       <div v-for="e in entries" :key="e.id" class="entry">
         <template v-if="e.json != null">
           <JsonBlock :text="e.json" />
         </template>
         <template v-else>
           <span v-if="e.time" class="ts">{{ e.time }}</span>
-          <span :style="{ color: e.color }">{{ e.text }}</span>
+          <span :style="{ color: e.color || LEVEL_COLOR[e.level] || 'var(--text-0)' }">{{ e.msg }}</span>
         </template>
       </div>
     </div>
 
     <div class="bar-wrap">
-      <div v-if="suggestOpen" class="suggest">
-        <div
-          v-for="(c, i) in matches"
-          :key="c.name"
-          class="sug-item"
-          :class="{ sel: i === selIdx }"
-          @mousedown.prevent="applyMatch(i)"
-          @mouseenter="selIdx = i"
-        >
-          <span class="sug-name">/{{ c.name }}</span>
-          <span class="sug-desc">{{ c.description || c.usage || '' }}</span>
-          <span v-if="c.author" class="sug-author">功能制作者：{{ c.author }}</span>
-        </div>
+      <div v-if="suggestOpen" class="suggest-wrap">
+        <SuggestPopup :matches="matches" :sel-idx="selIdx" show-slash @apply="applyMatch" @hover="onHover" />
       </div>
       <div class="bar">
         <input
@@ -131,22 +198,7 @@ function onKeydown(e) {
 .ts { color: var(--text-2); margin-right: 8px; }
 
 .bar-wrap { position: relative; border-top: 1px solid var(--line); background: var(--surface-1); }
-
-.suggest {
-  position: absolute;
-  bottom: 100%;
-  left: 0; right: 0;
-  max-height: 260px;
-  overflow-y: auto;
-  background: var(--win-bg);
-  border: 1px solid var(--win-border-active);
-  border-bottom: none;
-}
-.sug-item { padding: 7px 12px; cursor: pointer; border-bottom: 1px solid var(--line); }
-.sug-item.sel, .sug-item:hover { background: var(--surface-2); }
-.sug-name { font-family: var(--font-mono); color: var(--accent-cyan); font-size: 12.5px; margin-right: 8px; }
-.sug-desc { font-size: 11.5px; color: var(--text-1); }
-.sug-author { display: block; font-size: 10.5px; color: var(--text-2); margin-top: 2px; }
+.suggest-wrap { position: absolute; bottom: 100%; left: 0; right: 0; }
 
 .bar { display: flex; gap: 8px; padding: 10px 12px; }
 .bar input {

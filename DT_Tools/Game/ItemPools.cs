@@ -1,13 +1,23 @@
 using System.Linq;
-using Protocol;
 
-namespace DT_Tools.Patches.System.RandomItems
+namespace DT_Tools.Game
 {
     /// <summary>
-    /// 鱼池 / 货架共用道具池（纯共享 Logic，无 Feature）。武器区间 [2000, 3000)。
-    /// 启用判定由调用方用 Engine.Enabled&lt;本功能&gt;() 自查。
+    /// 随机道具模式（鱼池 / 货架等互斥选项统一用此枚举）。
+    /// Normal = 含武器；Safe = 不含武器。
     /// </summary>
-    public static class RandomItemPools
+    public enum RandomItemMode
+    {
+        Normal = 0,
+        Safe = 1,
+    }
+
+    /// <summary>
+    /// 鱼池 / 货架共用道具池（Game 层游戏数据表；原 Patches/System/RandomItems 纯共享
+    /// 目录上浮——武器区间判定与 60 项物品表属游戏行为数据，且消费方 ≥2 处）。
+    /// 武器区间 [2000, 3000)。启用判定由调用方用 Engine.Enabled&lt;本功能&gt;() 自查。
+    /// </summary>
+    public static class ItemPools
     {
         public static readonly int[] Full =
         {

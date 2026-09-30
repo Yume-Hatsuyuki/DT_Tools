@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using DT_Tools.Core;
 using HarmonyLib;
 using Protocol;
 
@@ -25,21 +26,14 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
         //    且 Traverse 绑定目标实例、跨实例不能复用，故缓存开放实例委托）──
         /// <summary>RefreshPlayerPin(Player) 私有：0.1.15b UI_GameScene.cs:850。</summary>
         private static readonly Action<UI_GameScene, Player> RefreshPlayerPinOf =
-            Bind<Action<UI_GameScene, Player>>(typeof(UI_GameScene), "RefreshPlayerPin", new[] { typeof(Player) });
+            Reflect.Bind<Action<UI_GameScene, Player>>(typeof(UI_GameScene), "RefreshPlayerPin", new[] { typeof(Player) });
 
         /// <summary>DeletePin(int) 私有：0.1.15b UI_GameScene.cs:933。</summary>
         private static readonly Action<UI_GameScene, int> DeletePinOf =
-            Bind<Action<UI_GameScene, int>>(typeof(UI_GameScene), "DeletePin", new[] { typeof(int) });
+            Reflect.Bind<Action<UI_GameScene, int>>(typeof(UI_GameScene), "DeletePin", new[] { typeof(int) });
 
         /// <summary>白方巡检的存活玩家 id 集合：静态复用，避免每帧 new 分配。</summary>
         private static readonly HashSet<int> LiveIds = new HashSet<int>();
-
-        /// <summary>按名取私有实例方法并绑定为开放实例委托（游戏方法缺失时返回 null，调用点跳过）。</summary>
-        private static T Bind<T>(Type owner, string name, Type[] parameters) where T : Delegate
-        {
-            MethodInfo mi = AccessTools.Method(owner, name, parameters);
-            return mi == null ? null : (T)Delegate.CreateDelegate(typeof(T), null, mi);
-        }
 
         public static UI_MinimapSubItem FindTabletPin(object tablet, int id)
             => FindPin(TabletPinsField, tablet, id);

@@ -32,5 +32,14 @@ namespace DT_Tools.WebConsole.Api
             });
             HttpServer.WriteJson(ctx.Response, new { ok = true });
         }
+
+        /// <summary>
+        /// GET /api/meta — 运行时能力发现。前端据此得知 WebSocket 实时流的独立端口
+        /// （Mono 的 HttpListener 不支持升级，实时流走 WsServer 自管 TCP 通道）；
+        /// wsPort=0 表示实时流被禁用，前端直接走轮询。仅暴露端口号，无敏感信息，
+        /// 仍统一过鉴权（Router 在分发前校验）。
+        /// </summary>
+        public static void HandleMeta(HttpListenerContext ctx)
+            => HttpServer.WriteJson(ctx.Response, new { ok = true, wsPort = WebConsoleOptions.WsPort });
     }
 }

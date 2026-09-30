@@ -1,5 +1,6 @@
 using System.Reflection;
 using DT_Tools.Core;
+using DT_Tools.Game;
 using HarmonyLib;
 using Protocol;
 using Server.Game;
@@ -29,7 +30,9 @@ namespace DT_Tools.Patches.System.WhiteSabotageClue
                 return;
             if (__instance.DeviceInfo == null || __instance.DeviceInfo.StateList[0] != 9999)
                 return;    // 本次调用没有实际拉闸
-            WhiteSabotageClueLogic.AddSabotageClue(__instance, player);
+            SabotageClue.AddClue(__instance, player);
+            Log.Info<WhiteSabotageClueFeature>(
+                $"白方拉电闸留痕：{player.Name}(pid={player.PublicInfo.PlayerId}) 设备={__instance.ID} 房间={__instance.RoomID}");
         }
     }
 }

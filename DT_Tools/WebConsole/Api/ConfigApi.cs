@@ -64,10 +64,15 @@ namespace DT_Tools.WebConsole.Api
                 HttpServer.WriteJson(ctx.Response, new { ok = false, error = "invalid body" });
                 return;
             }
-            int n = ConfigService.Reset(
-                Engine.Config,
-                (string)body["section"] ?? "",
-                (string)body["key"] ?? "");
+            string section = (string)body["section"] ?? "";
+            string key = (string)body["key"] ?? "";
+            // 拒绝"有 key 无 section"：那会重置所有配置段中的同名键（含各段 Enabled）
+            if (section == "" && key != "")
+            {
+                HttpServer.WriteJson(ctx.Response, new { ok = false, error = "reset with key requires section" });
+                return;
+            }
+            int n = ConfigService.Reset(Engine.Config, section, key);
             HttpServer.WriteJson(ctx.Response, new { ok = true, reset = n });
         }
 

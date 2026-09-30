@@ -1,9 +1,8 @@
 <script setup>
 import { computed, provide } from 'vue';
-import IconMinus from '~icons/tabler/minus';
-import IconSquare from '~icons/tabler/square';
-import IconSquaresDiagonal from '~icons/tabler/squares-diagonal';
 import IconX from '~icons/tabler/x';
+import IconMinus from '~icons/tabler/minus';
+import IconPlus from '~icons/tabler/plus';
 
 const props = defineProps({
   win: { type: Object, required: true },
@@ -19,10 +18,19 @@ provide('winApi', {
 
 const MIN_W = 360;
 const MIN_H = 240;
+// 与 tokens.css --topbar-h 同步：窗口不得拖进/放大到顶栏之下
+const TOPBAR_H = 32;
 
 const style = computed(() => {
   if (props.win.maximized) {
-    return { left: '0', top: '0', width: '100%', height: '100%', zIndex: props.win.z };
+    // macOS 全屏语义近似：盖过 Dock 但给顶栏（菜单栏）让位
+    return {
+      left: '0',
+      top: TOPBAR_H + 'px',
+      width: '100%',
+      height: `calc(100% - ${TOPBAR_H}px)`,
+      zIndex: props.win.z,
+    };
   }
   return {
     left: props.win.x + 'px',
@@ -36,13 +44,13 @@ const style = computed(() => {
 function onTitlebarPointerDown(e) {
   emit('focus');
   if (props.win.maximized) return;
-  if (e.target.closest('.win-controls')) return;
+  if (e.target.closest('.traffic')) return;
   const startX = e.clientX, startY = e.clientY;
   const startWinX = props.win.x, startWinY = props.win.y;
   const onMove = (ev) => {
     emit('update-geometry', {
       x: Math.max(0, startWinX + (ev.clientX - startX)),
-      y: Math.max(0, startWinY + (ev.clientY - startY)),
+      y: Math.max(TOPBAR_H, startWinY + (ev.clientY - startY)),
     });
   };
   const onUp = () => {
@@ -85,7 +93,7 @@ function onResizePointerDown(dir, e) {
     if (goNorth) {
       const h = Math.max(MIN_H, s.h - dy);
       patch.h = h;
-      patch.y = Math.max(0, s.y + (s.h - h));
+      patch.y = Math.max(TOPBAR_H, s.y + (s.h - h));
     }
     emit('update-geometry', patch);
   };
@@ -107,16 +115,15 @@ function onResizePointerDown(dir, e) {
     @pointerdown="emit('focus')"
   >
     <div class="win-titlebar" @pointerdown="onTitlebarPointerDown" @dblclick="emit('toggle-maximize')">
-      <component :is="win.icon" v-if="win.icon" class="win-icon" />
-      <span class="win-title">{{ win.title }}</span>
-      <div class="win-controls">
-        <button class="win-btn" title="最小化" @click="emit('minimize')"><IconMinus /></button>
-        <button class="win-btn" :title="win.maximized ? '还原' : '最大化'" @click="emit('toggle-maximize')">
-          <IconSquaresDiagonal v-if="win.maximized" />
-          <IconSquare v-else />
+      <div class="traffic">
+        <button class="tl tl-close" title="关闭" @click="emit('close')"><IconX /></button>
+        <button class="tl tl-min" title="最小化" @click="emit('minimize')"><IconMinus /></button>
+        <button class="tl tl-max" :title="win.maximized ? '还原' : '最大化'" @click="emit('toggle-maximize')">
+          <IconPlus />
         </button>
-        <button class="win-btn win-btn-close" title="关闭" @click="emit('close')"><IconX /></button>
       </div>
+      <span class="win-title">{{ win.title }}</span>
+      <span class="traffic-spacer" />
     </div>
     <div class="win-body">
       <slot />
@@ -142,7 +149,7 @@ function onResizePointerDown(dir, e) {
   border: 1px solid var(--win-border);
   border-radius: var(--win-radius);
   box-shadow: var(--win-shadow);
-  backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(22px) saturate(150%);
   overflow: hidden;
   min-width: 360px;
   min-height: 240px;
@@ -150,11 +157,11 @@ function onResizePointerDown(dir, e) {
 .win.maximized { border-radius: 0; border: none; }
 
 .win-titlebar {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 8px 0 14px;
+  height: 38px;
+  padding: 0 12px;
   background: var(--win-titlebar);
   border-bottom: 1px solid var(--line);
   cursor: grab;
@@ -162,33 +169,49 @@ function onResizePointerDown(dir, e) {
   flex-shrink: 0;
 }
 .win:active .win-titlebar { cursor: grabbing; }
-.win-icon { width: 16px; height: 16px; color: var(--accent-cyan); flex-shrink: 0; }
+
+/* macOS 交通灯：红关 / 黄最小化 / 绿最大化；悬停亮起符号 */
+.traffic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+.tl {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: transparent;
+  transition: filter 0.12s var(--ease), color 0.12s var(--ease);
+}
+.tl svg { width: 9px; height: 9px; stroke-width: 2.4; }
+.tl-close { background: #ff5f57; }
+.tl-min { background: #febc2e; }
+.tl-max { background: #28c840; }
+.traffic:hover .tl { color: rgba(20, 10, 5, 0.65); }
+.tl:hover { filter: brightness(1.12); }
+
 .win-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 55%;
   font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--text-1);
-  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  pointer-events: none;
 }
-.win-controls { display: flex; gap: 2px; }
-.win-btn {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-2);
-  cursor: pointer;
-  transition: background 0.12s var(--ease), color 0.12s var(--ease);
-}
-.win-btn svg { width: 14px; height: 14px; }
-.win-btn:hover { background: var(--surface-2); color: var(--text-0); }
-.win-btn-close:hover { background: var(--accent-red); color: #1a0508; }
+.traffic-spacer { margin-left: auto; }
 
 .win-body {
   flex: 1;
@@ -198,9 +221,9 @@ function onResizePointerDown(dir, e) {
   color: var(--text-0);
 }
 
-/* 八方向缩放柄：贴边热区 + hover 高亮（Kali 蓝），四角比边更宽以易命中 */
+/* 八方向缩放柄：贴边热区 + hover 高亮（壳层高光青），四角比边更宽以易命中 */
 .win-rz { position: absolute; z-index: 10; }
-.win-rz:hover { background: rgba(39, 127, 255, 0.25); }
+.win-rz:hover { background: rgba(95, 217, 246, 0.22); }
 .rz-n { left: 10px; right: 10px; top: 0; height: 5px; cursor: ns-resize; }
 .rz-s { left: 10px; right: 10px; bottom: 0; height: 5px; cursor: ns-resize; }
 .rz-e { top: 10px; bottom: 10px; right: 0; width: 5px; cursor: ew-resize; }

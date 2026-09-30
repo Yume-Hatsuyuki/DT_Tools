@@ -1,5 +1,5 @@
 using DT_Tools.Commands;
-using DT_Tools.Commands.Join;
+using DT_Tools.Game;
 
 namespace DT_Tools.Commands.ExitRoom
 {
@@ -21,13 +21,13 @@ namespace DT_Tools.Commands.ExitRoom
 
         public CommandResult Execute(CommandContext ctx)
         {
-            if (!JoinLogic.IsInRoom)
+            if (!RoomFlow.IsInRoom)
             {
                 ctx.Reply("当前不在任何房间中。");
                 return CommandResult.Fail("not in room");
             }
 
-            JoinLogic.LeaveCurrentRoom();
+            RoomFlow.LeaveCurrentRoom();
             ctx.Reply("已离开房间，正在返回大厅。（若你是房主，原房间将按原版规则移交或解散）");
             return CommandResult.Success(new { left = true });
         }

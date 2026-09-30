@@ -79,11 +79,25 @@ namespace DT_Tools.WebConsole
             {
                 HttpListenerContext ctx;
                 try { ctx = _listener.GetContext(); }
+                catch (HttpListenerException hle)
+                {
+                    // 监听器已失效（Stop/句柄释放）时 GetContext 会持续抛——该状态无法自愈，
+                    // 下线并告警；监听器仍健康时的瞬时异常不致命，稍候重试继续接受请求
+                    if (!_running || !_listener.IsListening)
+                    {
+                        if (_running)
+                            Log.Warn("WebConsole", $"监听循环中断，停止接受请求：{hle.ErrorCode} {hle.Message}");
+                        break;
+                    }
+                    Thread.Sleep(200);
+                    continue;
+                }
                 catch (Exception ex)
                 {
                     if (_running)
-                        Log.Warn("WebConsole", $"监听循环中断，停止接受请求：{ex.GetType().Name}: {ex.Message}");
-                    break;
+                        Log.Warn("WebConsole", $"GetContext 异常（监听继续）：{ex.GetType().Name}: {ex.Message}");
+                    Thread.Sleep(200);
+                    continue;
                 }
 
                 var captured = ctx;

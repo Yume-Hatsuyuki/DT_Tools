@@ -17,7 +17,7 @@ namespace DT_Tools
     /// </summary>
     public static class Log
     {
-        private const int GlobalCapacity = 200;
+        private const int GlobalCapacity = 2000;
         private const int TagCapacity = 100;
 
         private static ManualLogSource _src;
@@ -26,6 +26,12 @@ namespace DT_Tools
         private static readonly Dictionary<string, RingBuffer<LogEntry>> TagRings =
             new Dictionary<string, RingBuffer<LogEntry>>(StringComparer.OrdinalIgnoreCase);
         private static long _seq;
+
+        /// <summary>
+        /// 每条日志写入后触发（WebConsole 订阅后经 WebSocket 推给前端）。
+        /// 订阅方必须只做入队等轻量操作、绝不阻塞——事件可能从主线程或 HTTP 线程发出。
+        /// </summary>
+        public static event Action<LogEntry> EntryAppended;
 
         public static void Init(ManualLogSource source) => _src = source;
 
@@ -120,16 +126,21 @@ namespace DT_Tools
         /// <summary>只写两处环形缓冲（已写过 BepInEx 时复用；持锁内构造条目保证 Seq 单调）。</summary>
         private static void Append(string level, string tag, string message)
         {
+            LogEntry entry;
             lock (Gate)
             {
                 _seq++;
-                var entry = new LogEntry(_seq, DateTime.Now, level, tag ?? "", message ?? "");
+                entry = new LogEntry(_seq, DateTime.Now, level, tag ?? "", message ?? "", CommandSession.Current);
                 GlobalRing.Append(entry);
-                if (string.IsNullOrEmpty(tag)) return;
-                if (!TagRings.TryGetValue(tag, out var ring))
-                    TagRings[tag] = ring = new RingBuffer<LogEntry>(TagCapacity);
-                ring.Append(entry);
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    if (!TagRings.TryGetValue(tag, out var ring))
+                        TagRings[tag] = ring = new RingBuffer<LogEntry>(TagCapacity);
+                    ring.Append(entry);
+                }
             }
+            // 锁外触发：订阅方（WebSocket 广播）只做入队，避免持锁回调引入锁序问题
+            EntryAppended?.Invoke(entry);
         }
 
         private static string Format(string tag, string message) => $"[{tag}] {message}";

@@ -19,9 +19,6 @@ namespace DT_Tools.Core
         public static string To(object value)
             => JsonConvert.SerializeObject(value, Formatting.None, Settings);
 
-        public static string Pretty(object value)
-            => JsonConvert.SerializeObject(value, Formatting.Indented, Settings);
-
         public static T From<T>(string json)
             => JsonConvert.DeserializeObject<T>(json);
 

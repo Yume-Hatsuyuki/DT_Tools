@@ -1,5 +1,6 @@
 using DT_Tools.Commands;
 using DT_Tools.Core;
+using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Join
 {
@@ -32,10 +33,10 @@ namespace DT_Tools.Commands.Join
                 return CommandResult.Fail("invalid code");
             }
 
-            bool wasInRoom = JoinLogic.IsInRoom;
+            bool wasInRoom = RoomFlow.IsInRoom;
             if (wasInRoom)
             {
-                JoinLogic.LeaveCurrentRoom();
+                RoomFlow.LeaveCurrentRoom();
                 ctx.Reply($"已离开当前房间，正在加入房间码 {code} …（若你是房主，原房间将按原版规则移交或解散）");
             }
             else

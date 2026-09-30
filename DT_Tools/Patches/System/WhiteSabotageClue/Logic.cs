@@ -1,66 +1,74 @@
 using System.Linq;
+using HarmonyLib;
 using Protocol;
 using Server.Game;
 
 namespace DT_Tools.Patches.System.WhiteSabotageClue
 {
     /// <summary>
-    /// 线索写入：逐句镜像 Device.RecordLastUsingPlayer（0.1.15b Device.cs:159-215）的
-    /// 语义——Survive 阶段、30 秒粒度窗口内同设备同玩家只刷新时间（S_REMOVE_CLUE +
-    /// S_ADD_CLUE），新线索 S_ADD_CLUE 广播（非房主客户端经 ClueMirror 自动同步，
-    /// 侦探扫描经 S_SCAN_DEVICE 带出），行为人收 S_LEFT_CLUE 回执。
-    /// 差异点：不做 WhatType==WNone 过滤——门的 DeviceData.WhatType 未必有值，
-    /// 平板图钉按 PlayerId+RoomId 建立不受影响，房间/身份信息仍是线索主体。
+    /// 白方销毁证据执行序列（放行前缀见 Patch.DestroyEvidence）：
+    /// 逐句镜像 Server.Game/Device.DestroyEvidence（0.1.15b Server.Game/Device.cs:222-260），
+    /// 差异点仅一处——痕迹记录真实玩家身份而非固定假身份（黑方 66613 / 黑幕 11037，
+    /// Device.cs:244-250）。
     /// </summary>
     internal static class WhiteSabotageClueLogic
     {
-        // Player 必须全限定：全局命名空间有客户端 Player 类，裸名与 using 导入歧义
-        public static void AddSabotageClue(Device device, Server.Game.Player player)
+        /// <summary>
+        /// 白方销毁证据：逐句镜像 Server.Game/Device.DestroyEvidence 的销毁序列
+        /// （0.1.15b Server.Game/Device.cs:222-260：30 秒冷却 → 标记既有证据链 →
+        /// 新增一条销毁痕迹），差异点仅一处——痕迹记录真实玩家身份（原版按行为人
+        /// 颜色记固定假身份：黑方 66613 / 黑幕 11037，Device.cs:244-250）。
+        /// 与 Game/SabotageClue.AddClue 的 30 秒窗口去重不同：原版销毁不走窗口去重，
+        /// 每次销毁都新增一条；也不发 S_LEFT_CLUE（原版没有）。OnEvidenceDestroyed 为
+        /// protected virtual（Device.cs:263），经反射调用以保留子类覆写。
+        /// </summary>
+        public static void DestroyEvidence(Device device, Server.Game.Player player)
         {
-            if (device?.DeviceInfo == null || player == null)
-                return;
-            if (GameRoom.Instance == null || GameRoom.Instance.State != EGameState.Survive)
-                return;
+            player.CanDestroyEvidence = false;
+            player.DestroyEvidenceCooltimeEndTick = TimeManager.Instance.SurviveTime + 30;
+            TimeManager.Instance.PushSurvivalJob(30, delegate
+            {
+                player.CanDestroyEvidence = true;
+            });
+            player.Session.Send(new S_COOLTIME_DESTROY_EVIDENCE
+            {
+                Cooltime = 30
+            });
 
-            int playerId = player.PublicInfo.PlayerId;
-            int surviveTime = TimeManager.Instance.SurviveTime;
-            int limitTime = surviveTime / 30 * 30;
-            var existing = device.ClueList.FirstOrDefault(
-                x => x.Time >= limitTime && x.PlayerId == playerId && !x.Destroyed);
-            if (existing == null)
+            foreach (PropositionInfo item in device.ClueList
+                .Where((PropositionInfo x) => !x.Destroyed && !Define.IsDestroyEvidenceClue(x))
+                .ToList())
             {
-                var info = new PropositionInfo
-                {
-                    PlayerId = playerId,
-                    Time = surviveTime,
-                    RoomId = device.RoomID,
-                    WhatType = device.DeviceData?.WhatType ?? EWhatType.WNone,
-                };
-                device.ClueList.Add(info);
-                GameRoom.Instance.Broadcast(new S_ADD_CLUE
-                {
-                    DeviceId = device.ID,
-                    Info = info.Clone(),
-                });
-            }
-            else
-            {
-                var stale = existing.Clone();
-                device.ClueList.Remove(existing);
-                existing.Time = surviveTime;
-                device.ClueList.Add(existing);
                 GameRoom.Instance.Broadcast(new S_REMOVE_CLUE
                 {
                     DeviceId = device.ID,
-                    Info = stale,
+                    Info = item.Clone(),
                 });
+                item.Destroyed = true;
                 GameRoom.Instance.Broadcast(new S_ADD_CLUE
                 {
                     DeviceId = device.ID,
-                    Info = existing.Clone(),
+                    Info = item.Clone(),
                 });
             }
-            player.Session.Send(new S_LEFT_CLUE());
+
+            var trace = new PropositionInfo
+            {
+                PlayerId = player.PublicInfo.PlayerId,
+                Time = TimeManager.Instance.SurviveTime,
+                RoomId = device.RoomID,
+                WhatType = device.DeviceData.WhatType,
+            };
+            device.ClueList.Add(trace);
+            GameRoom.Instance.Broadcast(new S_ADD_CLUE
+            {
+                DeviceId = device.ID,
+                Info = trace.Clone(),
+            });
+
+            Log.Info<WhiteSabotageClueFeature>(
+                $"白方销毁证据留痕：{player.Name}(pid={player.PublicInfo.PlayerId}) 设备={device.ID} 房间={device.RoomID}");
+            AccessTools.Method(typeof(Device), "OnEvidenceDestroyed")?.Invoke(device, null);
         }
     }
 }

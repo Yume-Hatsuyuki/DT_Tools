@@ -24,18 +24,11 @@ namespace DT_Tools.Patches.Experience.PlayerRadar
 
         /// <summary>RefreshMyPlayerPin() 私有：0.1.15b UI_GameTablet.cs:1200。</summary>
         private static readonly Action<UI_GameTablet> RefreshMyPlayerPinOf =
-            Bind<Action<UI_GameTablet>>(typeof(UI_GameTablet), "RefreshMyPlayerPin");
+            Reflect.Bind<Action<UI_GameTablet>>(typeof(UI_GameTablet), "RefreshMyPlayerPin");
 
         /// <summary>RefreshPlayerPin(Player) 私有：0.1.15b UI_GameTablet.cs:1211。</summary>
         private static readonly Action<UI_GameTablet, Player> RefreshPlayerPinOf =
-            Bind<Action<UI_GameTablet, Player>>(typeof(UI_GameTablet), "RefreshPlayerPin", new[] { typeof(Player) });
-
-        /// <summary>按名取私有实例方法并绑定为开放实例委托（游戏方法缺失时返回 null，前缀退回原版）。</summary>
-        private static T Bind<T>(Type owner, string name, Type[] parameters = null) where T : Delegate
-        {
-            MethodInfo mi = AccessTools.Method(owner, name, parameters);
-            return mi == null ? null : (T)Delegate.CreateDelegate(typeof(T), null, mi);
-        }
+            Reflect.Bind<Action<UI_GameTablet, Player>>(typeof(UI_GameTablet), "RefreshPlayerPin", new[] { typeof(Player) });
 
         private static bool Prefix(UI_GameTablet __instance)
         {

@@ -17,17 +17,6 @@ namespace DT_Tools.Commands.Join
     {
         private const float LobbyUiTimeoutSeconds = 15f;
 
-        /// <summary>是否在房内：NetworkManager.InRoom 为 private（:165，GameServer != null），
-        /// GameServer 是公开读（NetworkManager.cs:130）。</summary>
-        public static bool IsInRoom => Managers.Network?.GameServer != null;
-
-        /// <summary>离开当前房间：与原版退出确认 OnClickExitYes 同路径（UI_GameScene.cs:2302-2308）。</summary>
-        public static void LeaveCurrentRoom()
-        {
-            Managers.Network.Leave();                              // 0.1.15b NetworkManager.cs:1305
-            Managers.Scene.LoadScene(Define.EScene.LobbyScene);    // 0.1.15b SceneManagerEx.cs:9
-        }
-
         /// <summary>启动加入流程（协程等大厅 UI，随后异步搜索房间码）。</summary>
         public static void StartJoinFlow(string code)
         {

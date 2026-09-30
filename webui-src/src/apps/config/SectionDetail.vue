@@ -12,7 +12,7 @@ import IconHistory from '~icons/tabler/history';
 const props = defineProps({
   section: { type: Object, required: true },
 });
-const emit = defineEmits(['back', 'updated', 'toast']);
+const emit = defineEmits(['back', 'updated', 'reset', 'toast']);
 
 const meta = computed(() => sectionMeta(props.section));
 const sectionMetaStore = useSectionMeta();
@@ -41,7 +41,8 @@ async function resetSection() {
   if (!confirm(`恢复段 [${props.section.section}] 全部默认值？（仅做临时调整，如需持久化请使用保存功能。）`)) return;
   const j = await API.configReset(props.section.section);
   if (j.unauthorized) return;
-  if (j.ok) { emit('updated'); emit('toast', { text: `已重置 ${j.reset} 项` }); }
+  // 通知父级 reload：详情页打开期间自动刷新被 isEditing 抑制，不主动刷就一直是旧值
+  if (j.ok) { emit('reset'); emit('toast', { text: `已重置 ${j.reset} 项` }); }
   else emit('toast', { text: j.error || '重置失败', error: true });
 }
 

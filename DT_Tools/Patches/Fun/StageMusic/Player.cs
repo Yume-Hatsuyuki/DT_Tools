@@ -1,8 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using DT_Tools.Core;
+using DT_Tools.Game;
 using Protocol;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -24,8 +25,12 @@ namespace DT_Tools.Patches.Fun.StageMusic
         private static float _currentVolume = 1f;   // 当前播放会话的音量（MixIntoMic 读取，随每次播放调用刷新）
 
         private static readonly Dictionary<string, AudioClip> _clips = new Dictionary<string, AudioClip>();
+        private static readonly Queue<string> _clipOrder = new Queue<string>();   // 插入序，供上限淘汰
+        private const int CacheCap = 32;                 // 缓存上限：长会话换曲不至无限累积
         private static string _configFingerprint = "\0";
         private static bool _loading;
+        private static long _loadGeneration;             // 加代替换计数：新触发使在途加载作废（对齐 AudioPlayback 语义）
+        private static long _pendingGeneration;
         private static float _pendingVolume = 1f;      // 异步加载期间暂存本次播放的音量/时长（加载完成后交给 StartPlayback）
         private static float _pendingMaxSeconds = -1f;
 
@@ -143,11 +148,11 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 StartPlayback(uri, cached, volume, maxSeconds);
                 return;
             }
-            if (_loading)
-                return;
             _pendingVolume = volume;
             _pendingMaxSeconds = maxSeconds;
-            CoroutineHost.Start(CoLoadAndPlay(uri));
+            _pendingGeneration = ++_loadGeneration;   // 加载中的新触发取代旧加载（旧语义静默丢弃已修）
+            if (!_loading)
+                CoroutineHost.Start(CoLoadAndPlay(uri));
         }
 
         /// <summary>停止当前阶段音乐（阶段切换触发与未配置阶段共用）。</summary>
@@ -155,6 +160,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
         {
             _playingUri = null;
             MixActive = false;
+            _loadGeneration++;   // 作废在途加载
             if (_stopCo != null)
             {
                 CoroutineHost.Stop(_stopCo);
@@ -164,14 +170,34 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 _source.Stop();
         }
 
+        /// <summary>热关闭清理（Feature.OnDisabled 调用）：停播并销毁 AudioSource 与全部缓存片段、复位混音状态。</summary>
+        public static void Shutdown()
+        {
+            StopCurrent();
+            if (_source != null)
+            {
+                UnityEngine.Object.Destroy(_source.gameObject);
+                _source = null;
+            }
+            foreach (var clip in _clips.Values)
+            {
+                if (clip != null)
+                    UnityEngine.Object.Destroy(clip);
+            }
+            _clips.Clear();
+            _clipOrder.Clear();
+            MixSamples = null;
+        }
+
         private static IEnumerator CoLoadAndPlay(string uri)
         {
-            if (_loading)
-                yield break;
             _loading = true;
+            long generation = _pendingGeneration;
             var request = UnityWebRequestMultimedia.GetAudioClip(uri, AudioType.UNKNOWN);
             yield return request.SendWebRequest();
             _loading = false;
+            if (generation != _loadGeneration)
+                yield break;   // 加载期间来了新触发/停止：本次结果作废
 
             if (request.result != UnityWebRequest.Result.Success)
             {
@@ -184,9 +210,34 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 Log.Warn<StageMusicFeature>("音频解码失败（引擎不支持该格式）: " + uri);
                 yield break;
             }
+            if (!_clips.ContainsKey(uri))
+                _clipOrder.Enqueue(uri);
             _clips[uri] = clip;
+            EvictCacheOverflow();
             Log.Info<StageMusicFeature>($"音频就绪: {clip.length:F1} 秒 ({uri})");
+            if (generation != _loadGeneration)
+                yield break;
             StartPlayback(uri, clip, _pendingVolume, _pendingMaxSeconds);
+        }
+
+        /// <summary>缓存上限淘汰：超过 CacheCap 时按插入序销毁最旧片段，正在播放的挪到队尾豁免。</summary>
+        private static void EvictCacheOverflow()
+        {
+            while (_clipOrder.Count > CacheCap)
+            {
+                string oldest = _clipOrder.Peek();
+                if (oldest == _playingUri && _clipOrder.Count == 1)
+                    break;
+                _clipOrder.Dequeue();
+                if (oldest == _playingUri)
+                {
+                    _clipOrder.Enqueue(oldest);   // 播放中豁免，挪到队尾
+                    continue;
+                }
+                if (_clips.TryGetValue(oldest, out var old) && old != null)
+                    UnityEngine.Object.Destroy(old);
+                _clips.Remove(oldest);
+            }
         }
 
         private static void StartPlayback(string uri, AudioClip clip, float volume, float maxSeconds)
@@ -226,10 +277,12 @@ namespace DT_Tools.Patches.Fun.StageMusic
 
         private static string ConfigFingerprint()
         {
-            return StageMusicFeature.KillTrack + "\n" + StageMusicFeature.GiveKnifeTrack + "\n"
-                + StageMusicFeature.LobbyTrack + "\n" + StageMusicFeature.SurviveTrack + "\n"
-                + StageMusicFeature.DetectTrack + "\n" + StageMusicFeature.TrialTrack + "\n"
-                + StageMusicFeature.ExecutionTrack + "\n" + StageMusicFeature.VictoryTrack;
+            // 全部阶段曲目参与指纹（Enum 驱动，新增阶段自动纳入）——指纹漏项会让
+            // "配置变化销毁缓存"的承诺失效（审计 F-L65：2026-09 新增 9 阶段未纳入旧指纹）
+            var sb = new StringBuilder();
+            foreach (MusicStage stage in Enum.GetValues(typeof(MusicStage)))
+                sb.Append(TrackOf(stage)).Append('\n');
+            return sb.ToString();
         }
 
         /// <summary>配置变化时销毁全部缓存片段（资源释放），重建指纹。</summary>
@@ -244,6 +297,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
                     UnityEngine.Object.Destroy(clip);
             }
             _clips.Clear();
+            _clipOrder.Clear();
             _configFingerprint = fp;
         }
 
@@ -264,26 +318,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 }
                 return raw;
             }
-            return ResolveLocalUri(raw);
-        }
-
-        private static string ResolveLocalUri(string raw)
-        {
-            try
-            {
-                string full = Path.GetFullPath(raw);
-                if (!File.Exists(full))
-                {
-                    Log.Warn<StageMusicFeature>("本地音频不存在: " + full);
-                    return null;
-                }
-                return new Uri(full).AbsoluteUri;
-            }
-            catch (Exception ex)
-            {
-                Log.Warn<StageMusicFeature>("本地路径无效: " + ex.Message);
-                return null;
-            }
+            return AudioMix.LocalFileUri(raw, Engine.SectionOf<StageMusicFeature>());
         }
 
         private static AudioSource EnsureSource()
@@ -306,30 +341,13 @@ namespace DT_Tools.Patches.Fun.StageMusic
             MixActive = false;
             if (!StageMusicFeature.MicBroadcast)
                 return;
-            try
-            {
-                int channels = clip.channels;
-                var all = new float[clip.samples * channels];
-                clip.GetData(all, 0);
-                int frames = clip.samples;
-                var mono = new float[frames];
-                for (int i = 0; i < frames; i++)
-                {
-                    float sum = 0f;
-                    for (int c = 0; c < channels; c++)
-                        sum += all[i * channels + c];
-                    mono[i] = sum / channels;
-                }
-                MixSamples = mono;
-                MixSampleRate = clip.frequency;
-                MixStartRealtime = Time.realtimeSinceStartup;
-                MixActive = true;
-            }
-            catch (Exception ex)
-            {
-                Log.Warn<StageMusicFeature>("麦克风混音准备失败: " + ex.Message);
-                MixActive = false;
-            }
+            var mono = AudioMix.ExtractMono(clip, Engine.SectionOf<StageMusicFeature>());
+            if (mono == null)
+                return;
+            MixSamples = mono;
+            MixSampleRate = clip.frequency;
+            MixStartRealtime = Time.realtimeSinceStartup;
+            MixActive = true;
         }
 
         /// <summary>
@@ -338,33 +356,8 @@ namespace DT_Tools.Patches.Fun.StageMusic
         /// </summary>
         public static void MixIntoMic(ArraySegment<float> buffer, int outputRate)
         {
-            if (!MixActive || !StageMusicFeature.MicBroadcast)
-                return;
-            var comms = Managers.Voice?.Comms;
-            if (comms != null && comms.IsMuted)
-                return;    // 麦克风静音：仅本地收听，不广播
-
-            float vol = _currentVolume;
-            double elapsed = Time.realtimeSinceStartup - MixStartRealtime;
-            long head = (long)(elapsed * outputRate);
-            for (int i = 0; i < buffer.Count; i++)
-            {
-                long pos = head + i;
-                if (pos >= MixSamples.Length)
-                {
-                    MixActive = false;   // 音乐播完，停止混入
-                    return;
-                }
-                int idx = (int)(pos * MixSampleRate / outputRate);
-                if (idx >= MixSamples.Length)
-                {
-                    MixActive = false;
-                    return;
-                }
-                int offset = buffer.Offset + i;
-                float mixed = buffer.Array[offset] + MixSamples[idx] * vol;
-                buffer.Array[offset] = Mathf.Clamp(mixed, -1f, 1f);
-            }
+            MixActive = AudioMix.MixInto(MixSamples, MixSampleRate, MixStartRealtime,
+                _currentVolume, MixActive && StageMusicFeature.MicBroadcast, buffer, outputRate);
         }
     }
 }

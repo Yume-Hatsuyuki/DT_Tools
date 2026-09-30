@@ -17,10 +17,7 @@
 
 安装完成后打开**浏览器**，访问：<u>[http://127.0.0.1:19450](http://127.0.0.1:19450)</u>
 
-可自行探索相关配置项：
-命令行：**DT CONSOLE**
-补丁类：**DT CONFIG**
-自动化：**AUTOMATION**
+<img src="images/屏幕截图_30-9-2026_92910_127.0.0.1.jpeg" width="850">
 
 ---
 
@@ -46,6 +43,7 @@ Deadly Trick/BepInEx/plugins/DT_Tools/
     ├── index.html
     ├── login.html
     ├── css/
+    ├── favicon/
     └── js/
 ```
 
@@ -55,7 +53,7 @@ Deadly Trick/BepInEx/plugins/DT_Tools/
 Deadly Trick/BepInEx/config/DT_Tools.cfg
 ```
 
-按段开启功能；改 `Enabled` 后需**重启游戏**才会装卸对应补丁。
+按需开启功能即可。
 
 #### 什么？你还是不会？
 没关系，打开[DeepSeek](https://chat.deepseek.com/)，输入下面的提示词：
@@ -85,7 +83,7 @@ https://github.com/Yume-Hatsuyuki/DT_Tools/blob/main/README.md
 - 怎么给你提供信息？
 
 关于更新：
-- 作者说更新的时候建议删除 /plugins/DT_Tools 文件夹，并进行全量替换。
+- 作者说更新的时候建议删除旧的 /plugins/DT_Tools 文件夹，并进行全量替换。
 - 怎么删除？
 - 怎么替换？
 ```
@@ -99,8 +97,9 @@ https://github.com/Yume-Hatsuyuki/DT_Tools/blob/main/README.md
 配置段 `[WebConsole]`（默认开启，端口 `19450`）：
 
 - 浏览器打开 `http://127.0.0.1:19450/`
-- **DT CONSOLE**：命令与日志  
-- **DT CONFIG**：运行时改配置（默认只改内存；「保存到 .cfg」或「覆盖配置」才写盘）
+
+自行摸索相关功能的使用方式：
+<img src="images/屏幕截图_30-9-2026_93444_127.0.0.1.jpeg" width="550">
 
 无 `WEBUI/` 时页面返回 503，HTTP API 与补丁仍可用。
 

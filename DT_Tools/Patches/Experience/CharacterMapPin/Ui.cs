@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using DT_Tools.Core;
 using Protocol;
 using HarmonyLib;
 using UnityEngine;
@@ -37,21 +38,14 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
         //    且 Traverse 绑定目标实例、跨实例不能复用，故缓存开放实例委托 / PropertyInfo）──
         /// <summary>UI_Base.GetObject(int) protected：0.1.15b UI_Base.cs:93。</summary>
         private static readonly Func<UI_Base, int, GameObject> PinGetObject =
-            Bind<Func<UI_Base, int, GameObject>>(typeof(UI_Base), "GetObject", new[] { typeof(int) });
+            Reflect.Bind<Func<UI_Base, int, GameObject>>(typeof(UI_Base), "GetObject", new[] { typeof(int) });
 
         /// <summary>UI_Base.GetImage(int) protected：0.1.15b UI_Base.cs:113。</summary>
         private static readonly Func<UI_Base, int, Image> PinGetImage =
-            Bind<Func<UI_Base, int, Image>>(typeof(UI_Base), "GetImage", new[] { typeof(int) });
+            Reflect.Bind<Func<UI_Base, int, Image>>(typeof(UI_Base), "GetImage", new[] { typeof(int) });
 
         /// <summary>UI_Arrow.TargetPos { get; private set; }：0.1.15b UI_Arrow.cs:20，每帧反射写入。</summary>
         private static readonly PropertyInfo ArrowTargetPos = AccessTools.Property(typeof(UI_Arrow), "TargetPos");
-
-        /// <summary>按名取实例方法并绑定为开放实例委托（游戏方法缺失时返回 null，调用点跳过）。</summary>
-        private static T Bind<T>(Type owner, string name, Type[] parameters) where T : Delegate
-        {
-            MethodInfo mi = AccessTools.Method(owner, name, parameters);
-            return mi == null ? null : (T)Delegate.CreateDelegate(typeof(T), null, mi);
-        }
 
         // ── 贴图键与解析 ──────────────────────────────────────────────
 

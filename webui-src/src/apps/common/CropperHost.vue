@@ -1,14 +1,15 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { useCropper, cropToDataUrl, clampOffset, STAGE, BOX } from '../../composables/useCropper.js';
+import { useCropper, cropToDataUrl, clampOffset } from '../../composables/useCropper.js';
 import IconX from '~icons/tabler/x';
 
 /** 全局裁切模态框宿主——只在 Desktop 挂载一次，逻辑全在 useCropper。 */
 const { state } = useCropper();
 const busy = ref(false);
 
-const stageStyle = computed(() => ({ width: STAGE + 'px', height: STAGE + 'px' }));
-const boxStyle = computed(() => ({ width: BOX + 'px', height: BOX + 'px' }));
+// 舞台尺寸随模式变化：头像/图标=320×320 方台，壁纸=舞台即选区（所见即所得）
+const stageStyle = computed(() => ({ width: state.stageW + 'px', height: state.stageH + 'px' }));
+const boxStyle = computed(() => ({ width: state.selW + 'px', height: state.selH + 'px' }));
 
 function onWheel(e) {
   e.preventDefault();
@@ -93,7 +94,7 @@ function cancel() {
         >
         <span class="zoom-value">{{ state.scale.toFixed(2) }}×</span>
       </div>
-      <div class="crop-hint">滚轮缩放 · 拖动平移 · 选区内为最终裁切</div>
+      <div class="crop-hint">滚轮缩放 · 拖动平移 · 框内即最终壁纸（输出 {{ state.outW }}×{{ state.outH }}）</div>
       <div class="crop-actions">
         <button type="button" @click="cancel">取消</button>
         <button type="button" class="primary" :disabled="busy" @click="confirm">{{ busy ? '处理中…' : '确定' }}</button>

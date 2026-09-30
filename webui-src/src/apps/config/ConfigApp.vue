@@ -15,7 +15,6 @@ import IconTrash from '~icons/tabler/trash';
 const sections = ref([]);
 const query = ref('');
 const openSection = ref(null);   // 展开中的段名，null=文件夹网格视图
-const editingField = ref(false);
 const sectionMeta = useSectionMeta();
 
 async function reload() {
@@ -29,7 +28,7 @@ async function reload() {
 }
 
 const { dirty, autoRefresh, toast, showToast, save, exportCfg, importFile, resetAll, startAutoRefresh, stopAutoRefresh }
-  = useConfigToolbar({ flag: 'config', reload, isEditing: () => editingField.value || !!openSection.value });
+  = useConfigToolbar({ flag: 'config', reload, isEditing: () => !!openSection.value });
 
 const currentSection = ref(null);
 /** FolderGrid 抛出的是磁贴摘要 {key,label,count,enabled}，需按 key 找回完整段对象。 */
@@ -45,6 +44,8 @@ function backToGrid() {
 }
 
 function onUpdated() { dirty.value = true; }
+/** 段级重置：除标脏外立即 reload——否则界面停在旧值，与"已重置"的提示相反。 */
+async function onReset() { dirty.value = true; await reload(); }
 function onToast(t) { showToast(t.text, t.error); }
 
 /**
@@ -71,7 +72,9 @@ const folderItems = computed(() =>
 );
 
 function enabledOf(section) {
-  const e = (section.entries || []).find(en => en.key === 'Enabled');
+  // 开关键名走协议字段（后端 Engine.EnabledKey），不硬编码 'Enabled'
+  const key = section.enabledKey || 'Enabled';
+  const e = (section.entries || []).find(en => en.key === key);
   return e ? !!e.value : null;
 }
 
@@ -112,6 +115,7 @@ onUnmounted(stopAutoRefresh);
       :section="currentSection"
       @back="backToGrid"
       @updated="onUpdated"
+      @reset="onReset"
       @toast="onToast"
     />
   </div>

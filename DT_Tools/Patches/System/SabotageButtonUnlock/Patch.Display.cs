@@ -22,7 +22,7 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
             var color = Managers.Player.MyPlayer.Color;
             if (color == EPlayerColor.Dark || color == EPlayerColor.Black)
                 return true;
-            if (!SabotageButtonUnlockLogic.ColorAllowedForDevice(__instance.DeviceType, color))
+            if (!SabotageButtonUnlockLogic.ColorAllowedForDevice(__instance, color))
             {
                 __result = "";
                 return false;

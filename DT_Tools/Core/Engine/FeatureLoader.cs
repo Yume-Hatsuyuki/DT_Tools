@@ -61,6 +61,7 @@ namespace DT_Tools.Core
 
             var claimedSections = new HashSet<string>(StringComparer.Ordinal);
             var featureNamespaces = new HashSet<string>(StringComparer.Ordinal);
+            var moduleNamespaces = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var type in SafeGetTypes(assembly))
             {
@@ -92,6 +93,9 @@ namespace DT_Tools.Core
                 {
                     string section = DeriveSection(type);
                     ClaimSection(type, section, claimedSections);
+                    if (!moduleNamespaces.Add(type.Namespace ?? ""))
+                        throw new InvalidOperationException(
+                            $"命名空间 {type.Namespace} 中出现第二个 [AutomationModule]（{type.Name}）——目录=模块，一个目录只允许一个 Module。");
                     var tick = FindTick(type);
                     if (tick == null)
                         throw new InvalidOperationException(
@@ -175,8 +179,8 @@ namespace DT_Tools.Core
                     }
                 }
             }
-
-            InvokeStaticIfPresent(feature.Type, "OnPatched");
+            // 注意：OnPatched 不在这里调用——它抛异常时补丁实际已挂载成功，
+            // 不能被上层计成"挂载失败（已跳过）"；由 Engine.Load 挂载循环单独隔离调用。
         }
 
         /// <summary>
@@ -200,7 +204,7 @@ namespace DT_Tools.Core
                     }
                     catch (Exception ex)
                     {
-                        Log.Error(section, $"Enabled 切换回调失败：{ex.GetType().Name}: {ex.Message}");
+                        Log.Exception(section, ex, "Enabled 切换回调失败");
                     }
                 });
             };

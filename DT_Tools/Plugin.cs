@@ -43,18 +43,19 @@ namespace DT_Tools
             }
             else
             {
-                Logger.LogInfo("WebConsole 已在配置中禁用，跳过启动。");
+                Log.Info("Plugin", "WebConsole 已在配置中禁用，跳过启动。");
             }
 
+            // 装配摘要走 Log 门面：进全局环形缓冲，WebUI 日志应用可见启动结果
             if (result.FailedCount > 0)
             {
-                Logger.LogWarning(
+                Log.Warn("Plugin",
                     $"{MyPluginInfo.PLUGIN_GUID} 加载完成：挂载成功 {result.MountedCount}，失败 {result.FailedCount}。" +
                     "失败的功能已跳过，其余不受影响；各功能 Enabled 可在局内热切换。");
             }
             else
             {
-                Logger.LogInfo(
+                Log.Info("Plugin",
                     $"{MyPluginInfo.PLUGIN_GUID} 加载完成：补丁功能 {result.MountedCount} 个，" +
                     $"自动化模块 {result.ModuleCount} 个，命令 {CommandRegistry.All.Count} 条" +
                     "（Enabled 支持局内热切换）。");

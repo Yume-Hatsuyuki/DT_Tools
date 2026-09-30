@@ -56,6 +56,11 @@ namespace DT_Tools.WebConsole
 
             _server = new HttpServer(router);
             _server.Start(WebConsoleOptions.ListenIp, WebConsoleOptions.Port);
+            // WebSocket 实时流独立通道（Mono 的 HttpListener 不支持 WS 升级）：
+            // 自管 TCP 完成握手后与 HTTP 路径共用 LogStreamApi 的客户端逻辑
+            WsServer.Start(WebConsoleOptions.ListenIp, WebConsoleOptions.WsPort, auth);
+            // 日志实时流：Log 门面每写一条即触发，广播到全部 WebSocket 客户端（只入队不阻塞）
+            Log.EntryAppended += Api.LogStreamApi.Broadcast;
             ApplyRuntimeToggles();
         }
 
@@ -80,8 +85,8 @@ namespace DT_Tools.WebConsole
         private void RegisterRoutes(Router router, Auth auth)
         {
             router.Add("POST", "/api/run", HandleRun);
-            router.Add("GET", "/api/log/stream", Api.LogsApi.HandleStream);   // 必须先于 /api/log（前缀匹配）
-            router.Add("GET", "/api/log", Api.LogsApi.Handle);
+            router.Add("GET", "/api/log/ws", Api.LogStreamApi.Handle);   // WebSocket 实时流（先于 /api/log 前缀匹配）
+            router.Add("GET", "/api/log", Api.LogsApi.Handle);           // 增量兜底（首屏/断线补齐）
             router.Add("GET", "/api/commands", Api.CommandsApi.HandleList);
             router.Add("*", "/api/config/section/", Api.ConfigApi.HandleSectionLog);
             router.Add("GET", "/api/config/list", Api.ConfigApi.HandleList);
@@ -95,11 +100,15 @@ namespace DT_Tools.WebConsole
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
             router.Add("GET", "/api/pick-file", Api.FilePickerApi.Handle);
+            router.Add("GET", "/api/meta", Api.SystemApi.HandleMeta);
             router.Add("POST", "/api/game/exit", Api.SystemApi.HandleExit);
         }
 
         private void OnDestroy()
         {
+            Log.EntryAppended -= Api.LogStreamApi.Broadcast;
+            Api.LogStreamApi.ShutdownAll();
+            WsServer.Stop();
             _server?.Stop();
             if (Instance == this) Instance = null;
         }
@@ -115,7 +124,14 @@ namespace DT_Tools.WebConsole
                 return;
             }
 
-            var pending = new PendingRequest { Command = raw, Done = new ManualResetEventSlim(false) };
+            var pending = new PendingRequest
+            {
+                Command = raw,
+                // 会话 id 由前端随 /api/run 头携带：执行期间 Log 写出的条目带 Session，
+                // 前端据此把输出隔离回发起命令的那个控制台窗口
+                Session = ctx.Request.Headers["X-DT-Session"],
+                Done = new ManualResetEventSlim(false),
+            };
             lock (_pendLock)
                 _pending.Enqueue(pending);
 
@@ -138,7 +154,8 @@ namespace DT_Tools.WebConsole
         {
             while (true)
             {
-                PendingRequest pending;
+                PendingRequest pending = null;
+                Action action = null;
                 lock (_pendLock)
                 {
                     if (_pending.Count == 0 && _actions.Count == 0) break;
@@ -148,11 +165,14 @@ namespace DT_Tools.WebConsole
                     }
                     else
                     {
-                        var action = _actions.Dequeue();
-                        // API 投递的动作自带 try/catch 兜底，这里不再包裹以免吞掉调用方语义
-                        action();
-                        continue;
+                        action = _actions.Dequeue();
                     }
+                }
+                if (action != null)
+                {
+                    // 锁外执行（与命令路径同构）：动作耗时不能堵住 HTTP 线程的入队锁
+                    action();
+                    continue;
                 }
                 ExecuteOnMainThread(pending);
             }
@@ -161,6 +181,9 @@ namespace DT_Tools.WebConsole
         private void ExecuteOnMainThread(PendingRequest pending)
         {
             string raw = pending.Command ?? "";
+            string session = pending.Session;
+            if (!string.IsNullOrEmpty(session))
+                CommandSession.Begin(session);
             try
             {
                 // 去掉前导 / 或 !
@@ -193,6 +216,11 @@ namespace DT_Tools.WebConsole
                 Log.Exception("WebConsole", ex, $"命令主线程执行异常: {raw}");
                 Complete(pending, CommandResult.Fail("command error"));
             }
+            finally
+            {
+                if (!string.IsNullOrEmpty(session))
+                    CommandSession.End();
+            }
         }
 
         private static void Complete(PendingRequest pending, CommandResult result)
@@ -214,6 +242,7 @@ namespace DT_Tools.WebConsole
         private sealed class PendingRequest
         {
             public string Command;
+            public string Session;
             public ManualResetEventSlim Done;
             public CommandResult Result;
         }

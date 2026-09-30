@@ -54,7 +54,11 @@ namespace DT_Tools.WebConsole
 
             string rel = path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
             string full = Path.GetFullPath(Path.Combine(root, rel));
-            if (!full.StartsWith(Path.GetFullPath(root), StringComparison.OrdinalIgnoreCase))
+            // 前缀比较必须锚定到目录分隔符：否则 "WebUI" 前缀的同级目录（如 WebUI2）也能通过
+            string rootFull = Path.GetFullPath(root);
+            if (!rootFull.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+                rootFull += Path.DirectorySeparatorChar;
+            if (!full.StartsWith(rootFull, StringComparison.OrdinalIgnoreCase))
             {
                 HttpServer.WriteText(resp, 403, "Forbidden");
                 return true;

@@ -60,10 +60,12 @@ namespace DT_Tools.Patches.Fun.StageMusic
             if (__1 == null)
                 return;
             if (StageMusicFeature.MicBroadcast)
+            {
                 StageMusicPlayer.MixIntoMic(__0, __1.SampleRate);
-            // 控制台点播（Game/AudioPlayback）与阶段音乐共用本注入点；
-            // 点播是否可广播同样受 MicBroadcast 总闸约束（钩子由本功能挂载）
-            AudioPlayback.MixIntoMic(__0, __1.SampleRate);
+                // 控制台点播（Game/AudioPlayback）与阶段音乐共用本注入点，
+                // 同受 MicBroadcast 总闸约束（此前点播分支漏套总闸，功能关闭广播后仍外泄）
+                AudioPlayback.MixIntoMic(__0, __1.SampleRate);
+            }
         }
     }
 }

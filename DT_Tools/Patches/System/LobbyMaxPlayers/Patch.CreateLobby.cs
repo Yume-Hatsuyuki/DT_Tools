@@ -15,6 +15,9 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]
     internal static class LobbyMaxPlayersCreateLobbyPatch
     {
+        // 顺序契约见 CustomRoomCode.CreateLobby 注释：整替 Prefix 靠后执行，才能读到
+        // 改参 Prefix 修改后的 roomCode/roomName
+        [HarmonyPriority(400)]
         private static bool Prefix(
             SteamLobbyManager __instance,
             string roomCode,

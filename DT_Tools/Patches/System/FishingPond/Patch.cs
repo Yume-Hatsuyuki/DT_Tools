@@ -1,5 +1,5 @@
 using DT_Tools.Core;
-using DT_Tools.Patches.System.RandomItems;
+using DT_Tools.Game;
 using HarmonyLib;
 using Protocol;
 
@@ -31,10 +31,10 @@ namespace DT_Tools.Patches.System.FishingPond
             if (!__instance.HasActiveMission)
                 return true;
 
-            int[] pool = RandomItemPools.ForMode(FishingPondFeature.Mode);
+            int[] pool = ItemPools.ForMode(FishingPondFeature.Mode);
             int itemId = pool[Util.GetRandomNumber(0, pool.Length)];
 
-            if (RandomItemPools.IsWeapon(itemId) && player.Weapon != null)
+            if (ItemPools.IsWeapon(itemId) && player.Weapon != null)
                 player.RemoveWeapon();
 
             Log.Info<FishingPondFeature>(

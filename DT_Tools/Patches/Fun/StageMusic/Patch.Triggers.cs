@@ -141,8 +141,9 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 发现尸体触发：Handle_S_DISCOVER_CORPSE 是全员广播（举报/发现尸体时服务端群发，
-    /// 0.1.15b PacketHandler.cs:820）。PacketHandler 为 internal，TargetMethod 运行时解析。
+    /// 发现尸体触发：Handle_S_DISCOVER_CORPSE 仅发给发现者本人（0.1.15b
+    /// Server.Game/Corpse.cs:349 只 player.Session.Send，其余人仅收 SeeCorpseSfx 音效），
+    /// 即本机发现尸体时播放。PacketHandler 为 internal，TargetMethod 运行时解析。
     /// </summary>
     [HarmonyPatch]
     internal static class StageMusicDiscoverCorpseTrigger
@@ -158,14 +159,17 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 自己死亡触发：Handle_S_NOTIFY_DEAD 只发给刚死亡的受害者本人
-    /// （驱动 UI_SoulSence 出窍动画，0.1.15b PacketHandler.cs:585）。
+    /// 自己死亡触发：S_DEAD 只发死者本人（0.1.15b Server.Game/Player.cs:827），
+    /// 客户端 Handle_S_DEAD 调 Managers.Game.Dead()（PacketHandler.cs:391）。
+    /// 不能挂 Handle_S_NOTIFY_DEAD——那是发给存活灵媒（SoulSense）的知晓通知，
+    /// 不是受害者本人（Server.Game/Player.cs:935-946）。
+    /// PacketHandler 为 internal，TargetMethod 运行时解析。
     /// </summary>
     [HarmonyPatch]
     internal static class StageMusicSelfDeadTrigger
     {
         private static MethodBase TargetMethod()
-            => AccessTools.Method(AccessTools.TypeByName("PacketHandler"), "Handle_S_NOTIFY_DEAD");
+            => AccessTools.Method(AccessTools.TypeByName("PacketHandler"), "Handle_S_DEAD");
 
         private static void Postfix()
         {
@@ -195,11 +199,12 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 黑幕继承触发：Handle_S_NOTIFY_BLACK 通知"你已成为黑幕"，ByHand 区分来源——
-    /// true=递刀交接（已由 StageMusicGiveKnifeTrigger 覆盖，此处跳过避免重复触发）；
-    /// false=原黑幕死亡后系统指定继承（当前无专属触发，本补丁覆盖此情形）。
-    /// 只在通知的 PlayerId 是本机玩家时触发（0.1.15b PacketHandler.cs:481，
-    /// S_NOTIFY_BLACK.cs:32,45）。
+    /// 黑幕继承触发：S_NOTIFY_BLACK 的接收者收到的都是"别人的 id"——0.1.15b
+    /// Server.Game/Player.cs:220-238 的全部发送点：主脑收新黑幕 id、新黑幕本人收主脑 id、
+    /// 死者收新黑幕 id，旧条件 PlayerId==本机 永假成死分支。
+    /// 判据复刻客户端自己的分支语义（PacketHandler.cs:499）：收包瞬间新黑幕尚未收到
+    /// S_CURRENT_COLOR、MyPlayer.Color 仍为 Dark；ByHand=false 排除递刀
+    /// （递刀由 StageMusicGiveKnifeTrigger 覆盖）；IsAlive 排除死者接收者。
     /// </summary>
     [HarmonyPatch]
     internal static class StageMusicBlackSuccessionTrigger
@@ -211,15 +216,12 @@ namespace DT_Tools.Patches.Fun.StageMusic
         {
             if (!Engine.Enabled<StageMusicFeature>())
                 return;
-            var me = Managers.Player.MyPlayer;
-            if (me == null)
+            if (!(packet.Pkt is S_NOTIFY_BLACK pkt) || pkt.ByHand)
                 return;
-            if (packet.Pkt is S_NOTIFY_BLACK pkt
-                && !pkt.ByHand
-                && pkt.PlayerId == me.PublicInfo.PlayerId)
-            {
-                StageMusicPlayer.Play(MusicStage.BlackSuccession);
-            }
+            var me = Managers.Player.MyPlayer;
+            if (me == null || me.Color != EPlayerColor.Dark || !Managers.Game.IsAlive)
+                return;
+            StageMusicPlayer.Play(MusicStage.BlackSuccession);
         }
     }
 }

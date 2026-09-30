@@ -4,7 +4,7 @@ Deadly Trick 游戏的 BepInEx 5 插件（C# / netstandard2.1 / HarmonyX）。
 **本文件是唯一的架构与操作契约**。
 改目录结构、角色模板或 API 协议前先读这里，改完顺手更新本文件。
 
-正式版本以 `DT_Tools/DT_Tools.csproj` 的 `<Version>` 为准（当前 **1.0.7.1**）；本文件及注释中不重复写死版本号。
+正式版本以 `DT_Tools/DT_Tools.csproj` 的 `<Version>` 为准（本文件不写死版本号）。
 
 ---
 
@@ -13,15 +13,14 @@ Deadly Trick 游戏的 BepInEx 5 插件（C# / netstandard2.1 / HarmonyX）。
 |           目录            |         性质         |                    用途                     |
 | ------------------------- | -------------------- | ------------------------------------------ |
 | `DT_Tools/`               | **唯一可修改的项目** | 插件源码 + `DT_Tools.csproj`                 |
-| `webui-src/`              | **前端源码工程**     | Vue 3 + Vite 桌面壳 WebUI 源码（见 §8.1）    |
+| `webui-src/`              | **前端源码工程**     | Vue 3 + Vite 桌面壳 WebUI 源码（见 §8）      |
 | `0.1.15b/`(版本可能有差异) | 只读                 | 游戏反编译源码。**一切游戏 API 的核对基准**。   |
 | `libs/`                   | 只读                 | 游戏程序集，编译引用源                        |
-| `Assets/`                 | 只读                 | `AssetRipper`解包资源文件                    |
 
 ## 2. 构建与验证
 
 ```bash
-dotnet build DT_Tools/DT_Tools.csproj        # 后端插件
+dotnet build DT_Tools/DT_Tools.csproj        # 后端插件（BuildWebUI 目标自动增量构建前端）
 cd webui-src && npm run build                # 前端（产物直出 DT_Tools/WebUI，勿手改产物）
 ```
 
@@ -29,113 +28,118 @@ cd webui-src && npm run build                # 前端（产物直出 DT_Tools/We
 - **完成标准 = 0 警告 0 错误**。产物：`bin/<配置>/netstandard2.1/DT_Tools_<配置>_<版本>.dll`（同目录 WebUI/ 即完整可部署内容）。
 - 多代理并行作业时**禁止运行构建**（共享 `obj/` 会互相干扰），由集成者统一构建修复。
 - 游戏内运行验证只能由用户执行（复制 DLL + WEBUI 到游戏 `BepInEx/plugins/DT_Tools/`）；首次启动自动生成全新 .cfg。
-- CI：`.github/workflows/build.yml`（push/PR：WebUI 必建并传产物；后端仅当仓库带 `libs/` 才编译，普通仓库自动跳过）+ `release.yml`（打 `vMAJOR.MINOR.PATCH[.BUILD]` tag 或手动触发 → 构建 WebUI[+DLL] → 发 GitHub Release）。
+- CI：`.github/workflows/build.yml`（push/PR：WebUI 必建并传产物；后端仅当仓库带 `libs/` 才编译）+ `.github/workflows/webui.yml`（WebUI 独立快速通道：`webui-src/**` 触发，npm 构建并传可部署产物，不需要 libs）+ `release.yml`（打 `vMAJOR.MINOR.PATCH[.BUILD]` tag → 构建 WebUI[+DLL] → 发 GitHub Release；打包目录名大小写是 `WebUI`，Linux CI 大小写敏感）。
 
-## 3. 目录与命名空间
-
-**命名空间 = 目录路径**，逐级一致。看到完整类名即知道文件位置；移动目录时 IDE 可整体改命名空间。
+## 3. 分层模型（Linux 式层级，单向依赖）
 
 ```
-DT_Tools/
-  DT_Tools.csproj
-  Plugin.cs              # BepInEx 入口：只做装配（Engine.Load + 常驻组件），无业务
-  Log.cs                 # 日志门面——必须在 DT_Tools 根命名空间（§5 硬约束 2）
-  Core/                   # 框架设施（不认识任何具体功能）
-    Attributes/           #   PatchFeature / AutomationModule / Config / ConfigSection
-    Engine/                #   Engine.cs 门面 + FeatureLoader.cs 装载机制
-    Config/                #   ConfigBinder / OptionProviders / ConfigOption
-    Log/                   #   RingBuffer（全项目唯一环形缓冲实现）
-    Json/                  #   Json 门面（Newtonsoft 封装）
-  Game/                   # 游戏行为助手（§4.4）：只放"≥2 处调用"的静态行为
-  Patches/                # Harmony 补丁功能，分类：Dev / Experience / Fun / Shop / System
-  Commands/               # 控制台命令：ICommand / CommandContext / CommandResult / CommandRegistry + <域>/<命令>/
-  Automation/             # 自动化模块：Host.cs / Runner.cs + <模块>/
-  WebConsole/             # HTTP 服务器：WebConsole / HttpServer / Router / Auth / StaticFiles / Api/*
-  WebUI/                  # 前端（零构建 ES modules，与后端 API 契约同步，见 §7）
+Plugin.cs（装配根）
+  └ Core/            内核：反射装载、配置绑定、日志、JSON、反射基建——不认识任何功能
+  └ Game/            游戏行为助手（≥2 处调用才上浮；只放行为，不放类型包装）
+  └ Patches/         Harmony 补丁功能域（Dev/Experience/Fun/Shop/System）
+  └ Commands/        命令域（主线程命令泵执行）
+  └ Automation/      自动化模块域（纯发包/只读）
+  └ WebConsole/      HTTP+WebSocket 服务、路由、鉴权、API
+      └ WebUI/       前端桌面壳（构建产物）
+        → 0.1.15b 游戏程序集（最底层，一切 API 的核对基准）
 ```
 
-规则：
+依赖方向只能向下：功能域 → Game → Core → 游戏。**禁止 Patches/Commands/Automation 之间横向依赖**。例外：命令域引用功能的公开静态状态（如 `LobbyMaxPlayersFeature.MaxMembers`）；功能之间共享的调用序列、数据表、设备读取一律上浮 Game——现有范本：`Game/RoomFlow`、`Game/ItemPools`、`Game/Devices.GetStorages`、`Game/AudioMix`、`Game/SabotageClue`、`Core/Reflect.Bind`、`Game/LocalPlayer.TryGetPlayer`。
 
-- **一个功能目录 = 一个功能**（一个 `[PatchFeature]` / 一个 `[AutomationModule]` / 一个命令域）。引擎发现同一命名空间出现两个 Feature 直接报错。
-- 类名 = `<功能名><角色>`（`RemoveFogFeature`、`KillArgs`）；文件名 = 角色名（`Feature.cs`、`Args.cs`）。同目录内文件名唯一标识角色。
-- 一个 Patch 类 = 一个 Harmony 补丁点；多补丁点按 `Patch.<主题>.cs` 拆分，单补丁就叫 `Patch.cs`。
-- 段名推导后缀表：`Feature / Module / Host / Options / Settings`。
-- ⚠ **命名空间遮蔽警戒**：`Patches/System/` 目录的存在使 `DT_Tools.Patches.*` 命名空间链上出现名为 `System` 的成员——该分类下文件的**文件体内全限定引用**（如 `System.Exception`）会被遮蔽解析失败，必须写 `global::System.*` 或改用 using + 短名（文件顶部 `using System…;` 不受影响）。新增/迁入该分类前先核对文件内有无裸 `System.X` 引用。
+**目录与命名空间**：功能目录 = 命名空间 = 目录路径，逐级一致（见完整类名即知文件位置）。**唯一豁免：Core 层命名空间扁平为 `DT_Tools.Core`**——`Core/Log` 若按目录建 `DT_Tools.Core.Log` 命名空间，其成员会在查找链上遮蔽根命名空间的日志门面 `Log`（§5.2），Core 其余子目录随惯例一并扁平。`Patches/System/` 的遮蔽警戒见 §5.3。
+
+- 一个功能目录 = 一个功能（一个 `[PatchFeature]` / 一个 `[AutomationModule]` / 一个命令域）。引擎发现同一命名空间出现两个 Feature **或两个 Module** 直接报错。
+- 类名 = `<功能名><角色>`；文件名 = 角色名（`Feature.cs`、`Patch.cs`）。一个 Patch 类 = 一个 Harmony 补丁点；多补丁点按 `Patch.<主题>.cs` 拆分。
+- **同一补丁点的多个 Prefix 有顺序依赖时必须用 `[HarmonyPriority(n)]` 显式固定**，禁止依赖 Section 字典序挂载顺序的巧合（范本：CreateLobby 三补丁）。
 
 ## 4. 三大角色模板与注册机制
 
 | 域 | 角色 | 说明 |
 |---|---|---|
-| `Patches/<分类>/<功能>/` | `Feature` `Patch` `Logic` `State` `Ui` | Feature=元数据+配置；Patch=一个 Harmony 补丁点（多补丁拆 `Patch.<主题>.cs`）；简单功能只有 Feature+Patch 两个文件 |
-| `Commands/<域>/<命令>/` | `Command` `Args` `Logic` `Format` | Command=纯编排，不做业务；同构命令用共享 Logic + 薄 Command |
+| `Patches/<分类>/<功能>/` | `Feature` `Patch` `Logic` `State` `Ui` | Feature=元数据+配置；简单功能只有 Feature+Patch |
+| `Commands/<域>/<命令>/` | `Command` `Args` `Logic` `Format` | Command=纯编排；同构命令用共享 Logic + 薄 Command |
 | `Automation/<模块>/` | `Module` `Trigger` `Action` `State` | Module 含 `static void Tick(bool hostEnabled)` 薄编排 |
 
-注册机制（全部反射发现，新增功能**零注册代码**）：
+注册全部反射发现，新增功能**零注册代码**：
 
-- `[PatchFeature]` → 引擎绑定配置段并挂载**同命名空间下所有带 `[HarmonyPatch]` 的类**（逐补丁类 try/catch 记录后任一失败即整功能跳过——失败隔离到**功能级**）；一个命名空间两个 Feature 直接抛异常。`Author` 缺省按「佚名」署名（禁止全局常量兜底）。
-- `[AutomationModule]` → 要求 `static void Tick(bool)`；总开关在 `Automation/Host.cs`（`[ConfigSection]`）。**自动化=纯发包/只读自动化**（客户端表现层如阶段音乐属补丁域，不进 Automation）。
-- `ICommand` 实现 → `CommandRegistry` 注册主名+别名（**别名冲突抛异常**）。
-- `[ConfigSection]` → 基础设施配置段（WebConsole/Automation）。
+- `[PatchFeature]` → 绑定配置段并挂载同命名空间下所有 `[HarmonyPatch]` 类（逐补丁 try/catch，任一失败整功能跳过——失败隔离到功能级；`OnPatched` 抛异常只记日志、不计为挂载失败，因为补丁已挂载且门闩仍生效）。`Author` 缺省「佚名」（禁止全局常量兜底）。
+- `[AutomationModule]` → 要求 `static void Tick(bool)`；总开关在 `Automation/Host.cs`。**自动化=纯发包/只读**（客户端表现层属补丁域）。
+- `ICommand` → `CommandRegistry` 注册主名+别名（别名冲突抛异常）。
+- `[ConfigSection]` → 基础设施配置段。
 
-**新增一个功能的标准动作**：建目录 → `Feature.cs`（`[PatchFeature]` sealed class + `[Config]` 字段）→ `Patch.cs`（`[HarmonyPatch]` static class，首行 `if (!Engine.Enabled<本Feature>()) …` 门闩）→ 核对游戏目标（见 §6）→ 构建。生命周期钩子按名约定、全部可选：`OnLoaded` / `OnPatched` / `OnEnabled` / `OnDisabled`（有 UI/状态副作用的功能**必须**实现 OnDisabled 清理）。
+**新增功能标准动作**：建目录 → `Feature.cs`（`[PatchFeature]` sealed class + `[Config]` 字段）→ `Patch.cs`（`[HarmonyPatch]` static class，首行 `if (!Engine.Enabled<本Feature>()) …` 门闩）→ 0.1.15b 核对 → 构建。生命周期钩子按名约定、全部可选：`OnLoaded` / `OnPatched` / `OnEnabled` / `OnDisabled`（**有 UI/音频/状态副作用的功能必须实现 OnDisabled 清理**，范本：StageMusic/LoginReward）。
 
-**4.4 Game 层准入**（封装行为，不封装类型）：只放**全项目 ≥2 处调用**的静态行为助手（函数体 = 直接的游戏 API 调用序列，如 `HostGuard.IsHost`、`PlayerQuery.AliveTargets`、`Teleport.TryTeleport`）；禁止类型包装、防腐接口、单调用点抽象——先内联，第二处出现再上浮。
-
-**客户端/服务端拆分原则**：一个功能的补丁若运行在**不同机器角色**（如每个客户端 vs 仅房主），必须拆成独立功能、各自 Enabled 与配置（如 ChatLimit 客户端输入框 / ChatSanitize 房主侧过滤）；运行在同一台机器上的两半不拆。
+**客户端/服务端拆分原则**：补丁运行在不同机器角色必须拆成独立功能、各自 Enabled 与配置（如 ChatLimit 客户端 / ChatSanitize 房主）；同机两半不拆。
 
 ## 5. 硬约束（违反即编译失败或运行时遮蔽）
 
-1. **命名空间 = 目录路径**，逐级一致。
-2. **游戏在全局命名空间有 `public static class Log`**（0.1.15b/Log.cs）。日志门面因此必须在 `DT_Tools` 根命名空间（`DT_Tools/Log.cs`）——C# 查找链先于 using，任何文件里裸写 `Log` 解析到门面。不要"修复"这个布局。
-3. **`Patches/System/` 分类目录遮蔽全局 `System`**：见 §3 遮蔽警戒。
-4. **Feature/Module 类必须 `sealed class`（成员全 static），不能是 `static class`**——`Engine.Enabled<T>()` / `Engine.SectionOf<T>()` 需要它们作类型参数；基础设施配置段同理。Patch 类保持 static。
-5. **配置零字符串**：段名=类名去后缀，键名=字段名，由引擎推导。配置字段是普通类型 + 字段初始化器默认值 + `[Config("描述", Min=, Max=)]`；引擎绑定后实时回写字段。**禁止** `ConfigEntry<T>` 字段、**禁止**声明 Enabled 字段、**禁止**在代码里写段名/键名字符串。
-6. BepInEx 5.4.20 怪癖：`ConfigEntryBase` **没有** `SettingChanged`（在泛型 `ConfigEntry<T>` 上）；`JToken.Value<T>()` 与实例重载冲突 → 用显式转换 `(bool)token`；匿名类型成员 `default` 要写 `@default`。
-7. **同名歧义一律全限定**：`Server.Game.Player` vs 全局客户端 `Player`；`DT_Tools.WebConsole.WebConsole` 与同名命名空间（取 Instance 写 `global::DT_Tools.WebConsole.WebConsole.Instance`）。
-8. 技术栈限制：netstandard2.1 —— 禁 `async/Task`、禁 `records`；`System.Text.Json` 不可用（用 Newtonsoft）。
+1. **命名空间 = 目录路径**，Core 层扁平豁免除外（§3）。
+2. **游戏在全局命名空间有 `public static class Log`**（0.1.15b/Log.cs）。日志门面必须在 `DT_Tools` 根命名空间——不要"修复"这个布局。
+3. **`Patches/System/` 分类遮蔽全局 `System`**：该链上任何 `DT_Tools.Patches.*` 文件体内**裸写** `System.X` 全限定都会解析失败——用 `global::System.*` 或 using + 短名；文件顶部 `using System…;` 不受影响。新增/迁入 Patches 下任何分类前先核对。
+4. **Feature/Module 类必须 `sealed class`（成员全 static）**；Patch 类保持 static。
+5. **配置零字符串**：段名=类名去后缀、键名=字段名，引擎推导；字段 = 普通类型 + 初始化器默认值 + `[Config("描述", Min=, Max=)]`。禁止 `ConfigEntry<T>` 字段、禁止声明 Enabled 字段、禁止段名/键名字符串。前端需要开关键名时走协议字段 `enabledKey`，**不硬编码 'Enabled'**。
+6. BepInEx 5.4.20 怪癖：`ConfigEntryBase` 没有 `SettingChanged`（在泛型 `ConfigEntry<T>` 上，经 EventInfo 订阅）；`JToken.Value<T>()` 冲突 → 显式转换 `(bool)token`；匿名成员 `default` 写 `@default`。
+7. **同名歧义一律全限定**：`Server.Game.Player` vs 客户端 `Player`；同名文件（如 `Server.Game/Door.cs` 与全局 `Door.cs`）的行号锚点**必须带子目录前缀**。
+8. 技术栈：netstandard2.1 —— 禁 `async/await` 语法、禁 `records`；`System.Text.Json` 不可用（用 Newtonsoft）。WebSocket 服务端（`HttpListenerContext.AcceptWebSocketAsync`）在 netstandard2.1 编译面可用，运行时以阻塞 `GetAwaiter().GetResult()` 在专用线程上等待——**只允许在非 Unity 线程阻塞**。
 
 ## 6. 游戏版本一致性（当前基准 0.1.15b）
 
-- **引用游戏 API 前先在 `0.1.15b/` 源码里核对**（`grep -n "成员名" 0.1.15b/<文件>.cs`）：确认存在、可见性、签名。私有成员用字符串定位并在注释标注 `0.1.15b <文件>.cs:<行号>`；能 `nameof` 的必须 `nameof`。
-- 全项目补丁点的注释都带 0.1.15b 行号——**游戏升级时的核对入口**：换新版反编译源码后全文搜索这些行号注释逐个复核，行为变化处参照 git 历史判断语义是否漂移。
-- 整段复制原版方法体的"整替补丁"升级时必须与新版源码逐行 diff。
+- 引用游戏 API 前先在 `0.1.15b/` 源码核对（存在性/可见性/签名）。私有成员用字符串定位并在注释标注 `0.1.15b <文件>.cs:<行号>`（含子目录前缀）；能 `nameof` 必须 `nameof`。
+- 全项目补丁点的行号注释是**游戏升级核对入口**：换新反编译源码后全文搜索行号注释逐个复核；行为变化处按语义判断漂移（v1 审计实测：119 个补丁点全部可控）。
+- 整段复制原版方法体的"整替补丁"升级时必须逐行 diff（范本：LobbyMaxPlayers/Patch.EnterPlayer.cs，锚点清单在文件头）。
 
 ## 7. 编码规范
 
-- **语言**：注释、配置描述、命令文案全部中文；日志 tag 是段名（自动）。注释写机制依据（为什么能这么改），不写流水账；引用游戏源码必带行号。
-- **日志**：唯一入口 `Log` 门面（tag 自动取段名，进 BepInEx + 全局/按段环形缓冲）。严重度全集：`Log.Info/Warn/Error/Fatal/Debug<TFeature>(msg)`；异常用 `Log.Exception<TFeature>(ex[, context])`（BepInEx 进完整堆栈，WebUI 只留单行摘要，**不要**用 Debug 输出堆栈）。命令输出走 `ctx.Reply/Warn`。**禁止 `Debug.Log`、禁止自建缓冲、禁止自拼 `[Tag]` 前缀**。
-- **JSON**：只走 `DT_Tools.Core.Json`（Newtonsoft，camelCase）。序列化用匿名对象/DTO；反序列化容错用 `Json.TryFrom`。**禁止手拼 JSON 字符串、手写转义、逐字符扫描解析**。
-- **命令协议**：`Execute` 返回 `CommandResult.Success(data)` / `Fail(error, data)`（信封 `{ok,error,data}`），同时 `ctx.Reply` 人类文本——双通道都要写。错误码 = 小写英文短词，错误文案 = 中文。房主门禁由框架按 `RequireHost` 统一做，**命令内禁止再写房主校验**。
-- **线程模型**：命令/自动化模块都在 Unity 主线程跑（WebConsole 队列泵 / AutomationRunner）；HTTP 线程上禁止碰 Unity API。
+- **语言**：注释、配置描述、命令文案全部中文；日志 tag 是段名（自动），**禁止手拼 `[Tag]` 前缀、禁止非中文日志**。注释写机制依据（为什么能这么改），引用游戏源码必带行号。
+- **日志**：唯一入口 `Log` 门面（`Info/Warn/Error/Fatal/Debug<TFeature>(msg)`；异常用 `Log.Exception<TFeature>(ex[, context])`——BepInEx 进完整堆栈，WebUI 只留单行摘要）。框架层 catch 一律走 `Log.Exception`。**禁止 `Debug.Log`、自建缓冲、绕过门面的裸 BepInEx Logger**（装配摘要也走门面，进环形缓冲）。命令输出走 `ctx.Reply/Warn`。
+- **日志会话**：命令执行期间 `CommandSession`（Core/Log）携带会话 id，Log 自动把 `Session` 写进条目——WebUI 控制台按会话隔离显示。前端每个控制台窗口实例持有一个会话 id，随 `/api/run` 头 `X-DT-Session` 上送。
+- **JSON**：只走 `DT_Tools.Core.Json`（Newtonsoft，camelCase）。禁止手拼 JSON/手写转义/逐字符解析。
+- **命令协议**：`Execute` 返回 `CommandResult.Success(data)/Fail(error, data)`（信封 `{ok,error,data}`），同时 `ctx.Reply` 人类文本——双通道都要写。错误码=小写英文短词，文案=中文。房主门禁框架统一做，命令内禁止再写。
+- **线程模型**：命令/自动化都在 Unity 主线程（WebConsole 队列泵 / AutomationRunner）；HTTP 线程禁止碰 Unity API；WebConsole 泵内 action 与命令一律**锁外执行**（锁内只出队）。
 
 ## 8. WebUI 契约（改 API 或前端前必读）
 
-前端（源码 `webui-src/`，Vue 3 桌面壳；构建产物 `DT_Tools/WebUI/` 由 StaticFiles 白名单服务）与后端 API 形状互为活契约，任何一侧改动必须同步另一侧：
+前端源码 `webui-src/`，构建产物 `DT_Tools/WebUI/`（StaticFiles 白名单服务，no-cache 头破缓存；产物禁止手改）。
 
-- `POST /api/run` body = **原始命令文本**（如 `/kill #3` 或 `kill #3`，后端剥前导 `/`/`!`），非 JSON；响应 = CommandResult 信封。
-- `GET /api/log?since=N` → `[{seq, time, color, msg}]` 数组；`GET /api/log/stream?since=N` → SSE（400ms 增量批，无增量发 `: ping` 注释心跳，前端看门狗按 `EventSource.readyState` 判在线，**不能**按"多久没消息"判——注释心跳不触发 message 事件）。
+### 8.1 实时日志（WebSocket 优先，轮询兜底）
+
+- `GET /api/log/ws`（握手 URL 带 `?since=<seq>`）→ 单向推送：
+  - 每帧 = 结构化条目 JSON 数组 `[{seq,time,level,tag,msg,session}]`（`time`="HH:mm:ss"；`session`=发源命令的会话 id，null=全局日志；颜色由前端按 level 推导）。
+  - 握手后先重放环形缓冲中 `seq > since` 的条目（全局缓冲 2000 条），再转实时；服务端按 `lastSentSeq` 去重——注册→重放→实时**无漏无重**。
+  - 15s 无增量发 `{"t":"ping"}` 心跳；慢消费（>1024 帧未发）服务端主动断开该客户端。
+- **运行时能力探测**：Unity Mono 的 `HttpListener.AcceptWebSocketAsync` 未实现（实机确认）——服务端首次握手探测一次：不支持时该警告**只提示一次**，后续握手静默回 501；前端连续 2 次失败即降级轮询 `/api/log?since=seq`（0.8s 增量，功能等价），本会话不再撞 WS。禁止去掉探测或恢复"每次失败都告警"（会刷屏 BepInEx）。
+- **独立 WS 端口（实时流主通道）**：Mono 的 HttpListener 无法升级 WS，实时流由 `WsServer`（`WebConsoleOptions.WsPort`，0=禁用）在独立端口自管 TCP 完成 RFC6455 握手，再交 `WebSocket.CreateFromStream`（isServer:true）——注册/重放/心跳/慢消费与 HTTP 路径共用 `LogStreamApi` 一套逻辑；鉴权同 HTTP（dt_token cookie 或 `?token=`，`Auth.CheckToken` 常量时间比较）。前端经 `GET /api/meta` 发现端口：`wsPort=0` 直接轮询；旧插件无 /api/meta 时回退同源握手 → 501 → 轮询（与旧行为一致）。HTTP 路径的探测告警保留，作为其它运行时（非 Mono）的升级通路。
+- `GET /api/log?since=N` → 同形状条目数组（轮询兜底 + 补齐用）。
+- 前端 `useLogStream()` 单例：全桌面一条连接/一个轮询器，断线自动重连（带 since 续传）、驱动 `useConnectionStatus`；全量历史有界缓冲（`replay(fn)` 补齐晚开窗口）；消费方 `onEntry(fn)` 订阅，各自维护本地视图数组。
+- **会话隔离（显示规则）**：控制台窗口（terminal/console）只显示 `session === 本窗口 id` 的条目 + 本地回显；**全量日志归「日志」应用（log）**。多个控制台窗口互不干扰。
+
+### 8.2 其余 API
+
+- `POST /api/run` body=**原始命令文本**，头 `X-DT-Session: <会话id>`（前端每窗口实例生成）；响应=CommandResult 信封。
 - `GET /api/commands` → `[{name, aliases, usage, description, author}]`。
-- 配置项字段：`key/type/value/default/description/accepts`；`accepts` = `{options:[...]}`（下拉）或 `{min,max}`（范围）；段级字段 `group` = `"automation"|"feature"`（**前端禁止硬编码段名**；配置页只显示 `feature`，`automation` 归自动化页）。
-- 段/模块日志：`GET /api/config/section/{段名}/log` 与 `GET /api/automation/modules/{id}/log` → `{ok, section/id, seq, lines:["HH:mm:ss [LEVEL] msg"]}` **对象（不是数组）**；`POST …/log/clear` 清空。
-- 桌面壳系统操作：`POST /api/game/exit` → `{ok}`，后端投递主线程执行 `Application.Quit()`（用户确认在前端做）。
-- 鉴权：`Password` 为空 = 不鉴权；非空 = `POST /login` 校验后发随机 token cookie（`dt_token`）；插件重启 token 轮换，前端 401 统一跳登录。
-- 监听与线程模型：`ListenIp` 配置监听地址（默认 `127.0.0.1`；`0.0.0.0`/`*` = 全部 IPv4；`::` = 全部 IPv6（通常双栈同收）；具体 IPv6 地址自动加方括号成合法前缀；Unity(Mono) HttpListener 无 URL ACL 限制）；`RunInBackground` 开启时插件强制 `Application.runInBackground=true`——游戏失焦后主线程停摆会让**所有** /api/run 统一 5 秒超时（远程/后台使用的第一嫌疑，超时必写 Warn 日志）。命令泵内未预期异常兜底回 `command error`，不吞挂起请求。
-- 前端铁律：视图代码禁止裸 fetch 与字面量 API 路径（一律走 `src/api.js`）；动态文本进 DOM 必须 `textContent` 或 `esc()`；登录页样式必须自包含。
-- 桌面壳本地状态（备忘录重命名/自定义图标/壁纸/用户名主机名头像）全部存浏览器 localStorage，**不进后端配置**——新终端内置命令 `whoami/hostname/user` 是前端本地命令，不进 `/api/commands`。
+- 配置：`GET /api/config/list` → 段 `[{section, group, enabledKey, entries:[{key,type,value,default,description,accepts}]}]`（`accepts`={options:[{value,label}],values} 或 {min,max}；`group`="automation"|"feature"，前端禁止硬编码段名）。`POST /api/config/update|save|reset|import`、`GET /api/config/export.cfg`。**reset 带 key 必须带 section**（后端拒绝跨段同名重置）。
+- 段/模块日志：`GET /api/config/section/{段}/log`、`GET /api/automation/modules/{id}/log` → `{ok, section/id, seq, lines:["HH:mm:ss [LEVEL] msg"]}` **对象**；`POST …/log/clear` 清空。
+- 自动化：`GET /api/automation/status`（模块含 `enabledKey`）、`POST /api/automation/host`。
+- 桌面壳：`POST /api/game/exit`（主线程 `Application.Quit()`，确认在前端做）、`GET /api/steam/players`、`GET /api/pick-file`。
+- 能力发现：`GET /api/meta` → `{ok, wsPort}`（WebSocket 实时流独立端口，对应 `WebConsoleOptions.WsPort`，0=禁用）。
+- 鉴权：`Password` 空=不鉴权；非空=`POST /login` 发随机 token cookie（`dt_token`），插件重启轮换，401 统一跳登录。WS 握手同样过鉴权（未授权收 401）。
+- 监听与后台：`ListenIp`（默认 127.0.0.1；`0.0.0.0`/`*`=全部 IPv4；`::`=全部 IPv6；Unity(Mono) HttpListener 无 URL ACL 限制）；`RunInBackground` 强制 `Application.runInBackground=true`——游戏失焦致主线程停摆会让所有 /api/run 统一 5 秒超时（远程使用第一嫌疑，超时必写 Warn）。监听循环对 GetContext 异常分类：监听器失效才下线，瞬时异常重试继续接受。
 
-### 8.1 前端工程（webui-src/）
+### 8.3 前端工程（webui-src/）
 
-- Vue 3 + Vite，`npm run build` 产物直出 `../DT_Tools/WebUI/`（无 hash 文件名，依赖后端 no-cache 头破缓存）；**产物目录禁止手改**——日常构建走 `dotnet build`（csproj 的 BuildWebUI 目标自动增量构建并拷贝到输出目录，见 §2）。
-- 结构：`src/desktop/`（桌面壳：Desktop/Window/Taskbar/DesktopIcon，八方向缩放窗口 + 多实例窗口管理）、`src/apps/`（应用窗口：console=旧版控制台、terminal=Kali 风格新终端（内置命令见上）、config=功能配置、automation=自动化；跨应用共享组件在 `apps/common/`：FolderGrid/LogPanel/EntryList/CropperHost）、`src/composables/`（全局单例状态：窗口管理/连接状态/日志流/身份/壁纸/备忘录/裁切）。
-- 两套控制台共享 `useConsole` 日志流单例（同一份 entries/连接状态）；日志流由 Desktop 挂载即启动，连接状态不依赖控制台窗口是否打开。
-- 图片导入（应用/文件夹图标、头像、壁纸）统一走 `useCropper` 裁切（256×256 输出，壁纸另行压缩 ≤1920px JPEG）。
-- 图标使用 unplugin-icons + tabler 集（注意：tabler **没有** `brand-kali`，Kali 风图标用 `dragon`）。
+- Vue 3 + Vite，`npm run build` 产物直出 `../DT_Tools/WebUI/`（无 hash 文件名）；`dotnet build` 的 BuildWebUI 目标自动增量构建并拷贝（`-p:SkipWebUIBuild=true` 可跳过）。
+- 结构：`src/desktop/`（桌面壳：Desktop/Window/TopBar/Dock + ParticleFlow 数据流粒子背景层 + SteamWidget 在线人数小组件（可拖动/可关闭，Dock 可重开，位置记忆在 localStorage），macOS 风格——顶栏=龙标+品牌名 DT_Tools（静态，图3）+ Kali 应用菜单风大面板（搜索/分类「应用/小组件/系统」/功能列表/底部用户栏：账户菜单弹层+独立退出键）+ 运行标签 + 图标化连接状态 + 中文时钟，底部 Dock 列出全部应用图标（鱼眼放大/运行点/右键备忘），八方向缩放 + 多实例窗口；应用图标不摆桌面；**右键菜单三处互不相通**：桌面=终端/壁纸/粒子效果开关/关于，Dock（任务栏）=打开终端/显示桌面/最小化所有进程/关闭所有进程/关于（批量窗口操作在 useWindowManager：showDesktop 带快照可再切回、minimizeAll/closeAll），应用图标=备忘菜单；**任务栏取色自适应**：自定义壁纸由 useWallpaper 在 48px 缩略图提平均主色压进深色玻璃区间存 `state.tint`，Desktop 经 `.desktop` 上的 CSS 变量继承覆写 `--dock-bg`/`--dock-border`（Dock 组件零改动，切回预设/提取失败即回默认色）；**粒子层可整体开关**（桌面右键「粒子效果」，ParticleFlow 挂 `v-if`））、`src/apps/`（terminal=Kali 终端、console=旧版控制台、config=配置、automation=自动化、**log=全量日志**；跨应用共享组件在 `apps/common/`：SuggestPopup/FolderGrid/LogPanel/EntryList/CropperHost）、`src/composables/`（useLogStream=日志流单例 / useWindowManager / useConnectionStatus / 身份 / 壁纸 / 裁切）、`src/apps/console/useCommandInput.js`（命令表/历史/会话化执行共享件；终端内置命令以 `builtin: true` 混入补全候选、白名+「内置」徽标排在服务端命令之后，并跟随 help 输出末尾列出；**新版终端 TAB=采纳当前高亮候选**（↑↓/悬停选定后 TAB 即补全那条，与旧版一致），高亮未挪动时连按 TAB 循环切下一个候选）。
+- 控制台通用件：吸底滚动三条件（贴底、无文本选区、未暂停）才跟随；本地条目批量截断（禁止逐条 shift 扰动选区）；补全列表高亮必须 `scrollIntoView` 跟随（SuggestPopup 统一实现）。
+- 桌面壳本地状态（备忘录重命名/自定义图标/壁纸/粒子效果开关/用户名主机名头像）全存浏览器 localStorage，**不进后端配置**；`whoami/hostname/user` 是终端本地命令，不进 `/api/commands`。
+- 前端铁律：视图禁止裸 fetch 与字面量 API 路径（一律走 `src/api.js`）；动态文本进 DOM 必须 `textContent` 或 `esc()`；登录页样式自包含；图片导入统一走 `useCropper`（头像/图标=256×256 方/圆选区；壁纸=shape 'free' 按视口比例的矩形选区、**舞台即选区所见即所得**（弹窗可见画面=最终成图，输出 ≤1920px JPEG），换壁纸不再有独立压缩管线）；图标用 unplugin-icons + tabler（tabler 无 `brand-kali`，Kali 风图标用 `dragon`）。
 
 ## 9. 禁止事项清单
 
 - 禁止修改 `0.1.15b/`、`libs/`、`Assets/`。
-- 禁止在代码中引入段名/键名字符串、`ConfigEntry<T>` 字段、`Debug.Log`、手拼 JSON。
-- 禁止让 Patches/Commands/Automation 之间产生新的横向依赖（公共逻辑上浮 Core 或 Game）；例外：命令域引用功能的公开静态状态/方法（如 `DarkRadar` 相关公开状态）。
-- 禁止未经 0.1.15b 核对就写下任何 `typeof(X)` / 反射字符串 / Traverse 成员名。
+- 禁止段名/键名字符串、`ConfigEntry<T>` 字段、`Debug.Log`、手拼 JSON、手拼 `[Tag]` 前缀、非中文日志。
+- 禁止 Patches/Commands/Automation 横向依赖；共享调用序列/数据表上浮 Game（§3 范本）。
+- 禁止未经 0.1.15b 核对就写 `typeof(X)` / 反射字符串 / Traverse 成员名；私有成员定位必须带 `0.1.15b 文件:行号` 注释（同名文件带子目录）。
+- 禁止依赖补丁挂载顺序的隐式契约（跨补丁顺序用 `[HarmonyPriority]` 显式固定）。
 - 禁止在多代理并行作业时运行 `dotnet build`。
-- 禁止重新引入全局作者常量/兜底——作者逐功能/模块/命令显式声明，未声明按「佚名」署名。
+- 禁止重新引入全局作者常量/兜底——作者逐功能显式声明，未声明按「佚名」署名。
+- 禁止恢复 SSE /api/log/stream（已被 WebSocket 取代）。

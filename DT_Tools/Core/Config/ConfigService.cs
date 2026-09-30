@@ -22,6 +22,9 @@ namespace DT_Tools.Core
             /// <summary>段落分组："automation"（自动化总开关+各模块，AUTOMATION 页）| "feature"（其余，CONFIG 页）。前端据此分流，不认识任何段名。</summary>
             public string Group;
 
+            /// <summary>本段的开关键名（引擎统一 Engine.EnabledKey）。前端经协议读取，不硬编码 'Enabled'。</summary>
+            public string EnabledKey = Engine.EnabledKey;
+
             public List<EntryDto> Entries = new List<EntryDto>();
         }
 
@@ -123,7 +126,9 @@ namespace DT_Tools.Core
                     return (false, rangeError ?? "out of range", null);
 
                 entry.BoxedValue = parsed;
-                return (true, null, entry.BoxedValue);
+                // 返回值与 List 同一序列化口径（枚举→成员名）：裸 BoxedValue 经 JSON
+                // 会写成数字，前端拿它回填下拉 value 后匹配不上任何 option，界面变空白
+                return (true, null, DisplayValue(entry.BoxedValue));
             }
             catch (Exception ex)
             {
@@ -441,16 +446,12 @@ namespace DT_Tools.Core
             if (acc == null) return true;
             try
             {
-                var m = acc.GetType().GetMethod("IsValid", new[] { typeof(object) })
-                        ?? acc.GetType().GetMethod("IsValid");
-                if (m != null)
+                // AcceptableValueBase.IsValid 是 public abstract，直调即可（旧实现两次
+                // GetMethod 反射查找纯属多余）
+                if (!acc.IsValid(value))
                 {
-                    object r = m.Invoke(acc, new[] { value });
-                    if (r is bool ok && !ok)
-                    {
-                        error = "out of range";
-                        return false;
-                    }
+                    error = "out of range";
+                    return false;
                 }
             }
             catch

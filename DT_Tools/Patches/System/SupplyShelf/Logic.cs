@@ -8,10 +8,6 @@ namespace DT_Tools.Patches.System.SupplyShelf
     /// <summary>货架投放：清空 → 按池构造道具袋 → 逐 StorageNormal 架切片投放。</summary>
     internal static class SupplyShelfLogic
     {
-        /// <summary>私有字段 _storages（0.1.15b DeviceManager.cs:32）。</summary>
-        public static List<Server.Game.Storage> GetStorages(Server.Game.DeviceManager dm)
-            => Traverse.Create(dm).Field("_storages").GetValue<List<Server.Game.Storage>>();
-
         public static void RefillAll(List<Server.Game.Storage> storages)
         {
             foreach (Server.Game.Storage storage in storages)
