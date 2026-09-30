@@ -31,14 +31,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      # 显式安装并固定 Node 版本（不再依赖 runner 镜像自带的 Node）
+      # 显式安装并固定 Node 版本（与本地开发环境 Node 24 保持一致）
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
+          # setup-node v5 起默认启用 package-manager 缓存，与上方 cache: npm 冲突，显式关闭
+          package-manager-cache: false
           cache-dependency-path: webui-src/package-lock.json
 
       # 先于 dotnet build 构建前端：产物写入 DT_Tools/WebUI，
@@ -52,7 +54,7 @@ jobs:
       # 版本以仓库根目录 global.json 为唯一来源（rollForward=disable，必须精确匹配）。
       # 注意不要再同时写 dotnet-version，否则两个版本都会被安装。
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -76,7 +78,7 @@ jobs:
             || { echo "::error::输出目录缺少 WebUI/js/app.js（前端未随插件输出）"; exit 1; }
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: DT_Tools
           path: |

@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -75,12 +75,14 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$ASSEMBLY_VERSION" >> "$GITHUB_OUTPUT"
 
-      # 显式安装并固定 Node 版本（不再依赖 runner 镜像自带的 Node）
+      # 显式安装并固定 Node 版本（与本地开发环境 Node 24 保持一致）
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
+          # setup-node v5 起默认启用 package-manager 缓存，与上方 cache: npm 冲突，显式关闭
+          package-manager-cache: false
           cache-dependency-path: webui-src/package-lock.json
 
       # 先于 dotnet build 构建前端：产物写入 DT_Tools/WebUI，
@@ -94,7 +96,7 @@ jobs:
       # 版本以仓库根目录 global.json 为唯一来源（rollForward=disable，必须精确匹配）。
       # 注意不要再同时写 dotnet-version，否则两个版本都会被安装。
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
 
@@ -171,7 +173,7 @@ jobs:
           unzip -l "$ZIP_NAME" | head -40
 
       - name: 创建 / 更新 GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           # 手动触发且 tag 尚不存在时，让新 tag 落在被构建的那个提交上
