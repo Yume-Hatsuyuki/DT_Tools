@@ -8,7 +8,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
 {
     /// <summary>
     /// 击杀触发：Handle_S_KILL_PLAYER 是"本机击杀了人"的权威信号（服务端只发凶手，
-    /// 0.1.15b DeviceManager.cs:588-609）。PacketHandler 为 internal（PacketHandler.cs:9），
+    /// 0.1.15b Server.Game/DeviceManager.cs:588-609）。PacketHandler 为 internal（PacketHandler.cs:9），
     /// TargetMethod 运行时解析。
     /// </summary>
     [HarmonyPatch]

@@ -17,7 +17,12 @@
 
 安装完成后打开**浏览器**，访问：<u>[http://127.0.0.1:19450](http://127.0.0.1:19450)</u>
 
-<img src="images/屏幕截图_30-9-2026_92910_127.0.0.1.jpeg" width="850">
+---
+
+## 界面展示
+
+<img src="images/屏幕截图_30-9-2026_12453_127.0.0.1.jpeg" width="850">
+<img src="images/屏幕截图_30-9-2026_12259_127.0.0.1.jpeg" width="850">
 
 ---
 
@@ -56,6 +61,7 @@ Deadly Trick/BepInEx/config/DT_Tools.cfg
 按需开启功能即可。
 
 #### 什么？你还是不会？
+
 没关系，打开[DeepSeek](https://chat.deepseek.com/)，输入下面的提示词：
 ```text
 请根据文档：
@@ -89,6 +95,7 @@ https://github.com/Yume-Hatsuyuki/DT_Tools/blob/main/README.md
 ```
 
 ##### 什么？DeepSeek也教不会你？
+
 没事，咱们玩得明白 MOD就玩，玩不明白就去睡觉。
 或者说正常游戏也挺好玩的，没 MOD 一样可以玩。
 
@@ -142,15 +149,19 @@ Deadly Trick/winhttp.dll
 需要详细描述触发后反应（最好带截图或者视频）。
 能够稳定复现3次以上。
 
----
-
-## 开发（欢迎更多开发者提交PR，玩家提交思路）
-
-目录与约定见仓库根目录 [AGENTS.md](AGENTS.md)。
+**欢迎更多开发者提交PR，玩家提交思路。**
 
 ---
 
 ## MOD 制作交流群：1121341127
+
 内含免费教程，群U都是好人。
 
 <img src="images/qrcode_1790070026689.jpg" width="250">
+
+---
+
+## 主题参考
+
+https://0l1v3rr.github.io/
+https://os.inori.ai/

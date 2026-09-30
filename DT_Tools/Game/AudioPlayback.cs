@@ -212,9 +212,6 @@ namespace DT_Tools.Game
             MixActive = false;
         }
 
-        private static string ResolveLocalUri(string raw)
-            => AudioMix.LocalFileUri(raw, Tag);
-
         private static AudioSource EnsureSource()
         {
             if (_source != null)

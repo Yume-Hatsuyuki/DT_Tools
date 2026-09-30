@@ -1,0 +1,9 @@
+# Node.js 依赖
+webui-src/node_modules/
+
+# Visual Studio 用户配置/临时目录
+DT_Tools/.vs/
+
+# .NET 编译输出和中间文件
+DT_Tools/bin/
+DT_Tools/obj/

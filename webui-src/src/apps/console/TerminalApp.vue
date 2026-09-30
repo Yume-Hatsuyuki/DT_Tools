@@ -335,7 +335,7 @@ function printBuiltins() {
 
 /** help <内置命令名> 的单条说明（服务端不认识内置命令，这里直接本地作答）。 */
 function printBuiltinDetail(b) {
-  print('/' + b.usage, 'var(--text-0)');
+  print(b.usage, 'var(--text-0)');
   print('      ' + b.description, 'var(--text-2)');
   print('      终端内置命令：本地执行，不经服务端。', 'var(--text-2)');
 }

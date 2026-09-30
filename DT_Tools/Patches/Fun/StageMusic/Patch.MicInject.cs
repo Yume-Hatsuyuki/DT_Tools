@@ -24,7 +24,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
         private static readonly Harmony _harmony = new Harmony("DT_Tools.StageMusic.Mic");
 
         private static bool _tried;
-        private static bool _mounted;
 
         /// <summary>Feature.OnEnabled 调用：动态解析并挂载（幂等，失败降级不抛出）。</summary>
         public static void TryMount()
@@ -44,7 +43,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 var prefix = new HarmonyMethod(typeof(StageMusicMicInject)
                     .GetMethod(nameof(MicPrefix), BindingFlags.NonPublic | BindingFlags.Static));
                 _harmony.Patch(target, prefix: prefix);
-                _mounted = true;
                 Log.Info<StageMusicFeature>("麦克风广播注入已挂载");
             }
             catch (Exception ex)
@@ -53,10 +51,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             }
         }
 
-        public static bool Mounted => _mounted;
-
-        private static void MicPrefix(ArraySegment<float> __0, WaveFormat __1)
-        {
+        private static void MicPrefix(ArraySegment<float> __0, WaveFormat __1)        {
             if (__1 == null)
                 return;
             if (StageMusicFeature.MicBroadcast)

@@ -80,14 +80,5 @@ namespace DT_Tools.Commands.Agent
             if (!IsReady) return true;
             return ActiveMissionTypes.Contains(missionType);
         }
-
-        /// <summary>
-        /// 某个任务类型当前是否"进行中或排队中"（用于不想漏掉即将开始的任务的场景）。
-        /// </summary>
-        public static bool IsActiveOrWaiting(int missionType)
-        {
-            if (!IsReady) return true;
-            return ActiveMissionTypes.Contains(missionType) || WaitingMissionTypes.Contains(missionType);
-        }
     }
 }

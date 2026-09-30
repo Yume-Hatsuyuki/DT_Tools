@@ -11,7 +11,7 @@ namespace DT_Tools.Commands.ReportCorpse
     /// 原版 Corpse.Interact（0.1.15b Server.Game/Corpse.cs:262-270）仅校验
     /// !IsHidden && !TrickLocked && !_isReport && !DiscoverdDone，没有距离 / 颜色 /
     /// IsAlive / IsSpectator 检查，故可在地图任意位置直接发包触发 EndSurvival 进入
-    /// Detective。尸体 DeviceId 与死者 PlayerId 相同（Corpse.cs:190/:227 构造函数
+    /// Detective。尸体 DeviceId 与死者 PlayerId 相同（Server.Game/Corpse.cs:190/:227 构造函数
     /// base.ID = playerInfo.PlayerId）。
     ///
     /// 客户端可见的尸体状态字段（与 Server.Game/Corpse.cs 对齐）：

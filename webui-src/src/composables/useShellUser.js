@@ -29,7 +29,7 @@ function persist() {
 }
 
 /** 名字合法性：非空、无空白、≤32 字符——进提示符与铭牌，保持单行可读。 */
-export function sanitizeShellName(v) {
+function sanitizeShellName(v) {
   const s = String(v ?? '').trim();
   if (!s) return { ok: false, error: '名称不能为空' };
   if (/\s/.test(s)) return { ok: false, error: '名称不能包含空白字符' };
@@ -56,11 +56,5 @@ export function useShellUser() {
     state.avatar = dataUrl || null;
     persist();
   }
-  function resetAll() {
-    state.user = DEFAULTS.user;
-    state.hostname = DEFAULTS.hostname;
-    state.avatar = null;
-    persist();
-  }
-  return { state, setUser, setHostname, setAvatar, resetAll };
+  return { state, setUser, setHostname, setAvatar };
 }

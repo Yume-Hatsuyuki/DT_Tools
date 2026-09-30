@@ -44,7 +44,7 @@ namespace DT_Tools.Game
                             && f.Info.StateList[0] == FuseboxStateIntact)
                 .ToList();
 
-        /// <summary>服务端设备管理器的全部货架（私有字段 _storages，0.1.15b DeviceManager.cs:32）。房主侧功能用。</summary>
+        /// <summary>服务端设备管理器的全部货架（私有字段 _storages，0.1.15b Server.Game/DeviceManager.cs:32）。房主侧功能用。</summary>
         public static List<Server.Game.Storage> GetStorages(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_storages").GetValue<List<Server.Game.Storage>>();
     }

@@ -16,8 +16,8 @@ const options = computed(() => normalizeOptions(props.entry.accepts));
 const numeric = computed(() => isNumberType(props.entry.type));
 const isBool = computed(() => (props.entry.type || '').toLowerCase() === 'boolean');
 
-// 启发式：约定后缀 Track 结尾的字符串字段是"曲目来源"（url 或本地路径，见
-// AGENTS.md §3 段名推导后缀表），才显示"选择文件"按钮。后端目前没有把
+// 启发式：约定后缀 Track 结尾的字符串字段是"曲目来源"（url 或本地路径），
+// 才显示"选择文件"按钮。后端目前没有把
 // "这是路径"作为协议的一部分显式声明，这是前端按命名约定做的推断，
 // 不是通用协议——未来如果后端加上专门的 accepts.isPath 标记，这里改用那个更准。
 const looksLikePathField = computed(() =>

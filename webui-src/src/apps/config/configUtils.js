@@ -15,9 +15,9 @@ export function splitDesc(desc) {
   return { author, side, text: body.join('\n') };
 }
 
-/** 段的 Author/Side 取自其 Enabled 项的描述头。 */
+/** 段的 Author/Side 取自其开关键（enabledKey 由协议给出，禁止硬编码 'Enabled'）的描述头。 */
 export function sectionMeta(section) {
-  const enabledEntry = (section.entries || []).find(e => e.key === 'Enabled');
+  const enabledEntry = (section.entries || []).find(e => e.key === section.enabledKey);
   if (!enabledEntry) return { author: '', side: '' };
   const { author, side } = splitDesc(enabledEntry.description);
   return { author, side };

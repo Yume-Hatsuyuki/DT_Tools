@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { API, createPoller } from '../../api.js';
+import { createPoller } from '../../api.js';
 
 /**
  * 段/模块日志面板：挂载即拉取，3 秒轮询跟随（页面隐藏自动暂停），

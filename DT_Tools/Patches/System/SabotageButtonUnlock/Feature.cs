@@ -8,7 +8,7 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
     /// 按档位放开显示。锁门/拆电源档位是"叠加"语义：Dark（默认）=仅黑幕（原版档位，
     /// 不额外放行）；Black=黑幕+黑方；White=黑幕+白方；All=黑幕+黑方+白方。
     /// 拆电源服务端无身份校验（Fusebox.Interact 全身份受理），放开即全场景生效；
-    /// 锁门服务端有黑幕硬校验（Server.Game/Door.cs:53），实际生效需房主启用
+    /// 锁门服务端有黑幕硬校验（Server.Game/Door.cs:66），实际生效需房主启用
     /// 「DoorLockServer」（放行档位 + 锁门留痕都在该功能）；
     /// 白方销毁证据服务端有 Black/Dark 硬校验（Server.Game/Device.cs:219），
     /// 实际生效需房主启用「WhiteSabotageClue」。

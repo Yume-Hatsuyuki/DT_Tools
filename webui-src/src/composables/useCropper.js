@@ -19,8 +19,8 @@ import { reactive } from 'vue';
  *   就是最终成图——否则舞台里展示的"整图"与上墙后的选区子区域观感割裂
  *   （实测反馈：裁切显示和实际效果完全不一致的根因）。
  */
-export const STAGE = 320;
-export const BOX = 240;
+const STAGE = 320;
+const BOX = 240;
 const OUTPUT_SIZE = 256;
 
 const state = reactive({
@@ -42,7 +42,7 @@ const state = reactive({
 });
 
 /** 当前有效缩放 k = fit × scale（显示层与裁切共用的唯一比例）。 */
-export function effectiveScale() {
+function effectiveScale() {
   return state.fit * state.scale;
 }
 

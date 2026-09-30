@@ -61,5 +61,5 @@ export function useSectionMeta() {
     persist();
   }
 
-  return { meta, get, displayName, setName, setIcon, clearIcon };
+  return { get, displayName, setName, setIcon, clearIcon };
 }

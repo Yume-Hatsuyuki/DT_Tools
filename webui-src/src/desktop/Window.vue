@@ -10,10 +10,9 @@ const props = defineProps({
 const emit = defineEmits(['close', 'focus', 'minimize', 'toggle-maximize', 'update-geometry']);
 
 // 给窗口内应用（如终端的 exit 内置命令）一个受控的自我操作通道
+// （最小化/最大化走窗口 chrome 与 TopBar 菜单，不经此通道）
 provide('winApi', {
   close: () => emit('close'),
-  minimize: () => emit('minimize'),
-  toggleMaximize: () => emit('toggle-maximize'),
 });
 
 const MIN_W = 360;

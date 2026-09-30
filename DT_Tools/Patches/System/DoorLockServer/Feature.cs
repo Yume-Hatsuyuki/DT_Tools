@@ -3,7 +3,7 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Patches.System.DoorLockServer
 {
     /// <summary>
-    /// 锁门服务端放行：Door.HandleEvent 原版仅黑幕可锁门（0.1.15b Server.Game/Door.cs:53），
+    /// 锁门服务端放行：Door.HandleEvent 原版仅黑幕可锁门（0.1.15b Server.Game/Door.cs:66），
     /// 本功能按 LockDoorMode 额外放行黑方/白方/所有身份。锁定序列与原版一致：
     /// CanSabotage 置 false + 40 秒恢复 + S_COOLTIME_SABOTAGE + LockDoor。
     /// 白方锁门留痕（真实身份线索）随放行归本功能承担（LockDoorClue，原

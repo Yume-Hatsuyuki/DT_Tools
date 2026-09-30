@@ -11,7 +11,7 @@ namespace DT_Tools.Patches.Experience.PlayerRadar
     /// 「myPlayer.Color == White && Managers.Game.IsAlive 则不刷新他人」分支（:3004）。
     /// 方法为 private，字符串定位：0.1.15b UI_GameTablet.cs:2992；
     /// _init 为基类 InitBase 的 protected 字段（0.1.15b InitBase.cs:5），
-    /// RefreshMyPlayerPin :1200 / RefreshPlayerPin(Player) :1211 为 private——
+    /// RefreshMyPlayerPin（UI_GameTablet.cs:1200）/ RefreshPlayerPin(Player)（UI_GameTablet.cs:1211）为 private——
     /// 均 LateUpdate 逐帧调用，缓存 FieldInfo 与开放实例委托（HarmonyX 的 Traverse 无
     /// MethodInfo 重载；Traverse 绑定目标实例，跨实例也不能缓存 Traverse 本身，
     /// 故缓存 MemberInfo 并 CreateDelegate）。已实测 AccessTools.Field 沿基类链查找，可命中基类字段。

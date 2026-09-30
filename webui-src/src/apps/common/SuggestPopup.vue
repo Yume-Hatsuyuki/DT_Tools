@@ -5,7 +5,8 @@ import { ref, watch, nextTick } from 'vue';
  * 命令补全列表（两套控制台共用）：候选渲染 + 高亮项滚动跟随。
  * ↑↓ 高亮移出可视区时容器自动滚过去（旧实现只改高亮不滚动，
  * 长列表里选中的命令看不到——已确认缺陷的修复点）。
- * 定位（绝对锚点/宽度）由宿主的 .suggest-wrap 决定，本组件只画列表本身。
+ * 定位（绝对锚点/宽度）由宿主决定（旧版控制台 .suggest-wrap / 新版终端
+ * .suggest-float），本组件只画列表本身。
  */
 const props = defineProps({
   /** [{name, aliases, usage, description, author}] */

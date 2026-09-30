@@ -10,8 +10,6 @@
   /* 桌面壳：默认壁纸为「深海数据流」预设（useWallpaper 'abyss-flow'），
      此处是样式加载前的兜底色 */
   --desktop-bg-0: #0a1a24;
-  --desktop-bg-1: #0d2531;
-  --desktop-grid-line: rgba(255, 255, 255, 0.05);
 
   /* 壳层 chrome（顶栏 / Dock）：毛玻璃深青 */
   --topbar-h: 32px;

@@ -8,13 +8,13 @@ namespace DT_Tools.Patches.System.MultiArmoryWeapon
 {
     /// <summary>
     /// 多刀编排：刷刀后开放多架、到期随机转移；同步 CurrentArmory 等权威指针以兼容
-    /// 原版取刀断言（SendWeapon 要求 ID == CurrentArmory.ID：0.1.15b Armory.cs:134）与任务箭头。
-    /// DeviceManager 私有成员定位（0.1.15b DeviceManager.cs）：_armories:28、_lastArmory:14、
+    /// 原版取刀断言（SendWeapon 要求 ID == CurrentArmory.ID：0.1.15b Server.Game/Armory.cs:134）与任务箭头。
+    /// DeviceManager 私有成员定位（0.1.15b Server.Game/DeviceManager.cs）：_armories:28、_lastArmory:14、
     /// CurrentArmory:42（private set 属性）、ArmoryPos:44（private set 属性）。
     /// </summary>
     internal static class MultiArmoryWeaponLogic
     {
-        /// <summary>私有字段 _armories（0.1.15b DeviceManager.cs:28）。</summary>
+        /// <summary>私有字段 _armories（0.1.15b Server.Game/DeviceManager.cs:28）。</summary>
         private static List<Server.Game.Armory> GetArmories(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_armories").GetValue<List<Server.Game.Armory>>();
 
@@ -72,8 +72,8 @@ namespace DT_Tools.Patches.System.MultiArmoryWeapon
         private static void OpenArmory(Server.Game.Armory armory, Server.Game.GameRoom room)
         {
             if (armory == null || room == null) return;
-            armory.RefreshState(EArmoryState.OpenArmory);          // 0.1.15b Armory.cs:56
-            try { armory.StartSelectBlackCount(); }                // 0.1.15b Armory.cs:76
+            armory.RefreshState(EArmoryState.OpenArmory);          // 0.1.15b Server.Game/Armory.cs:56
+            try { armory.StartSelectBlackCount(); }                // 0.1.15b Server.Game/Armory.cs:76
             catch (global::System.Exception ex) { Log.Warn<MultiArmoryWeaponFeature>($"StartSelectBlackCount 失败：{ex.Message}"); }
             Server.Game.Player masterMind = room.MasterMind;
             if (masterMind == null || !masterMind.WeaponPickupLocked)
@@ -99,10 +99,10 @@ namespace DT_Tools.Patches.System.MultiArmoryWeapon
 
         /// <summary>
         /// 重置本架转移 CD 并续 TickArmory 逐秒链。不能走 RefreshState(OpenArmory)：
-        /// 原版仅在状态变化时才重置 StateList[2]/[3] 并续链（0.1.15b Armory.cs:56-74 的
+        /// 原版仅在状态变化时才重置 StateList[2]/[3] 并续链（0.1.15b Server.Game/Armory.cs:56-74 的
         /// `if (state2 != (int)state)` 门），而到期转移时本架必已是 OpenArmory，该调用是 no-op。
-        /// 这里绕过它直写状态，对齐 Armory.cs:62-67 的 OpenArmory 分支语义；
-        /// TickArmory 为私有（0.1.15b Armory.cs:154），经 Traverse 续约下一跳（会再进补丁前缀）。
+        /// 这里绕过它直写状态，对齐 Server.Game/Armory.cs:62-67 的 OpenArmory 分支语义；
+        /// TickArmory 为私有（0.1.15b Server.Game/Armory.cs:154），经 Traverse 续约下一跳（会再进补丁前缀）。
         /// </summary>
         private static void RearmTransfer(Server.Game.Armory armory, Server.Game.GameRoom room)
         {

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue';
 import { API } from '../../api.js';
 import { useSectionMeta } from '../../composables/useSectionMeta.js';
-import { sectionMeta, splitDesc } from './configUtils.js';
+import { sectionMeta } from './configUtils.js';
 import EntryList from '../common/EntryList.vue';
 import LogPanel from '../common/LogPanel.vue';
 import IconArrowLeft from '~icons/tabler/arrow-left';

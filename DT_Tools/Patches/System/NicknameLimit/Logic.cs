@@ -19,9 +19,9 @@ namespace DT_Tools.Patches.System.NicknameLimit
 
         // ── UI 元素索引（UI_Base 的 protected GetText/GetInputField，0.1.15b UI_Base.cs:98/:103，
         //    Traverse 定位）──
-        /// <summary>昵称错误提示文本（原版 :500 清空、:1590 写 LobbyNicknameTooLong）。</summary>
+        /// <summary>昵称错误提示文本（原版 UI_LobbyScene.cs:500 清空、UI_LobbyScene.cs:1590 写 LobbyNicknameTooLong）。</summary>
         private const int TextErrorTip = 15;
-        /// <summary>三个大厅按钮文字，校验结果以灰/白着色（原版 :703-709 的着色与文案）。</summary>
+        /// <summary>三个大厅按钮文字，校验结果以灰/白着色（原版 UI_LobbyScene.cs:703-709 的着色与文案）。</summary>
         private const int TextCreateGame = 16;
         private const int TextFindGame = 17;
         private const int TextEnterGame = 18;

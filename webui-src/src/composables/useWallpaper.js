@@ -5,7 +5,7 @@ import { reactive } from 'vue';
  * 地面网格/数据流粒子由 ParticleFlow 背景层叠加（仅 CSS 预设生效，自定义图片
  * 时只保留粒子以避免压住照片）；自定义图片统一走 useCropper 裁切（选区比例=
  * 视口，输出 ≤1920px JPEG dataURL），落 localStorage 超配额时保内存态（本次
- * 会话生效）并提示。旧默认 'kali-blue' 预设保留可切换，但存它的会自动迁移到新默认。
+ * 会话生效）并提示。旧默认 'kali-blue' 预设已移除，存它的会自动迁移到新默认。
  *
  * 取色（tint）：自定义壁纸设置时在 48px 缩略图上提平均主色，压进"深色毛玻璃"
  * 区间后存进 state.tint（随壁纸一起持久化）——Desktop 用它覆写 --dock-bg /
@@ -15,7 +15,7 @@ import { reactive } from 'vue';
 const STORAGE_KEY = 'dt_wallpaper_v1';
 const DEFAULT_PRESET = 'abyss-flow';
 
-export const WALLPAPER_PRESETS = [
+const WALLPAPER_PRESETS = [
   {
     id: 'abyss-flow',
     label: '深海数据流',
@@ -128,13 +128,6 @@ export function useWallpaper() {
     persist();
   }
 
-  function applyPreset(id) {
-    state.presetId = id;
-    state.custom = null;
-    state.tint = null;   // 取色只属于自定义壁纸
-    persist();
-  }
-
   /**
    * 设为自定义壁纸：入参是裁切器产出的 dataURL（≤1920px JPEG，Desktop 已裁好）；
    * 失败返回 { error }，成功返回 null。
@@ -157,7 +150,7 @@ export function useWallpaper() {
     persist();
   }
 
-  return { state, presets: WALLPAPER_PRESETS, applyPreset, setCustom, reset };
+  return { state, presets: WALLPAPER_PRESETS, setCustom, reset };
 }
 
 // 旧版本已存的自定义壁纸没有取色：载入后补提取一次并落盘（之后随壁纸一起持久化）

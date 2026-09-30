@@ -7,7 +7,6 @@ import SteamWidget from './SteamWidget.vue';
 import Window from './Window.vue';
 import CropperHost from '../apps/common/CropperHost.vue';
 import { useWindowManager } from '../composables/useWindowManager.js';
-import { useSectionMeta } from '../composables/useSectionMeta.js';
 import { pickImageFile } from '../composables/pickImage.js';
 import { useWallpaper } from '../composables/useWallpaper.js';
 import { useCropper } from '../composables/useCropper.js';
@@ -178,12 +177,8 @@ const desktopStyle = computed(() => {
     style = { backgroundImage: `url("${w.custom}")`, backgroundSize: 'cover', backgroundPosition: 'center' };
   } else {
     const preset = wallpaper.presets.find(p => p.id === w.presetId) || wallpaper.presets[0];
-    if (preset.image) {
-      style = { backgroundImage: `url("${preset.image}")`, backgroundSize: 'cover', backgroundPosition: 'center' };
-    } else {
-      style = { backgroundImage: preset.css };
-      if (preset.size) style.backgroundSize = preset.size;
-    }
+    style = { backgroundImage: preset.css };
+    if (preset.size) style.backgroundSize = preset.size;
   }
   // 自定义壁纸取色 → 覆写 Dock 配色。CSS 变量沿 .desktop 继承进 Dock 组件，
   // Dock 自身零改动；色相来自壁纸，明度/饱和度已在 useWallpaper 压进深色玻璃区间
@@ -196,12 +191,7 @@ const desktopStyle = computed(() => {
 });
 
 /** 光柱/地面网格只在 CSS 渐变壁纸上叠加；自定义图片壁纸时只留粒子。 */
-const decorative = computed(() => {
-  const w = wallpaper.state;
-  if (w.custom) return false;
-  const preset = wallpaper.presets.find(p => p.id === w.presetId) || wallpaper.presets[0];
-  return !preset.image;
-});
+const decorative = computed(() => !wallpaper.state.custom);
 
 function windowFor(win) {
   return win.appDef || apps.find(a => a.id === win.appId);
