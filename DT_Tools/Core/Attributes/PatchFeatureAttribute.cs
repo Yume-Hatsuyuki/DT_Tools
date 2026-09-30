@@ -1,48 +1,38 @@
 using System;
 
-namespace DT_Tools.Core
+namespace DT_Tools.Core.Attributes
 {
     /// <summary>
-    /// 标记一个功能补丁类。
-    /// PatchLoader 扫描此特性：生成 [Section].Enabled，并尝试 Harmony.PatchAll（失败则隔离该功能）。
-    /// Enabled 为运行时开关：补丁内通过 FeatureGate 门闩，局内修改立即生效，无需重启。
-    /// 同段子项用 <see cref="ConfigFieldAttribute"/> 声明，由 ConfigBinder 自动 Bind。
+    /// 标记一个补丁功能（Patches/ 下目录级静态类）。
+    /// 配置段名由引擎按"类名去 Feature 后缀"推导，代码零段名字符串；
+    /// 同命名空间下所有带 [HarmonyPatch] 的类视为该功能的补丁，由引擎逐个挂载、失败隔离。
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class PatchFeatureAttribute : Attribute
     {
-        /// <summary>配置段名（写入 .cfg 的 [Section]），请保持稳定以免旧配置失效。</summary>
-        public string Section { get; }
-
         /// <summary>Enabled 项的说明（写入 .cfg 注释）。</summary>
         public string Description { get; }
 
-        /// <summary>默认是否启用该功能。</summary>
+        /// <summary>默认是否启用。</summary>
         public bool DefaultEnabled { get; }
 
         /// <summary>作用面（Client / Host / Both），用于文档与 UI 标签。</summary>
         public FeatureSide Side { get; }
 
-        /// <summary>作者；有值时在 .cfg 注释顶部生成 Author 行。</summary>
-        public string Author { get; }
+        /// <summary>
+        /// 功能制作者（写入 .cfg 的 Author 行、WebUI 展示）。缺省按「佚名」署名；
+        /// 禁止引入全局作者常量兜底——作者归属逐功能声明，供不同贡献者合并 PR。
+        /// </summary>
+        public string Author { get; set; }
 
-        /// <param name="section">配置段名</param>
-        /// <param name="description">Enabled 中文说明</param>
-        /// <param name="defaultEnabled">默认是否启用</param>
-        /// <param name="side">作用面</param>
-        /// <param name="author">作者</param>
         public PatchFeatureAttribute(
-            string section,
-            string description,
+            string description = null,
             bool defaultEnabled = false,
-            FeatureSide side = FeatureSide.Client,
-            string author = null)
+            FeatureSide side = FeatureSide.Client)
         {
-            Section = section ?? throw new ArgumentNullException(nameof(section));
             Description = description ?? "";
             DefaultEnabled = defaultEnabled;
             Side = side;
-            Author = author;
         }
     }
 }

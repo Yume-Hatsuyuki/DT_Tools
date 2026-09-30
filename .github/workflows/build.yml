@@ -11,8 +11,6 @@ on:
       - 'docs/**'
       - '.gitignore'
       - 'LICENSE'
-      - '.github/**'
-      - '!.github/workflows/build.yml'
   pull_request:
     branches: [main]
     paths-ignore:
@@ -22,6 +20,11 @@ on:
       - 'LICENSE'
   workflow_dispatch:
 
+# 同一分支的多个触发并发时，取消旧运行，避免重复编译占用 runner。
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,17 +33,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 显式安装并固定 Node 版本（不再依赖 runner 镜像自带的 Node）
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: webui-src/package-lock.json
+
+      # 先于 dotnet build 构建前端：产物写入 DT_Tools/WebUI，
+      # 保证 csproj 里 <None Include="WebUI/**"> 在求值时就能看到这些文件。
+      - name: Build WebUI
+        working-directory: webui-src
+        run: |
+          npm ci
+          npm run build
+
+      # 版本以仓库根目录 global.json 为唯一来源（rollForward=disable，必须精确匹配）。
+      # 注意不要再同时写 dotnet-version，否则两个版本都会被安装。
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # 与仓库 global.json / 本地环境对齐
-          dotnet-version: '7.0.410'
+          global-json-file: global.json
 
       - name: Restore
         run: dotnet restore DT_Tools/DT_Tools.csproj
 
+      # 前端已在上一步显式构建，跳过 csproj 内的 BuildWebUI，避免重复执行 npm
       - name: Build
-        run: dotnet build DT_Tools/DT_Tools.csproj -c Release --no-restore
+        run: dotnet build DT_Tools/DT_Tools.csproj -c Release --no-restore -p:SkipWebUIBuild=true
+
+      # 注意：Linux 区分大小写，输出目录名是 WebUI（不是 WEBUI）
+      - name: Verify output
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT_DIR="DT_Tools/bin/Release/netstandard2.1"
+          ls -la "$OUT_DIR"
+          test -n "$(find "$OUT_DIR" -maxdepth 1 -name 'DT_Tools*.dll')" \
+            || { echo "::error::未找到编译产物 dll"; exit 1; }
+          test -f "$OUT_DIR/WebUI/js/app.js" \
+            || { echo "::error::输出目录缺少 WebUI/js/app.js（前端未随插件输出）"; exit 1; }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -48,5 +81,8 @@ jobs:
           name: DT_Tools
           path: |
             DT_Tools/bin/Release/netstandard2.1/DT_Tools*.dll
-            DT_Tools/bin/Release/netstandard2.1/WEBUI/**
+            DT_Tools/bin/Release/netstandard2.1/DT_Tools*.pdb
+            DT_Tools/bin/Release/netstandard2.1/DT_Tools*.deps.json
+            DT_Tools/bin/Release/netstandard2.1/DT_Tools*.xml
+            DT_Tools/bin/Release/netstandard2.1/WebUI/**
           if-no-files-found: error

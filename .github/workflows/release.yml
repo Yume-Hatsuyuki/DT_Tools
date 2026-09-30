@@ -5,16 +5,21 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*.*'
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       tag:
-        description: '版本号（例如 v*.*.*.*）'
+        description: '版本号（例如 v*.*.*，也支持 v*.*.*.*）'
         required: true
         type: string
 
 permissions:
   contents: write
+
+# 同一 tag 重复触发时取消旧运行，避免重复发布
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:
@@ -26,20 +31,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      # 表达式一律经 env 传入 shell，避免把 inputs / ref 名直接拼进脚本（注入风险）
       - name: 校验发布来源分支
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            BRANCH="${{ github.ref_name }}"
-            if [ "$BRANCH" != "main" ]; then
-              echo "::error::手动发布必须在 main 上触发，当前分支是「$BRANCH」。"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$REF_NAME" != "main" ]; then
+              echo "::error::手动发布必须在 main 上触发，当前分支是「$REF_NAME」。"
               exit 1
             fi
           else
             git fetch origin main
-            if ! git merge-base --is-ancestor "${{ github.sha }}" origin/main; then
-              echo "::error::tag（${GITHUB_REF#refs/tags/}）不在 main 历史中，已阻止发布。"
+            if ! git merge-base --is-ancestor "$SHA" origin/main; then
+              echo "::error::tag（$REF_NAME）不在 main 历史中，已阻止发布。"
               exit 1
             fi
           fi
@@ -47,9 +56,12 @@ jobs:
       - name: 确定版本号
         id: ver
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ inputs.tag }}"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG="$INPUT_TAG"
           else
             TAG="${GITHUB_REF#refs/tags/}"
           fi
@@ -63,26 +75,48 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$ASSEMBLY_VERSION" >> "$GITHUB_OUTPUT"
 
+      # 显式安装并固定 Node 版本（不再依赖 runner 镜像自带的 Node）
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: webui-src/package-lock.json
+
+      # 先于 dotnet build 构建前端：产物写入 DT_Tools/WebUI，
+      # 保证 csproj 里 <None Include="WebUI/**"> 在求值时就能看到这些文件。
+      - name: Build WebUI
+        working-directory: webui-src
+        run: |
+          npm ci
+          npm run build
+
+      # 版本以仓库根目录 global.json 为唯一来源（rollForward=disable，必须精确匹配）。
+      # 注意不要再同时写 dotnet-version，否则两个版本都会被安装。
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '7.0.410'
+          global-json-file: global.json
 
       - name: Restore
         run: dotnet restore DT_Tools/DT_Tools.csproj
 
+      # 前端已在上面显式构建，跳过 csproj 内的 BuildWebUI，避免重复执行 npm
       - name: Build
         run: |
           dotnet build DT_Tools/DT_Tools.csproj -c Release --no-restore \
-            -p:Version=${{ steps.ver.outputs.version }}
+            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:SkipWebUIBuild=true
 
       - name: 打包发布文件
         id: package
         shell: bash
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
         run: |
           set -euo pipefail
           OUT_DIR="DT_Tools/bin/Release/netstandard2.1"
-          # 用户解压到 BepInEx/plugins/ 后得到 plugins/DT_Tools/{dll,WEBUI}
+          # 用户解压到 BepInEx/plugins/ 后得到 plugins/DT_Tools/{dll,WebUI,README...}
           STAGE="stage/DT_Tools"
           mkdir -p "$STAGE"
 
@@ -93,17 +127,43 @@ jobs:
           fi
           cp "$DLL_PATH" "$STAGE/DT_Tools.dll"
 
-          if [ ! -d "$OUT_DIR/WEBUI" ]; then
-            echo "::error::输出目录缺少 WEBUI（检查 csproj CopyToOutputDirectory）"
+          # 随主程序集一并发布"信息类"伴生文件：.pdb 调试符号（报 bug 定位行号）、
+          # .deps.json 依赖清单、.xml 文档注释。均非运行必需，缺失只提示、不阻断发布。
+          for ext in pdb deps.json xml; do
+            SRC_FILE="${DLL_PATH%.dll}.${ext}"
+            if [ -f "$SRC_FILE" ]; then
+              cp "$SRC_FILE" "$STAGE/DT_Tools.${ext}"
+              echo "已附带 ${ext}：$(basename "$SRC_FILE")"
+            else
+              echo "::notice::无 ${ext}（$SRC_FILE），跳过"
+            fi
+          done
+
+          # Linux 区分大小写：csproj 输出的目录名是 WebUI（不是 WEBUI）
+          if [ ! -f "$OUT_DIR/WebUI/js/app.js" ]; then
+            echo "::error::输出目录缺少 WebUI/js/app.js（检查前端构建与 csproj CopyToOutputDirectory）"
             exit 1
           fi
-          cp -a "$OUT_DIR/WEBUI" "$STAGE/"
+          cp -a "$OUT_DIR/WebUI" "$STAGE/"
 
-          cp README.md "$STAGE/" 2>/dev/null || true
-          cp FEATURES.md "$STAGE/" 2>/dev/null || true
-          cp LICENSE "$STAGE/" 2>/dev/null || true
+          # 发布包必带文件：缺失时直接失败，而不是静默跳过
+          # （FEATURES.md 已删除，曾因 `|| true` 长期未被发现）
+          for f in README.md LICENSE; do
+            if [ ! -f "$f" ]; then
+              echo "::error::缺少发布必需文件：$f"
+              exit 1
+            fi
+            cp "$f" "$STAGE/"
+          done
 
-          ZIP_NAME="DT_Tools-${{ steps.ver.outputs.tag }}.zip"
+          # README 引用 images/ 下的截图与二维码；不随包发布则包内 README 图片失效
+          if [ ! -d images ]; then
+            echo "::error::缺少 images/ 目录（README 引用了其中的图片）"
+            exit 1
+          fi
+          cp -a images "$STAGE/"
+
+          ZIP_NAME="DT_Tools-${TAG}.zip"
           (cd stage && zip -r "../$ZIP_NAME" DT_Tools)
 
           echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
@@ -114,6 +174,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
+          # 手动触发且 tag 尚不存在时，让新 tag 落在被构建的那个提交上
+          target_commitish: ${{ github.sha }}
           name: DT_Tools ${{ steps.ver.outputs.tag }}
           generate_release_notes: true
           files: |
