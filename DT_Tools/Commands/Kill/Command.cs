@@ -21,7 +21,7 @@ namespace DT_Tools.Commands.Kill
     internal sealed class KillCommand : ICommand
     {
         public string Name => "kill";
-        public string[] Aliases => new[] { "处决", "击杀", "execute" };
+        public string[] Aliases => new[] { "处决", "击杀" };
         public string Usage => "kill <all|#playerId>";
         public string Description => "颈环炸弹处决指定/全体存活玩家（需房主·Survive/Detective/Trial 阶段，立即倒地、6 秒后死亡）。";
         public string Author => "梦初雪";
