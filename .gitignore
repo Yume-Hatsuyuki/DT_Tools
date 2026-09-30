@@ -7,3 +7,7 @@ DT_Tools/.vs/
 # .NET 编译输出和中间文件
 DT_Tools/bin/
 DT_Tools/obj/
+
+# Node.js 的构建产物
+DT_Tools/WebUI/
+DT_Tools/WEBUI/
