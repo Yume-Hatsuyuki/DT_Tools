@@ -24,7 +24,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
             }
             catch (global::System.Exception ex)
             {
-                Log.Error<UnlockMadelineFeature>("资源注入失败: " + ex);
+                Log.Exception<UnlockMadelineFeature>(ex, "资源注入失败");
             }
         }
     }

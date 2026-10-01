@@ -4,18 +4,18 @@ Deadly Trick 游戏的 BepInEx 5 插件（C# / netstandard2.1 / HarmonyX）。
 **本文件是唯一的架构与操作契约**。
 改目录结构、角色模板或 API 协议前先读这里，改完顺手更新本文件。
 
-正式版本以 `DT_Tools/DT_Tools.csproj` 的 `<Version>` 为准（本文件不写死版本号）。
+正式版本以 `DT_Tools/DT_Tools.csproj` 的 `<Version>` 为准。
 
 ---
 
 ## 1. 工作区布局
 
-|           目录            |         性质         |                    用途                     |
-| ------------------------- | -------------------- | ------------------------------------------ |
-| `DT_Tools/`               | **唯一可修改的项目** | 插件源码 + `DT_Tools.csproj`                 |
-| `webui-src/`              | **前端源码工程**     | Vue 3 + Vite 桌面壳 WebUI 源码（见 §8）      |
-| `0.1.15b/`(版本可能有差异) | 只读                 | 游戏反编译源码。**一切游戏 API 的核对基准**。   |
-| `libs/`                   | 只读                 | 游戏程序集，编译引用源                        |
+|           目录            |       性质       |                    用途                     |
+| ------------------------- | ---------------- | ------------------------------------------ |
+| `DT_Tools/`               | **模组项目**     | 插件源码 + `DT_Tools.csproj`                |
+| `webui-src/`              | **前端源码工程** | Vue 3 + Vite 桌面壳 WebUI 源码（见 §8）      |
+| `0.1.15b/`(版本可能有差异) | 只读             | 游戏反编译源码。**一切游戏 API 的核对基准**。 |
+| `libs/`                   | 只读             | 游戏程序集，编译引用源                        |
 
 ## 2. 构建与验证
 
@@ -44,7 +44,7 @@ Plugin.cs（装配根）
         → 0.1.15b 游戏程序集（最底层，一切 API 的核对基准）
 ```
 
-依赖方向只能向下：功能域 → Game → Core → 游戏。**禁止 Patches/Commands/Automation 之间横向依赖**。例外：命令域引用功能的公开静态状态（如 `LobbyMaxPlayersFeature.MaxMembers`）；功能之间共享的调用序列、数据表、设备读取一律上浮 Game——现有范本：`Game/RoomFlow`、`Game/ItemPools`、`Game/Devices.GetStorages`、`Game/AudioMix`、`Game/SabotageClue`、`Core/Reflect.Bind`、`Game/LocalPlayer.TryGetPlayer`。
+依赖方向只能向下：功能域 → Game → Core → 游戏。**禁止 Patches/Commands/Automation 之间横向依赖**。例外：命令域引用功能的公开静态状态（如 `LobbyMaxPlayersFeature.MaxMembers`）；WebConsole API 层同命令域（如 DummyApi 读 `LobbyMaxPlayersFeature.MaxMembers` 解析房间容量）；功能之间共享的调用序列、数据表、设备读取一律上浮 Game——现有范本：`Game/RoomFlow`、`Game/ItemPools`、`Game/Devices.GetStorages`、`Game/AudioMix`、`Game/SabotageClue`、`Game/RoomLobbyData`、`Core/Reflect.Bind`、`Game/LocalPlayer.TryGetPlayer`。
 
 **目录与命名空间**：功能目录 = 命名空间 = 目录路径，逐级一致（见完整类名即知文件位置）。**唯一豁免：Core 层命名空间扁平为 `DT_Tools.Core`**——`Core/Log` 若按目录建 `DT_Tools.Core.Log` 命名空间，其成员会在查找链上遮蔽根命名空间的日志门面 `Log`（§5.2），Core 其余子目录随惯例一并扁平。`Patches/System/` 的遮蔽警戒见 §5.3。
 
@@ -87,6 +87,7 @@ Plugin.cs（装配根）
 - 引用游戏 API 前先在 `0.1.15b/` 源码核对（存在性/可见性/签名）。私有成员用字符串定位并在注释标注 `0.1.15b <文件>.cs:<行号>`（含子目录前缀）；能 `nameof` 必须 `nameof`。
 - 全项目补丁点的行号注释是**游戏升级核对入口**：换新反编译源码后全文搜索行号注释逐个复核；行为变化处按语义判断漂移（v1 审计实测：119 个补丁点全部可控）。
 - 整段复制原版方法体的"整替补丁"升级时必须逐行 diff（范本：LobbyMaxPlayers/Patch.EnterPlayer.cs，锚点清单在文件头）。
+- **Agent 域槽位锚点**：/agent 四条链对服务端 StateList 槽位语义的逐项判断，集中核对入口在 `Commands/Agent/Logic.ItemHelper.cs` 头部的「设备 StateList 槽位布局表」（每行带 0.1.15b 行号）——游戏升级后按该表逐行复核，禁止在链文件里新增无锚点的槽位判断。
 
 ## 7. 编码规范
 
@@ -94,7 +95,7 @@ Plugin.cs（装配根）
 - **日志**：唯一入口 `Log` 门面（`Info/Warn/Error/Fatal/Debug<TFeature>(msg)`；异常用 `Log.Exception<TFeature>(ex[, context])`——BepInEx 进完整堆栈，WebUI 只留单行摘要）。框架层 catch 一律走 `Log.Exception`。**禁止 `Debug.Log`、自建缓冲、绕过门面的裸 BepInEx Logger**（装配摘要也走门面，进环形缓冲）。命令输出走 `ctx.Reply/Warn`。
 - **日志会话**：命令执行期间 `CommandSession`（Core/Log）携带会话 id，Log 自动把 `Session` 写进条目——WebUI 控制台按会话隔离显示。前端每个控制台窗口实例持有一个会话 id，随 `/api/run` 头 `X-DT-Session` 上送。
 - **JSON**：只走 `DT_Tools.Core.Json`（Newtonsoft，camelCase）。禁止手拼 JSON/手写转义/逐字符解析。
-- **命令协议**：`Execute` 返回 `CommandResult.Success(data)/Fail(error, data)`（信封 `{ok,error,data}`），同时 `ctx.Reply` 人类文本——双通道都要写。错误码=小写英文短词，文案=中文。房主门禁框架统一做，命令内禁止再写。
+- **命令协议**：`Execute` 返回 `CommandResult.Success(data)/Fail(error, data)`（信封 `{ok,error,data}`），同时 `ctx.Reply` 人类文本——双通道都要写。错误码=小写英文短词，文案=中文。房主门禁框架统一做，命令内禁止再写。豁免备案：`/room_list` 为异步受理型命令，机器通道回「已受理」信封（列表数据稍后经日志流输出），命令内已自我声明。
 - **线程模型**：命令/自动化都在 Unity 主线程（WebConsole 队列泵 / AutomationRunner）；HTTP 线程禁止碰 Unity API；WebConsole 泵内 action 与命令一律**锁外执行**（锁内只出队）。
 
 ## 8. WebUI 契约（改 API 或前端前必读）
@@ -142,4 +143,3 @@ Plugin.cs（装配根）
 - 禁止依赖补丁挂载顺序的隐式契约（跨补丁顺序用 `[HarmonyPriority]` 显式固定）。
 - 禁止在多代理并行作业时运行 `dotnet build`。
 - 禁止重新引入全局作者常量/兜底——作者逐功能显式声明，未声明按「佚名」署名。
-- 禁止恢复 SSE /api/log/stream（已被 WebSocket 取代）。

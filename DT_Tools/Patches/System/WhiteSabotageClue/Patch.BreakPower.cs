@@ -9,10 +9,10 @@ namespace DT_Tools.Patches.System.WhiteSabotageClue
 {
     /// <summary>
     /// 白方拉电闸留痕：Fusebox.DisconnetCable 后缀（private，字符串定位：
-    /// 0.1.15b Server.Game/Fusebox.cs:113）。原版在此处把拉闸人固定记为黑幕
-    /// （11037，:126 的 EWhatState.Mastermind），白方拉闸同样被记成"黑幕所为"；
+    /// 0.1.15b Server.Game/Fusebox.cs:114）。原版在此处把拉闸人固定记为黑幕
+    /// （11037，:127 的 EWhatState.Mastermind），白方拉闸同样被记成"黑幕所为"；
     /// 本补丁在其后追加一条真实身份线索。后缀校验 StateList[0]==9999（成功拉闸
-    /// 后置位，:121）——MissionType 不符被原版提前 return 时不误记。
+    /// 后置位，:122）——MissionType 不符被原版提前 return 时不误记。
     /// </summary>
     [HarmonyPatch]
     internal static class WhiteBreakPowerCluePatch

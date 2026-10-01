@@ -40,14 +40,14 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>POST /api/automation/host {enabled} — 自动化总开关。</summary>
         public static void HandleHost(HttpListenerContext ctx)
         {
-            var body = ParseBody(ctx);
+            var body = ApiUtil.ParseBody(ctx);
             if (body == null)
             {
                 HttpServer.WriteJson(ctx.Response, new { ok = false, error = "invalid body" });
                 return;
             }
 
-            bool? enabled = ReadBool(body, "enabled");
+            bool? enabled = ApiUtil.ReadBool(body, "enabled");
             if (enabled == null)
             {
                 HttpServer.WriteJson(ctx.Response, new { ok = false, error = "missing enabled" });
@@ -126,28 +126,6 @@ namespace DT_Tools.WebConsole.Api
             _ => side.ToString(),
         };
 
-        private static bool? ReadBool(Newtonsoft.Json.Linq.JObject body, string key)
-        {
-            var token = body[key];
-            if (token == null || token.Type != Newtonsoft.Json.Linq.JTokenType.Boolean)
-                return null;
-            return (bool)token;
-        }
-
-        /// <summary>解析 JSON 请求体；空体或非法 JSON 一律返回 null（由调用方回 "invalid body"）。</summary>
-        private static Newtonsoft.Json.Linq.JObject ParseBody(HttpListenerContext ctx)
-        {
-            string body = HttpServer.ReadBody(ctx.Request);
-            if (string.IsNullOrWhiteSpace(body))
-                return null;
-            try
-            {
-                return Newtonsoft.Json.Linq.JObject.Parse(body);
-            }
-            catch (Newtonsoft.Json.JsonReaderException)
-            {
-                return null;
-            }
-        }
+        // 请求体解析与 ReadBool 统一走 WebConsole/ApiUtil（原本类内两份实现已收编）
     }
 }

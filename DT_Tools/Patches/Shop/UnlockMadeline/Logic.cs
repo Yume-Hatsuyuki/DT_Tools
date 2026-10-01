@@ -23,16 +23,6 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
         /// <summary>审判过场立绘位置（与其余角色在 CUTSCENE_POS_LIST 的量级一致）。</summary>
         public static readonly Vector2 TrialCutscenePos = new Vector2(90f, 150f);
 
-        /// <summary>
-        /// 中文排序表（Madeline 置末位）。前 12 位与原版一致：
-        /// 0.1.15b CharacterSortOrder.cs:16（FillChineseOrder，私有静态）。
-        /// </summary>
-        public static readonly int[] ChineseOrder =
-        {
-            106, 104, 113, 108, 102, 103, 110, 107, 112, 111,
-            105, 109, 101
-        };
-
         /// <summary>审判过场表情图集键（立绘表情四态；键即 Addressables 地址前缀）。</summary>
         public static readonly string[] ExpKeys =
         {

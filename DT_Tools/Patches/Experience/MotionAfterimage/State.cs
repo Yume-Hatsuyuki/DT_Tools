@@ -9,9 +9,10 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
     {
         public GameObject Go;
         public SkeletonAnimation Anim;
+        /// <summary>本条残影专属的材质副本（Instantiate 自原版材质），随实例销毁，防止原生内存泄漏。</summary>
+        public Material Mat;
         public float BornTime;
         public float Lifetime;
-        public int CharacterId = -1;
     }
 
     /// <summary>一名玩家的活体残影队列 + 死亡黑色定格。</summary>
@@ -20,7 +21,8 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
         public readonly List<AfterimageInstance> Live = new List<AfterimageInstance>();
         public GameObject DeathGhost;
         public SkeletonAnimation DeathAnim;
-        public int DeathCharacterId = -1;
+        /// <summary>黑色定格专属的材质副本，随定格销毁。</summary>
+        public Material DeathMat;
         public float LastSpawnTime = -999f;
         public Vector3 LastPos;
         public bool LastLookLeft;

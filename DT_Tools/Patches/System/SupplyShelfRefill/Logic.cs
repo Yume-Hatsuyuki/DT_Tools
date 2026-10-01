@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using DT_Tools.Core;
 using DT_Tools.Game;
-using DT_Tools.Patches.System.SupplyShelf;
 using Protocol;
 
 namespace DT_Tools.Patches.System.SupplyShelfRefill
@@ -11,8 +10,8 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
     /// 必出与补货逻辑。
     /// 兜底道具集中于此（FallbackItems）：BELL(3009) / AIRHORN(3008)，与原版 InitStorage
     /// 的内建投放池一致（0.1.15b Server.Game/DeviceManager.cs:353）；Define 常量：Define.cs:746 / :744。
-    /// 对 SupplyShelf 的依赖仅剩两处公开面：Engine.Enabled&lt;SupplyShelfFeature&gt;() 判定与
-    /// Mode 配置读值（决定补货池语义）；货架读取走 Game.Devices，池表走 Game.ItemPools。
+    /// 补货池经 Game/ItemPools.ShelfPoolProvider 只读（由 SupplyShelf 装载时发布，含其
+    /// Enabled/Mode 判定）；货架读取走 Game.Devices——无 Patches 间横向依赖（AGENTS §3）。
     /// </summary>
     internal static class SupplyShelfRefillLogic
     {
@@ -105,7 +104,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
 
             storage.DeviceInfo.StateList[index] = itemId;
             storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // :43
-            storage.BroadcastStateInArea();                                          // 0.1.15b Device.cs:114
+            storage.BroadcastStateInArea();                                          // 0.1.15b Server.Game/Device.cs:114
         }
 
         // ── 拿取后补货 ────────────────────────────────────────────────────
@@ -144,13 +143,13 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
             // 这一格仍会在到点后补回。理由：
             // 1) 补货是「拿取时功能开启」动作的延迟收口，最多补一格，影响有界；
             // 2) 残留任务随整局结束由 TimeManager.ClearSurvivalJob 统一清空
-            //    （0.1.15b GameRoom.cs:540 FullReset 内调用 → TimeManager.cs:129），
+            //    （0.1.15b GameRoom.cs:540 FullReset 内调用 → Server.Game/TimeManager.cs:129），
             //    不会跨局泄漏；
             // 3) RefillIntervalSeconds 默认 -1（不排程），常态下根本不会产生闭包。
             int storageId = storage.ID;
             int slot = index;
             int refillId = itemId;
-            Server.Game.TimeManager.Instance.PushSurvivalJob(interval, () =>               // TimeManager.cs:77
+            Server.Game.TimeManager.Instance.PushSurvivalJob(interval, () =>               // Server.Game/TimeManager.cs:77
             {
                 if (Server.Game.GameRoom.Instance?.State != EGameState.Survive)
                     return;
@@ -164,12 +163,10 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
                 $"scheduled storage={storageId} slot={slot} itemId={refillId} after={interval}s");
         }
 
-        /// <summary>补货池：货架随机道具开启时沿用其扩展池（按 SupplyShelf.Mode 语义），否则兜底 BELL/AIRHORN。</summary>
+        /// <summary>补货池：货架随机道具开启时沿用其扩展池（经 ItemPools.ShelfPoolProvider），否则兜底 BELL/AIRHORN。</summary>
         private static int PickRefillItemId()
         {
-            int[] pool = Engine.Enabled<SupplyShelfFeature>()
-                ? ItemPools.ForMode(SupplyShelfFeature.Mode)
-                : FallbackItems;
+            int[] pool = ItemPools.ShelfPoolProvider?.Invoke() ?? FallbackItems;
             return pool[Util.GetRandomNumber(0, pool.Length)];
         }
 

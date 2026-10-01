@@ -62,13 +62,6 @@ namespace DT_Tools
             Append("ERROR", tag, summary);
         }
 
-        /// <summary>断言：condition 为 false 时按 Error 记录（对齐 Unity Debug.Assert 语义，开发期自检用）。</summary>
-        public static void Assert(string tag, bool condition, string message)
-        {
-            if (condition) return;
-            Write("ERROR", tag, "[Assert] " + message);
-        }
-
         // ---- tag = SectionOf<T>() 的便捷重载 ----
 
         public static void Debug<T>(string message) => Debug(Engine.SectionOf<T>(), message);
@@ -77,7 +70,6 @@ namespace DT_Tools
         public static void Error<T>(string message) => Error(Engine.SectionOf<T>(), message);
         public static void Fatal<T>(string message) => Fatal(Engine.SectionOf<T>(), message);
         public static void Exception<T>(Exception ex, string context = null) => Exception(Engine.SectionOf<T>(), ex, context);
-        public static void Assert<T>(bool condition, string message) => Assert(Engine.SectionOf<T>(), condition, message);
 
         // ---- 环形缓冲快照（WebUI 日志 API 用）----
 

@@ -1,25 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using DT_Tools.Commands;
+using DT_Tools.Game;
 using Protocol;
 using Server.Game;
 
 namespace DT_Tools.Commands.Faction
 {
     /// <summary>
-    /// /list_black、/list_dark、/list_white 共用业务：按 PlayerId 升序列出指定阵营玩家
+    /// /list_black、/list_dark、/list_white 共用业务：按 PlayerId 升序列出指定阵营玩家（含假人）
     /// （房主门禁由框架 RequireHost 统一执行，完整阵营数据仅在 Host 端）。
     /// </summary>
     internal static class FactionLogic
     {
-        /// <summary>非大厅的进行中状态（选角结束之后）。</summary>
-        private static bool IsInGame(EGameState state)
-        {
-            return state != EGameState.Lobby
-                && state != EGameState.NoneState
-                && state != EGameState.PickCharacter;
-        }
-
         public static CommandResult Execute(CommandContext ctx, EPlayerColor color, string title)
         {
             var room = GameRoom.Instance;
@@ -29,7 +22,8 @@ namespace DT_Tools.Commands.Faction
                 return CommandResult.Fail("no room");
             }
 
-            if (!IsInGame(room.State))
+            // global:: 全限定：Commands 命名空间下存在同名命令域 GameState（/game_state），裸名会解析成命名空间
+            if (!global::DT_Tools.Game.GameState.IsInGame(room.State))
             {
                 ctx.Reply($"仅在游戏中可用（当前状态: {room.State}）。");
                 return CommandResult.Fail("not in game", new { state = room.State.ToString() });
@@ -47,7 +41,6 @@ namespace DT_Tools.Commands.Faction
             var matched = room.Players
                 .Where(p => p?.PublicInfo != null
                     && !p.IsSpectator
-                    && !p.IsDummy
                     && p.Color == color)
                 .OrderBy(p => p.PublicInfo.PlayerId)
                 .ToList();

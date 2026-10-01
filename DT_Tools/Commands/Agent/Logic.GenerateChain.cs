@@ -36,38 +36,8 @@ namespace DT_Tools.Commands.Agent
                 !filter.MissionId.HasValue || filter.MissionId.Value == mission
                 || AgentItemHelper.RelatedTo(filter.MissionId.Value, mission);
 
-            // ── 矿物需求 ──
-            // 工艺台：StateList[0]=所需 DataId（唯一色）
-            // 收集柜：State[1]=红需求 State[2]=绿 State[3]=蓝；State[4..6]=已交类型(0红/1绿/2蓝)或-1
-            //         缺口 = 需求 - 已交该色次数；只挖/交仍缺的颜色
-            var neededMineralIds = new HashSet<int>();
-            foreach (var d in devices)
-            {
-                if (d.DeviceType == EDeviceType.Craft
-                    && d.Info.MissionType == (int)ESchoolMission.ScMineralCraft
-                    && d.Info.StateList != null && d.Info.StateList.Count > 0)
-                {
-                    int req = d.Info.StateList[0];
-                    if (req >= AgentItemHelper.MineralMin && req <= AgentItemHelper.MineralMax)
-                        neededMineralIds.Add(req);
-                }
-            }
-            bool craftLocked = neededMineralIds.Count > 0;
-            if (!craftLocked)
-            {
-                foreach (var d in devices)
-                {
-                    if (d.DeviceType != EDeviceType.Collector) continue;
-                    var cst = d.Info.StateList;
-                    if (cst == null || cst.Count < 7 || cst[0] != 1) continue;
-                    for (int type = 0; type < 3; type++)
-                    {
-                        int remain = AgentItemHelper.CollectorRemain(cst, type);
-                        if (remain > 0)
-                            neededMineralIds.Add(AgentItemHelper.MineralDataIdFromType(type));
-                    }
-                }
-            }
+            // ── 矿物需求（工艺台 + 收集柜缺口，统一由 ItemHelper 计算；槽位锚点见其布局表）──
+            var neededMineralIds = AgentItemHelper.BuildNeededMineralIds(devices);
 
             int handNow = Managers.Player?.MyPlayer?.PublicInfo?.HandItemId ?? 0;
             if (handNow < 0) handNow = 0;

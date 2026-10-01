@@ -10,33 +10,8 @@ namespace DT_Tools.Commands.Agent
     {
         public static void Collect(List<DeviceBase> devices, AgentFilter filter, AddDel Add)
         {
-            // 当前仍需要的矿色（工艺台 + 收集柜缺口）
-            var needMinerals = new HashSet<int>();
-            foreach (var d in devices)
-            {
-                if (d.DeviceType == EDeviceType.Craft
-                    && d.Info.MissionType == (int)ESchoolMission.ScMineralCraft
-                    && d.Info.StateList != null && d.Info.StateList.Count > 0)
-                {
-                    int req = d.Info.StateList[0];
-                    if (req >= AgentItemHelper.MineralMin && req <= AgentItemHelper.MineralMax)
-                        needMinerals.Add(req);
-                }
-            }
-            if (needMinerals.Count == 0)
-            {
-                foreach (var d in devices)
-                {
-                    if (d.DeviceType != EDeviceType.Collector) continue;
-                    var cst = d.Info.StateList;
-                    if (cst == null || cst.Count < 7 || cst[0] != 1) continue;
-                    for (int type = 0; type < 3; type++)
-                    {
-                        if (AgentItemHelper.CollectorRemain(cst, type) > 0)
-                            needMinerals.Add(AgentItemHelper.MineralDataIdFromType(type));
-                    }
-                }
-            }
+            // 当前仍需要的矿色（工艺台 + 收集柜缺口，统一由 ItemHelper 计算）
+            var needMinerals = AgentItemHelper.BuildNeededMineralIds(devices);
 
             // 当前仍需要的花色（喷雾合成台 + 调酒台缺口）
             var needFlowers = AgentItemHelper.BuildNeededFlowerIds(devices);

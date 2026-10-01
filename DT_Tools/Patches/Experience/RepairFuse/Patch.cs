@@ -7,7 +7,7 @@ namespace DT_Tools.Patches.Experience.RepairFuse
 {
     /// <summary>
     /// Fusebox.Interact 整替：总时长改配置，读条起点仍取服务端已修 tick
-    /// （原版 GetRepairTick 读 StateList[2]，0.1.15b Fusebox.cs:39-69）。
+    /// （原版 Interact 为 Fusebox.cs:39-63，GetRepairTick 为 :65-72，读 StateList[2] 在 :71）。
     /// protected override，字符串定位。
     /// </summary>
     [HarmonyPatch(typeof(Fusebox), "Interact")]
@@ -31,9 +31,7 @@ namespace DT_Tools.Patches.Experience.RepairFuse
             float repaired = Define.DecodeFuseboxRepairTick(tick);   // 0.1.15b Define.cs:2050
             float serverLeft = Math.Max(0f, VanillaTotal - repaired);
 
-            float cfg = RepairFuseFeature.CastingTime;
-            if (cfg < MinCasting || float.IsNaN(cfg) || float.IsInfinity(cfg))
-                cfg = VanillaTotal;
+            float cfg = Game.Casting.ClampSeconds(RepairFuseFeature.CastingTime, MinCasting, VanillaTotal);
 
             float remain = Math.Max(MinCasting, Math.Min(cfg, serverLeft));
             float total = repaired + remain;

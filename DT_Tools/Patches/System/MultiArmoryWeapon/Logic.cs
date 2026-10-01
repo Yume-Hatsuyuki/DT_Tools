@@ -25,6 +25,99 @@ namespace DT_Tools.Patches.System.MultiArmoryWeapon
             return Mathf.Clamp(want, 1, Mathf.Max(1, total));
         }
 
+        /// <summary>
+        /// 「投票任意黑方胜利」命中判定：庭审最高票（唯一）是任意活着的黑方（非本庭绑定凶手、非主谋）时为 true。
+        /// 不能复用原版 MostVotedPlayerId 当「最高票玩家」：它的返回值语义是「原版处决目标」——
+        /// 只有最高票为绑定凶手（TrialManager.cs:856-859）或主谋（:861-864）才返回对应 id，
+        /// 其余情形（含投中其他黑方与白方）一律返回 -1（:866），据此过滤会永远不命中。
+        /// 因此这里自读 _candidates（0.1.15b Server.Game/TrialManager.cs:47，私有）统计唯一最高票：
+        /// 无票（:835-838）、平票（:840-853）、绑定凶手（原版已判白胜 :787-791）、主谋（独立出局语义 :801-816）
+        /// 一律交还原版；其余仅当目标是活着的黑方才接管——死后被票出不算（原版 Trial Survive 豁免也仅限绑定凶手）。
+        /// </summary>
+        internal static bool TryGetAnyBlackCatch(Server.Game.TrialManager trial, out int catchId, out string skipReason)
+        {
+            catchId = -1;
+            skipReason = null;
+            Server.Game.GameRoom room = Server.Game.GameRoom.Instance;
+            if (room == null)
+            {
+                skipReason = "房间不存在";
+                return false;
+            }
+
+            List<Server.Game.TrialManager.Candidate> candidates = Traverse.Create(trial)
+                .Field("_candidates")
+                .GetValue<List<Server.Game.TrialManager.Candidate>>();
+            if (candidates == null || candidates.Count <= 1)
+            {
+                skipReason = $"候选数不足（{candidates?.Count ?? 0}）";
+                return false;
+            }
+
+            int topCount = 0;
+            foreach (Server.Game.TrialManager.Candidate candidate in candidates)
+            {
+                if (candidate.Info.VoteCount > topCount)
+                    topCount = candidate.Info.VoteCount;
+            }
+            if (topCount <= 0)
+            {
+                skipReason = "无人投票";
+                return false;
+            }
+
+            int topId = -1;
+            bool tied = false;
+            foreach (Server.Game.TrialManager.Candidate candidate in candidates)
+            {
+                if (candidate.Info.VoteCount != topCount)
+                    continue;
+                if (topId >= 0)
+                {
+                    tied = true;
+                    break;
+                }
+                topId = candidate.Info.PlayerId;
+            }
+            if (tied)
+            {
+                skipReason = $"平票（各 {topCount} 票）";
+                return false;
+            }
+
+            if (trial.Black != null && topId == trial.Black.PublicInfo.PlayerId)
+            {
+                skipReason = "最高票即本庭绑定凶手（原版判白胜）";
+                return false;
+            }
+            Server.Game.Player masterMind = room.MasterMind;
+            if (masterMind != null && topId == masterMind.PublicInfo.PlayerId)
+            {
+                skipReason = "最高票为主谋（原版 MastermindVoteLoss 语义）";
+                return false;
+            }
+
+            Server.Game.Player target = room.Players.FirstOrDefault(p => p.PublicInfo.PlayerId == topId);
+            if (target == null)
+            {
+                skipReason = $"最高票 #{topId} 不在玩家表";
+                return false;
+            }
+            if (target.Color != EPlayerColor.Black)
+            {
+                skipReason = $"最高票 #{topId} 非黑方（{target.Color}）";
+                return false;
+            }
+            if (!target.IsAlive)
+            {
+                skipReason = $"最高票 #{topId} 为已死黑方";
+                return false;
+            }
+
+            catchId = topId;
+            return true;
+        }
+
         /// <summary>刷刀后：按数量开放多架，并让 CurrentArmory 指向其中之一以兼容原版逻辑。</summary>
         public static void OpenAfterSpawn(Server.Game.DeviceManager dm, bool isInit)
         {

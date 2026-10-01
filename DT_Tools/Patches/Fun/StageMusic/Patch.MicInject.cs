@@ -43,6 +43,9 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 var prefix = new HarmonyMethod(typeof(StageMusicMicInject)
                     .GetMethod(nameof(MicPrefix), BindingFlags.NonPublic | BindingFlags.Static));
                 _harmony.Patch(target, prefix: prefix);
+                // 状态位归 Game 层（AudioPlayback 持有）：/play_audio 播放路径据此检测
+                // 广播能力缺席并告警，消除「点播广播静默依赖本功能开启」的隐性耦合
+                AudioPlayback.MicInjectMounted = true;
                 Log.Info<StageMusicFeature>("麦克风广播注入已挂载");
             }
             catch (Exception ex)

@@ -17,12 +17,11 @@ namespace DT_Tools.Game
 
     /// <summary>
     /// 控制台点播引擎（/play_audio、/stop_music 专用，Game 层公共能力）：
-    /// 与 StageMusic 补丁功能完全解耦——独立的 AudioSource/片段缓存/加载协程/限长停时器，
-    /// 不读取任何阶段配置，结束也不恢复"阶段音乐"（阶段音乐是另一条能力线）。
-    /// 加载期间的新点播会取代旧加载（修复旧实现"加载中点播被静默丢弃"）。
+    /// 与 StageMusic 补丁功能完全解耦——独立的播放槽状态，无状态部分共用 Game/AudioMix
+    /// （见其头注释）。加载期间的新点播会取代旧加载（修复旧实现"加载中点播被静默丢弃"）。
     /// 麦克风广播：播放时提取单声道 PCM，由 StageMusic 的语音注入钩子混入编码前帧
-    /// （总闸是 StageMusic 的 MicBroadcast 配置——注入钩子挂在语音管线上，属该功能域）；
-    /// 未启用时仅本地播放。
+    /// （总闸与注入点归属见 StageMusic/Patch.MicInject.cs）；
+    /// 注入点缺席（「阶段音乐」未启用或挂载失败）时仅本地播放，并在播放路径告警一次。
     /// </summary>
     public static class AudioPlayback
     {
@@ -47,6 +46,13 @@ namespace DT_Tools.Game
         internal static int MixSampleRate;
         internal static float MixStartRealtime;
         internal static bool MixActive;
+
+        /// <summary>
+        /// 语音注入点是否已挂载（StageMusic 的 MicInject 挂载成功后置位）。
+        /// Game 层不感知补丁层：只提供状态位，注入方负责写。
+        /// </summary>
+        internal static bool MicInjectMounted;
+        private static bool _micInjectWarned;
 
         /// <summary>
         /// 点播入口：kind 指定来源类型（Local/Online 显式指定，Auto 按前缀识别），
@@ -237,6 +243,14 @@ namespace DT_Tools.Game
             MixSampleRate = clip.frequency;
             MixStartRealtime = Time.realtimeSinceStartup;
             MixActive = true;
+
+            // 广播依赖语音注入钩子（由「阶段音乐」功能动态挂载）；缺席时点播只会本地响，
+            // 这里显式告警避免「以为广播了其实没有」的静默失效（每次进程只提醒一次）。
+            if (!MicInjectMounted && !_micInjectWarned)
+            {
+                _micInjectWarned = true;
+                Log.Warn(Tag, "点播广播不可用：语音注入点未挂载（需启用「阶段音乐」功能），本次仅本地播放");
+            }
         }
 
         /// <summary>

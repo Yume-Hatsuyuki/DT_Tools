@@ -19,6 +19,7 @@ import TerminalApp from '../apps/console/TerminalApp.vue';
 import ConfigApp from '../apps/config/ConfigApp.vue';
 import AutomationApp from '../apps/automation/AutomationApp.vue';
 import LogApp from '../apps/log/LogApp.vue';
+import DummyApp from '../apps/dummy/DummyApp.vue';
 
 import IconTerminal from '~icons/tabler/terminal';
 import IconPhoto from '~icons/tabler/photo';
@@ -33,6 +34,7 @@ import IconTerminal2 from '~icons/tabler/terminal-2';
 import IconAdjustmentsHorizontal from '~icons/tabler/adjustments-horizontal';
 import IconRobot from '~icons/tabler/robot';
 import IconListDetails from '~icons/tabler/list-details';
+import IconUsersGroup from '~icons/tabler/users-group';
 import IconBrandSteam from '~icons/tabler/brand-steam';
 
 /**
@@ -46,7 +48,8 @@ const apps = [
   { id: 'console', title: '控制台（旧版）', icon: markRaw(IconTerminal2), component: markRaw(ConsoleApp), defaults: { x: 90, y: 80, w: 760, h: 520 } },
   { id: 'config', title: 'DT 配置', icon: markRaw(IconAdjustmentsHorizontal), component: markRaw(ConfigApp), defaults: { x: 140, y: 110, w: 860, h: 580 } },
   { id: 'automation', title: '自动化', icon: markRaw(IconRobot), component: markRaw(AutomationApp), defaults: { x: 180, y: 140, w: 720, h: 520 } },
-  { id: 'log', title: '日志', icon: markRaw(IconListDetails), component: markRaw(LogApp), defaults: { x: 220, y: 170, w: 820, h: 560 } },
+  { id: 'dummy', title: '假人管理', icon: markRaw(IconUsersGroup), component: markRaw(DummyApp), defaults: { x: 220, y: 170, w: 780, h: 480 } },
+  { id: 'log', title: '日志', icon: markRaw(IconListDetails), component: markRaw(LogApp), defaults: { x: 260, y: 200, w: 820, h: 560 } },
 ];
 
 useLogStream();

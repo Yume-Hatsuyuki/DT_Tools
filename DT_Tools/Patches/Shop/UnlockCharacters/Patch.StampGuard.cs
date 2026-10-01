@@ -17,15 +17,12 @@ namespace DT_Tools.Patches.Shop.UnlockCharacters
     /// 与 UnlockEmotes 命名空间下的同目标守卫互为备份：Harmony 对多个 bool Prefix
     /// 任一返回 false 即跳过原方法（其余 Prefix 仍执行但本补丁无副作用），
     /// 两个功能同时开启时任一生效即可。
+    /// 已知取舍：原方法一次给角色与表情两个列表打戳，整体跳过会连表情侧的真实
+    /// 打戳一起推迟（两个 Feature 描述均已声明，见各自 Feature.cs）。
     /// </summary>
     [HarmonyPatch(typeof(SteamInventorySource), "StampNewlyAcquired")]
     internal static class UnlockCharactersStampGuardPatch
     {
-        private static bool Prefix()
-        {
-            if (!Engine.Enabled<UnlockCharactersFeature>())
-                return true;    // 功能关闭：放行原版，正常打戳
-            return false;       // 功能开启：跳过本次打戳（机制见类注释）
-        }
+        private static bool Prefix() => !Engine.Enabled<UnlockCharactersFeature>();
     }
 }

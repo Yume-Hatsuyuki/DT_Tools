@@ -29,8 +29,9 @@ namespace DT_Tools.Patches.System.DuplicateCharacter
             // _pickReady 为私有字段：0.1.15b GameRoom.cs:97
             if (!t.Field("_pickReady").GetValue<bool>())
             {
+                // 原版同分支英文文案（GameRoom.cs:1723 一带）："PickCharacter ignored - phase not ready yet"
                 Log.Info<DuplicateCharacterFeature>(
-                    $"PickCharacter ignored - phase not ready yet. playerId:{player.PublicInfo.PlayerId}");
+                    $"忽略选角请求：选角阶段尚未就绪。playerId:{player.PublicInfo.PlayerId}");
                 return false;
             }
 
@@ -48,7 +49,8 @@ namespace DT_Tools.Patches.System.DuplicateCharacter
             {
                 if (!pickPlayers.Contains(playerId) && randomPickPlayers.Add(playerId))
                 {
-                    Log.Info<DuplicateCharacterFeature>($"Random pick reserved - playerId:{playerId}");
+                    // 原版英文文案："Random pick reserved"
+                    Log.Info<DuplicateCharacterFeature>($"已登记随机选角 - playerId:{playerId}");
                     // 只回选择者本人：其他客户端收不到就不会置灰格子（原版广播会触发
                     // 对端的 Selected 锁定，挡住后续重复选择请求）
                     player.Session?.Send(new S_PICK_CHARACTER

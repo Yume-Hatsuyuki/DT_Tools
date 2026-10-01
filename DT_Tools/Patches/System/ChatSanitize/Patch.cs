@@ -1,3 +1,4 @@
+using System;
 using DT_Tools.Core;
 using HarmonyLib;
 using Server.Game;
@@ -17,7 +18,9 @@ namespace DT_Tools.Patches.System.ChatSanitize
                 return true;
 
             string text = raw ?? "";
-            int max = ChatSanitizeFeature.MaxLength;
+            // 手改 .cfg 可绕过 [Config(Min=100)]：低于原版 100 的截断上限不放行
+            // （对齐 LobbyMaxPlayers 的 Math.Clamp 收口惯例）
+            int max = Math.Max(100, ChatSanitizeFeature.MaxLength);
             if (text.Length > max)
             {
                 int n = max;

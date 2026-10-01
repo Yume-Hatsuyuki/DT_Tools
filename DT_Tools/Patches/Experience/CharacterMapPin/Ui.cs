@@ -34,8 +34,7 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
 
         private static bool _diagnosticsLogged;
 
-        // ── 反射缓存（pin 贴图替换/还原逐帧调用；HarmonyX 的 Traverse 无 MethodInfo 重载，
-        //    且 Traverse 绑定目标实例、跨实例不能复用，故缓存开放实例委托 / PropertyInfo）──
+        // ── 反射缓存（pin 贴图替换/还原逐帧调用；缓存策略见 Core/Reflect.cs 头注释）──
         /// <summary>UI_Base.GetObject(int) protected：0.1.15b UI_Base.cs:93。</summary>
         private static readonly Func<UI_Base, int, GameObject> PinGetObject =
             Reflect.Bind<Func<UI_Base, int, GameObject>>(typeof(UI_Base), "GetObject", new[] { typeof(int) });
@@ -201,10 +200,33 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
             CharacterMapPinState.Arrows.Clear();
         }
 
-        // ── pin 贴图还原（Enabled 热关闭）──────────────────────────────
-        // 原版 RefreshPlayerPin 对已存在的 pin 只调 SetLocalPosition、不重设 sprite
-        //（0.1.15b UI_GameScene.cs:850-866 / UI_GameTablet.cs:1211-1226 的 else 分支已核实），
-        // 所以热关闭后本功能换上的角色头像不会自行还原，必须在 OnDisabled 主动恢复。
+    // ── pin 贴图还原（Enabled 热关闭）──────────────────────────────
+    // 原版 RefreshPlayerPin 对已存在的 pin 只调 SetLocalPosition、不重设 sprite
+    //（0.1.15b UI_GameScene.cs:850-866 / UI_GameTablet.cs:1211-1226 的 else 分支已核实），
+    // 所以热关闭后本功能换上的角色头像不会自行还原，必须在 OnDisabled 主动恢复。
+
+    /// <summary>
+    /// 热关闭时删除「死亡保留 Pin」保下的 pin（KeepDeadPin 拦截记录在
+    /// CharacterMapPinState.KeptPinIds）：其玩家已 Despawn，原版不会再碰这些 pin，
+    /// 关闭功能后按原版"死亡即删"的观感主动清掉。HUD DeletePin(int) 私有走反射
+    ///（Logic.DeleteHudPin），平板 DeletePin(int) 为公开方法（0.1.15b UI_GameTablet.cs:1264）。
+    /// </summary>
+    public static void ClearKeptPins()
+    {
+        if (CharacterMapPinState.KeptPinIds.Count == 0 || Managers.Resource == null)
+            return;
+
+        UI_GameScene scene = Managers.UI != null ? Managers.UI.GetSceneUI<UI_GameScene>() : null;
+        UI_GameTablet tablet = Managers.Tablet != null ? Managers.Tablet.Tablet : null;
+
+        foreach (int id in CharacterMapPinState.KeptPinIds)
+        {
+            if (scene != null)
+                CharacterMapPinLogic.DeleteHudPin(scene, id);
+            tablet?.DeletePin(id);
+        }
+        CharacterMapPinState.KeptPinIds.Clear();
+    }
 
         /// <summary>
         /// 遍历 HUD（UI_GameScene._playerPinList）与平板（UI_GameTablet._subItems）两份 pin 列表，

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DT_Tools.Game;
 using Protocol;
 using Server.Game;
 
@@ -15,29 +16,17 @@ namespace DT_Tools.Commands.LunaProtect
     /// </summary>
     internal static class LunaProtectLogic
     {
-        /// <summary>房间守卫：切换中 / 迁移中 / 非生存阶段拒绝。</summary>
+        /// <summary>房间守卫：切换中 / 迁移中 / 非生存阶段拒绝（屏障判定上浮 Game/RoomFlow.TryGuardBusy）。</summary>
         public static bool TryGuard(GameRoom room, out string code, out string text)
         {
-            if (room.IsTransitioning)
-            {
-                code = "transitioning";
-                text = "阶段切换正在进行中（等待全体客户端加载完成），请稍后再试。";
+            if (!RoomFlow.TryGuardBusy(room, "施加护盾", out code, out text))
                 return false;
-            }
-            if (room.IsMigrating)
-            {
-                code = "migrating";
-                text = "正在进行主机迁移，无法施加护盾。";
-                return false;
-            }
             if (room.State != EGameState.Survive)
             {
                 code = "invalid state";
                 text = $"护盾命令仅能在生存阶段（Survive）使用，当前状态: {room.State}。";
                 return false;
             }
-            code = null;
-            text = null;
             return true;
         }
 

@@ -45,19 +45,21 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
     }
 
     /// <summary>
-    /// CharacterSortOrder.FillChineseOrder 整替（私有静态方法，字符串定位）：
-    /// 0.1.15b CharacterSortOrder.cs:16。原版 12 人序追加 101 置末位。
+    /// CharacterSortOrder.FillChineseOrder 后缀（私有静态方法，字符串定位）：
+    /// 0.1.15b CharacterSortOrder.cs:16。原版填 12 人中文序（101 不在其中；非中文
+    /// 分支也显式排除 101，见 :57-63）——后缀仅追加 101 置末位，不复制原版 12 人序，
+    /// 游戏改序时零漂移。
     /// </summary>
     [HarmonyPatch(typeof(CharacterSortOrder), "FillChineseOrder")]
     internal static class UnlockMadelineChineseOrderPatch
     {
-        private static bool Prefix(global::System.Collections.Generic.List<int> order)
+        private static void Postfix(global::System.Collections.Generic.List<int> order)
         {
             if (!Engine.Enabled<UnlockMadelineFeature>())
-                return true;
+                return;
 
-            order.AddRange(UnlockMadelineLogic.ChineseOrder);
-            return false;
+            if (!order.Contains(UnlockMadelineLogic.MadelineDataId))
+                order.Add(UnlockMadelineLogic.MadelineDataId);
         }
     }
 

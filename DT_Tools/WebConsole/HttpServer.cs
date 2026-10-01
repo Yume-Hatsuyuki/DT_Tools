@@ -48,8 +48,9 @@ namespace DT_Tools.WebConsole
         /// 通常双栈同时收 v4）；具体地址按 IPAddress 校验——IPv6 必须加方括号才是合法的
         /// HttpListener 前缀（如 http://[::1]:19450/）；localhost 原样；非法值回退 127.0.0.1 并告警。
         /// Unity(Mono) 的 HttpListener 不做 Windows URL ACL 校验，任意前缀可直接监听。
+        /// 监听地址解释的唯一权威：WsServer.ResolveIp 亦经本方法（避免两份口径漂移）。
         /// </summary>
-        private static string NormalizeIp(string raw)
+        public static string NormalizeIp(string raw)
         {
             string ip = (raw ?? "").Trim();
             if (ip.Length == 0

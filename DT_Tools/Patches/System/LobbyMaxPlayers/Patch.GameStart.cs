@@ -69,14 +69,14 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
             // FirstBloodVictimId 只有 private set（0.1.15b GameRoom.cs:127），走 public Restore
             __instance.RestoreFirstBloodVictimId(0);            // 0.1.15b GameRoom.cs:167
 
-            AwardManager.Instance.StartRound();                 // 0.1.15b AwardManager.cs:48（public）
+            AwardManager.Instance.StartRound();                 // 0.1.15b Server.Game/AwardManager.cs:48（public）
 
             return false;
         }
 
         /// <summary>
-        /// 开局任务分配：MissionManager 在发行程序集中为 internal（0.1.15b MissionManager.cs:10），
-        /// 反射访问统一收敛到 Game/MissionAccess（无参 StartMission()：MissionManager.cs:355）。
+        /// 开局任务分配：MissionManager 在发行程序集中为 internal（0.1.15b Server.Game/MissionManager.cs:10），
+        /// 反射访问统一收敛到 Game/MissionAccess（无参 StartMission()：Server.Game/MissionManager.cs:355）。
         /// </summary>
         private static void InvokeMissionStart()
         {

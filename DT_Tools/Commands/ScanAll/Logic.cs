@@ -1,12 +1,15 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DT_Tools.Commands;
 using DT_Tools.Game;
 using Protocol;
+using UnityEngine;
 
 namespace DT_Tools.Commands.ScanAll
 {
     /// <summary>
-    /// /scan_all 业务：本机身份守卫 + 可扫描设备筛选 + C_SCAN_DEVICE 群发。
+    /// /scan_all 业务：本机身份守卫 + 可扫描设备筛选 + C_SCAN_DEVICE 分帧群发（0.2s/包）。
     ///
     /// 原版客户端 DeviceBase.Scan 要求本地物理接触并启动 2 秒扫描条，完成后才发
     /// C_SCAN_DEVICE{DeviceId}；服务端 DeviceManager.Scan → device.Scan(player)
@@ -64,14 +67,35 @@ namespace DT_Tools.Commands.ScanAll
         /// 逐个发包并同步本地状态（标记已扫描 + 清除泡泡 UI，与原版 DeviceBase.Scan 一致）。
         /// 服务端无成功回执：线索经 S_SCAN_DEVICE / S_SCAN_CORPSE / S_SCAN_ARMORY 推送。
         /// </summary>
-        public static void Execute(DeviceManager device, List<DeviceBase> targets)
+        // 分帧间隔：调查阶段可达几十包，每包触发全员广播——按 0.2s 分帧错峰
+        // （对齐 Fusebox 域同类群发的协程节流惯例，节流标准统一）。
+        private const float PacketInterval = 0.2f;
+
+        public static IEnumerator SendPackets(List<DeviceBase> targets, CommandContext ctx)
         {
+            int sent = 0;
             foreach (var d in targets)
             {
+                if (Managers.Network == null || Managers.Network.GameServer == null || Managers.Game == null)
+                {
+                    ctx.Warn($"【知晓一切】网络链路已断开，中止剩余发包（已发 {sent}/{targets.Count}）。");
+                    yield break;
+                }
+
                 Managers.Network.GameServer.Send(new C_SCAN_DEVICE { DeviceId = d.ID });
                 Managers.Game.ScannedDeviceSet.Add(d.ID);
                 d.SetBubble(0);
+                sent++;
+
+                if (sent < targets.Count)
+                    yield return new WaitForSeconds(PacketInterval);
             }
+        }
+
+        /// <summary>启动分帧发送协程（挂 Core 常驻协程宿主，不依赖命令上下文存活）。</summary>
+        public static void StartPacketsCoroutine(List<DeviceBase> targets, CommandContext ctx)
+        {
+            Core.CoroutineHost.Start(SendPackets(targets, ctx));
         }
     }
 }

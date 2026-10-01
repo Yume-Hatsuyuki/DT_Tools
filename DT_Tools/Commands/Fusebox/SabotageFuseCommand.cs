@@ -14,6 +14,10 @@ namespace DT_Tools.Commands.Fusebox
     /// 没有距离、没有拔螺栓谜题校验——好人（White）也能拉闸停电，第 2 个电闸拉断时
     /// 还会获得 OnBlackout"主谋"成就。这是服务端缺失身份门导致的设计漏洞，本命令不额外限制颜色。
     ///
+    /// ⚠ 多人局警示（服务端无身份校验，事后无法区分是否命令所为）：
+    /// 好人（White）也能拉闸停电，第 2 个电闸拉断时还会获得 OnBlackout"主谋"成就——
+    /// 本命令不额外限制颜色，多人局使用会污染成就与游戏进程归属。
+    ///
     /// 实现原理：原版 Dark 侧客户端 Fusebox.UseSabotage 弹出 UI_FuseboxPopup 拔螺栓谜题，
     /// 谜题进度通过 C_HANDLE_FUSEBOX.SaveProgress 纯 cosmetic 广播；实际拉断只靠
     /// C_INTERACT_FUSEBOX（StateList[0]==0 → DisconnetCable），故直接发包即可绕过谜题。
@@ -32,7 +36,7 @@ namespace DT_Tools.Commands.Fusebox
         public string Name => "sabotage_fuse";
         public string[] Aliases => new[] { "拆电", "拉闸", "断电闸" };
         public string Usage => "sabotage_fuse [#id|all]";
-        public string Description => "客户端拉闸停电（直接发 C_INTERACT_FUSEBOX 触发 DisconnetCable，绕过谜题，好人也可用）。";
+        public string Description => "客户端拉闸停电（直接发 C_INTERACT_FUSEBOX 触发 DisconnetCable，绕过谜题，好人也可用）。⚠ 多人局：好人拉闸可拿「主谋」成就，游戏状态被污染且事后无法区分，慎用。";
         public string Author => "梦初雪";
 
         public bool RequireHost => false;

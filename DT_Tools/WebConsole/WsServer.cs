@@ -274,18 +274,17 @@ namespace DT_Tools.WebConsole
                 return Convert.ToBase64String(sha.ComputeHash(Encoding.ASCII.GetBytes(key + WsMagic)));
         }
 
-        /// <summary>监听地址解析（与 HttpServer.NormalizeIp 同语义，返回套接字地址）。</summary>
+        /// <summary>
+        /// 监听地址解析：解释口径统一走 HttpServer.NormalizeIp（唯一权威，消除两份同构归一化），
+        /// 这里只做字符串 → 套接字地址的转换（"*"/localhost 特判、IPv6 去方括号）。
+        /// </summary>
         private static IPAddress ResolveIp(string raw)
         {
-            string ip = (raw ?? "").Trim();
-            if (ip.Length == 0
-                || ip.Equals("0.0.0.0", StringComparison.OrdinalIgnoreCase)
-                || ip.Equals("any", StringComparison.OrdinalIgnoreCase)
-                || ip == "*")
-                return IPAddress.Any;
-            if (ip.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-                return IPAddress.Loopback;
-            return IPAddress.TryParse(ip, out var parsed) ? parsed : IPAddress.Loopback;
+            string ip = HttpServer.NormalizeIp(raw);
+            if (ip == "*") return IPAddress.Any;
+            if (ip.Equals("localhost", StringComparison.OrdinalIgnoreCase)) return IPAddress.Loopback;
+            string bare = ip.StartsWith("[") ? ip.Trim('[', ']') : ip;
+            return IPAddress.TryParse(bare, out var parsed) ? parsed : IPAddress.Loopback;
         }
     }
 }

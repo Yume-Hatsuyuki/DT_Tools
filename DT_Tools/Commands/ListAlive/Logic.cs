@@ -18,11 +18,8 @@ namespace DT_Tools.Commands.ListAlive
             public EPlayerColor Color;
         }
 
-        /// <summary>仅游戏中可用（选角结束之后）。</summary>
-        public static bool IsInGame(EGameState state)
-            => state != EGameState.Lobby
-               && state != EGameState.NoneState
-               && state != EGameState.PickCharacter;
+        /// <summary>仅游戏中可用（选角结束之后；判定上浮 Game/GameState.IsInGame）。</summary>
+        public static bool IsInGame(EGameState state) => global::DT_Tools.Game.GameState.IsInGame(state);
 
         /// <summary>收集存活玩家（存活、非观战、非 Dummy），按 PlayerId 升序，附 Roster SteamId。</summary>
         public static List<Entry> Collect(GameRoom room)

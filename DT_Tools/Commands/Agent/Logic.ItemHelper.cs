@@ -14,32 +14,68 @@ namespace DT_Tools.Commands.Agent
     internal static class AgentItemHelper
     {
         // ═══════════════════════════════════════════════════
-        //  道具 DataId 具名常量（与 Server.Game 各设备 Interact/HandleEvent 消耗条件一致）
+        //  Agent 域设备 StateList 槽位布局表（0.1.15b Server.Game 行号锚点）
+        //  —— 四条链（Delivery/Vacuum/Instant/Generate）+ 本文件全部槽位判断的唯一
+        //     核对入口；游戏升级后按此表逐行复核（审计技术负债 #1 的收口）。
+        // ═══════════════════════════════════════════════════
+        //
+        //  Mission·手术(SurgeryMission)     [0]=0 待收尸(Mission.cs:99→TakeInBody)；[0]==2 且 mt>0 二阶段(Mission.cs:103-106)
+        //  Computer·修电脑                  [1]==2 待插 U 盘、手=1008(Computer.cs:26)，写[0]=0 [1]=1(Computer.cs:30-31)
+        //  Charger·充电器                   激活置[2]=10 Bubble=1011(Charger.cs:110-111)；空电1011：[0]==0(Charger.cs:26)+[2]==10(:38)→写[0]=1 [1]=0(:46-47)；满电可取[0]==1 且 [2]==0(TakeOutBattery Charger.cs:57-59)
+        //  Miner·矿工                       [0]!=0 激活(Miner.cs:22)；电池1015：[1]==0(Miner.cs:24)→写[1]=5(:37-43)；抬杆[1]==5 且 mt>0(:28)、ControlLever(:49-62：[2]扳杆 [3]目标色(:85) [4]当前色(:58))
+        //  Warp·传送(科学 SubType=WarpScience) [0]!=0 激活(Warp.cs:34)；需电池 Bubble=1015(Warp.cs:178 SetDestination)；放电池 HandItemId==1015→写[2]=1 Bubble=0(Warp.cs:136-143)；解码完成[2]==1(Warp.cs:125)
+        //  Bio·生物电池                     [0]!=0 且 [1]==0 且 1015(Bio.cs:22)，写[1]=1(Bio.cs:28)
+        //  Collector·收集柜                 [0]==1 激活(Collector.cs:88)；[1..3]=各色需求次数(Collector.cs:96)；[4..6]=已交槽=矿物类型(0红/1绿/2蓝)或 -1(Collector.cs:54,102)
+        //  Craft·放矿/工艺                  放矿[0]=所需矿DataId、mt=7(Craft.cs:86-89)；交矿[0]==hand(Craft.cs:39-45)；完成[0]==0 且 mt==8(Craft.cs:35,63-68)
+        //  Boiler·温控(SubType=AdjustBoiler) 交热水1028：[0]==1 且手=1028(Boiler.cs:34；SubType 分流 Boiler.cs:22)
+        //  Boiler·制冰(SubType=IceMaker)    启动[0]=1 [1]=20 倒计时(Boiler.cs:62-63)；完成[0]=3 可取(Boiler.cs:151)
+        //  Potion·扫描仪(SubType=0)         槽常量 S_ACTIVE..S_STATUS(Potion.cs:8-18)；目标[1]/[2](Potion.cs:111-112)、已放[3]/[4](:82)、完成[5](:95)
+        //  Potion·色台(SubType=1..4)        InteractColor 每次进手一瓶、State 不关(Potion.cs:61-68)
+        //  Rune·符文台(RuneStand SubType=1) 放书[0]=1 [4]=书1051/1052(Rune.cs:105-108)；交书[1]==0 且 手==[4](Rune.cs:51-58)；完成[1]!=0
+        //  Occult·火焰(OccultFire)          交书[1]==1 且 dataId==Bubble(Occult.cs:68-77)
+        //  Occult·书/蜡烛                   书目标[0..5]=蜡烛翻面序(Occult.cs:134)；蜡烛状态[0](InteractOccultCandle Occult.cs:86)
+        //  Drink·调酒台(SubType=0)          开局[0]=1 [1]=0 目标[2]/[3](Drink.cs:136-146)；交花 mt>0(Drink.cs:75)+[1]==0(:79)+手==[2]/[3] 且[4]/[5]空(:86-94)；完成[1]=1(:109)；[1]==1 再交互发 1039(:116-119)
+        //  Drink·献酒雕像(SubType=1)        [0]=1(Drink.cs:191)；献酒[1]!=1 且 手==1040(Drink.cs:175)，写[1]=1(:180)
+        //  Cancer·喷雾台(SubType=1)         [0]!=0 且 SubType==1(Cancer.cs:31)；[1]==0 且槽[2]/[3]空(Cancer.cs:40)；目标[4]/[5](Cancer.cs:43-51)；完成[0]=0 [1]=1 [6]=5 [7]=0(Cancer.cs:72-75)
+        //  Alchemist·炼金锅(SubType=2)      [0]==1(Alchemist.cs:25)；投料[1]==0 且 手==Bubble(Alchemist.cs:29-41)；FireTick [1] 0→1→2(Alchemist.cs:60-81)；可取[1]==2(:47)
+        //  Flower·花盆                      [0]=0 浇水→1 生长([2]=10 倒计时 Flower.cs:33-34)→2 可采(Flower.cs:80)→3 凋谢(Flower.cs:59)
+        //  Mushroom·蘑菇                    [0]=1 激活(Mushroom.cs:90)、[1]/[2]=Index、[3]/[4]=双投放(Mushroom.cs:37-52)、完成[0]=2(:60)
+        //  Nintendo·任天堂                  mt==34 且 [7]!=1 可玩(Nintendo.cs:80-82)；硬币状态 HandleEvent(Nintendo.cs:112-133)、[6]=当前序号(:133)、[8]=占用玩家(:46-48)；[1] 硬币位图解包见 UnpackCoins
+        //  Sample·显微镜(SubType=Microscope)  mt==10 且 [0]!=0(Sample.cs:47；写[0]=0 Sample.cs:93-99)
+        //  Sample·分离机(SubType=Separator)  mt==9、启动 [1]==0(Sample.cs:60-67)→[1]=1、完成[1]=2(Sample.cs:84-85)
+        //  Fishing·钓鱼                     mt==40 即激活(Fishing.cs:49)；阶段 [1](Fishing.cs:139-186 推进)
+        //  ItemHolder·地面掉落              [0]=道具 DataId(服务端掉落设备 StateList.Add(item.DataId)，ItemManager.cs:65/165；摇酒替换写 [0]=newItemId，ItemManager.cs:203)
+        //  Mineral·矿                       HandleEvent IsSuccess 即掉落 1032/1033/1034(Mineral.cs:26-43)
+        //  摇酒(无设备)                     1039 随移动累计 Hand.Value≥24 → 1040(Server.Game/Player.cs:646-658，ClearMission ScShakeShaker)
+        //
+        // ═══════════════════════════════════════════════════
+        //  道具 DataId 具名常量（统一引用 Define.ITEM_ID_*，双权威收敛到游戏定义；
+        //  行号=0.1.15b Define.cs）
         // ═══════════════════════════════════════════════════
 
-        public const int ItemUsb = 1008;           // U 盘 → ScFixPc(17) 修电脑（0.1.15b Define.cs:640 ITEM_ID_USB）
-        public const int ItemManikin = 1009;       // 人体模型 → ScManikinStart(18) 手术台
-        public const int ItemEmptyBattery = 1011;  // 空电池 → ScChargeBattery(23) 充电器
-        public const int ItemBattery = 1015;       // 电池 → ScBatteryMiner(25)/ScBatteryWarp(26)/ScBatteryBio(27)
-        public const int FlowerRed = 1021;         // 红花（ScMakeSpray(2)/ScDrink(15) 目标花色）
-        public const int FlowerBlue = 1022;        // 蓝花
-        public const int FlowerYellow = 1023;      // 黄花
-        public const int FlowerPink = 1024;        // 粉花
-        public const int ItemSpray = 1025;         // 喷雾 → ScSprayCancer(20)
-        public const int ItemMushroom = 1026;      // 蘑菇 → ScMushroomAlchemist(30)
-        public const int ItemHotWater = 1028;      // 热水 → ScBoiler(14) 温控
-        public const int ItemAlchemyPotion = 1030; // 炼金药 → ScPotionAlchemist(21)
-        public const int MineralBlue = 1032;       // 蓝矿（EMineralType.BlueMineral 产出）
-        public const int MineralGreen = 1033;      // 绿矿（EMineralType.GreenMineral 产出）
-        public const int MineralRed = 1034;        // 红矿（EMineralType.RedMineral 产出）
-        public const int ItemRawSake = 1039;       // 生酒 → ScShakeShaker(16)（玩家摇酒变 1040，无法发包）
-        public const int ItemShakenSake = 1040;    // 熟酒 → ScShakerDrink(22) 献酒
-        public const int PotionDataIdBase = 1045;  // 药水色 = DataId - 1045（1046红/1047绿/1048蓝/1049黄）
-        public const int ItemBookOne = 1051;       // 符文书 A → ScFire(4)/ScBookRune(11) 两用
-        public const int ItemBookTwo = 1052;       // 符文书 B → 同上
-        public const int FishNormal = 1059;        // 钓鱼产出：普通鱼（非任务道具，必丢）
-        public const int FishRare = 1060;          // 稀有鱼
-        public const int FishGold = 1061;          // 金鱼
+        public const int ItemUsb = Define.ITEM_ID_USB;                       // 1008 U 盘 → ScFixPc 修电脑（Define.cs:640）
+        public const int ItemManikin = Define.ITEM_ID_MANIKIN;               // 1009 人体模型 → ScManikinStart 手术台（Define.cs:642）
+        public const int ItemEmptyBattery = Define.ITEM_ID_BATTERY_EMPTY;    // 1011 空电池 → ScChargeBattery 充电器（Define.cs:646）
+        public const int ItemBattery = Define.ITEM_ID_BATTERY_FULL;          // 1015 电池 → Miner/Warp/Bio 三处消耗（Define.cs:648）
+        public const int FlowerRed = Define.ITEM_ID_RED_FLOWER;              // 1021 红花（ScMakeSpray/ScDrink 目标花色，Define.cs:650）
+        public const int FlowerBlue = Define.ITEM_ID_BLUE_FLOWER;            // 1022 蓝花（Define.cs:652）
+        public const int FlowerYellow = Define.ITEM_ID_YELLOW_FLOWER;        // 1023 黄花（Define.cs:654）
+        public const int FlowerPink = Define.ITEM_ID_PINK_FLOWER;            // 1024 粉花（Define.cs:656）
+        public const int ItemSpray = Define.ITEM_ID_AMPLE;                   // 1025 喷雾 → ScSprayCancer（Define.cs:658）
+        public const int ItemMushroom = Define.ITEM_ID_MUSHROOM;             // 1026 蘑菇 → ScMushroomAlchemist（Define.cs:660）
+        public const int ItemHotWater = Define.ITEM_ID_ICE_WATER;            // 1028 热水/冰水 → ScBoiler 温控（Define.cs:662；Define 命名为 ICE_WATER，调酒台侧用它当热水）
+        public const int ItemAlchemyPotion = Define.ITEM_ID_ULTIMATEPOTION;  // 1030 炼金药 → ScPotionAlchemist（Define.cs:664）
+        public const int MineralBlue = Define.ITEM_ID_BLUEMINERAL;           // 1032 蓝矿（EMineralType.BlueMineral 产出，Define.cs:668）
+        public const int MineralGreen = Define.ITEM_ID_GREENMINERAL;         // 1033 绿矿（Define.cs:670）
+        public const int MineralRed = Define.ITEM_ID_REDMINERAL;             // 1034 红矿（Define.cs:672）
+        public const int ItemRawSake = Define.ITEM_ID_SHAKER_BALL_01;        // 1039 生酒 → ScShakeShaker（Define.cs:690；玩家摇动变 1040，无法直接发包）
+        public const int ItemShakenSake = Define.ITEM_ID_SHAKER_BALL_02;     // 1040 熟酒 → ScShakerDrink 献酒（Define.cs:692）
+        public const int PotionDataIdBase = Define.ITEM_ID_SYRINGE_YELLOW;   // 1045 药水色基：色 = DataId - 1045（1046红/1047绿/1048蓝/1049黄，Define.cs:702-710）
+        public const int ItemBookOne = Define.ITEM_ID_RED_BOOK;              // 1051 符文书 A → ScFire/ScBookRune 两用（Define.cs:712）
+        public const int ItemBookTwo = Define.ITEM_ID_BLUE_BOOK;             // 1052 符文书 B → 同上（Define.cs:714）
+        public const int FishNormal = Define.ITEM_ID_FISH_NORMAL;            // 1059 钓鱼产出：普通鱼（非任务道具，必丢，Define.cs:678）
+        public const int FishRare = Define.ITEM_ID_FISH_RARE;                // 1060 稀有鱼（Define.cs:680）
+        public const int FishGold = Define.ITEM_ID_FISH_GOLD;                // 1061 金鱼（Define.cs:682）
 
         /// <summary>矿物 DataId 区间（收矿/采矿共用判断）。</summary>
         public const int MineralMin = MineralBlue;
@@ -50,8 +86,8 @@ namespace DT_Tools.Commands.Agent
         public const int FlowerMax = FlowerPink;
 
         /// <summary>药水 DataId 区间。</summary>
-        public const int PotionMin = 1046;
-        public const int PotionMax = 1049;
+        public const int PotionMin = Define.ITEM_ID_POTION_RED;     // 1046（Define.cs:704）
+        public const int PotionMax = Define.ITEM_ID_POTION_YELLOW;  // 1049（Define.cs:710）
 
         // ═══════════════════════════════════════════════════
         //  矿石 / 花 / 鱼映射（旧 AgentItemHelper）
@@ -232,7 +268,10 @@ namespace DT_Tools.Commands.Agent
         /// <summary>
         /// 手上物品是否应丢弃。判断顺序：
         ///   1. 鱼 → 必丢（从不是任务道具）。
-        ///   2. 有精确交付目标（HasDeliveryTarget 命中具体空槽）→ 保留，等下一步交付。
+        ///   2. 有精确交付目标 → 保留，等下一步交付。判定直接复用交付链
+        ///      （AgentDeliveryChain.Collect）——「能生成交付步骤」才叫有目标，
+        ///      与执行侧天然同源，杜绝「判有目标、无步骤」的静默空转（审计 E-6：
+        ///      旧双份判定条件已漂移，如 Warp 电池不查 WarpScience、火焰交书不查 st[1]==1）。
         ///   3. 非任务道具（不在 MissionsOfItem 表里）→ 丢。
         ///   4. 任务道具，但其所有候选任务在本局都已不再激活 → 丢。
         ///      这覆盖两种情况：(a) 这局根本没有这个任务链（比如没有符文任务却捡到符文书），
@@ -247,86 +286,15 @@ namespace DT_Tools.Commands.Agent
             if (hand <= 0) return false;
             if (IsFish(hand)) return true;
 
-            if (HasDeliveryTarget(hand, devices)) return false;
+            bool hasDelivery = false;
+            AgentDeliveryChain.Collect(hand, devices,
+                (priority, label, mission, deviceId, send, changesHand) => hasDelivery = true);
+            if (hasDelivery) return false;
 
             if (!IsMissionItem(hand)) return true;
 
             if (!IsItemMissionActive(hand)) return true;
 
-            return false;
-        }
-
-        public static bool HasDeliveryTarget(int hand, List<DeviceBase> devices)
-        {
-            foreach (var dev in devices)
-            {
-                if (dev.Data == null) continue;
-                var st = dev.Info.StateList;
-                int sub = dev.Data.SubType;
-                int mt = dev.Info.MissionType;
-                int bubble = dev.Info.Bubble;
-                if (hand == ItemManikin && dev.DeviceType == EDeviceType.Mission
-                    && sub == (int)EMissionType.SurgeryMission && st != null && st.Count > 0 && st[0] == 0)
-                    return true;
-                if (hand == ItemUsb && dev.DeviceType == EDeviceType.Computer && st != null && st.Count > 1 && st[1] == 2)
-                    return true;
-                if (hand == ItemSpray && dev.DeviceType == EDeviceType.Mission && sub == (int)EMissionType.CancerMission)
-                    return true;
-                if (hand == ItemAlchemyPotion && dev.DeviceType == EDeviceType.Mission && bubble == ItemAlchemyPotion)
-                    return true;
-                if (hand == ItemEmptyBattery && dev.DeviceType == EDeviceType.Charger && st != null && st.Count > 2 && st[0] == 0 && st[2] == 10)
-                    return true;
-                if (hand == ItemBattery && ((dev.DeviceType == EDeviceType.Miner && st != null && st.Count > 1 && st[0] != 0 && st[1] == 0)
-                    || (dev.DeviceType == EDeviceType.Warp && bubble == ItemBattery)
-                    || (dev.DeviceType == EDeviceType.Bio && st != null && st.Count > 1 && st[0] != 0 && st[1] == 0)))
-                    return true;
-                if (hand == ItemMushroom && dev.DeviceType == EDeviceType.Alchemist && bubble == ItemMushroom)
-                    return true;
-                if ((hand == ItemBookOne || hand == ItemBookTwo) && (
-                    (dev.DeviceType == EDeviceType.Rune && sub == (int)ERuneType.RuneStand && st != null && st.Count > 4 && st[1] == 0 && st[4] == hand)
-                    || (dev.DeviceType == EDeviceType.Occult && sub == (int)EOccultType.OccultFire && bubble == hand)))
-                    return true;
-                if (hand >= FlowerMin && hand <= FlowerMax)
-                {
-                    // 喷雾台：手上花必须命中某个仍空着的目标槽（[4]/[5]目标，对应物理槽[2]/[3]）
-                    // 依据 Server.Game/Cancer.cs InteractCompounder：
-                    //   遍历 [4],[5] 找 StateList[i]==Hand.DataId 的目标，命中后写入 index+2 指定的物理槽。
-                    //   若两个物理槽都已占满（st[2]!=0 且 st[3]!=0），交付会静默失败（return），
-                    //   故这里必须同时检查"至少还有一个空物理槽"，不能只看设备类型和任务类型。
-                    if (dev.DeviceType == EDeviceType.Cancer && mt == (int)ESchoolMission.ScMakeSpray
-                        && st != null && st.Count >= 6 && st[1] == 0
-                        && ((st[4] == hand && st[2] == 0) || (st[5] == hand && st[3] == 0)))
-                        return true;
-                    // 调酒台：手上花必须命中某个仍空着的目标槽（[2]/[3]目标，[4]/[5]已放）
-                    // 依据 Server.Game/Drink.cs InteractTable：
-                    //   遍历 [2],[3] 找 StateList[i]==HandItemId 且 StateList[i+2]==0 的槽，命中即交付。
-                    if (dev.DeviceType == EDeviceType.Drink && mt == (int)ESchoolMission.ScDrink
-                        && st != null && st.Count >= 6 && st[1] == 0
-                        && ((st[2] == hand && st[4] == 0) || (st[3] == hand && st[5] == 0)))
-                        return true;
-                }
-                if (hand >= MineralMin && hand <= MineralMax)
-                {
-                    if (dev.DeviceType == EDeviceType.Craft && mt == (int)ESchoolMission.ScMineralCraft
-                        && st != null && st.Count > 0 && st[0] == hand)
-                        return true;
-                    if (dev.DeviceType == EDeviceType.Collector && st != null && st.Count >= 7 && st[0] == 1
-                        && CollectorRemain(st, MineralTypeFromDataId(hand)) > 0)
-                        return true;
-                }
-                if (hand == ItemHotWater && dev.DeviceType == EDeviceType.Boiler && sub == (int)EBoilerType.AdjustBoiler && st != null && st[0] == 1)
-                    return true;
-                if (hand >= PotionMin && hand <= PotionMax && dev.DeviceType == EDeviceType.Potion
-                    && dev.Data.SubType == 0 && mt == (int)ESchoolMission.ScPotion
-                    && st != null && st.Count >= 6 && st[0] == 1 && st[5] == 0)
-                {
-                    int color = hand - PotionDataIdBase; // 1046→1
-                    int need = st[3] == 0 ? st[1] : (st[4] == 0 ? st[2] : 0);
-                    if (color == need) return true;
-                }
-                if (hand == ItemShakenSake && dev.DeviceType == EDeviceType.Drink && sub == 1)
-                    return true;
-            }
             return false;
         }
 
@@ -393,6 +361,43 @@ namespace DT_Tools.Commands.Agent
                         needed.Add(dst[2]);
                     if (dst[5] == 0 && dst[3] >= FlowerMin && dst[3] <= FlowerMax)
                         needed.Add(dst[3]);
+                }
+            }
+            return needed;
+        }
+
+        /// <summary>
+        /// 计算当前仍需要的矿物 DataId 集合（工艺台所需 + 收集柜缺口）。
+        /// 供 VacuumChain/GenerateChain 复用，消除两份同构计算（范本：BuildNeededFlowerIds）。
+        /// 依据：工艺台所需矿见槽位布局表 Craft 行（Craft.cs:86-89）；
+        /// 收集柜需求/已交槽见 Collector 行（Collector.cs:88-104）。
+        /// </summary>
+        public static HashSet<int> BuildNeededMineralIds(List<DeviceBase> devices)
+        {
+            var needed = new HashSet<int>();
+            foreach (var d in devices)
+            {
+                if (d.DeviceType == EDeviceType.Craft
+                    && d.Info.MissionType == (int)ESchoolMission.ScMineralCraft
+                    && d.Info.StateList != null && d.Info.StateList.Count > 0)
+                {
+                    int req = d.Info.StateList[0];
+                    if (req >= MineralMin && req <= MineralMax)
+                        needed.Add(req);
+                }
+            }
+            if (needed.Count == 0)
+            {
+                foreach (var d in devices)
+                {
+                    if (d.DeviceType != EDeviceType.Collector) continue;
+                    var cst = d.Info.StateList;
+                    if (cst == null || cst.Count < 7 || cst[0] != 1) continue;
+                    for (int type = 0; type < 3; type++)
+                    {
+                        if (CollectorRemain(cst, type) > 0)
+                            needed.Add(MineralDataIdFromType(type));
+                    }
                 }
             }
             return needed;

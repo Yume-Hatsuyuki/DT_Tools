@@ -25,7 +25,7 @@ namespace DT_Tools.Patches.Experience.EmoteNoCd
             UI_EmotionPanel panel =
                 __instance.gameObject.FindComponentInParents<UI_EmotionPanel>();
             if (panel == null)
-                Log.Error<EmoteNoCdFeature>("Not Find Parent : UI_EmotionPanel");
+                Log.Error<EmoteNoCdFeature>("父面板缺失：UI_EmotionPanel");
 
             bool canUse =
                 panel != null

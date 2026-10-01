@@ -56,8 +56,9 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
             // 已绑定非 Dummy 的重复 C_ENTER_GAME 忽略（原版 0.1.15b GameRoom.cs:1041）
             if (session.Player != null && !session.Player.IsDummy)
             {
+                // 原版英文文案："Duplicate enter ignored"
                 Log.Info<LobbyMaxPlayersFeature>(
-                    $"Duplicate enter ignored pid={session.Player.PublicInfo.PlayerId} name={pkt.PlayerName}");
+                    $"忽略重复进房 pid={session.Player.PublicInfo.PlayerId} name={pkt.PlayerName}");
                 return false;
             }
 
@@ -74,7 +75,8 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
             pkt.PlayerName = Util.NeutralizeRichText(pkt.PlayerName);
             if (pendingDisconnects.Remove(session.SteamId))
             {
-                Log.Info<LobbyMaxPlayersFeature>($"Reject enter: steamId already left lobby ({session.SteamId})");
+                // 原版英文文案："Reject enter: steamId already left lobby"
+                Log.Info<LobbyMaxPlayersFeature>($"拒绝进房：steamId 已离开大厅（{session.SteamId}）");
                 s_ENTER_GAME.Success = false;
                 s_ENTER_GAME.Name = "ErrorRoomFull";
                 session.Send(s_ENTER_GAME);
@@ -124,8 +126,9 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
             {
                 s_ENTER_GAME.Success = false;
                 s_ENTER_GAME.Name = "ErrorBuildMismatch";
+                // 原版英文文案："[Host] Build mismatch on join"
                 Log.Info<LobbyMaxPlayersFeature>(
-                    "[Host] Build mismatch on join: guest='" + guestBuild + "' vs host='" + hostBuild + "'");
+                    "进房版本不匹配：guest='" + guestBuild + "' vs host='" + hostBuild + "'");
             }
             else if (InvokeCheckDuplicationName(__instance, pkt.PlayerName, session, pkt.PlayerId))
             {
@@ -137,8 +140,9 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
                 spectating = true;
             }
 
+            // 原版英文文案："Enter decision"
             Log.Info<LobbyMaxPlayersFeature>(
-                $"Enter decision name={pkt.PlayerName} success={s_ENTER_GAME.Success} reason={s_ENTER_GAME.Name} " +
+                $"进房判定 name={pkt.PlayerName} success={s_ENTER_GAME.Success} reason={s_ENTER_GAME.Name} " +
                 $"players={__instance.Players.Count} members={__instance.RoomMemberCountForMetadata()} " +
                 $"state={__instance.State} spectating={spectating}");
             if (!s_ENTER_GAME.Success)
@@ -191,8 +195,9 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
             {
                 pendingBootstrap.Add(player.PublicInfo.PlayerId);
             }
+            // 原版英文文案："[Tracking][Lifecycle] Host enter"
             Log.Info<LobbyMaxPlayersFeature>(
-                $"[Tracking][Lifecycle] Host enter pid={player.PublicInfo.PlayerId} name={player.Name} " +
+                $"[生命周期] 房主机进房 pid={player.PublicInfo.PlayerId} name={player.Name} " +
                 $"state={__instance.State} playersCount={__instance.Players.Count}");
             if (spectating)
             {

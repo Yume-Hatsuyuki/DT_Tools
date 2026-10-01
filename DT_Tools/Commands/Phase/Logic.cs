@@ -1,5 +1,6 @@
 using System.Linq;
 using DT_Tools.Commands;
+using DT_Tools.Game;
 using DT_Tools.Patches.System.DetectivePhaseFix;
 using Protocol;
 using Server.Game;
@@ -24,17 +25,12 @@ namespace DT_Tools.Commands.Phase
             return room;
         }
 
-        /// <summary>阶段切换屏障 / Host 迁移进行中时拒绝再次跳转。</summary>
+        /// <summary>阶段切换屏障 / Host 迁移进行中时拒绝再次跳转（判定上浮 Game/RoomFlow.TryGuardBusy）。</summary>
         private static bool EnsureNotBusy(GameRoom room, CommandContext ctx)
         {
-            if (room.IsTransitioning)
+            if (!RoomFlow.TryGuardBusy(room, "切换阶段", out _, out string text))
             {
-                ctx.Reply("阶段切换正在进行中（等待全体客户端加载完成），请稍后再试。");
-                return false;
-            }
-            if (room.IsMigrating)
-            {
-                ctx.Reply("正在进行主机迁移，无法切换阶段。");
+                ctx.Reply(text);
                 return false;
             }
             return true;
