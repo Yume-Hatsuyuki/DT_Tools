@@ -54,8 +54,8 @@ export const API = {
   commands: () => request('/api/commands'),
   steamPlayers: () => request('/api/steam/players'),
 
-  // 文件选择（尽力而为的原生对话框，见 FilePickerApi 后端注释）
-  pickFile: () => request('/api/pick-file'),
+  // 本机目录浏览（WebUI 内置文件选择器的数据源；path 为空=盘符根视图）
+  fsList: (path) => request('/api/fs/list' + (path ? '?path=' + encodeURIComponent(path) : '')),
 
   // 桌面壳系统操作
   gameExit: () => post('/api/game/exit'),

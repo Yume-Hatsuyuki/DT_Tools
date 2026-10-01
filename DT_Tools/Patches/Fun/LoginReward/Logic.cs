@@ -1,4 +1,5 @@
 using DT_Tools.Core;
+using HarmonyLib;
 using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.LoginReward
@@ -9,9 +10,23 @@ namespace DT_Tools.Patches.Fun.LoginReward
     ///   服务端权威 + 每日限额）→ 回调经 OnChanged 到达 → TryShowPopup 终态裁决。
     /// 终态规则：earned&gt;0 走官方动画；earned&lt;=0 立即视为「服务端当日已满或拒绝」，
     /// 不再死等（旧版在此死等 60 秒超时，即 0.1.15b 下登录奖励失效的根因）。
+    ///
+    /// 在途竞态（0.1.15b 修复）：GrantFreeFromStars 入口把 _revealEarned 清 0
+    /// （InventoryManager.cs:353），真终态要等 grant 回调写入（:356）。在途窗口内
+    /// 任何其它来源的 OnChanged（价格缓存/库存全量刷新等）会被当成终态，读走 0
+    /// 误判「服务端拒绝」。TryGrant 发请求前把 _revealEarned 置 InFlightEarned(-1)，
+    /// OnInventoryChanged 见 -1 即过滤（真回调只写 0/正数，见 State.InFlightEarned）。
     /// </summary>
     internal static class LoginRewardLogic
     {
+        /// <summary>
+        /// 0.1.15b InventoryManager.cs:40——公开属性 LastRevealEarned 的后备字段；
+        /// 写点 :353（入口清 0）与 :356（grant 回调写终值）。游戏升级后按行号复核；
+        /// 仅写需要反射（读走公开属性），字段缺失时跳过标记并告警，行为退回旧版。
+        /// </summary>
+        // 注意:Patches 命名空间链遮蔽全局 System(工作守则 §5.3),须 global:: 全限定
+        private static readonly global::System.Reflection.FieldInfo RevealEarnedField =
+            AccessTools.Field(typeof(InventoryManager), "_revealEarned");
         /// <summary>
         /// 订阅库存回调并安排首次发放尝试（Init 后缀与 OnEnabled 热开启共用）。
         /// Init 可能多次触发（每次启动流程），按实例判重。
@@ -76,6 +91,12 @@ namespace DT_Tools.Patches.Fun.LoginReward
 
             if (LoginRewardState.WaitingReveal && !LoginRewardState.PopupDone)
             {
+                // 在途过滤：抢跑的 OnChanged 时 _revealEarned 仍为 -1（见 TryGrant），
+                // 说明 grant 回调未到，不算终态；真回调只会写 0 或正数
+                var waitingInv = Managers.Inventory;
+                if (waitingInv != null && waitingInv.LastRevealEarned == LoginRewardState.InFlightEarned)
+                    return;
+
                 LoginRewardState.RevealResolved = true;
                 TryShowPopup();
             }
@@ -148,6 +169,14 @@ namespace DT_Tools.Patches.Fun.LoginReward
                 AmountToStars(want, cap, out int gold, out int silver);
                 Log.Info<LoginRewardFeature>(
                     $"请求发放 amount={want} → 金星={gold} 银星={silver}（今日 {earnedToday}/{cap}，ForceAnim={forceAnim}）");
+
+                // 在途标记：见类头注释「在途竞态」。必须在调用前写——GrantFreeFromStars
+                // 入口会清 0（0.1.15b InventoryManager.cs:353），真回调只写 0/正数
+                if (RevealEarnedField != null)
+                    RevealEarnedField.SetValue(inv, LoginRewardState.InFlightEarned);
+                else
+                    Log.Warn<LoginRewardFeature>(
+                        "InventoryManager._revealEarned 缺失（游戏升级？）——在途标记不可用，OnChanged 抢跑误判风险回归（0.1.15b InventoryManager.cs:40 核对）。");
 
                 // 0.1.15b InventoryManager.cs:349：置 pending 后经服务端异步发放，
                 // 其末尾会同步触发一次 OnChanged（InventoryManager.cs:360），先标记调用窗口

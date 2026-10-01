@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { API } from '../../api.js';
 import { normalizeOptions, isNumberType } from './configUtils.js';
+import FileBrowser from '../common/FileBrowser.vue';
 import IconFolderOpen from '~icons/tabler/folder-open';
 
 const props = defineProps({
@@ -24,22 +24,13 @@ const looksLikePathField = computed(() =>
   !isBool.value && !options.value && (props.entry.type || '').toLowerCase() === 'string'
   && /Track$/.test(props.entry.key || ''));
 
-const picking = ref(false);
-async function pickFile() {
-  picking.value = true;
-  try {
-    const r = await API.pickFile();
-    if (r.unauthorized) return;
-    if (!r.ok) {
-      alert('原生文件选择框不可用（' + (r.error || '未知原因') + '），可直接手动输入路径。');
-      return;
-    }
-    if (r.canceled) return;
-    local.value = r.path;
-    commit();
-  } finally {
-    picking.value = false;
-  }
+// 文件夹按钮 → WebUI 内置文件浏览器（原生对话框在游戏 Mono 里加载不了
+// System.Windows.Forms，改为浏览器内直接浏览本机目录；文本框手输路径始终可用）
+const browsing = ref(false);
+function onPicked(p) {
+  browsing.value = false;
+  local.value = p;
+  commit();
 }
 
 function commit() {
@@ -82,9 +73,16 @@ function toggleBool() {
       @change="commit"
       @keydown.enter="commit"
     >
-    <button class="pick-btn" type="button" :disabled="picking" title="从本机选择文件（原生对话框，尽力而为）" @click="pickFile">
+    <button class="pick-btn" type="button" title="在 WebUI 中浏览本机文件" @click="browsing = true">
       <IconFolderOpen />
     </button>
+    <FileBrowser
+      v-if="browsing"
+      :start-path="local"
+      title="选择音频文件"
+      @select="onPicked"
+      @close="browsing = false"
+    />
   </div>
 
   <input
@@ -147,7 +145,6 @@ function toggleBool() {
   color: var(--text-1);
   cursor: pointer;
 }
-.pick-btn:hover:not(:disabled) { color: var(--accent-cyan); border-color: var(--accent-cyan-dim); }
-.pick-btn:disabled { opacity: 0.5; cursor: default; }
+.pick-btn:hover { color: var(--accent-cyan); border-color: var(--accent-cyan-dim); }
 .pick-btn svg { width: 15px; height: 15px; }
 </style>
