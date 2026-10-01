@@ -41,7 +41,10 @@ namespace DT_Tools.Commands.Kill
                || state == EGameState.Detective
                || state == EGameState.Trial;
 
-        /// <summary>单目标校验：观战者 / Dummy（主机占位）/ 已死亡不可处决。</summary>
+        /// <summary>
+        /// 单目标校验：观战者 / 已死亡不可处决。
+        /// （0.1.15b Server.Game/Player.cs:857-878），假会话只丢弃发给自己的包，死亡流程完整。
+        /// </summary>
         public static bool IsTargetKillable(Server.Game.Player target, out string text, out string code)
         {
             int id = target.PublicInfo.PlayerId;
@@ -49,12 +52,6 @@ namespace DT_Tools.Commands.Kill
             {
                 code = "target is spectator";
                 text = $"目标 {target.Name}（#{id}）是观战者，无法处决。";
-                return false;
-            }
-            if (target.IsDummy)
-            {
-                code = "target is dummy";
-                text = $"目标 {target.Name}（#{id}）是 Dummy（主机占位），无法处决。";
                 return false;
             }
             if (!target.IsAlive)

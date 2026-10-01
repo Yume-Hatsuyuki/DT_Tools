@@ -7,7 +7,7 @@ using Server.Game;
 namespace DT_Tools.Commands.Faction
 {
     /// <summary>
-    /// /list_black、/list_dark、/list_white 共用业务：按 PlayerId 升序列出指定阵营玩家
+    /// /list_black、/list_dark、/list_white 共用业务：按 PlayerId 升序列出指定阵营玩家（含假人）
     /// （房主门禁由框架 RequireHost 统一执行，完整阵营数据仅在 Host 端）。
     /// </summary>
     internal static class FactionLogic
@@ -47,7 +47,6 @@ namespace DT_Tools.Commands.Faction
             var matched = room.Players
                 .Where(p => p?.PublicInfo != null
                     && !p.IsSpectator
-                    && !p.IsDummy
                     && p.Color == color)
                 .OrderBy(p => p.PublicInfo.PlayerId)
                 .ToList();

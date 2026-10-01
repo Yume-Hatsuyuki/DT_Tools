@@ -100,7 +100,8 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
                     CharacterMapPinUi.ApplyPin(pin, player, CharacterMapPinFeature.ReplaceBlackPin);
             }
 
-            // 清掉已不在 live 列表里的他人 pin（DeletePin(int) 私有：0.1.15b UI_GameScene.cs:933）
+            // 清掉已不在 live 列表里的他人 pin（DeletePin(int) 私有：0.1.15b UI_GameScene.cs:933）。
+            // 「死亡保留 Pin」拦下的 pin 也在 live 列表外（玩家已 Despawn），按集合跳过。
             var pinList = HudPinListOf(scene);
             if (pinList == null)
                 return;
@@ -112,9 +113,31 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
                     continue;
                 if (pin.Type == Define.EMinimapPinType.MyPlayer)
                     continue;
+                if (CharacterMapPinFeature.KeepDeadPin && CharacterMapPinState.KeptPinIds.Contains(pin.ID))
+                    continue;
                 DeletePinOf?.Invoke(scene, pin.ID);
             }
         }
+
+        /// <summary>
+        /// 「死亡保留 Pin」是否拦下本次删除：仅对局内（Survive/Detective）、非自己的 pin。
+        /// 庭审开始时原版 StartTrial→ClearSharedAndObservedPlayers 会广播 S_DESPAWN 清场
+        ///（0.1.15b GameRoom.cs:2164-2166），此时状态已是 Trial（服务器先切 State 再广播，
+        /// 0.1.15b GameRoom.cs:573-581 + 601-610），不在 Survive/Detective 内，照常删除。
+        /// </summary>
+        public static bool CanKeepPin(int id)
+        {
+            MyPlayer my = Managers.Player.MyPlayer;
+            if (my == null || id == my.PublicInfo.PlayerId)
+                return false;
+
+            EGameState gs = Managers.Game.State;
+            return gs == EGameState.Survive || gs == EGameState.Detective;
+        }
+
+        /// <summary>HUD 删除 pin（DeletePin(int) 私有：0.1.15b UI_GameScene.cs:933；热关闭清理保留 pin 用）。</summary>
+        public static void DeleteHudPin(UI_GameScene scene, int id)
+            => DeletePinOf?.Invoke(scene, id);
 
         /// <summary>常驻箭头是否追踪该玩家：排除自己/无角色/观战/已死，Kaho 追踪目标不重复显示。</summary>
         public static bool ShouldTrack(MyPlayer my, Player player)

@@ -25,14 +25,21 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
         [Config("常驻角色箭头：不开平板也在屏幕边缘显示指向其他存活玩家的箭头（接近时自动隐藏，Kaho 技能目标不重复显示）")]
         public static bool ShowCharacterArrow = false;
 
+        [Config("死亡保留 Pin：其他玩家死亡后，小地图与平板上的 Pin 不删除，定格在最后位置" +
+                "（模拟 Kaho 监视目标的表现：0.1.15b TabletManager.DeletePin 的技能豁免只对 Kaho 生效，" +
+                "本开关把它扩大到所有人；庭审开始与结算仍按原版清理）")]
+        public static bool KeepDeadPin = false;
+
         /// <summary>
         /// 运行时关闭：销毁全部常驻箭头，并把已替换的 pin 贴图还原为原版。
         /// 原版 RefreshPlayerPin 对已存在的 pin 只调 SetLocalPosition、不重设 sprite
         ///（0.1.15b UI_GameScene.cs:850-866 / UI_GameTablet.cs:1211-1226 的 else 分支），
         /// 所以热关闭后贴图不会自行还原，必须在这里按 PinSpriteKey 主动恢复（见 Ui.RestoreAllPins）。
+        /// 死亡保留的 pin 先整批删除（玩家已 Despawn，原版不会替我们清理），再走常规还原。
         /// </summary>
         private static void OnDisabled()
         {
+            CharacterMapPinUi.ClearKeptPins();
             CharacterMapPinUi.RestoreAllPins();
             CharacterMapPinUi.ClearAllArrows();
         }

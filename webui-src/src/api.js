@@ -77,6 +77,15 @@ export const API = {
   automationHost: (enabled) => post('/api/automation/host', { enabled }),
   moduleLog: (id) => request('/api/automation/modules/' + encodeURIComponent(id) + '/log'),
   moduleLogClear: (id) => post('/api/automation/modules/' + encodeURIComponent(id) + '/log/clear'),
+
+  // 假人管理（错误码在 error，中文详情在 data.message）
+  dummyState: () => request('/api/dummy/state'),
+  dummyCharacters: () => request('/api/dummy/characters'),
+  dummyCreate: (name, characterId) => post('/api/dummy/create', { name, characterId }),
+  dummyRemove: (name) => post('/api/dummy/remove', { name }),
+  dummyRemoveAll: () => post('/api/dummy/remove-all'),
+  dummyReady: (name, ready) => post('/api/dummy/ready', { name, ready }),
+  dummyPick: (name, characterId) => post('/api/dummy/pick', { name, characterId }),
 };
 
 /**

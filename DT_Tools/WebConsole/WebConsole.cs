@@ -39,6 +39,42 @@ namespace DT_Tools.WebConsole
                 self._actions.Enqueue(action);
         }
 
+        /// <summary>
+        /// 供 API 层在 HTTP 线程同步执行一段需要主线程的工作并取回结果（复用 /api/run 的
+        /// 队列 + 超时保护）。成功返回 work 的结果；主线程停摆超时 / WebConsole 未装配时
+        /// 返回 Fail。注意：超时后 work 仍会在主线程稍后执行（结果被丢弃），work 必须可重入无害。
+        /// </summary>
+        public static CommandResult RunOnMain(Func<CommandResult> work, int timeoutMs = RunTimeoutMs)
+        {
+            if (work == null) return CommandResult.Fail("empty action");
+            var self = Instance;
+            if (self == null) return CommandResult.Fail("webconsole offline");
+
+            var done = new ManualResetEventSlim(false);
+            CommandResult result = null;
+            lock (self._pendLock)
+                self._actions.Enqueue(() =>
+                {
+                    try { result = work(); }
+                    catch (Exception ex)
+                    {
+                        Log.Exception("WebConsole", ex, "主线程动作执行异常");
+                        result = CommandResult.Fail("action error");
+                    }
+                    // 竞态防护同 Complete()：HTTP 线程超时后已 Dispose，晚到的 Set() 必须吞掉
+                    try { done.Set(); }
+                    catch (ObjectDisposedException) { /* 超时路径已回包 Fail("timeout") */ }
+                });
+
+            if (!done.Wait(timeoutMs))
+            {
+                Log.Warn("WebConsole", $"主线程动作 {timeoutMs / 1000} 秒未被执行（主线程卡顿或失焦停摆？）");
+                return CommandResult.Fail("timeout");
+            }
+            done.Dispose();
+            return result ?? CommandResult.Fail("action error");
+        }
+
         /// <summary>由 Plugin 在启用 WebConsole 时调用（读取 WebConsoleOptions 已由引擎绑定）。</summary>
         public void Init(ManualLogSource log)
         {
@@ -100,6 +136,16 @@ namespace DT_Tools.WebConsole
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
             router.Add("GET", "/api/pick-file", Api.FilePickerApi.Handle);
+            // 假人管理（假人应用）：全部经 RunOnMain 在主线程读写 GameRoom。
+            // remove-all 必须注册在 remove 之前——Router 按注册顺序做前缀匹配，
+            // 否则 /api/dummy/remove-all 会被更短的 /api/dummy/remove 截走报 invalid body
+            router.Add("POST", "/api/dummy/remove-all", Api.DummyApi.HandleRemoveAll);
+            router.Add("GET", "/api/dummy/state", Api.DummyApi.HandleState);
+            router.Add("GET", "/api/dummy/characters", Api.DummyApi.HandleCharacters);
+            router.Add("POST", "/api/dummy/create", Api.DummyApi.HandleCreate);
+            router.Add("POST", "/api/dummy/remove", Api.DummyApi.HandleRemove);
+            router.Add("POST", "/api/dummy/ready", Api.DummyApi.HandleReady);
+            router.Add("POST", "/api/dummy/pick", Api.DummyApi.HandlePick);
             router.Add("GET", "/api/meta", Api.SystemApi.HandleMeta);
             router.Add("POST", "/api/game/exit", Api.SystemApi.HandleExit);
         }
