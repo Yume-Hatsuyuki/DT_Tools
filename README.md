@@ -21,8 +21,8 @@
 
 ## 界面展示
 
-<img src="images/屏幕截图_30-9-2026_12453_127.0.0.1.jpeg" width="850">
-<img src="images/屏幕截图_30-9-2026_12259_127.0.0.1.jpeg" width="850">
+<img src="images/屏幕截图_2-10-2026_517_127.0.0.1.jpeg" width="850">
+<img src="images/屏幕截图_2-10-2026_5312_127.0.0.1.jpeg" width="850">
 
 ---
 
@@ -105,8 +105,9 @@ https://github.com/Yume-Hatsuyuki/DT_Tools/blob/main/README.md
 
 - 浏览器打开 `http://127.0.0.1:19450/`
 
-自行摸索相关功能的使用方式：
-<img src="images/屏幕截图_30-9-2026_93444_127.0.0.1.jpeg" width="550">
+自行摸索相关功能的使用方式：  
+
+<img src="images/屏幕截图_2-10-2026_5410_127.0.0.1.jpeg" width="550">
 
 无 `WEBUI/` 时页面返回 503，HTTP API 与补丁仍可用。
 
