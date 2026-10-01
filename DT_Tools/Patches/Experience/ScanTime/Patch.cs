@@ -17,7 +17,7 @@ namespace DT_Tools.Patches.Experience.ScanTime
     [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.StartScanning))]
     internal static class ScanTimePatch
     {
-        private static bool Prefix(GameManagerEX __instance, ref float castingTime, Action callback)
+        private static bool Prefix(GameManagerEX __instance, float castingTime, Action callback)
         {
             if (!Engine.Enabled<ScanTimeFeature>())
                 return true;
@@ -25,23 +25,21 @@ namespace DT_Tools.Patches.Experience.ScanTime
             if (__instance.ScanningSlider != null)
                 return false;
 
-            float t = ScanTimeFeature.CastingTime;
-            if (t < 0.1f || float.IsNaN(t) || float.IsInfinity(t))
-                t = 0.1f;
+            float t = Game.Casting.ClampSeconds(ScanTimeFeature.CastingTime, 0.1f, 0.1f);
 
             // 原版：IsScanUp 时强制 0.5（0.1.15b GameManagerEX.cs:807）。
             // 配置更短时不套用，避免“加速变成减速”。
             if (t >= 0.5f && __instance.IsScanUp)
                 t = 0.5f;
 
-            castingTime = t;
+            // 不写回 castingTime：原方法已被跳过，ref 回传无人消费
             Managers.Sound.PlayLoop("ScanningSfx");
             MyPlayer my = Managers.Player.MyPlayer;
             if (__instance.IsAlive)
                 my.ChangeMyPlayerState(EPlayerState.Scanning);
 
             UI_ScanningSlider slider = Managers.UI.MakeWorldSpaceUI<UI_ScanningSlider>(my.UIGroup);
-            slider.SetInfo(castingTime, callback);
+            slider.SetInfo(t, callback);
             slider.transform.localPosition = new Vector2(0f, -30f);
             Traverse.Create(__instance).Property("ScanningSlider").SetValue(slider);
             return false;

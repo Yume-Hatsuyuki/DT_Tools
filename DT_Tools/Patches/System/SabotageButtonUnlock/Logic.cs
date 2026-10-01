@@ -96,7 +96,7 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
             var t = HarmonyLib.Traverse.Create(scene);
             var myPlayer = Managers.Player.MyPlayer;
             Go(scene, 22).SetVisible(visible: false, layoutIgnore: true);
-            if (t.Field("_carryTrickPromptActive").GetValue<bool>())   // 私有字段：UI_GameScene.cs
+            if (t.Field("_carryTrickPromptActive").GetValue<bool>())   // 私有字段：0.1.15b UI_GameScene.cs:304
             {
                 Go(scene, 22).SetVisible(true);
                 Txt(scene, 20).text = Managers.GetText("DeadlyTrickInteract");

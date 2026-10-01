@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
+using System.Linq;
 
 namespace DT_Tools.WebConsole
 {
@@ -19,10 +21,14 @@ namespace DT_Tools.WebConsole
 
         private readonly Auth _auth;
         private readonly List<Route> _routes = new List<Route>();
+        private readonly string _listenIp;
+        private readonly string[] _localHostWhitelist;
 
-        public Router(Auth auth)
+        public Router(Auth auth, string listenIp)
         {
             _auth = auth ?? throw new ArgumentNullException(nameof(auth));
+            _listenIp = (listenIp ?? "").Trim();
+            _localHostWhitelist = BuildLocalHostWhitelist();
         }
 
         /// <summary>注册路由；method 用 "*" 匹配任意方法（handler 内自行校验）。</summary>
@@ -42,11 +48,23 @@ namespace DT_Tools.WebConsole
             // （简单 POST）或 Referer，与 Host 头不符即拒绝；非浏览器客户端（curl 等本机
             // 脚本）不带这两个头，直接放行。读请求靠同源策略已无法被跨站页面读取
             // （本服务器不再发送 Access-Control-Allow-Origin: *），无需校验。
-            if (req.HttpMethod != "GET" && req.HttpMethod != "HEAD" && !IsSameOrigin(req))
+            if (req.HttpMethod != "GET" && req.HttpMethod != "HEAD")
             {
-                Log.Warn("WebConsole", $"已拒绝跨站写请求：{req.HttpMethod} {path}（Origin/Referer 与 Host 不符）。");
-                HttpServer.WriteText(resp, 403, "Forbidden");
-                return;
+                if (!IsSameOrigin(req))
+                {
+                    Log.Warn("WebConsole", $"已拒绝跨站写请求：{req.HttpMethod} {path}（Origin/Referer 与 Host 不符）。");
+                    HttpServer.WriteText(resp, 403, "Forbidden");
+                    return;
+                }
+                // DNS rebinding 防线：该攻击下 Origin 与 Host 同为攻击者域名（其解析被改写
+                // 指向 127.0.0.1），同源校验形同虚设，空密码时无第二道防线——再校验 Host
+                // 是否指向本机（白名单全部本地枚举，不做 DNS 解析）。
+                if (!IsLocalHost(req))
+                {
+                    Log.Warn("WebConsole", $"已拒绝 Host 异常的写请求：{req.HttpMethod} {path}（Host 非本机地址，疑似 DNS rebinding）。");
+                    HttpServer.WriteText(resp, 403, "Forbidden");
+                    return;
+                }
             }
 
             if (path == "/login" && req.HttpMethod == "POST")
@@ -109,6 +127,62 @@ namespace DT_Tools.WebConsole
             string host = req.Headers["Host"];
             return !string.IsNullOrEmpty(host) &&
                    string.Equals(uri.Authority, host.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Host 头是否指向本机：回环、配置的监听地址（非通配）、本机主机名与网卡地址。
+        /// 全部在构造时本地枚举并缓存，绝不解析 Host 名（解析恰是 rebinding 的攻击路径）。
+        /// 浏览器带 IPv6 Host 恒为方括号形式（[::1]:port），按方括号取地址；其余按最后
+        /// 一个冒号去端口。
+        /// </summary>
+        private bool IsLocalHost(HttpListenerRequest req)
+        {
+            string host = req.Headers["Host"];
+            if (string.IsNullOrEmpty(host))
+                return true;   // HTTP/1.0 客户端可能不带 Host：无法判定，交由同源校验兜底
+
+            string value = host.Trim();
+            if (value.StartsWith("["))
+            {
+                int end = value.IndexOf(']');
+                if (end > 0)
+                    value = value.Substring(1, end - 1);
+            }
+            else
+            {
+                int colon = value.LastIndexOf(':');
+                if (colon >= 0)
+                    value = value.Substring(0, colon);
+            }
+
+            return _localHostWhitelist.Contains(value, StringComparer.OrdinalIgnoreCase);
+        }
+
+        /// <summary>构造本机白名单。网卡枚举失败时仅退回回环三项（默认本机回环使用不受影响）。</summary>
+        private string[] BuildLocalHostWhitelist()
+        {
+            var list = new List<string> { "127.0.0.1", "localhost", "::1" };
+            if (_listenIp.Length > 0 && _listenIp != "0.0.0.0" && _listenIp != "*" && _listenIp != "::")
+                list.Add(_listenIp);
+            try
+            {
+                string machine = Dns.GetHostName();
+                if (!string.IsNullOrEmpty(machine))
+                {
+                    list.Add(machine);
+                    foreach (IPAddress ip in Dns.GetHostAddresses(machine))
+                    {
+                        if (ip.AddressFamily == AddressFamily.InterNetwork ||
+                            ip.AddressFamily == AddressFamily.InterNetworkV6)
+                            list.Add(ip.ToString());
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // 主机名/网卡枚举不可用：白名单退化为回环三项，安全侧收敛
+            }
+            return list.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
     }
 }

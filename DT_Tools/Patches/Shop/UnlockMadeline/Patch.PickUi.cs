@@ -103,16 +103,11 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
             // 工程未引用 DOTween 程序集，无法直接调扩展；其各补间终态均为可见
             // （alpha=1 / scaleX=1），与直写终态一致，故直接落终态（等价原版
             // :524-528 的 animate=false 分支），仅 Madeline 选中少一段入场动画。
-            // CanvasGroup 定义于 UnityEngine.UIModule（工程未引用该程序集），
-            // 经反射取组件并写 alpha 终态。
             Vector3 localScale = transform.localScale;
             transform.localScale = new Vector3(1f, localScale.y, localScale.z);
-            global::System.Type canvasGroupType = AccessTools.TypeByName("UnityEngine.CanvasGroup");
-            Component canvasGroup = canvasGroupType != null
-                ? transform.GetComponent(canvasGroupType)
-                : null;
+            var canvasGroup = transform.GetComponent<CanvasGroup>();
             if (canvasGroup != null)
-                AccessTools.Property(canvasGroupType, "alpha")?.SetValue(canvasGroup, 1f);
+                canvasGroup.alpha = 1f;
 
             return false;
         }

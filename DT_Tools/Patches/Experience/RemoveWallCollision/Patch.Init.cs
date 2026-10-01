@@ -19,7 +19,6 @@ namespace DT_Tools.Patches.Experience.RemoveWallCollision
             if (!__result)
                 return;
 
-            RemoveWallCollisionLogic.ApplyIgnoreLayers(ignore: true);
             RemoveWallCollisionLogic.ApplyColliderTo(__instance, asTrigger: true);
         }
     }

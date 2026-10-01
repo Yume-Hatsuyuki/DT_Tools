@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using DT_Tools.Commands;
+using DT_Tools.Game;
 using Google.Protobuf;
 using Protocol;
 using Server.Game;
@@ -173,18 +174,21 @@ namespace DT_Tools.Commands.PacketCall
             }
         }
 
-        /// <summary>解析目标：all | #id。成功返回 true；targetAll / targetId 有效。</summary>
+        /// <summary>
+        /// 解析目标：all | #id。成功返回 true；targetAll / targetId 有效。
+        /// 复用 Game/TargetSpec（全项目唯一实现，随其语义同时接受纯数字 ID）。
+        /// </summary>
         public static bool TryParseTarget(string token, out bool targetAll, out int targetId, out string error)
         {
             targetAll = false;
             targetId = -1;
             error = null;
-            if (token.Equals("all", StringComparison.OrdinalIgnoreCase))
+            if (TargetSpec.IsAll(token))
             {
                 targetAll = true;
                 return true;
             }
-            if (token.StartsWith("#") && int.TryParse(token.Substring(1), out int pid))
+            if (TargetSpec.TryParseId(token, out int pid))
             {
                 targetId = pid;
                 return true;

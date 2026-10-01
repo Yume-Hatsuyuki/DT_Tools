@@ -54,25 +54,9 @@ namespace DT_Tools.Commands.GiveMission
             public bool IsEmptyCase;
         }
 
-        /// <summary>阶段守卫：切换中 / 迁移中拒绝派发（原 PhaseJumpHelper.EnsureNotBusy 文案）。</summary>
+        /// <summary>阶段守卫：切换中 / 迁移中拒绝派发（判定上浮 Game/RoomFlow.TryGuardBusy）。</summary>
         public static bool TryGuardBusy(GameRoom room, out string code, out string text)
-        {
-            if (room.IsTransitioning)
-            {
-                code = "transitioning";
-                text = "阶段切换正在进行中（等待全体客户端加载完成），请稍后再试。";
-                return false;
-            }
-            if (room.IsMigrating)
-            {
-                code = "migrating";
-                text = "正在进行主机迁移，无法切换阶段。";
-                return false;
-            }
-            code = null;
-            text = null;
-            return true;
-        }
+            => RoomFlow.TryGuardBusy(room, "切换阶段", out code, out text);
 
         /// <summary>
         /// 派发前置守卫：MissionManager 反射访问器是否可用。

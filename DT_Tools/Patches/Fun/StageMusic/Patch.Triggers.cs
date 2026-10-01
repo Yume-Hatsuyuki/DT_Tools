@@ -1,7 +1,6 @@
 using System.Reflection;
 using DT_Tools.Core;
 using HarmonyLib;
-using NAudio.Wave;
 using Protocol;
 
 namespace DT_Tools.Patches.Fun.StageMusic

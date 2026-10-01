@@ -23,9 +23,7 @@ namespace DT_Tools.Patches.Experience.DestroyEvidence
             if (Managers.Game.CastingSlider != null)
                 return false;
 
-            float t = DestroyEvidenceFeature.CastingTime;
-            if (t < MinCasting || float.IsNaN(t) || float.IsInfinity(t))
-                t = MinCasting;
+            float t = Game.Casting.ClampSeconds(DestroyEvidenceFeature.CastingTime, MinCasting, MinCasting);
 
             Managers.Game.StartCasting(t, delegate
             {

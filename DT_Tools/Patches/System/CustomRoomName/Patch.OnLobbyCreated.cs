@@ -1,3 +1,4 @@
+using DT_Tools.Core;
 using DummyClient;
 using HarmonyLib;
 
@@ -10,6 +11,12 @@ namespace DT_Tools.Patches.System.CustomRoomName
     [HarmonyPatch(typeof(SteamLobbyManager), "OnLobbyCreated")]
     internal static class CustomRoomNameOnLobbyCreatedPatch
     {
-        private static void Postfix() => CustomRoomNameLogic.TryApplyRoomName("OnLobbyCreated");
+        private static void Postfix()
+        {
+            // 首行门闩（惯例）：功能关闭时不进 TryApply，避免每次建房产生无意义日志
+            if (!Engine.Enabled<CustomRoomNameFeature>())
+                return;
+            CustomRoomNameLogic.TryApplyRoomName("OnLobbyCreated");
+        }
     }
 }

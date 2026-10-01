@@ -24,14 +24,14 @@ namespace DT_Tools.Game
     ///   2. 玩家 ID 走 ObjectUtils 座位表分配（1..16，0.1.15b Server/ObjectUtils.cs:76-88），
     ///      与真实玩家同一套 ID 空间；旧版随机 100000+ 的 ID 不占座位、无法释放。
     ///   3. 移除走 HandleLeavePlayer 完整清理（广播 S_LEAVE_GAME、释放座位、清可见性与
-    ///      存活表，0.1.15b Server.Game/GameRoom.cs:1486-1542）——这正是游戏在 StartLobby
-    ///      清理原生假人用的同一入口（GameRoom.cs:804-832），对假会话完全安全：
-    ///      SessionManager 全部为空实现（0.1.15b Server/SessionManager.cs），HostPeerSession.
-    ///      Disconnect 为空（0.1.15b Server.Game/HostPeerSession.cs:74-76）。
+    ///      存活表，0.1.15b Server.Game/GameRoom.cs:1486-1542）——游戏在 StartLobby
+    ///      清理原生假人用的同一入口，对假会话完全安全：SessionManager 全部为空实现
+    ///      （0.1.15b Server/SessionManager.cs），HostPeerSession.Disconnect 为空
+    ///      （0.1.15b Server.Game/HostPeerSession.cs:74-76）。
     ///
-    /// 生命周期对齐游戏语义：回大厅（StartLobby）时游戏会自行移除所有假人，
-    /// 本类的台账经 Prune 同步失效——WebUI 行配置保留，重新点「准备」即可再次进场。
-    /// 所有方法都必须在 Unity 主线程调用（WebConsole.RunOnMain / 命令泵内）。
+    /// 回大厅时游戏自行移除所有假人，本类台账经 Prune 同步失效——WebUI 行配置保留，
+    /// 重新点「准备」即可再次进场。所有方法都必须在 Unity 主线程调用
+    /// （WebConsole.RunOnMain / 命令泵内）。
     /// </summary>
     public static class FakePlayers
     {
@@ -52,19 +52,6 @@ namespace DT_Tools.Game
 
         /// <summary>本助手创建、仍存活于房间内的假人台账（仅主线程访问）。</summary>
         private static readonly List<Server.Game.Player> Created = new List<Server.Game.Player>();
-
-        /// <summary>该玩家是否为本助手创建的假人（Snapshot 标记 ours 用）。</summary>
-        public static bool IsOurs(Server.Game.Player player) => Created.Contains(player);
-
-        /// <summary>当前假人数。</summary>
-        public static int Count
-        {
-            get
-            {
-                var room = GameRoom.Instance;
-                return room == null ? Created.Count : Prune(room);
-            }
-        }
 
         // ---- 操作（主线程）----
 
@@ -290,7 +277,8 @@ namespace DT_Tools.Game
         /// <summary>
         /// 为假人选角色。选角阶段直接走原生 PickCharacter（支持 -2 随机/占用校验，
         /// 0.1.15b Server.Game/GameRoom.cs:1717-1767）；大厅阶段走 ModifyPlayer 换角
-        /// （Player.cs:1682-1702，要求未准备），随机先解析成具体角色。
+        /// （0.1.15b Server.Game/Player.cs:1682 方法头；ChangeCharacter 分支 :1713-1717，
+        /// 要求未准备），随机先解析成具体角色。
         /// </summary>
         public static bool TryPick(string nameOrId, int characterId, out string error, out string text)
         {

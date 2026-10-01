@@ -257,7 +257,8 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                     MotionAfterimageFeature.DeathSortingOrder,
                     isDeath: true,
                     out GameObject go,
-                    out SkeletonAnimation anim))
+                    out SkeletonAnimation anim,
+                    out Material mat))
                 return;
 
             if (anim?.Skeleton != null)
@@ -265,7 +266,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
 
             track.DeathGhost = go;
             track.DeathAnim = anim;
-            track.DeathCharacterId = track.LastCharacterIdLive;
+            track.DeathMat = mat;
         }
 
         private static bool IsMapPhaseActive()
@@ -338,7 +339,8 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                     MotionAfterimageFeature.SortingOrder,
                     isDeath: false,
                     out GameObject go,
-                    out SkeletonAnimation anim))
+                    out SkeletonAnimation anim,
+                    out Material mat))
                 return;
 
             if (anim?.Skeleton != null)
@@ -348,9 +350,9 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             {
                 Go = go,
                 Anim = anim,
+                Mat = mat,
                 BornTime = now,
-                Lifetime = fade,
-                CharacterId = characterId
+                Lifetime = fade
             });
         }
 
@@ -392,10 +394,12 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             int sortingOrder,
             bool isDeath,
             out GameObject go,
-            out SkeletonAnimation anim)
+            out SkeletonAnimation anim,
+            out Material mat)
         {
             go = null;
             anim = null;
+            mat = null;
 
             Transform parent = ResolveParent(preferStableRoot: isDeath);
             if (parent == null)
@@ -457,7 +461,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                 if (srcMat == null)
                     throw new global::System.Exception("材质加载失败: " + matName);
 
-                Material mat = Object.Instantiate(srcMat);
+                mat = Object.Instantiate(srcMat);
                 mat.mainTexture = primary.mainTexture;
                 anim.CustomMaterialOverride.Clear();
                 anim.CustomMaterialOverride.Add(primary, mat);
@@ -479,6 +483,11 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             catch (global::System.Exception ex)
             {
                 LogOnceFail("创建异常: " + ex.Message);
+                if (mat != null)
+                {
+                    Object.Destroy(mat);
+                    mat = null;
+                }
                 Object.Destroy(go);
                 go = null;
                 anim = null;
@@ -520,7 +529,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                 }
                 catch (global::System.Exception ex)
                 {
-                    Log.Debug("MotionAfterimage", $"Instantiate {key} 异常: {ex.Message}");
+                    Log.Debug<MotionAfterimageFeature>($"Instantiate {key} 异常: {ex.Message}");
                 }
             }
 
@@ -567,8 +576,12 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                 else
                     Object.Destroy(inst.Go);
             }
+            // 材质副本是 Instantiate 出来的运行时对象,必须随实例销毁,否则等场景切换才释放
+            if (inst.Mat != null)
+                Object.Destroy(inst.Mat);
             inst.Go = null;
             inst.Anim = null;
+            inst.Mat = null;
         }
 
         private static void DestroyDeathGhost(AfterimageTrack track)
@@ -581,7 +594,11 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                     Object.Destroy(track.DeathGhost);
                 track.DeathGhost = null;
                 track.DeathAnim = null;
-                track.DeathCharacterId = -1;
+            }
+            if (track.DeathMat != null)
+            {
+                Object.Destroy(track.DeathMat);
+                track.DeathMat = null;
             }
         }
 

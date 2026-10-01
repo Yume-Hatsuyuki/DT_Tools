@@ -14,7 +14,8 @@ namespace DT_Tools.WebConsole
     /// <summary>
     /// 内嵌 WebUI 控制台组件：装配（Auth/Router/HttpServer）+ 命令主线程队列。
     /// 线程模型：/api/run 工作线程入队并同步等待（≤5s），Update() 在主线程消费执行，
-    /// 命令因此可以安全访问 Unity API 与游戏单例。
+    /// 命令因此可以安全访问 Unity API 与游戏单例。API 层的主线程投递统一走
+    /// Core/CoroutineHost.Post（本类不再自建第二套动作泵）。
     /// </summary>
     public sealed class WebConsole : MonoBehaviour
     {
@@ -23,26 +24,24 @@ namespace DT_Tools.WebConsole
         private const int RunTimeoutMs = 5000;
 
         private readonly Queue<PendingRequest> _pending = new Queue<PendingRequest>();
-        private readonly Queue<Action> _actions = new Queue<Action>();
         private readonly object _pendLock = new object();
         private HttpServer _server;
 
         /// <summary>
         /// 供 API 层（HTTP 线程）把需要 Unity API 的动作投递到主线程执行，
-        /// 与 /api/run 的命令队列共用同一把锁与 Update() 泵。
+        /// 泵由 Core/CoroutineHost 承载（与命令队列各自独立，互不阻塞）。
         /// </summary>
         public static void Post(Action action)
         {
-            var self = Instance;
-            if (self == null || action == null) return;
-            lock (self._pendLock)
-                self._actions.Enqueue(action);
+            if (Instance == null || action == null) return;
+            CoroutineHost.Post(action);
         }
 
         /// <summary>
         /// 供 API 层在 HTTP 线程同步执行一段需要主线程的工作并取回结果（复用 /api/run 的
         /// 队列 + 超时保护）。成功返回 work 的结果；主线程停摆超时 / WebConsole 未装配时
-        /// 返回 Fail。注意：超时后 work 仍会在主线程稍后执行（结果被丢弃），work 必须可重入无害。
+        /// 返回 Fail。注意：超时后 work 仍会在主线程稍后执行（结果被丢弃），work 必须
+        /// 可重入无害；延迟执行发生时会显式告警，不再静默生效。
         /// </summary>
         public static CommandResult RunOnMain(Func<CommandResult> work, int timeoutMs = RunTimeoutMs)
         {
@@ -52,22 +51,27 @@ namespace DT_Tools.WebConsole
 
             var done = new ManualResetEventSlim(false);
             CommandResult result = null;
-            lock (self._pendLock)
-                self._actions.Enqueue(() =>
+            // 共享取消标记：HTTP 线程超时回包后置位，主线程晚到的执行据此告警
+            // （bool 写原子且此处无重排风险：晚几十毫秒置位也只是少一条日志）
+            bool timedOut = false;
+            CoroutineHost.Post(() =>
+            {
+                if (timedOut)
+                    Log.Warn("WebConsole", "主线程动作在超时回包后仍被延迟执行（如 /api/dummy/create 的写操作可能已实际生效）——结果与用户预期可能背离。");
+                try { result = work(); }
+                catch (Exception ex)
                 {
-                    try { result = work(); }
-                    catch (Exception ex)
-                    {
-                        Log.Exception("WebConsole", ex, "主线程动作执行异常");
-                        result = CommandResult.Fail("action error");
-                    }
-                    // 竞态防护同 Complete()：HTTP 线程超时后已 Dispose，晚到的 Set() 必须吞掉
-                    try { done.Set(); }
-                    catch (ObjectDisposedException) { /* 超时路径已回包 Fail("timeout") */ }
-                });
+                    Log.Exception("WebConsole", ex, "主线程动作执行异常");
+                    result = CommandResult.Fail("action error");
+                }
+                // 竞态防护同 Complete()：HTTP 线程超时后已 Dispose，晚到的 Set() 必须吞掉
+                try { done.Set(); }
+                catch (ObjectDisposedException) { /* 超时路径已回包 Fail("timeout") */ }
+            });
 
             if (!done.Wait(timeoutMs))
             {
+                timedOut = true;
                 Log.Warn("WebConsole", $"主线程动作 {timeoutMs / 1000} 秒未被执行（主线程卡顿或失焦停摆？）");
                 return CommandResult.Fail("timeout");
             }
@@ -87,7 +91,7 @@ namespace DT_Tools.WebConsole
             DontDestroyOnLoad(gameObject);
 
             var auth = new Auth(WebConsoleOptions.Password);
-            var router = new Router(auth);
+            var router = new Router(auth, WebConsoleOptions.ListenIp);
             RegisterRoutes(router, auth);
 
             _server = new HttpServer(router);
@@ -200,25 +204,11 @@ namespace DT_Tools.WebConsole
         {
             while (true)
             {
-                PendingRequest pending = null;
-                Action action = null;
+                PendingRequest pending;
                 lock (_pendLock)
                 {
-                    if (_pending.Count == 0 && _actions.Count == 0) break;
-                    if (_pending.Count > 0)
-                    {
-                        pending = _pending.Dequeue();
-                    }
-                    else
-                    {
-                        action = _actions.Dequeue();
-                    }
-                }
-                if (action != null)
-                {
-                    // 锁外执行（与命令路径同构）：动作耗时不能堵住 HTTP 线程的入队锁
-                    action();
-                    continue;
+                    if (_pending.Count == 0) break;
+                    pending = _pending.Dequeue();
                 }
                 ExecuteOnMainThread(pending);
             }

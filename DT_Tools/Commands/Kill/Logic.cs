@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DT_Tools.Game;
 using Protocol;
 using Server.Game;
 
@@ -10,29 +11,17 @@ namespace DT_Tools.Commands.Kill
         /// <summary>DeadDetective 语义标记时长（毫秒）；CollarBomb 分支不检查它，到期自然过期。</summary>
         private const int PrimeBuffMs = 6000;
 
-        /// <summary>房间门禁：切换中 / 迁移中 / 阶段不符时返回 false，并给出错误码与提示文案。</summary>
+        /// <summary>房间门禁：切换中 / 迁移中 / 阶段不符时返回 false，并给出错误码与提示文案（屏障判定上浮 Game/RoomFlow.TryGuardBusy）。</summary>
         public static bool TryGuard(GameRoom room, out string code, out string text)
         {
-            if (room.IsTransitioning)
-            {
-                code = "transitioning";
-                text = "阶段切换正在进行中（等待全体客户端加载完成），请稍后再试。";
+            if (!RoomFlow.TryGuardBusy(room, "执行处决", out code, out text))
                 return false;
-            }
-            if (room.IsMigrating)
-            {
-                code = "migrating";
-                text = "正在进行主机迁移，无法执行处决。";
-                return false;
-            }
             if (!IsAllowedState(room.State))
             {
                 code = "invalid state";
                 text = $"处决仅能在生存/调查/裁判阶段使用，当前状态: {room.State}。";
                 return false;
             }
-            code = null;
-            text = null;
             return true;
         }
 

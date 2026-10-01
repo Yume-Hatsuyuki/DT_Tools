@@ -22,8 +22,7 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
         private static readonly FieldInfo HudPinsField =
             AccessTools.Field(typeof(UI_GameScene), "_playerPinList");
 
-        // ── 私有方法反射缓存（白方巡检逐帧调用；HarmonyX 的 Traverse 无 MethodInfo 重载，
-        //    且 Traverse 绑定目标实例、跨实例不能复用，故缓存开放实例委托）──
+        // ── 私有方法反射缓存（白方巡检逐帧调用；缓存策略见 Core/Reflect.cs 头注释）──
         /// <summary>RefreshPlayerPin(Player) 私有：0.1.15b UI_GameScene.cs:850。</summary>
         private static readonly Action<UI_GameScene, Player> RefreshPlayerPinOf =
             Reflect.Bind<Action<UI_GameScene, Player>>(typeof(UI_GameScene), "RefreshPlayerPin", new[] { typeof(Player) });

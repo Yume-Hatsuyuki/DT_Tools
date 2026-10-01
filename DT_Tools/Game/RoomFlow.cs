@@ -1,3 +1,5 @@
+using Server.Game;
+
 namespace DT_Tools.Game
 {
     /// <summary>
@@ -14,6 +16,31 @@ namespace DT_Tools.Game
         {
             Managers.Network.Leave();                              // 0.1.15b NetworkManager.cs:1305
             Managers.Scene.LoadScene(Define.EScene.LobbyScene);    // 0.1.15b SceneManagerEx.cs:9
+        }
+
+        /// <summary>
+        /// 「切换/迁移中」屏障守卫：阶段切换（等待全体客户端加载）或主机迁移进行中时拒绝。
+        /// 五处命令域逐字相同的守卫上浮于此（§3 ≥2 处才上浮）；
+        /// <paramref name="migratingAction"/> 拼接迁移中文案的动作词（如「切换阶段」「执行处决」），
+        /// 保持各域原有提示不变。
+        /// </summary>
+        public static bool TryGuardBusy(GameRoom room, string migratingAction, out string code, out string text)
+        {
+            if (room.IsTransitioning)
+            {
+                code = "transitioning";
+                text = "阶段切换正在进行中（等待全体客户端加载完成），请稍后再试。";
+                return false;
+            }
+            if (room.IsMigrating)
+            {
+                code = "migrating";
+                text = $"正在进行主机迁移，无法{migratingAction}。";
+                return false;
+            }
+            code = null;
+            text = null;
+            return true;
         }
     }
 }

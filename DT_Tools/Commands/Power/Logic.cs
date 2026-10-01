@@ -1,5 +1,6 @@
 using System.Linq;
 using DT_Tools.Commands;
+using DT_Tools.Game;
 using Protocol;
 using Server.Game;
 
@@ -36,14 +37,9 @@ namespace DT_Tools.Commands.Power
                 ctx.Reply("当前没有活动的游戏房间。");
                 return null;
             }
-            if (room.IsTransitioning)
+            if (!RoomFlow.TryGuardBusy(room, "操作电力", out _, out string busyText))
             {
-                ctx.Reply("阶段切换正在进行中（等待全体客户端加载完成），请稍后再试。");
-                return null;
-            }
-            if (room.IsMigrating)
-            {
-                ctx.Reply("正在进行主机迁移，无法操作电力。");
+                ctx.Reply(busyText);
                 return null;
             }
             if (room.State != EGameState.Survive)

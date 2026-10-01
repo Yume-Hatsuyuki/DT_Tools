@@ -13,7 +13,9 @@ namespace DT_Tools.Patches.System.DoorLockServer
     /// → StateList[2]=0 → LockDoor → 1s 后 TickDoor 启动自动解锁倒计时）。
     /// 放行的白方锁门成功后按 LockDoorClue 写真实身份线索（Game/SabotageClue.AddClue，
     /// 原由 WhiteSabotageClue 的前后缀对状态做差推锁门成功，放行点本就知情，直接写）。
-    /// 模式未放行的颜色放行原版（Dark 走原版；其余被原版静默拒绝，与未启用一致）。
+    /// 注意：Dark 被放行条件无条件纳入（:28），因此 Dark 恒走本补丁的复刻序列而非原方法
+    /// （复刻序列与原版逐句一致，无行为差异）；模式未放行的颜色才交回原版（被原版
+    /// 条件静默拒绝，与未启用一致）。
     /// </summary>
     [HarmonyPatch(typeof(Server.Game.Door), nameof(Server.Game.Door.HandleEvent))]
     internal static class DoorLockServerHandleEventPatch
@@ -30,7 +32,7 @@ namespace DT_Tools.Patches.System.DoorLockServer
                 || (mode == LockDoorMode.White && player.Color == EPlayerColor.White)
                 || mode == LockDoorMode.All;
             if (!allowed)
-                return true;    // 原版路径：Dark 正常锁，其余被原版条件拒绝
+                return true;    // 原版路径：未放行颜色被原版条件拒绝（Dark 恒放行，不会到这里）
 
             if (!player.CanSabotage || __instance.State == 2)
                 return false;   // 放行身份但处于冷却/已锁：与原版条件不满足时的静默行为一致

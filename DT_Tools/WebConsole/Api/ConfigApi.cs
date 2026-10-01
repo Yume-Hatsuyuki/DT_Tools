@@ -17,7 +17,7 @@ namespace DT_Tools.WebConsole.Api
 
         public static void HandleUpdate(HttpListenerContext ctx)
         {
-            var body = ParseBody(ctx);
+            var body = ApiUtil.ParseBody(ctx);
             if (body == null)
             {
                 HttpServer.WriteJson(ctx.Response, new { ok = false, error = "invalid body" });
@@ -32,7 +32,7 @@ namespace DT_Tools.WebConsole.Api
 
             string section = (string)body["section"];
             string key = (string)body["key"];
-            string raw = NormalizeRaw(body["value"]);
+            string raw = ApiUtil.NormalizeRaw(body["value"]);
             if (raw == null)
             {
                 HttpServer.WriteJson(ctx.Response, new { ok = false, error = "missing value" });
@@ -57,7 +57,7 @@ namespace DT_Tools.WebConsole.Api
 
         public static void HandleReset(HttpListenerContext ctx)
         {
-            var body = ParseBody(ctx);
+            var body = ApiUtil.ParseBody(ctx);
             if (body == null)
             {
                 // 非法 JSON 不能静默当成空体——空 section/key 会触发全量重置
@@ -78,7 +78,7 @@ namespace DT_Tools.WebConsole.Api
 
         public static void HandleImport(HttpListenerContext ctx)
         {
-            var body = ParseBody(ctx);
+            var body = ApiUtil.ParseBody(ctx);
             if (body == null)
             {
                 HttpServer.WriteJson(ctx.Response, new { ok = false, error = "invalid body" });
@@ -156,37 +156,6 @@ namespace DT_Tools.WebConsole.Api
 
         // ---- 内部 ----
 
-        /// <summary>解析 JSON 请求体；空体或非法 JSON 一律返回 null（由调用方回 "invalid body"）。</summary>
-        private static Newtonsoft.Json.Linq.JObject ParseBody(HttpListenerContext ctx)
-        {
-            string body = HttpServer.ReadBody(ctx.Request);
-            if (string.IsNullOrWhiteSpace(body))
-                return null;
-            try
-            {
-                return Newtonsoft.Json.Linq.JObject.Parse(body);
-            }
-            catch (Newtonsoft.Json.JsonReaderException)
-            {
-                return null;
-            }
-        }
-
-        /// <summary>JToken 值 → 配置更新用的原始字符串（字符串去引号，其余字面量转文本）。</summary>
-        private static string NormalizeRaw(Newtonsoft.Json.Linq.JToken token)
-        {
-            switch (token?.Type)
-            {
-                case null:
-                case Newtonsoft.Json.Linq.JTokenType.Null:
-                    return null;
-                case Newtonsoft.Json.Linq.JTokenType.String:
-                    return (string)token;
-                case Newtonsoft.Json.Linq.JTokenType.Boolean:
-                    return (bool)token ? "true" : "false";
-                default:
-                    return token.ToString(Newtonsoft.Json.Formatting.None);
-            }
-        }
+        // 请求体解析与值归一化统一走 WebConsole/ApiUtil（原本类内两份实现已收编）
     }
 }

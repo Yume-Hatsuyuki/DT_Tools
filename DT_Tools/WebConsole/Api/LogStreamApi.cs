@@ -11,7 +11,7 @@ using DT_Tools.Core;
 namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
-    /// GET /api/log/ws — WebSocket 日志流（全量替换旧 SSE /api/log/stream）。
+    /// GET /api/log/ws — WebSocket 日志流。
     ///
     /// 协议（单向推送，客户端消息一律忽略）：
     ///   握手后先重放环形缓冲中 seq &gt; since 的条目（?since=N，缺省 0），

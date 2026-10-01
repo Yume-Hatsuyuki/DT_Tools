@@ -18,7 +18,7 @@ namespace DT_Tools.Commands.Agent
     ///   Server.Game.MissionManager 类本身是 `internal class`（0.1.15b MissionManager.cs:10），
     ///   DT_Tools 是独立编译、引用 Assembly-CSharp.dll 的外部程序集，无法在编译期直接写
     ///   `Server.Game.MissionManager.Instance`。Server.Game.MissionMirror 则是
-    ///   `public static class`（0.1.15b MissionMirror.cs:4，HasState:10/ProgressTypes:6/WaitTypes:8），
+    ///   `public static class`（0.1.15b Server.Game/MissionMirror.cs:5，HasState:11/ProgressTypes:7/WaitTypes:9），
     ///   可以直接编译期引用，但它只在"当前客户端不是 Host"时才会被 PacketHandler 写入
     ///   （Host 自己不需要镜像，见 PacketHandler.Handle_S_MISSION_STATE 的判断），
     ///   Host 模式下永远为空。
@@ -44,7 +44,7 @@ namespace DT_Tools.Commands.Agent
             {
                 if (IsHost)
                     return MissionAccess.Available && MissionAccess.Instance != null;
-                return Server.Game.MissionMirror.HasState;   // 0.1.15b MissionMirror.cs:10
+                return Server.Game.MissionMirror.HasState;   // 0.1.15b Server.Game/MissionMirror.cs:11
             }
         }
 
@@ -56,17 +56,6 @@ namespace DT_Tools.Commands.Agent
                 if (IsHost)
                     return MissionAccess.CollectTypes(MissionAccess.ProgressList);
                 return new HashSet<int>(Server.Game.MissionMirror.ProgressTypes);
-            }
-        }
-
-        /// <summary>排队等待、尚未真正开始的任务类型集合。</summary>
-        public static HashSet<int> WaitingMissionTypes
-        {
-            get
-            {
-                if (IsHost)
-                    return MissionAccess.CollectTypes(MissionAccess.WaitQueue);
-                return new HashSet<int>(Server.Game.MissionMirror.WaitTypes);
             }
         }
 

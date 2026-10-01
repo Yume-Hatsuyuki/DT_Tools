@@ -52,23 +52,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
         }
     }
 
-    /// <summary>
-    /// SaveManager.IsCharacterOwned：原版对 101 恒 false（public，可用 nameof）：
-    /// 0.1.15b SaveManager.cs:357。仅 101 整替为 true。
-    /// </summary>
-    [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.IsCharacterOwned))]
-    internal static class UnlockMadelineSaveOwnedPatch
-    {
-        private static bool Prefix(int dataId, ref bool __result)
-        {
-            if (!Engine.Enabled<UnlockMadelineFeature>())
-                return true;
-
-            if (dataId != UnlockMadelineLogic.MadelineDataId)
-                return true;
-
-            __result = true;
-            return false;
-        }
-    }
+    // 注：曾存在 SaveManager.IsCharacterOwned（SaveManager.cs:357）的同类补丁，
+    // 0.1.15b 全源码零调用点（所有权判定全部走 SteamInventorySource），属无效防御
+    // 补丁，已删除（审计 O-1）；若未来版本调用面变化需重新评估。
 }

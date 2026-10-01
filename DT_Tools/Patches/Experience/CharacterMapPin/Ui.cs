@@ -34,8 +34,7 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
 
         private static bool _diagnosticsLogged;
 
-        // ── 反射缓存（pin 贴图替换/还原逐帧调用；HarmonyX 的 Traverse 无 MethodInfo 重载，
-        //    且 Traverse 绑定目标实例、跨实例不能复用，故缓存开放实例委托 / PropertyInfo）──
+        // ── 反射缓存（pin 贴图替换/还原逐帧调用；缓存策略见 Core/Reflect.cs 头注释）──
         /// <summary>UI_Base.GetObject(int) protected：0.1.15b UI_Base.cs:93。</summary>
         private static readonly Func<UI_Base, int, GameObject> PinGetObject =
             Reflect.Bind<Func<UI_Base, int, GameObject>>(typeof(UI_Base), "GetObject", new[] { typeof(int) });

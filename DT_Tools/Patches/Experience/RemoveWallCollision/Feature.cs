@@ -18,7 +18,7 @@ namespace DT_Tools.Patches.Experience.RemoveWallCollision
     {
         private static void OnEnabled() => RemoveWallCollisionLogic.ApplyToLocalPlayer();
 
-        /// <summary>运行时关闭：恢复层与碰撞体（躲藏态下保持 trigger，退出躲藏后由原版恢复实心）。</summary>
+        /// <summary>运行时关闭：恢复本地玩家碰撞体（躲藏态下保持 trigger，退出躲藏后由原版恢复实心）。</summary>
         private static void OnDisabled() => RemoveWallCollisionLogic.RestoreLocalPlayer();
     }
 }

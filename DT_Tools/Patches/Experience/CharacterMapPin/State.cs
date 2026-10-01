@@ -22,12 +22,6 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
         /// 新对局同 id 玩家的删除拦截行为与其身份无关，语义不变。
         /// </summary>
         public static readonly HashSet<int> KeptPinIds = new HashSet<int>();
-
-        public static void Reset()
-        {
-            Arrows.Clear();
-            KeptPinIds.Clear();
-        }
     }
 
     /// <summary>单支常驻箭头的运行态：箭头视图、Mark 贴图槽、当前已套用的贴图键。</summary>

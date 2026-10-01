@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 
 namespace DT_Tools.Game
@@ -89,5 +90,12 @@ namespace DT_Tools.Game
 
         public static int[] ForMode(RandomItemMode mode) =>
             mode == RandomItemMode.Safe ? Safe : Full;
+
+        /// <summary>
+        /// 货架扩展池提供者：由货架随机道具功能（SupplyShelf）装载时发布，取值含
+        /// 功能开启判定（未开启返回 null）。下游（SupplyShelfRefill 补货池）只读本层，
+        /// 消除 Patches 功能间的横向依赖（AGENTS §3）。
+        /// </summary>
+        public static Func<int[]> ShelfPoolProvider;
     }
 }

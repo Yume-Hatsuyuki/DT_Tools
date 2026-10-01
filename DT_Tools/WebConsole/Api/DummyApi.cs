@@ -60,7 +60,7 @@ namespace DT_Tools.WebConsole.Api
         {
             if (!ParseBody(ctx, out var body)) return;
             string name = body.Value<string>("name");
-            bool? ready = ReadBool(body, "ready");
+            bool? ready = ApiUtil.ReadBool(body, "ready");
             if (ready == null)
             {
                 HttpServer.WriteJson(ctx.Response, CommandResult.Fail("missing ready"));
@@ -139,34 +139,13 @@ namespace DT_Tools.WebConsole.Api
             catch { return 0; }
         }
 
-        private static bool? ReadBool(JObject body, string key)
-        {
-            var token = body[key];
-            if (token == null || token.Type != JTokenType.Boolean)
-                return null;
-            return (bool)token;
-        }
-
-        /// <summary>解析 JSON 请求体；缺失/非法直接回 "invalid body"（AutomationApi 同款）。</summary>
+        /// <summary>解析 JSON 请求体；缺失/非法直接回 "invalid body"（统一解析在 ApiUtil）。</summary>
         private static bool ParseBody(HttpListenerContext ctx, out JObject body)
         {
-            body = null;
-            string raw = HttpServer.ReadBody(ctx.Request);
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                HttpServer.WriteJson(ctx.Response, CommandResult.Fail("invalid body"));
-                return false;
-            }
-            try
-            {
-                body = JObject.Parse(raw);
-            }
-            catch (Newtonsoft.Json.JsonReaderException)
-            {
-                HttpServer.WriteJson(ctx.Response, CommandResult.Fail("invalid body"));
-                return false;
-            }
-            return true;
+            body = ApiUtil.ParseBody(ctx);
+            if (body != null) return true;
+            HttpServer.WriteJson(ctx.Response, CommandResult.Fail("invalid body"));
+            return false;
         }
     }
 }

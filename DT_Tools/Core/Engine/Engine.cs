@@ -47,12 +47,11 @@ namespace DT_Tools.Core
 
         public static IReadOnlyList<ModuleInfo> AutomationModules => ModuleInfos;
 
-        public static Harmony Harmony { get; private set; }
         public static ConfigFile Config { get; private set; }
 
         public static LoadResult Load(Harmony harmony, ConfigFile config, ManualLogSource log)
         {
-            Harmony = harmony ?? throw new ArgumentNullException(nameof(harmony));
+            if (harmony == null) throw new ArgumentNullException(nameof(harmony));
             Config = config ?? throw new ArgumentNullException(nameof(config));
             Log.Init(log ?? throw new ArgumentNullException(nameof(log)));
 

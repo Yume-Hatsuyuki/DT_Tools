@@ -11,7 +11,7 @@ namespace DT_Tools.Patches.System.WhiteSabotageClue
     /// 本前缀在白方请求且其余门禁条件（存活/设备有证据/个人冷却，与原版同式）满足时
     /// 接管执行白方销毁序列（Logic.DestroyEvidence，痕迹记真实身份），其余一律交回
     /// 原版——黑方/黑幕路径零改动，关闭功能即原版门禁。
-    /// DestroyEvidence 为非虚方法且由 DeviceManager 分发（HostPacketHandler.cs:747），
+    /// DestroyEvidence 为非虚方法且由 DeviceManager 分发（Server.Game/HostPacketHandler.cs:747），
     /// 补丁打在基类即可覆盖全部设备。
     /// </summary>
     [HarmonyPatch(typeof(Server.Game.Device), nameof(Server.Game.Device.DestroyEvidence))]

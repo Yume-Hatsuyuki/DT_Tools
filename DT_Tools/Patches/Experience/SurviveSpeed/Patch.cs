@@ -11,9 +11,8 @@ namespace DT_Tools.Patches.Experience.SurviveSpeed
     /// <summary>
     /// FixedUpdateSurvive 整替：逐分支复刻 0.1.15b MyPlayer.cs:1757，仅倍率可配。
     /// 被调用的私有成员（字符串定位）：UpdateMovePacket 0.1.15b MyPlayer.cs:1955、
-    /// FixedUpdateMove(float) :1869、FixedKnockbackPlayer :1943——均被每 FixedUpdate 调用，
-    /// 缓存为开放实例委托（HarmonyX 的 Traverse 无 MethodInfo 重载；Traverse 绑定目标实例，
-    /// 跨实例也不能缓存 Traverse 本身，故缓存 MethodInfo 并 CreateDelegate）。
+    /// FixedUpdateMove(float) :1869、FixedKnockbackPlayer :1943——逐帧热路径，
+    /// 反射缓存策略见 Core/Reflect.cs 头注释。
     /// 公共成员直接引用：Controller 属性 :87、ChangeMyPlayerState :338、
     /// Moving（Player.cs:358）、SetRigidBodyVelocity（Player.cs:1783）、
     /// Define.HEAVY_ITEM_LIST（Define.cs:1503，int[]，Contains 走 LINQ）。

@@ -28,7 +28,7 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
         }
     }
 
-    /// <summary>成功回执记录（Handle_S_COOLTIME_SABOTAGE：PacketHandler.cs:769-774）。
+    /// <summary>成功回执记录（Handle_S_COOLTIME_SABOTAGE：PacketHandler.cs:766）。
     /// PacketHandler 为 internal（PacketHandler.cs:9）——TargetMethod 运行时解析。</summary>
     [HarmonyPatch]
     internal static class SabotageCooltimeAckPatch

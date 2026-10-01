@@ -20,7 +20,7 @@ namespace DT_Tools.Commands.ScanAll
         public static string Reply(List<DeviceBase> targets)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("【知晓一切】已对以下可扫描设备发送 C_SCAN_DEVICE：");
+            sb.AppendLine("【知晓一切】已受理以下可扫描设备（按 0.2s 分帧发送 C_SCAN_DEVICE）：");
 
             foreach (var d in targets)
                 sb.AppendLine($"  #{d.ID,-4} {d.DeviceType,-16} ({Category(d.DeviceType)})");

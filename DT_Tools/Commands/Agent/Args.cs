@@ -1,51 +1,54 @@
 using System;
 using System.Collections.Generic;
+using Protocol;
 
 namespace DT_Tools.Commands.Agent
 {
     /// <summary>/agent 参数解析：all / 任务ID / 任务别名 / #设备号 / stop（对应旧 AgentCommand 内联解析）。</summary>
     internal sealed class AgentArgs
     {
-        /// <summary>任务名/中文别名 → ESchoolMission 底层值（ScFishing=40、ScMorseCode=37 等，0.1.15b Protocol/ESchoolMission.cs）。</summary>
+        /// <summary>
+        /// 任务名/中文别名 → ESchoolMission 底层值。全部用枚举成员引用（编译期校验），
+        /// 枚举值变化时此处编译报错而非静默失配（0.1.15b Protocol/ESchoolMission.cs）。
+        /// </summary>
         private static readonly Dictionary<string, int> AliasMap =
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
             {
-                { "morse", 37 }, { "摩斯", 37 }, { "摩斯密码", 37 },
-                { "surgery", 1 }, { "手术", 1 },
-                { "spray", 2 }, { "喷雾", 2 }, { "合成喷雾", 2 },
-                { "miner", 3 }, { "矿工", 3 },
-                { "candle", 4 }, { "蜡烛", 4 },
-                { "collector", 6 }, { "收集", 6 },
-                { "mineralcraft", 7 }, { "放矿", 7 },
-                { "craft", 8 }, { "合成", 8 },
-                { "essence", 9 }, { "分离", 9 },
-                { "microscope", 10 }, { "显微镜", 10 },
-                { "bookrune", 11 }, { "符文书", 11 },
-                { "rune", 12 }, { "符文", 12 },
-                { "warp", 13 }, { "传送", 13 },
-                { "boiler", 14 }, { "制冰", 14 }, { "锅炉", 14 },
-                { "drink", 15 }, { "调酒", 15 },
-                { "shaker", 16 }, { "摇酒", 16 },
-                { "fixpc", 17 }, { "修电脑", 17 }, { "电脑", 17 },
-                { "manikin", 18 }, { "人体模型", 18 }, { "假人", 18 },
-                { "spraycancer", 20 }, { "杀菌", 20 },
-                { "potionalchemist", 21 }, { "炼金药", 21 },
-                { "shakerdrink", 22 }, { "献酒", 22 },
-                { "charge", 23 }, { "充电", 23 },
-                { "battery", 24 }, { "满电", 24 },
-                { "batteryminer", 25 }, { "矿工电池", 25 },
-                { "batterywarp", 26 }, { "传送电池", 26 },
-                { "batterybio", 27 }, { "生物电池", 27 },
-                { "mushroom", 28 }, { "蘑菇", 28 },
-                { "mushroomalchemist", 30 }, { "蘑菇炼金", 30 },
-                { "nintendo", 34 }, { "任天堂", 34 },
-                { "potion", 35 }, { "药剂", 35 },
-                { "fire", 36 }, { "火焰", 36 },
-                { "fish", 40 }, { "钓鱼", 40 },
+                { "morse", (int)ESchoolMission.ScMorseCode }, { "摩斯", (int)ESchoolMission.ScMorseCode }, { "摩斯密码", (int)ESchoolMission.ScMorseCode },
+                { "surgery", (int)ESchoolMission.ScSurgery }, { "手术", (int)ESchoolMission.ScSurgery },
+                { "spray", (int)ESchoolMission.ScMakeSpray }, { "喷雾", (int)ESchoolMission.ScMakeSpray }, { "合成喷雾", (int)ESchoolMission.ScMakeSpray },
+                { "miner", (int)ESchoolMission.ScMiner }, { "矿工", (int)ESchoolMission.ScMiner },
+                { "candle", (int)ESchoolMission.ScCandle }, { "蜡烛", (int)ESchoolMission.ScCandle },
+                { "collector", (int)ESchoolMission.ScCollector }, { "收集", (int)ESchoolMission.ScCollector },
+                { "mineralcraft", (int)ESchoolMission.ScMineralCraft }, { "放矿", (int)ESchoolMission.ScMineralCraft },
+                { "craft", (int)ESchoolMission.ScCraft }, { "合成", (int)ESchoolMission.ScCraft },
+                { "essence", (int)ESchoolMission.ScEssence }, { "分离", (int)ESchoolMission.ScEssence },
+                { "microscope", (int)ESchoolMission.ScMicroscope }, { "显微镜", (int)ESchoolMission.ScMicroscope },
+                { "bookrune", (int)ESchoolMission.ScBookRune }, { "符文书", (int)ESchoolMission.ScBookRune },
+                { "rune", (int)ESchoolMission.ScRune }, { "符文", (int)ESchoolMission.ScRune },
+                { "warp", (int)ESchoolMission.ScWarp }, { "传送", (int)ESchoolMission.ScWarp },
+                { "boiler", (int)ESchoolMission.ScBoiler }, { "制冰", (int)ESchoolMission.ScBoiler }, { "锅炉", (int)ESchoolMission.ScBoiler },
+                { "drink", (int)ESchoolMission.ScDrink }, { "调酒", (int)ESchoolMission.ScDrink },
+                { "shaker", (int)ESchoolMission.ScShakeShaker }, { "摇酒", (int)ESchoolMission.ScShakeShaker },
+                { "fixpc", (int)ESchoolMission.ScFixPc }, { "修电脑", (int)ESchoolMission.ScFixPc }, { "电脑", (int)ESchoolMission.ScFixPc },
+                { "manikin", (int)ESchoolMission.ScManikinStart }, { "人体模型", (int)ESchoolMission.ScManikinStart }, { "假人", (int)ESchoolMission.ScManikinStart },
+                { "spraycancer", (int)ESchoolMission.ScSprayCancer }, { "杀菌", (int)ESchoolMission.ScSprayCancer },
+                { "potionalchemist", (int)ESchoolMission.ScPotionAlchemist }, { "炼金药", (int)ESchoolMission.ScPotionAlchemist },
+                { "shakerdrink", (int)ESchoolMission.ScShakerDrink }, { "献酒", (int)ESchoolMission.ScShakerDrink },
+                { "charge", (int)ESchoolMission.ScChargeBattery }, { "充电", (int)ESchoolMission.ScChargeBattery },
+                { "battery", (int)ESchoolMission.ScBattery }, { "满电", (int)ESchoolMission.ScBattery },
+                { "batteryminer", (int)ESchoolMission.ScBatteryMiner }, { "矿工电池", (int)ESchoolMission.ScBatteryMiner },
+                { "batterywarp", (int)ESchoolMission.ScBatteryWarp }, { "传送电池", (int)ESchoolMission.ScBatteryWarp },
+                { "batterybio", (int)ESchoolMission.ScBatteryBio }, { "生物电池", (int)ESchoolMission.ScBatteryBio },
+                { "mushroom", (int)ESchoolMission.ScMushroom }, { "蘑菇", (int)ESchoolMission.ScMushroom },
+                { "mushroomalchemist", (int)ESchoolMission.ScMushroomAlchemist }, { "蘑菇炼金", (int)ESchoolMission.ScMushroomAlchemist },
+                { "nintendo", (int)ESchoolMission.ScNintendo }, { "任天堂", (int)ESchoolMission.ScNintendo },
+                { "potion", (int)ESchoolMission.ScPotion }, { "药剂", (int)ESchoolMission.ScPotion },
+                { "fire", (int)ESchoolMission.ScFire }, { "火焰", (int)ESchoolMission.ScFire },
+                { "fish", (int)ESchoolMission.ScAquaticCapture }, { "钓鱼", (int)ESchoolMission.ScAquaticCapture },
             };
 
         public bool IsStop { get; private set; }
-        public bool IsAll { get; private set; }
         public AgentFilter Filter { get; private set; }
 
         /// <summary>
@@ -70,8 +73,7 @@ namespace DT_Tools.Commands.Agent
             if (string.Equals(args[0], "all", StringComparison.OrdinalIgnoreCase)
                 || args[0] == "全部" || args[0] == "全清")
             {
-                parsed.IsAll = true;
-                return true;
+                return true;   // 全清 = 无过滤（Filter 保持 default），与无参预览同语义
             }
 
             if (!TryParseFilter(args[0], out var filter))

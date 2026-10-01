@@ -10,11 +10,13 @@ namespace DT_Tools.Patches.Experience.PlayerRadar
     /// LateUpdate 整替：复刻 0.1.15b UI_GameTablet.cs:2992，去掉
     /// 「myPlayer.Color == White && Managers.Game.IsAlive 则不刷新他人」分支（:3004）。
     /// 方法为 private，字符串定位：0.1.15b UI_GameTablet.cs:2992；
-    /// _init 为基类 InitBase 的 protected 字段（0.1.15b InitBase.cs:5），
-    /// RefreshMyPlayerPin（UI_GameTablet.cs:1200）/ RefreshPlayerPin(Player)（UI_GameTablet.cs:1211）为 private——
-    /// 均 LateUpdate 逐帧调用，缓存 FieldInfo 与开放实例委托（HarmonyX 的 Traverse 无
-    /// MethodInfo 重载；Traverse 绑定目标实例，跨实例也不能缓存 Traverse 本身，
-    /// 故缓存 MemberInfo 并 CreateDelegate）。已实测 AccessTools.Field 沿基类链查找，可命中基类字段。
+    /// _init 为基类 InitBase 的 protected 字段（0.1.15b InitBase.cs:5，AccessTools.Field
+    /// 已实测沿基类链命中）；RefreshMyPlayerPin（:1200）/ RefreshPlayerPin(Player)（:1211）
+    /// 为 private——逐帧热路径，反射缓存策略见 Core/Reflect.cs 头注释。
+    ///
+    /// 与 CharacterMapPin 的隐式联动：本补丁经委托调用原 RefreshPlayerPin，仍会触发
+    /// CharacterMapPin 挂在其上的 Postfix（头像替换）——该联动靠补丁机制维持，
+    /// 若本补丁改为不再调用原方法，CharacterMapPin 的平板 pin 头像会静默失效。
     /// </summary>
     [HarmonyPatch(typeof(UI_GameTablet), "LateUpdate")]
     internal static class PlayerRadarPatch

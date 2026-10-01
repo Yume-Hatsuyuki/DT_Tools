@@ -28,40 +28,25 @@ namespace DT_Tools.Commands.Agent
         public const int   MaxTicks     = 720;      // 原 300(=180s) → 0.25s下 720 tick=180s，等效不变
 
         /// <summary>
-        /// 改 Hand 操作的跨 tick 冷却 tick 数（0.25s×2=0.5s，与矿物冷却同量级）。
-        ///
-        /// 背景：Managers.Player.MyPlayer.PublicInfo.HandItemId 只在客户端收到服务端
-        /// S_ADD_ITEM/S_STATE 等回包后才会更新（见 PacketHandler.Handle_S_ADD_ITEM →
-        /// Inventory.InsertHand），是异步确认的，不是发包后立即生效的本地状态。
-        ///
-        /// 0.6s 的旧 tick 下，这个网络往返延迟（通常 &lt;200ms）天然小于一个 tick 周期，
-        /// 问题被掩盖；换成 0.25s 后，若延迟接近/超过一个 tick，Planner 会在
-        /// HandItemId 尚未刷新时误判"仍是空手"，对同一个地面物品重复发送
-        /// C_ACQUIRE_ITEM，造成重复拾取/重复交付判定，表现为同一目标反复出现在日志里。
-        ///
-        /// 修复：任何 ChangesHand==true 的步骤执行后，在本冷却期内不再执行新的改 Hand
-        /// 步骤（不止是采矿，覆盖交付/拾取/丢弃/生成全部四类），留出时间等待服务端回包
-        /// 把本地 Hand 状态刷新到位。冷却期结束判据是"经过的 tick 数"而非"状态真的变了"，
-        /// 因为若某次操作被服务端拒绝，等状态变化会永久卡死；用固定冷却更保守也更安全。
+        /// 改 Hand 操作的跨 tick 冷却（0.25s×2=0.5s）。依据：HandItemId 只在收到服务端
+        /// S_ADD_ITEM/S_STATE 回包后更新（PacketHandler.Handle_S_ADD_ITEM → Inventory.InsertHand，
+        /// 异步确认）；0.25s tick 下网络往返可能横跨 tick，Planner 会对同一目标重复发包。
+        /// 改 Hand 步骤执行后冷却期内不再执行新的改 Hand 步骤（覆盖交付/拾取/丢弃/生成）；
+        /// 判据用"经过 tick 数"而非"状态已变"——被服务端拒绝时等状态会永久卡死，固定冷却更保守。
         /// </summary>
         private const int HandOpCooldownTicks = 2;
 
         /// <summary>
-        /// 卡死检测阈值：同一个 label（同一设备同一动作）连续被执行这么多次，
-        /// 判定为"重复推进但未真正改变游戏状态"，主动停止并报警。
-        /// 这是 HandOpCooldown 修复之外的第二道防线：若未来某处判断条件有误导致
-        /// 类似的原地打转，能在数秒内被发现，而不必等到 MaxTicks 硬顶（180s）才停止。
+        /// 卡死检测阈值：同一 label 连续执行这么多次即判"原地打转"，停止并报警。
+        /// HandOpCooldown 之外的第二道防线，数秒内发现判断条件失效，而非等 MaxTicks 硬顶。
         /// </summary>
         private const int StuckRepeatThreshold = 8;
 
         /// <summary>
-        /// 任务全部完成的判定阈值（百分比）。
-        /// 依据 Server.Game/MissionManager.cs CheckAllClear：
-        ///   (int)(CurrentPoint/GoalPoint*100) &gt;= 100 时设置 AllClear=true（0.1.15b :30 AllClear、:461 调用）。
-        /// 客户端通过 S_MISSION_PROGRESS_PERCENT 收到同一个 Percent 值，
-        /// 经 PacketHandler.Handle_S_MISSION_PROGRESS_PERCENT 转发为
-        /// Managers.Game.OnBroadcastSceneEvent(ChangeMissionPercent, Percent) 场景事件
-        /// （0.1.15b GameManagerEX.cs:258 事件、Define.cs:170 ChangeMissionPercent）。
+        /// 任务全部完成判定阈值。依据 Server.Game/MissionManager.cs CheckAllClear：
+        /// Percent &gt;= 100 置 AllClear（0.1.15b :30 / :461）；客户端经
+        /// S_MISSION_PROGRESS_PERCENT → 场景事件 ChangeMissionPercent 收到同一值
+        /// （0.1.15b GameManagerEX.cs:258、Define.cs:170）。
         /// </summary>
         private const int AllClearPercent = 100;
 
