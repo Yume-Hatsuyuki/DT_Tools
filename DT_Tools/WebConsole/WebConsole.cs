@@ -139,7 +139,7 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/automation/host", Api.AutomationApi.HandleHost);
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
-            router.Add("GET", "/api/pick-file", Api.FilePickerApi.Handle);
+            router.Add("GET", "/api/fs/list", Api.FsApi.HandleList);   // WebUI 内置文件选择器（只读目录浏览）
             // 假人管理（假人应用）：全部经 RunOnMain 在主线程读写 GameRoom。
             // remove-all 必须注册在 remove 之前——Router 按注册顺序做前缀匹配，
             // 否则 /api/dummy/remove-all 会被更短的 /api/dummy/remove 截走报 invalid body

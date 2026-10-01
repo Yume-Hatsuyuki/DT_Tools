@@ -48,11 +48,11 @@ public/
 ## 本机文件选择
 
 浏览器的标准文件选择 API（`<input type=file>` / File System Access API）出于安全设计
-不会把绝对路径交给网页，这是所有浏览器的既定行为。因为 WebConsole 只监听
-`127.0.0.1`、请求者与游戏进程必然同机，所以改为后端出面：新增了
-`GET /api/pick-file`（`WebConsole/Api/FilePickerApi.cs`），反射晚绑定弹出 Windows
-原生文件对话框，返回绝对路径。**纯尽力而为**——反射加载失败时前端会提示"不可用"
-并允许直接手打路径，不会因为这个功能失败而挡住其他操作。
+不会把绝对路径交给网页，这是所有浏览器的既定行为；游戏的 Mono 运行时又加载不了
+System.Windows.Forms，弹 Windows 原生文件对话框的方案（`/api/pick-file` 反射晚绑定）
+已因此整体移除。所以路径选择完全由后端出面：`GET /api/fs/list`
+（`WebConsole/Api/FsApi.cs`）只读列举本机目录，前端 `apps/common/FileBrowser.vue`
+弹窗内浏览、选中后把绝对路径写进配置；地址栏也接受直接粘贴路径回车跳转。
 
 只有字段名以 `Track` 结尾的字符串配置项（如 `KillTrack`）才会显示"选择文件"按钮，
 这是前端按命名约定做的启发式判断（后端协议目前没有专门声明"这是一个路径字段"）。

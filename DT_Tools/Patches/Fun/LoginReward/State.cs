@@ -9,6 +9,14 @@ namespace DT_Tools.Patches.Fun.LoginReward
         /// </summary>
         public const float PopupTimeoutSec = 60f;
 
+        /// <summary>
+        /// 发放在途标记：TryGrant 发请求前写入 InventoryManager._revealEarned。
+        /// 真正的 grant 回调只会写 0（拒绝）或正数（发放量），见 0.1.15b InventoryManager.cs:356，
+        /// 因此 -1 可区分「回调未到」——发放请求在途期间，其它来源的 OnChanged
+        /// （价格缓存加载、库存全量刷新等）据此被过滤，不再抢跑误判为「服务端拒绝」。
+        /// </summary>
+        public const int InFlightEarned = -1;
+
         /// <summary>已订阅 OnChanged 的库存管理器（Init 可能多次触发，按实例判重）。</summary>
         public static InventoryManager Inv;
 
