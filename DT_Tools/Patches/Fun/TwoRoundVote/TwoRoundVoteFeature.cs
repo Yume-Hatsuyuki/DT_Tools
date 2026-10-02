@@ -9,7 +9,7 @@ using DT_Tools.Core;
 using DT_Tools.Core.Attributes;
 using GamePlayer = Server.Game.Player;
 
-namespace DT_Tools.Patches.System.TwoRoundVote
+namespace DT_Tools.Patches.Fun.TwoRoundVote
 {
     /// <summary>
     /// 二轮投票制（房主权威）：把原版「一次审判即终局」改为「至多两次审判」。

@@ -5,7 +5,7 @@ using Server.Game;
 using DT_Tools.Core;
 using DT_Tools.Core.Attributes;
 
-namespace DT_Tools.Patches.System.HostScreenSms
+namespace DT_Tools.Patches.Fun.HostScreenSms
 {
     /// <summary>
     /// 房主全员短信上屏：普通模式设备短信（DeviceChat）在房主中继时，
