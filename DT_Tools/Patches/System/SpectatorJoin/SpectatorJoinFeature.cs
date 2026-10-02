@@ -27,7 +27,7 @@ namespace DT_Tools.Patches.System.SpectatorJoin
         "满房观战：等待中（大厅）与进行中（Survive/Detective/允许观战的审判）的满房房间均可加入观战，观战者不占人数、不影响他人对局。",
         defaultEnabled: false,
         side: FeatureSide.Both,
-        Author = "梦初雪")]
+        Author = "合理")]
     public sealed partial class SpectatorJoinFeature
     {
         [Config("同时观战人数上限（1–16）。实际还受 Steam 大厅 16 人总上限约束。", Min = 1, Max = 16)]

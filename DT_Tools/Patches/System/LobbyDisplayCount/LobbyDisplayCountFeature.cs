@@ -25,7 +25,7 @@ namespace DT_Tools.Patches.System.LobbyDisplayCount
         "自定义大厅显示人数：对外（Steam 大厅列表）显示人数可与房间真实人数不同（偏移或固定值）。真实满员判定不变——达到最大人数依旧拒绝加入；与 SpectatorJoin（满房观战）、LobbyMaxPlayers（超上限）天然兼容。仅房主生效。",
         defaultEnabled: false,
         side: FeatureSide.Host,
-        Author = "Doubao")]
+        Author = "合理")]
     public sealed class LobbyDisplayCountFeature
     {
         [Config("显示人数偏移：对外显示人数 = 房间真实人数 + 偏移（可为负）。结果钳制下限 1（Steam 大厅列表读不到 <=0 的值会回退显示真实 Steam 成员数）。", Min = -64, Max = 64)]

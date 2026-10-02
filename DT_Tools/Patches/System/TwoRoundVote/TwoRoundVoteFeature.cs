@@ -23,7 +23,7 @@ namespace DT_Tools.Patches.System.TwoRoundVote
         "二轮投票制：第一轮投出黑方后不结束，单独处刑黑方，白方与黑幕进入第二轮（黑幕身份不变、出生点随机、任务与时间重置）；投出黑幕或白方则直接结束。第二轮黑方胜利时，第一轮的黑方同样计入胜利。房主侧生效。",
         defaultEnabled: false,
         side: FeatureSide.Host,
-        Author = "梦初雪")]
+        Author = "合理")]
     public sealed class TwoRoundVoteFeature
     {
         /// <summary>当前对局是否已进入第二轮。匹配开始时（StartPick）复位。</summary>

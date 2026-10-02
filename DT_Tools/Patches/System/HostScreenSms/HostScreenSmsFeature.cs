@@ -23,7 +23,7 @@ namespace DT_Tools.Patches.System.HostScreenSms
         "房主全员短信上屏：普通模式设备短信由房主转发为全屏气泡，未安装插件的玩家也能看到（仅房主生效）。",
         defaultEnabled: false,
         side: FeatureSide.Host,
-        Author = "Doubao")]
+        Author = "合理")]
     public sealed class HostScreenSmsFeature
     {
         /// <summary>
