@@ -19,6 +19,9 @@ namespace DT_Tools.Core
         {
             public Type Type;
             public string Section;
+
+            /// <summary>分类 = 命名空间中 Patches 段的下一级（目录 Patches/&lt;分类&gt;/&lt;功能&gt;），随配置协议下发。</summary>
+            public string Category;
             public string Description;
             public bool DefaultEnabled;
             public FeatureSide Side;
@@ -80,6 +83,7 @@ namespace DT_Tools.Core
                     {
                         Type = type,
                         Section = section,
+                        Category = DeriveCategory(type),
                         Description = patch.Description,
                         DefaultEnabled = patch.DefaultEnabled,
                         Side = patch.Side,
@@ -149,6 +153,17 @@ namespace DT_Tools.Core
                     return name.Substring(0, name.Length - suffix.Length);
             }
             return name;
+        }
+
+        /// <summary>
+        /// 分类 = 命名空间里 Patches 段的下一级（目录 Patches/&lt;分类&gt;/&lt;功能&gt;，段名属功能级）。
+        /// 非两段结构（如功能直接挂在 Patches 下）返回 null——前端把它归入「其他」文件夹兜底。
+        /// </summary>
+        public static string DeriveCategory(Type type)
+        {
+            string[] parts = (type.Namespace ?? "").Split('.');
+            int i = Array.IndexOf(parts, "Patches");
+            return i >= 0 && i + 2 < parts.Length ? parts[i + 1] : null;
         }
 
         /// <summary>

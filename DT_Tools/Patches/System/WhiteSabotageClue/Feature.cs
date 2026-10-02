@@ -9,13 +9,13 @@ namespace DT_Tools.Patches.System.WhiteSabotageClue
     /// 黑方销毁证据记 66613——白方的破坏行为原版完全不留痕，本功能补齐这一环。
     /// 销毁证据原版仅黑方/黑幕（Server.Game/Device.cs:219 硬校验），DestroyEvidence
     /// 开启后白方也可销毁，痕迹记真实身份而非固定假身份；白方的销毁按钮显示需白方端
-    /// 启用「SabotageButtonUnlock」（WhiteDestroyEvidence）。白方锁门的放行与留痕
-    /// 已并入「DoorLockServer」（放行+LockDoorClue 一处调整）；拉电闸服务端无身份校验，
+    /// 启用「SabotageButtonUnlock」（WhiteDestroyEvidence）。白方锁门的放行已并入
+    /// 「DoorLockServer」（锁门不留痕，与原版一致）；拉电闸服务端无身份校验，
     /// 白方拆完线即可触发。
     /// 白方留痕会暴露自己——破坏收益与被推理风险并存。
     /// </summary>
     [PatchFeature(
-        "白方破坏留痕：白方拉电闸/销毁证据时留下真实身份线索，侦探扫描设备可得。\nDestroyEvidence 同时放行白方销毁证据（原版仅黑方/黑幕）；白方的对应按钮显示见「SabotageButtonUnlock」；白方锁门的放行与留痕见「DoorLockServer」。",
+        "白方破坏留痕：白方拉电闸/销毁证据时留下真实身份线索，侦探扫描设备可得。\nDestroyEvidence 同时放行白方销毁证据（原版仅黑方/黑幕）；白方的对应按钮显示见「SabotageButtonUnlock」；白方锁门的放行见「DoorLockServer」。",
         defaultEnabled: false,
         side: FeatureSide.Host,
         Author = "梦初雪")]

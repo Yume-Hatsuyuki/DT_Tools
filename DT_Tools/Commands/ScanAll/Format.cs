@@ -17,10 +17,12 @@ namespace DT_Tools.Commands.ScanAll
                 _                  => "设备",
             };
 
-        public static string Reply(List<DeviceBase> targets)
+        public static string Reply(List<DeviceBase> targets, float interval)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("【知晓一切】已受理以下可扫描设备（按 0.2s 分帧发送 C_SCAN_DEVICE）：");
+            sb.AppendLine(interval > 0f
+                ? $"【知晓一切】已受理以下可扫描设备（按 {interval:0.##}s 分帧发送 C_SCAN_DEVICE）："
+                : "【知晓一切】已受理以下可扫描设备（同帧一次性发送 C_SCAN_DEVICE）：");
 
             foreach (var d in targets)
                 sb.AppendLine($"  #{d.ID,-4} {d.DeviceType,-16} ({Category(d.DeviceType)})");

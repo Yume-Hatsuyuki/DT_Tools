@@ -62,7 +62,7 @@ Plugin.cs（装配根）
 
 注册全部反射发现，新增功能**零注册代码**：
 
-- `[PatchFeature]` → 绑定配置段并挂载同命名空间下所有 `[HarmonyPatch]` 类（逐补丁 try/catch，任一失败整功能跳过——失败隔离到功能级；`OnPatched` 抛异常只记日志、不计为挂载失败，因为补丁已挂载且门闩仍生效）。`Author` 缺省「佚名」（禁止全局常量兜底）。
+- `[PatchFeature]` → 绑定配置段并挂载同命名空间下所有 `[HarmonyPatch]` 类（逐补丁 try/catch，任一失败整功能跳过——失败隔离到功能级；`OnPatched` 抛异常只记日志、不计为挂载失败，因为补丁已挂载且门闩仍生效）。`Author` 缺省「佚名」（禁止全局常量兜底）。分类由命名空间 `Patches/<分类>/<功能>` 自动推导（`FeatureLoader.DeriveCategory`），随 `/api/config/list` 的 `category` 字段下发，零配置。
 - `[AutomationModule]` → 要求 `static void Tick(bool)`；总开关在 `Automation/Host.cs`。**自动化=纯发包/只读**（客户端表现层属补丁域）。
 - `ICommand` → `CommandRegistry` 注册主名+别名（别名冲突抛异常）。
 - `[ConfigSection]` → 基础设施配置段。
@@ -118,7 +118,7 @@ Plugin.cs（装配根）
 
 - `POST /api/run` body=**原始命令文本**，头 `X-DT-Session: <会话id>`（前端每窗口实例生成）；响应=CommandResult 信封。
 - `GET /api/commands` → `[{name, aliases, usage, description, author}]`。
-- 配置：`GET /api/config/list` → 段 `[{section, group, enabledKey, entries:[{key,type,value,default,description,accepts}]}]`（`accepts`={options:[{value,label}],values} 或 {min,max}；`group`="automation"|"feature"，前端禁止硬编码段名）。`POST /api/config/update|save|reset|import`、`GET /api/config/export.cfg`。**reset 带 key 必须带 section**（后端拒绝跨段同名重置）。
+- 配置：`GET /api/config/list` → 段 `[{section, group, category, enabledKey, entries:[{key,type,value,default,description,accepts}]}]`（`accepts`={options:[{value,label}],values} 或 {min,max}；`group`="automation"|"feature"，前端禁止硬编码段名）。`category`=功能所属 Patches 分类目录名（Dev/Experience/Fun/Shop/System），由 `FeatureLoader.DeriveCategory` 从命名空间推导；非补丁功能段（WebConsole/ScanAll 等基础设施）缺省，前端归入「其他」文件夹兜底。CONFIG 页两级导航：分类文件夹 → 功能段。`POST /api/config/update|save|reset|import`、`GET /api/config/export.cfg`。**reset 带 key 必须带 section**（后端拒绝跨段同名重置）。
 - 段/模块日志：`GET /api/config/section/{段}/log`、`GET /api/automation/modules/{id}/log` → `{ok, section/id, seq, lines:["HH:mm:ss [LEVEL] msg"]}` **对象**；`POST …/log/clear` 清空。
 - 自动化：`GET /api/automation/status`（模块含 `enabledKey`）、`POST /api/automation/host`。
 - 桌面壳：`POST /api/game/exit`（主线程 `Application.Quit()`，确认在前端做）、`GET /api/steam/players`。
@@ -130,7 +130,7 @@ Plugin.cs（装配根）
 ### 8.3 前端工程（webui-src/）
 
 - Vue 3 + Vite，`npm run build` 产物直出 `../DT_Tools/WebUI/`（无 hash 文件名）；`dotnet build` 的 BuildWebUI 目标自动增量构建并拷贝（`-p:SkipWebUIBuild=true` 可跳过）。
-- 结构：`src/desktop/`（桌面壳：Desktop/Window/TopBar/Dock + ParticleFlow 数据流粒子背景层 + SteamWidget 在线人数小组件（可拖动/可关闭，Dock 可重开，位置记忆在 localStorage），macOS 风格——顶栏=龙标+品牌名 DT_Tools（静态，图3）+ Kali 应用菜单风大面板（搜索/分类「应用/小组件/系统」/功能列表/底部用户栏：账户菜单弹层+独立退出键）+ 运行标签 + 图标化连接状态 + 中文时钟，底部 Dock 列出全部应用图标（鱼眼放大/运行点/右键备忘），八方向缩放 + 多实例窗口；应用图标不摆桌面；**右键菜单三处互不相通**：桌面=终端/壁纸/粒子效果开关/关于，Dock（任务栏）=打开终端/显示桌面/最小化所有进程/关闭所有进程/关于（批量窗口操作在 useWindowManager：showDesktop 带快照可再切回、minimizeAll/closeAll），应用图标=备忘菜单；**任务栏取色自适应**：自定义壁纸由 useWallpaper 在 48px 缩略图提平均主色压进深色玻璃区间存 `state.tint`，Desktop 经 `.desktop` 上的 CSS 变量继承覆写 `--dock-bg`/`--dock-border`（Dock 组件零改动，切回预设/提取失败即回默认色）；**粒子层可整体开关**（桌面右键「粒子效果」，ParticleFlow 挂 `v-if`））、`src/apps/`（terminal=Kali 终端、console=旧版控制台、config=配置、automation=自动化、**log=全量日志**；跨应用共享组件在 `apps/common/`：SuggestPopup/FolderGrid/LogPanel/EntryList/CropperHost/FileBrowser（本机文件选择弹窗，`*Track` 路径字段的文件夹按钮打开它， Teleport 到 body、数据源 /api/fs/list））、`src/composables/`（useLogStream=日志流单例 / useWindowManager / useConnectionStatus / 身份 / 壁纸 / 裁切）、`src/apps/console/useCommandInput.js`（命令表/历史/会话化执行共享件；终端内置命令以 `builtin: true` 混入补全候选、白名+「内置」徽标排在服务端命令之后，并跟随 help 输出末尾列出；**新版终端 TAB=采纳当前高亮候选**（↑↓/悬停选定后 TAB 即补全那条，与旧版一致），高亮未挪动时连按 TAB 循环切下一个候选）。
+- 结构：`src/desktop/`（桌面壳：Desktop/Window/TopBar/Dock + ParticleFlow 数据流粒子背景层 + SteamWidget 在线人数小组件（可拖动/可关闭，Dock 可重开，位置记忆在 localStorage），macOS 风格——顶栏=龙标+品牌名 DT_Tools（静态，图3）+ Kali 应用菜单风大面板（搜索/分类「应用/小组件/系统」/功能列表/底部用户栏：账户菜单弹层+独立退出键）+ 运行标签 + 图标化连接状态 + 中文时钟，底部 Dock 列出全部应用图标（鱼眼放大/运行点/右键备忘），八方向缩放 + 多实例窗口；应用图标不摆桌面；**右键菜单三处互不相通**：桌面=终端/壁纸/粒子效果开关/关于，Dock（任务栏）=打开终端/显示桌面/最小化所有进程/关闭所有进程/关于（批量窗口操作在 useWindowManager：showDesktop 带快照可再切回、minimizeAll/closeAll），应用图标=备忘菜单；**任务栏取色自适应**：自定义壁纸由 useWallpaper 在 48px 缩略图提平均主色压进深色玻璃区间存 `state.tint`，Desktop 经 `.desktop` 上的 CSS 变量继承覆写 `--dock-bg`/`--dock-border`（Dock 组件零改动，切回预设/提取失败即回默认色）；**粒子层可整体开关**（桌面右键「粒子效果」，ParticleFlow 挂 `v-if`））、`src/apps/`（terminal=Kali 终端、console=旧版控制台、config=配置（两级文件夹导航：五大分类 `category` 文件夹→功能段，根视图搜索跨分类平铺功能段）、automation=自动化、**log=全量日志**；跨应用共享组件在 `apps/common/`：SuggestPopup/FolderGrid/LogPanel/EntryList/CropperHost/FileBrowser（本机文件选择弹窗，`*Track` 路径字段的文件夹按钮打开它， Teleport 到 body、数据源 /api/fs/list））、`src/composables/`（useLogStream=日志流单例 / useWindowManager / useConnectionStatus / 身份 / 壁纸 / 裁切）、`src/apps/console/useCommandInput.js`（命令表/历史/会话化执行共享件；终端内置命令以 `builtin: true` 混入补全候选、白名+「内置」徽标排在服务端命令之后，并跟随 help 输出末尾列出；**新版终端 TAB=采纳当前高亮候选**（↑↓/悬停选定后 TAB 即补全那条，与旧版一致），高亮未挪动时连按 TAB 循环切下一个候选）。
 - 控制台通用件：吸底滚动三条件（贴底、无文本选区、未暂停）才跟随；本地条目批量截断（禁止逐条 shift 扰动选区）；补全列表高亮必须 `scrollIntoView` 跟随（SuggestPopup 统一实现）。
 - 桌面壳本地状态（备忘录重命名/自定义图标/壁纸/粒子效果开关/用户名主机名头像）全存浏览器 localStorage，**不进后端配置**；`whoami/hostname/user` 是终端本地命令，不进 `/api/commands`。
 - 前端铁律：视图禁止裸 fetch 与字面量 API 路径（一律走 `src/api.js`）；动态文本进 DOM 必须 `textContent` 或 `esc()`；登录页样式自包含；图片导入统一走 `useCropper`（头像/图标=256×256 方/圆选区；壁纸=shape 'free' 按视口比例的矩形选区、**舞台即选区所见即所得**（弹窗可见画面=最终成图，输出 ≤1920px JPEG），换壁纸不再有独立压缩管线）；图标用 unplugin-icons + tabler（tabler 无 `brand-kali`，Kali 风图标用 `dragon`）。

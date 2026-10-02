@@ -12,9 +12,38 @@ import IconUpload from '~icons/tabler/upload';
 import IconRefresh from '~icons/tabler/refresh';
 import IconTrash from '~icons/tabler/trash';
 
+/**
+ * 分类显示名：键 = 后端 Patches/<分类>/ 目录名（协议 category 字段），前端只认这套
+ * 稳定的目录名集合并给中文标签，未知值回退原名；段名本身仍零硬编码。
+ * 右键重命名走 useSectionMeta（localStorage 备忘），与功能段图标/改名同一套机制。
+ */
+const CATEGORY_LABELS = {
+  Dev: '开发类',
+  Experience: '体验增强',
+  Fun: '娱乐功能',
+  Shop: '零元购',
+  System: '游戏系统',
+};
+/** 已知分类的固定展示顺序；未知分类按名排其后，「其他」（无 category 的基础设施段）恒最后。 */
+const CATEGORY_ORDER = ['Dev', 'Experience', 'Fun', 'Shop', 'System'];
+const OTHER_KEY = '__other';   // 无分类段的归并键（后端 category 缺省）
+
+function categoryLabel(key) {
+  if (key === OTHER_KEY) return '其他';
+  return CATEGORY_LABELS[key] || key;
+}
+function categoryRank(key) {
+  const i = CATEGORY_ORDER.indexOf(key);
+  if (i !== -1) return i;
+  return key === OTHER_KEY ? CATEGORY_ORDER.length + 1 : CATEGORY_ORDER.length;
+}
+/** 段 → 归并分类键（协议 category 或 OTHER_KEY）。 */
+function categoryOf(s) { return s.category || OTHER_KEY; }
+
 const sections = ref([]);
 const query = ref('');
-const openSection = ref(null);   // 展开中的段名，null=文件夹网格视图
+const openCategory = ref(null);  // 展开中的分类键，null=分类网格视图
+const openSection = ref(null);   // 展开中的段名，null=未进入段详情
 const sectionMeta = useSectionMeta();
 
 async function reload() {
@@ -38,9 +67,26 @@ function openDetail(item) {
   currentSection.value = sec;
   openSection.value = sec.section;
 }
-function backToGrid() {
+function closeSection() {
   openSection.value = null;
   currentSection.value = null;
+}
+/** 段详情返回：有上级分类回到分类文件夹，从搜索结果进入的回根视图。 */
+function backToFolder() {
+  closeSection();
+}
+function backToRoot() {
+  closeSection();
+  openCategory.value = null;
+}
+
+/** FolderGrid 的 open：根视图无搜索时点的是分类磁贴，其余都是段磁贴。 */
+function onOpen(item) {
+  if (!openCategory.value && !query.value.trim()) {
+    openCategory.value = item.key;
+    return;
+  }
+  openDetail(item);
 }
 
 function onUpdated() { dirty.value = true; }
@@ -55,21 +101,52 @@ function onToast(t) { showToast(t.text, t.error); }
  */
 const featureSections = computed(() => sections.value.filter(s => s.group !== 'automation'));
 
-const folderItems = computed(() =>
-  featureSections.value
-    .filter(s => {
-      const q = query.value.trim().toLowerCase();
-      if (!q) return true;
-      const alias = (sectionMeta.displayName(s.section) || '').toLowerCase();
-      return alias.includes(q) || sectionMatches(s, q);
-    })
-    .map(s => ({
-      key: s.section,
-      label: s.section,
-      count: (s.entries || []).length,
-      enabled: enabledOf(s),
-    }))
-);
+/** 段磁贴摘要（key=段名，FolderGrid 经 useSectionMeta 显示别名/图标）。 */
+function toSectionTile(s) {
+  return {
+    key: s.section,
+    label: s.section,
+    count: (s.entries || []).length,
+    enabled: enabledOf(s),
+  };
+}
+
+function matchSection(s, q) {
+  if (!q) return true;
+  const alias = (sectionMeta.displayName(s.section) || '').toLowerCase();
+  // 分类中文标签也纳入搜索：搜「商店」应列出商店分类下的功能
+  const catLabel = categoryLabel(categoryOf(s)).toLowerCase();
+  return alias.includes(q) || catLabel.includes(q) || sectionMatches(s, q);
+}
+
+/** 当前分类下的功能段（分类视图用）。 */
+const sectionsInCategory = computed(() =>
+  featureSections.value.filter(s => categoryOf(s) === openCategory.value));
+
+/** 根视图的分类磁贴：按固定顺序排列，无分类段归并进「其他」（空则不出现）。 */
+const categoryItems = computed(() => {
+  const counts = new Map();
+  for (const s of featureSections.value) {
+    const key = categoryOf(s);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  return [...counts.keys()]
+    .sort((a, b) => categoryRank(a) - categoryRank(b) || (a < b ? -1 : 1))
+    .map(key => ({ key, label: categoryLabel(key), count: counts.get(key), enabled: null }));
+});
+
+const folderItems = computed(() => {
+  const q = query.value.trim().toLowerCase();
+  if (openCategory.value) {
+    // 分类视图：只列本分类的功能段
+    return sectionsInCategory.value.filter(s => matchSection(s, q)).map(toSectionTile);
+  }
+  if (q) {
+    // 根视图搜索：全部分类内的功能段平铺，磁贴直接进详情
+    return featureSections.value.filter(s => matchSection(s, q)).map(toSectionTile);
+  }
+  return categoryItems.value;
+});
 
 function enabledOf(section) {
   // 开关键名走协议字段（后端 Engine.EnabledKey），不硬编码 'Enabled'
@@ -89,10 +166,26 @@ onUnmounted(stopAutoRefresh);
   <div class="config-app">
     <div class="toolbar">
       <div class="toolbar-left">
-        <input v-if="!openSection" v-model="query" class="search" type="search" placeholder="搜索文件夹 / 字段…">
-        <span v-else class="breadcrumb">
-          全部配置 / <b :title="openSection">{{ sectionMeta.displayName(openSection) || openSection }}</b>
-        </span>
+        <template v-if="openSection">
+          <span class="breadcrumb">
+            <a class="crumb" title="返回全部分类" @click="backToRoot">全部配置</a>
+            <template v-if="openCategory">
+              <span class="sep">/</span>
+              <a class="crumb" :title="'返回 ' + categoryLabel(openCategory)" @click="closeSection">{{ categoryLabel(openCategory) }}</a>
+            </template>
+            <span class="sep">/</span>
+            <b :title="openSection">{{ sectionMeta.displayName(openSection) || openSection }}</b>
+          </span>
+        </template>
+        <template v-else-if="openCategory">
+          <span class="breadcrumb">
+            <a class="crumb" title="返回全部分类" @click="backToRoot">全部配置</a>
+            <span class="sep">/</span>
+            <b>{{ categoryLabel(openCategory) }}</b>
+          </span>
+          <input v-model="query" class="search" type="search" placeholder="搜索本分类功能 / 字段…">
+        </template>
+        <input v-else v-model="query" class="search" type="search" placeholder="搜索功能 / 分类 / 字段…">
       </div>
       <div class="toolbar-right">
         <span v-if="dirty" class="dirty-mark" title="有未保存的更改">●未保存</span>
@@ -109,11 +202,12 @@ onUnmounted(stopAutoRefresh);
 
     <div v-if="toast" class="toast" :class="{ error: toast.error }">{{ toast.text }}</div>
 
-    <FolderGrid v-if="!openSection" :items="folderItems" @open="openDetail" />
+    <FolderGrid v-if="!openSection" :items="folderItems" @open="onOpen" />
     <SectionDetail
-      v-else-if="currentSection"
+      v-if="currentSection"
       :section="currentSection"
-      @back="backToGrid"
+      :back-label="openCategory ? categoryLabel(openCategory) : '全部配置'"
+      @back="backToFolder"
       @updated="onUpdated"
       @reset="onReset"
       @toast="onToast"
@@ -135,9 +229,10 @@ onUnmounted(stopAutoRefresh);
   flex-wrap: wrap;
   background: var(--surface-1);
 }
-.toolbar-left { flex: 1; min-width: 160px; }
+.toolbar-left { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 10px; }
 .search {
-  width: 100%;
+  flex: 1;
+  min-width: 120px;
   max-width: 260px;
   background: var(--surface-0);
   border: 1px solid var(--line);
@@ -147,8 +242,11 @@ onUnmounted(stopAutoRefresh);
   padding: 7px 10px;
   outline: none;
 }
-.breadcrumb { font-size: 12.5px; color: var(--text-1); }
+.breadcrumb { font-size: 12.5px; color: var(--text-1); flex-shrink: 0; }
 .breadcrumb b { color: var(--accent-cyan); font-family: var(--font-mono); }
+.crumb { color: var(--text-1); cursor: pointer; }
+.crumb:hover { color: var(--accent-cyan); text-decoration: underline; }
+.sep { color: var(--text-2); margin: 0 3px; }
 
 .toolbar-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .dirty-mark { font-size: 11px; color: var(--accent-amber); margin-right: 4px; }

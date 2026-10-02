@@ -11,6 +11,8 @@ import IconHistory from '~icons/tabler/history';
 
 const props = defineProps({
   section: { type: Object, required: true },
+  /** 返回目标显示名（上级分类名；从搜索结果进入时为"全部配置"）。 */
+  backLabel: { type: String, default: '全部配置' },
 });
 const emit = defineEmits(['back', 'updated', 'reset', 'toast']);
 
@@ -52,7 +54,7 @@ const logOpen = ref(false);
 <template>
   <div class="section-detail">
     <div class="detail-header">
-      <button class="back-btn" @click="emit('back')"><IconArrowLeft /> 全部配置</button>
+      <button class="back-btn" @click="emit('back')"><IconArrowLeft /> {{ backLabel }}</button>
       <div class="detail-title">
         <span class="bracket-name" :title="section.section">[{{ alias || section.section }}]</span>
         <span v-if="meta.side" class="badge">{{ meta.side }}</span>
