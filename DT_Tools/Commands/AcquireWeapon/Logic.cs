@@ -9,7 +9,7 @@ namespace DT_Tools.Commands.AcquireWeapon
     /// 刀架查询走 Game/Devices（OpenArmories / AllOf），房名走 Game/RoomLabel.FromDevice。
     /// 机制依据：原版客户端 Armory.InteractArmory / UseSabotageArmory 要求本地物理接触
     /// 才发 C_INTERACT_ARMORY，而服务端 DeviceManager.Interact → Armory 全程无距离校验，
-    /// 直接发包即可任意位置拔刀。颜色分流（0.1.15b Server.Game/Armory.cs:44-48）：
+    /// 直接发包即可任意位置拔刀。颜色分流（0.1.16b Server.Game/Armory.cs:44-48）：
     /// White → AcquireWeapon（State==1 && Color==White，:112）；Dark → SelectBlack
     /// （State==1 && Color==Dark && Weapon==null && !WeaponPickupLocked，:122-124）；
     /// Black 两分支都不接受，直接拒绝。服务端 SendWeapon 硬断言目标架 == CurrentArmory
@@ -21,7 +21,7 @@ namespace DT_Tools.Commands.AcquireWeapon
         // ═══════════════════════════════════════════════════
         //  具名常量：凶器道具 DataId（服务端 Armory 发放，背包出现即生效）
         // ═══════════════════════════════════════════════════
-        internal const int WeaponDataId = Define.ITEM_ID_KNIFE;   // 2001（0.1.15b Define.cs:720）
+        internal const int WeaponDataId = Define.ITEM_ID_KNIFE;   // 2001（0.1.16b Define.cs:712）
 
         /// <summary>
         /// 武器架空场后自动换点的剩余秒数（StateList[2]=总时长, [3]=已计时）。
@@ -52,7 +52,7 @@ namespace DT_Tools.Commands.AcquireWeapon
 
         /// <summary>
         /// 真伪可拔判定（房主权威）：SendWeapon 硬断言目标架 == CurrentArmory
-        /// （0.1.15b Server.Game/Armory.cs:134）——当前架必真；其它开放架取决于房主
+        /// （0.1.16b Server.Game/Armory.cs:134）——当前架必真；其它开放架取决于房主
         /// 「武器架多刀」：启用=拾取自动接管 CurrentArmory，可拔；未启用=静默拒绝。
         /// 非房主执行时无服务端数据，返回未知。
         /// </summary>

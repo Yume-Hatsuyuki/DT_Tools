@@ -6,9 +6,9 @@ using Server.Game;
 namespace DT_Tools.Patches.System.CorpseWait
 {
     /// <summary>
-    /// 尸体构造（Server.Game.Corpse，签名 (Player, PublicPlayerInfo)：0.1.15b Server.Game/Corpse.cs:188；
+    /// 尸体构造（Server.Game.Corpse，签名 (Player, PublicPlayerInfo)：0.1.16b Server.Game/Corpse.cs:188；
     /// 全局命名空间另有客户端 Corpse : DeviceBase，故用全名）。原版为「首具尸体」排程时
-    /// WaitDetectiveSecond = Util.GetRandomNumber(50, 71)（0.1.15b Server.Game/Corpse.cs:218），
+    /// WaitDetectiveSecond = Util.GetRandomNumber(50, 71)（0.1.16b Server.Game/Corpse.cs:218），
     /// 并在 StateList[5] 记录触发时间、PushSurvivalJob 挂 EndSurvival。
     /// Prefix 记录改写窗口并掷出本次等待秒数，Postfix 统一改写三处，保证一致。
     /// Finalizer 兜底：原版 ctor 中途抛异常时 Postfix 不会执行，RewritePush 窗口会滞留为 true，
@@ -39,7 +39,7 @@ namespace DT_Tools.Patches.System.CorpseWait
                 return;
 
             int wait = CorpseWaitState.PendingWait;
-            // WaitDetectiveSecond 为 private set 属性（0.1.15b Server.Game/Corpse.cs:22），Traverse 写入
+            // WaitDetectiveSecond 为 private set 属性（0.1.16b Server.Game/Corpse.cs:22），Traverse 写入
             Traverse.Create(__instance).Property("WaitDetectiveSecond").SetValue(wait);
             var deviceInfo = __instance.DeviceInfo;
             if (deviceInfo?.StateList != null && deviceInfo.StateList.Count > 5)

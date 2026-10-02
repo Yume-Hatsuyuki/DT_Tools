@@ -10,12 +10,12 @@ namespace DT_Tools.Game
     /// <summary>
     /// Server.Game.MissionManager 反射访问器（全项目唯一，消费方：FishingPond /
     /// LobbyMaxPlayers / GiveMission / Agent）。该类在发行程序集中是 internal
-    /// （0.1.15b Server.Game/MissionManager.cs:10），无法编译期引用，但其成员签名固定，
+    /// （0.1.16b Server.Game/MissionManager.cs:10），无法编译期引用，但其成员签名固定，
     /// 反射能访问（Instance/ProgressMissionList/WaitMissionQueue/ClearMission/StartMission()
     /// 均为 public，BroadcastMissionState/RemoveFromWaitQueue/StartMission(MissionData) 为
     /// private——外层类不可见不妨碍反射调用）。Data.MissionData 是 public 类型，直接引用。
     ///
-    /// 反射目标（0.1.15b，升级时全文搜索核对）：
+    /// 反射目标（0.1.16b，升级时全文搜索核对）：
     ///   Type 全名 "Server.Game.MissionManager"            → MissionManager.cs:10（internal class）
     ///   Instance（static property getter）                → :14
     ///   ProgressMissionList（public List&lt;MissionData&gt;）    → :26
@@ -111,7 +111,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>StartMission()：开局启动任务分配（0.1.15b MissionManager.cs:355）。</summary>
+        /// <summary>StartMission()：开局启动任务分配（0.1.16b MissionManager.cs:355）。</summary>
         public static bool StartParameterless()
         {
             object inst = Instance;

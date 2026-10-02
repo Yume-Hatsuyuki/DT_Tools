@@ -28,7 +28,7 @@ namespace DT_Tools.Commands.GiveDrink
 
         // 原则：Define.cs 中 ITEM_ID_* 全量收录（ITEM_ID_START=1000 是区间哨兵值，非真实道具，排除）；
         // 另收录 ITEM_SMAHO=4001（不以 ITEM_ID_ 命名，但原版扫描/开平板时确实作为手持物显示）。
-        // 所有值均为 DataId，可直接传入 ItemManager.CreateAndInsertInven。常量核对：0.1.15b Define.cs:606-758。
+        // 所有值均为 DataId，可直接传入 ItemManager.CreateAndInsertInven。常量核对：0.1.16b Define.cs:598-750。
         internal static readonly List<ItemDef> ItemDefs = new List<ItemDef>
         {
             // ── 任务/设备道具 (10xx) ──

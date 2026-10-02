@@ -8,7 +8,7 @@ namespace DT_Tools.Game
     /// <summary>
     /// 音频纯函数（Game 层共享）：StageMusic 播放器与点播引擎（AudioPlayback）是两台
     /// 同构引擎，播放槽状态（AudioSource/片段缓存/加载协程）各归各引擎，但无状态部分
-    /// 只留一份实现——多声道下混提取、语音编码前混入、本地路径解析（0.1.15b 审计 F-M9/F-M18）。
+    /// 只留一份实现——多声道下混提取、语音编码前混入、本地路径解析（0.1.16b 审计 F-M9/F-M18）。
     /// </summary>
     internal static class AudioMix
     {

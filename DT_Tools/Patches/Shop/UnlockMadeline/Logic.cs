@@ -33,7 +33,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
         };
 
         // ── 存档字段探底 ──
-        // _data 为私有字段：0.1.15b SaveManager.cs:16；MarkDirty 为私有方法。
+        // _data 为私有字段：0.1.16b SaveManager.cs:16；MarkDirty 为私有方法。
 
         public static PlayerSaveData GetSaveData(SaveManager save)
             => Traverse.Create(save).Field("_data").GetValue<PlayerSaveData>();
@@ -43,7 +43,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
 
         /// <summary>
         /// 确保 CharacterPlayCounts 含 101（原版 EnsureCharacterStats 明确跳过 101：
-        /// 0.1.15b SaveManager.cs:449；RecordGamePlayed 只对已有键自增：SaveManager.cs:465）。
+        /// 0.1.16b SaveManager.cs:454；RecordGamePlayed 只对已有键自增：SaveManager.cs:470）。
         /// 新补键时 MarkDirty。
         /// </summary>
         public static void SeedPlayCount(SaveManager save)
@@ -59,7 +59,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
 
         // ── 位置表补键 ──
 
-        /// <summary>档案立绘位置表（私有静态只读字典）：0.1.15b UI_InfomationPopup.cs:68。</summary>
+        /// <summary>档案立绘位置表（私有静态只读字典）：0.1.16b UI_InfomationPopup.cs:68。</summary>
         private static Dictionary<string, Vector2> StandingPosList()
             => AccessTools.Field(typeof(UI_InfomationPopup), "STANDING_POS_LIST")
                 ?.GetValue(null) as Dictionary<string, Vector2>;
@@ -84,7 +84,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
             dict.Remove("Medelin");
         }
 
-        /// <summary>审判过场位置表（public 静态字段）：0.1.15b UI_TrialEvent.cs:143。</summary>
+        /// <summary>审判过场位置表（public 静态字段）：0.1.16b UI_TrialEvent.cs:143。</summary>
         public static void EnsureCutscenePos()
         {
             if (!UI_TrialEvent.CUTSCENE_POS_LIST.ContainsKey("Madeline"))
@@ -103,7 +103,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
 
         /// <summary>
         /// 选人列表排序：已拥有优先，其次中文序（或 DataId），与原版一致但不再
-        /// 过滤 ECharacterType.Madeline（原版过滤见 0.1.15b UI_PickPopup.cs:142）。
+        /// 过滤 ECharacterType.Madeline（原版过滤见 0.1.16b UI_PickPopup.cs:142）。
         /// </summary>
         public static IEnumerable<CharacterData> OrderedPickList()
             => from d in Managers.Data.CharacterDic.Values
@@ -113,8 +113,8 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
                select d;
 
         /// <summary>
-        /// 选人面板介绍文案（六语言）。原版取 "&lt;Name&gt;Explain" 文本键（0.1.15b
-        /// UI_PickPopup.cs:513），Madeline 无对应文本数据，故本地内置。
+        /// 选人面板介绍文案（六语言）。原版取 "&lt;Name&gt;Explain" 文本键（0.1.16b
+        /// UI_PickPopup.cs:517），Madeline 无对应文本数据，故本地内置。
         /// </summary>
         public static string GetExplain()
         {
@@ -154,7 +154,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
 
         /// <summary>
         /// 表情图集不在 ResourceManager 缓存（Madeline 未开放），尝试经 Addressables
-        /// 同步预载进 _resources 字典（私有字段：0.1.15b ResourceManager.cs:11）。
+        /// 同步预载进 _resources 字典（私有字段：0.1.16b ResourceManager.cs:11）。
         /// 只试一次；Addressables 不可用时静默跳过（审判过场表情缺失可接受）。
         /// </summary>
         public static void EnsureExpsPreloaded()

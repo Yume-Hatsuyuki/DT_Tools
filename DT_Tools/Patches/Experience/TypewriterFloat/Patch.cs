@@ -5,7 +5,7 @@ namespace DT_Tools.Patches.Experience.TypewriterFloat
 {
     /// <summary>
     /// 打字机（对讲机）消息浮文化触发：
-    /// - EnqueueDeviceChat 后缀（public，0.1.15b VoiceManager.cs:1353）——对讲机公开频道
+    /// - EnqueueDeviceChat 后缀（public，0.1.16b VoiceManager.cs:1353）——对讲机公开频道
     ///   （DeviceChat）消息改用秘密通话浮文样式匿名显示；秘密通话（isSecret=true）由
     ///   原版 UI_SecretChatOverlay 浮文，跳过以避免双份。
     /// - SendDeviceChatMessage 前缀（public，:1298）——记录本机发送的文本与时刻，

@@ -100,7 +100,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 有效房间人数上限：「房间人数上限」功能（LobbyMaxPlayers）开启时用其 MaxMembers
         /// （1–16，其 GameStart 补丁已做出生点循环复用，>8 不越界）；关闭时回原生 8
-        /// （0.1.15b Define.cs:760）。Game 层禁止反向引用 Patches（AGENTS.md §3），
+        /// （0.1.16b Define.cs:752）。Game 层禁止反向引用 Patches（AGENTS.md §3），
         /// 故在 API 顶层解析后作为参数传给 FakePlayers；座位表 16 为硬顶。
         /// </summary>
         private static int ResolveRoomCapacity()

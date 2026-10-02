@@ -7,7 +7,7 @@ namespace DT_Tools.Patches.Experience.CanShowLie
 {
     /// <summary>
     /// LoadAllArea 后置：缓存 S_INIT_MAP.AreaInfos。
-    /// 公共方法（nameof 定位），0.1.15b MapManager.cs:150。
+    /// 公共方法（nameof 定位），0.1.16b MapManager.cs:150。
     /// </summary>
     [HarmonyPatch(typeof(MapManager), nameof(MapManager.LoadAllArea))]
     internal static class CanShowLieCachePatch

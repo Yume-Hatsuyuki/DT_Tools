@@ -7,10 +7,10 @@ using Protocol;
 namespace DT_Tools.Patches.Experience.PlayerRadar
 {
     /// <summary>
-    /// LateUpdate 整替：复刻 0.1.15b UI_GameTablet.cs:2992，去掉
+    /// LateUpdate 整替：复刻 0.1.16b UI_GameTablet.cs:2992，去掉
     /// 「myPlayer.Color == White && Managers.Game.IsAlive 则不刷新他人」分支（:3004）。
-    /// 方法为 private，字符串定位：0.1.15b UI_GameTablet.cs:2992；
-    /// _init 为基类 InitBase 的 protected 字段（0.1.15b InitBase.cs:5，AccessTools.Field
+    /// 方法为 private，字符串定位：0.1.16b UI_GameTablet.cs:2992；
+    /// _init 为基类 InitBase 的 protected 字段（0.1.16b InitBase.cs:5，AccessTools.Field
     /// 已实测沿基类链命中）；RefreshMyPlayerPin（:1200）/ RefreshPlayerPin(Player)（:1211）
     /// 为 private——逐帧热路径，反射缓存策略见 Core/Reflect.cs 头注释。
     ///
@@ -21,14 +21,14 @@ namespace DT_Tools.Patches.Experience.PlayerRadar
     [HarmonyPatch(typeof(UI_GameTablet), "LateUpdate")]
     internal static class PlayerRadarPatch
     {
-        /// <summary>_init：0.1.15b InitBase.cs:5，protected（AccessTools.Field 沿基类链查找）。</summary>
+        /// <summary>_init：0.1.16b InitBase.cs:5，protected（AccessTools.Field 沿基类链查找）。</summary>
         private static readonly FieldInfo InitField = AccessTools.Field(typeof(UI_GameTablet), "_init");
 
-        /// <summary>RefreshMyPlayerPin() 私有：0.1.15b UI_GameTablet.cs:1200。</summary>
+        /// <summary>RefreshMyPlayerPin() 私有：0.1.16b UI_GameTablet.cs:1200。</summary>
         private static readonly Action<UI_GameTablet> RefreshMyPlayerPinOf =
             Reflect.Bind<Action<UI_GameTablet>>(typeof(UI_GameTablet), "RefreshMyPlayerPin");
 
-        /// <summary>RefreshPlayerPin(Player) 私有：0.1.15b UI_GameTablet.cs:1211。</summary>
+        /// <summary>RefreshPlayerPin(Player) 私有：0.1.16b UI_GameTablet.cs:1211。</summary>
         private static readonly Action<UI_GameTablet, Player> RefreshPlayerPinOf =
             Reflect.Bind<Action<UI_GameTablet, Player>>(typeof(UI_GameTablet), "RefreshPlayerPin", new[] { typeof(Player) });
 

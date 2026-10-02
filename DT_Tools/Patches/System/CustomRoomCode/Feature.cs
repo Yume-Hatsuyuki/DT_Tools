@@ -4,7 +4,7 @@ namespace DT_Tools.Patches.System.CustomRoomCode
 {
     /// <summary>
     /// 自定义房间码：建房用自定义码替代随机码。加入方按 Steam lobby data "code"
-    /// 精确等于过滤搜索（0.1.15b DummyClient/SteamLobbyManager.cs:178-193），
+    /// 精确等于过滤搜索（0.1.16b DummyClient/SteamLobbyManager.cs:178-193），
     /// 写入即对加入方生效。与 CustomRoomName 互不影响（不同的 data 键）。
     /// </summary>
     [PatchFeature(

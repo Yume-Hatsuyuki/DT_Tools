@@ -6,7 +6,7 @@ namespace DT_Tools.Patches.Shop.UnlockEmotes
 {
     /// <summary>
     /// 原版 = 默认装备 + 已确认的商店/两套表情包（属性 getter，public，可用 nameof）：
-    /// 0.1.15b SteamInventorySource.cs:162。整替为四组 ID 全量聚合（-1 占位剔除）。
+    /// 0.1.16b SteamInventorySource.cs:162。整替为四组 ID 全量聚合（-1 占位剔除）。
     /// </summary>
     [HarmonyPatch(typeof(SteamInventorySource), nameof(SteamInventorySource.OwnedEmoticonIds),
         MethodType.Getter)]

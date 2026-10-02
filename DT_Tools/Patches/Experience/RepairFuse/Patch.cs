@@ -13,7 +13,7 @@ namespace DT_Tools.Patches.Experience.RepairFuse
     [HarmonyPatch(typeof(Fusebox), "Interact")]
     internal static class RepairFusePatch
     {
-        /// <summary>原版总时长（0.1.15b Fusebox.cs:46 的 StartCasting(10f, ...)）。</summary>
+        /// <summary>原版总时长（0.1.16b Fusebox.cs:46 的 StartCasting(10f, ...)）。</summary>
         private const float VanillaTotal = 10f;
         private const float MinCasting = 0.1f;
 
@@ -28,7 +28,7 @@ namespace DT_Tools.Patches.Experience.RepairFuse
                 return true;
 
             int tick = __instance.Info.StateList.Count > 2 ? __instance.Info.StateList[2] : 0;
-            float repaired = Define.DecodeFuseboxRepairTick(tick);   // 0.1.15b Define.cs:2050
+            float repaired = Define.DecodeFuseboxRepairTick(tick);   // 0.1.16b Define.cs:2044
             float serverLeft = Math.Max(0f, VanillaTotal - repaired);
 
             float cfg = Game.Casting.ClampSeconds(RepairFuseFeature.CastingTime, MinCasting, VanillaTotal);
@@ -48,7 +48,7 @@ namespace DT_Tools.Patches.Experience.RepairFuse
                 Managers.Network.GameServer.Send(new C_HANDLE_FUSEBOX_REPAIR
                 {
                     FuseboxId = __instance.ID,
-                    RepairTick = Define.EncodeFuseboxRepairTick(interrupted)  // 0.1.15b Define.cs:2045
+                    RepairTick = Define.EncodeFuseboxRepairTick(interrupted)  // 0.1.16b Define.cs:2039
                 });
             });
             return false;

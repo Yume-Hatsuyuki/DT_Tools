@@ -5,7 +5,7 @@ using Protocol;
 namespace DT_Tools.Patches.System.AttackRangeServer
 {
     /// <summary>
-    /// Util.UnifiedAttackRect 取值后置（静态属性 getter，0.1.15b Util.cs:57）：
+    /// Util.UnifiedAttackRect 取值后置（静态属性 getter，0.1.16b Util.cs:57）：
     /// 把攻击盒前向延伸 ExtraForwardReach。前向 = 盒 Pos.X 的负方向
     /// （未翻转时朝左，CalcRectInfo 对翻转侧取 -Pos.X，两个朝向天然对称：
     /// Pos.X -= N 与 Size.X += N 在任一朝向下都恰好把前缘外推 N、后缘不动）。

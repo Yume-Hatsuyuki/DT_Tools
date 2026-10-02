@@ -6,8 +6,8 @@ using Server.Game;
 namespace DT_Tools.Patches.System.ChatSanitize
 {
     /// <summary>
-    /// SanitizeChat 整替：原版硬编码 100 截断（0.1.15b Server.Game/GameRoom.cs:2524，
-    /// Util.NeutralizeRichText 在 0.1.15b Util.cs:172），改为读配置上限并保留代理对完整性。
+    /// SanitizeChat 整替：原版硬编码 100 截断（0.1.16b Server.Game/GameRoom.cs:2524，
+    /// Util.NeutralizeRichText 在 0.1.16b Util.cs:172），改为读配置上限并保留代理对完整性。
     /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.SanitizeChat))]
     internal static class ChatSanitizePatch

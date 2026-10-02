@@ -19,7 +19,7 @@ namespace DT_Tools.Commands.Agent
         /// 挖矿后冷却 tick 数：等待服务端 S_SPAWN_DEVICE 回包 + 客户端 Cache 刷新，
         /// 避免矿石还没落地就重复发送挖矿包。
         ///
-        /// 服务端 Mineral.HandleEvent 本身零冷却、零状态锁（0.1.15b Server.Game/Mineral.cs:26/43
+        /// 服务端 Mineral.HandleEvent 本身零冷却、零状态锁（0.1.16b Server.Game/Mineral.cs:26/43
         /// 每次收到 C_HANDLE_MINERAL{IsSuccess=true} 即无条件 CreateAndDropItem + 广播），
         /// 此值不是在模拟服务器限制，纯粹是等待网络 RTT。0.25s tick 下取 2 tick = 0.5s，
         /// 对常见 Steam P2P 延迟（约 50-200ms）留有约 2 倍余量。

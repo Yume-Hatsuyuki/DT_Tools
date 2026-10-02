@@ -7,7 +7,7 @@ namespace DT_Tools.Commands.GiveBuff
 {
     /// <summary>
     /// /givebuff 参数：&lt;all|#id&gt; &lt;buff|clear&gt; [seconds|clear|0]
-    /// 别名表对照 Protocol.EBuffType 全量收录（0.1.15b Protocol/EBuffType.cs，
+    /// 别名表对照 Protocol.EBuffType 全量收录（0.1.16b Protocol/EBuffType.cs，
     /// enum 声明在第 5 行、收尾括号在第 39 行，Slow..Footprint 全 16 项）。
     /// </summary>
     internal sealed class GiveBuffArgs

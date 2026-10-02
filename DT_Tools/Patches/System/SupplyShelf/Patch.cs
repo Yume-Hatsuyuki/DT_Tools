@@ -6,7 +6,7 @@ using HarmonyLib;
 namespace DT_Tools.Patches.System.SupplyShelf
 {
     /// <summary>
-    /// 原版 InitStorage（0.1.15b Server.Game/DeviceManager.cs:347）固定投放 {BELL(3009), AIRHORN(3008)}
+    /// 原版 InitStorage（0.1.16b Server.Game/DeviceManager.cs:347）固定投放 {BELL(3009), AIRHORN(3008)}
     /// 加空槽；开启功能后整替为扩展池随机投放。
     /// 目标为 DeviceManager 唯一公有无重载方法 → 类级 nameof 定位（旧 TargetMethod() 形态废除）。
     /// </summary>

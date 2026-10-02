@@ -5,7 +5,7 @@ namespace DT_Tools.Patches.System.ChatLimit
 {
     /// <summary>
     /// 输入框上限抬升与全场景扫描。原版各聊天输入框硬编码 characterLimit = 100
-    /// （0.1.15b UI_GameTablet.cs:871、UI_DirectChat.cs:88、UI_ChatDevicePopup.cs:95）。
+    /// （0.1.16b UI_GameTablet.cs:871、UI_DirectChat.cs:88、UI_ChatDevicePopup.cs:95）。
     /// 房主侧发言过滤（原 GameRoom.SanitizeChat）已拆分至 System/ChatSanitize。
     /// </summary>
     internal static class ChatLimitLogic
@@ -21,7 +21,7 @@ namespace DT_Tools.Patches.System.ChatLimit
         /// <summary>
         /// 抬限只认原版聊天框的精确值 100：不误伤 Prefab 内嵌的其他小上限
         /// （如昵称输入框，归 NicknameLimit 管），也不覆盖更大的内嵌上限
-        /// （如 UI_BugReport 的 2000，0.1.15b UI_BugReport.cs:72）——否则全局
+        /// （如 UI_BugReport 的 2000，0.1.16b UI_BugReport.cs:72）——否则全局
         /// TmpOnEnable/TmpActivate 兜底会波及所有输入框并与 NicknameLimit 互相拉扯。
         /// </summary>
         public static void RaiseLimit(TMP_InputField field)

@@ -23,7 +23,7 @@ namespace DT_Tools.Commands.RoomList
         }
 
         /// <summary>
-        /// 发起异步查询（0.1.15b DummyClient/SteamLobbyManager.cs:140
+        /// 发起异步查询（0.1.16b DummyClient/SteamLobbyManager.cs:140
         /// RequestLobbyList(Action&lt;List&lt;LobbyListEntry&gt;&gt;)，结果经 Steam 回调送达）。
         /// </summary>
         public static void Request(SteamLobbyManager lobby, Action<List<LobbyListEntry>> onResult)

@@ -6,9 +6,9 @@ namespace DT_Tools.Automation.AutoReady
 {
     /// <summary>
     /// 动作：延迟等待 → 上限检查 → 定位 UI_GameScene 准备按钮 → 经原版
-    /// OnClickReadyButton 发送 C_READY（0.1.15b UI_GameScene.cs:2159，私有方法；
+    /// OnClickReadyButton 发送 C_READY（0.1.16a UI_GameScene.cs:2162，私有方法；
     /// F5 快捷键即直接调用它 :4882）。房主（开局按钮可见）无需准备；
-    /// 原版开局只由房主发 C_START 触发（0.1.15b Server.Game/GameRoom.cs:1571-1587），
+    /// 原版开局只由房主发 C_START 触发（0.1.16a Server.Game/GameRoom.cs:1571-1587），
     /// 准备动作因此不可能间接开局。
     /// </summary>
     internal static class AutoReadyAction
@@ -31,15 +31,15 @@ namespace DT_Tools.Automation.AutoReady
                 return;
             }
 
-            var scene = Managers.UI?.SceneUI as UI_GameScene;   // 0.1.15b UIManager.cs:61
+            var scene = Managers.UI?.SceneUI as UI_GameScene;   // 0.1.16a UIManager.cs:61
             if (scene == null)
             {
                 ScheduleRetry();
                 return;
             }
 
-            // GetObject 为 UI_Base protected（0.1.15b UI_Base.cs:93）；绑定器
-            // 32 = 房主开局按钮、31 = 准备按钮（绑定 UI_GameScene.cs:611，F5 判定 :4878-4884）
+            // GetObject 为 UI_Base protected（0.1.16a UI_Base.cs:93）；绑定器
+            // 32 = 房主开局按钮、31 = 准备按钮（绑定 UI_GameScene.cs:612，F5 判定 :4878-4884）
             var t = HarmonyLib.Traverse.Create(scene);
             GameObject startBtn = t.Method("GetObject", new object[] { 32 }).GetValue<GameObject>();
             if (startBtn != null && startBtn.activeInHierarchy)
@@ -55,7 +55,7 @@ namespace DT_Tools.Automation.AutoReady
                 return;
             }
 
-            if (scene.IsReady)   // 公开属性：0.1.15b UI_GameScene.cs:508
+            if (scene.IsReady)   // 公开属性：0.1.16a UI_GameScene.cs:509
             {
                 AutoReadyState.MarkLeft();
                 Log.Info<AutoReadyModule>("已处于就绪状态");

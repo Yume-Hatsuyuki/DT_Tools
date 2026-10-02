@@ -13,7 +13,7 @@ namespace DT_Tools
     /// tag 一律用段名：Log.Info&lt;TFeature&gt;(…) 自动取 Engine.SectionOf&lt;T&gt;()。
     ///
     /// 注意：本类必须放在 DT_Tools 根命名空间——游戏在全局命名空间有一个 public static class
-    /// Log（0.1.15b Log.cs），C# 命名空间查找链上 DT_Tools.Log 优先于它，否则会被遮蔽。
+    /// Log（0.1.16b Log.cs），C# 命名空间查找链上 DT_Tools.Log 优先于它，否则会被遮蔽。
     /// </summary>
     public static class Log
     {
