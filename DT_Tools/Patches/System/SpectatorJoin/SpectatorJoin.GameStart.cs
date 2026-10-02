@@ -52,7 +52,10 @@ namespace DT_Tools.Patches.System.SpectatorJoin
                 foreach (GamePlayer player in __instance.Players)
                 {
                     if (player.IsSpectator)
+                    {
                         InvokeEnterSpectator(__instance, player);
+                        InvokeChangeAreaToGameArea(player);
+                    }
                     else
                         player.GameStart(fallback);
                 }
@@ -66,6 +69,7 @@ namespace DT_Tools.Patches.System.SpectatorJoin
                     if (player.IsSpectator)
                     {
                         InvokeEnterSpectator(__instance, player);
+                        InvokeChangeAreaToGameArea(player);
                         continue;
                     }
                     player.GameStart(list[idx % list.Count]);
@@ -103,6 +107,42 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             }
             m.Invoke(room, new object[] { player });
             player.Session.Send(new S_DEAD());
+        }
+
+        /// <summary>
+        /// 观战者显式指定游戏区域并下发 S_AREA_PUBLIC（黑屏修复）：
+        /// 观战者 IsAlive=false，Player.Move 不会触发 ChangeArea，服务端若不下发区域包，
+        /// 客户端 CurrentArea 恒为 null 且无法 ChangeRoom 加载地图（黑屏/不见场景）。
+        /// 这里 force:true 强制 LeavePlayer+EnterPlayer → SendAreaInfo → S_AREA_PUBLIC，
+        /// 客户端收到后按 RoomId 实例化房间 Prefab 并 Spawn 显示地图。
+        /// 位置优先取观战者当前有效坐标（进行中加入已随机到出生点），否则用出生点列表首点。
+        /// </summary>
+        private static void InvokeChangeAreaToGameArea(GamePlayer player)
+        {
+            if (player == null)
+                return;
+            try
+            {
+                PosInfo pos = player.PublicInfo.Pos;
+                if (pos == null || (pos.X == 0f && pos.Y == 0f)
+                    || !AreaManager.Instance.ValidPosition(pos))
+                {
+                    List<PosInfo> startPos = Managers.Data.MapData.StartPosList;
+                    if (startPos != null && startPos.Count > 0)
+                        pos = startPos[0];
+                    else
+                        pos = Managers.Data.MapData.ErrorPos
+                            ?? Managers.Data.MapData.LobbyPos
+                            ?? new PosInfo { X = 0f, Y = 0f };
+                }
+                player.ChangeArea(pos, true);
+                Log.Info<SpectatorJoinFeature>(
+                    $"观战者已进入区域 room={player.CurrentArea?.Info.RoomId} pid={player.PublicInfo.PlayerId} 地图场景将下发");
+            }
+            catch (global::System.Exception ex)
+            {
+                Log.Error<SpectatorJoinFeature>("观战者区域下发失败: " + ex.Message);
+            }
         }
 
         /// <summary>

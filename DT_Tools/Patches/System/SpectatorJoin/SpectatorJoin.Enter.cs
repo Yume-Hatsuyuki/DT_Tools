@@ -257,6 +257,7 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             if (inGame)
             {
                 InvokeEnterSpectatorNow(__instance, player);
+                InvokeChangeAreaToGameArea(player);
             }
 
             return false;
