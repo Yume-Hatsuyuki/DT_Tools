@@ -152,6 +152,16 @@ Deadly Trick/winhttp.dll
 
 **欢迎更多开发者提交PR，玩家提交思路。**
 
+### 快速开发辅助
+
+> 为方便快速理解本项目结构，可使用以下在线工具：
+
+- **架构图 GitDiagram**：自动生成可交互的系统架构图，点击模块可跳转到对应源码。  
+  https://gitdiagram.com/yume-hatsuyuki/dt_tools
+
+- **代码摘要 GitIngest**：将整个仓库整理成适合 AI / LLM 阅读的文本，便于问答和分析。  
+  https://gitingest.com/yume-hatsuyuki/dt_tools
+
 ---
 
 ## MOD 制作交流群：1121341127
