@@ -6,8 +6,8 @@ namespace DT_Tools.Patches.System.ChatLimit
 {
     /// <summary>
     /// UI_GameTablet.Init 后置：抬高平板聊天输入框上限。
-    /// 公共方法（nameof 定位），0.1.16a UI_GameTablet.cs:821（:871 写 characterLimit = 100）。
-    /// GetInputField 为 UI_Base 的 protected 方法（0.1.16a UI_Base.cs:98），Traverse 定位。
+    /// 公共方法（nameof 定位），0.1.16b UI_GameTablet.cs:821（:871 写 characterLimit = 100）。
+    /// GetInputField 为 UI_Base 的 protected 方法（0.1.16b UI_Base.cs:98），Traverse 定位。
     /// </summary>
     [HarmonyPatch(typeof(UI_GameTablet), nameof(UI_GameTablet.Init))]
     internal static class ChatLimitTabletPatch

@@ -6,7 +6,7 @@ namespace DT_Tools.Commands.Kick
     /// <summary>
     /// /kick #&lt;playerId&gt; — 将指定玩家踢出当前房间（仅 Lobby、需房主）。
     ///
-    /// 直接调用 GameRoom.KickPlayer（0.1.16a Server.Game/GameRoom.cs:1544），
+    /// 直接调用 GameRoom.KickPlayer（0.1.16b Server.Game/GameRoom.cs:1544），
     /// 与游戏内房主踢人按钮走同一套逻辑：校验 Lobby 与 Host → 目标 SteamId 进黑名单
     /// → 向目标发 S_KICKED 并断开连接。
     /// </summary>

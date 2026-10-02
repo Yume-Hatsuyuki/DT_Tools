@@ -8,7 +8,7 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
     /// <summary>
     /// 输入分发层放行（"有按钮但按了没反应"的修复）：原版把 Special 键/杀按钮送进
     /// UseSabotageBase 的入口有三处，且都硬编码只认 Dark（或限 ChatDevice/Corpse/
-    /// 销毁证据的 Black 分支）——0.1.16a MyPlayer.cs:1660-1699（InputInteract）、
+    /// 销毁证据的 Black 分支）——0.1.16b MyPlayer.cs:1660-1699（InputInteract）、
     /// MyPlayer.cs:1256-1290（UpdateCarry）、UI_GameScene.cs:2044-2069（OnClickKillButton）。
     /// 本补丁在三处入口前拦截：档位放行的设备（Door/Fusebox/销毁证据目标）且提示激活时，
     /// 由任何放行颜色触发 UseSabotageBase（门发包 / 电闸开弹窗 / 销毁证据读条）；

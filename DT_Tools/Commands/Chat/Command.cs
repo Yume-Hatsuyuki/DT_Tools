@@ -17,7 +17,7 @@ namespace DT_Tools.Commands.Chat
     ///   2. C_CHAT_MESSAGE Type=DeviceChat（服务端 RelayDeviceChat 要求 Survive + 存活 + 已占机）
     ///   3. C_HANDLE_CHATDEVICE 释放占机
     /// 服务端 DeviceManager.Interact 对 ChatDevice 无距离校验，可在地图任意位置发包。
-    /// 仅生存阶段生效（0.1.16a HostPacketHandler.RelayDeviceChat）。
+    /// 仅生存阶段生效（0.1.16b HostPacketHandler.RelayDeviceChat）。
     /// 跟随控制台 / 客户端，非房主可用。
     /// </summary>
     internal sealed class ChatCommand : ICommand

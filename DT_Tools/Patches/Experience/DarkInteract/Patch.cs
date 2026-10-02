@@ -5,8 +5,8 @@ namespace DT_Tools.Patches.Experience.DarkInteract
 {
     /// <summary>
     /// GetInteractMessageBase 在检查 Darkness 前临时把 CanUseDarkness 置 true，
-    /// 使 0.1.16a DeviceBase.cs:365 条件不成立；调用结束后还原。
-    /// CanUseDarkness 为 public get / protected set（0.1.16a DeviceBase.cs:60），经 Traverse 写入。
+    /// 使 0.1.16b DeviceBase.cs:365 条件不成立；调用结束后还原。
+    /// CanUseDarkness 为 public get / protected set（0.1.16b DeviceBase.cs:60），经 Traverse 写入。
     /// </summary>
     [HarmonyPatch(typeof(DeviceBase), nameof(DeviceBase.GetInteractMessageBase))]
     internal static class DarkInteractPatch

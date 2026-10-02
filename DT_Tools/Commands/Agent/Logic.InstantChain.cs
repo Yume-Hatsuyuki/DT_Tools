@@ -11,10 +11,10 @@ namespace DT_Tools.Commands.Agent
     {
         // ═══════════════════════════════════════════════════
         //  蜡烛设备（OccultBook 谜题的 6 支蜡烛）：动态筛选 EDeviceType.Occult 且
-        //  SubType == OccultCandle（0.1.16a Server.Game/Occult.cs:55-57 SubType==2 走
-        //  InteractOccultCandle；0.1.16a Protocol/EOccultType.cs:12 OccultCandle=2），
+        //  SubType == OccultCandle（0.1.16b Server.Game/Occult.cs:55-57 SubType==2 走
+        //  InteractOccultCandle；0.1.16b Protocol/EOccultType.cs:12 OccultCandle=2），
         //  按 ID 升序即与 OccultBook 的 StateList[0..5] 目标一一对应。
-        //  旧版硬编码 10121-10126 来自地图数据、0.1.16a 代码不可核对，地图变更即静默
+        //  旧版硬编码 10121-10126 来自地图数据、0.1.16b 代码不可核对，地图变更即静默
         //  失效——仅保留作动态查询为空时的 fallback。
         // ═══════════════════════════════════════════════════
         private static readonly int[] FallbackCandleDeviceIds = { 10121, 10122, 10123, 10124, 10125, 10126 };
@@ -126,7 +126,7 @@ namespace DT_Tools.Commands.Agent
 
                 if (dev.DeviceType == EDeviceType.Fishing && st.Count >= 4 && mt == 40)
                 {
-                    // 钓鱼任务（ESchoolMission 值 40，0.1.16a Protocol/ESchoolMission.cs:84 ScAquaticCapture = 40；
+                    // 钓鱼任务（ESchoolMission 值 40，0.1.16b Protocol/ESchoolMission.cs:84 ScAquaticCapture = 40；
                     // Server.Game/Fishing.cs:49 HasActiveMission 以 MissionType==40 判定）
                     // 仅 MissionType==40 时推进；清任务后 mt=0，不会再刷
                     // 收杆会 CreateAndInsertInven 鱼(1059/60/61) → 下 tick 自动丢弃

@@ -27,14 +27,14 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
 
         [Config("死亡保留 Pin：其他玩家死亡后，小地图与平板上的 Pin 不删除，定格在最后位置，" +
                 "并像 Kaho 监视目标一样跟随服务器广播的强制位移（躲柜、MindControl 传送、Trick 搬运等）；" +
-                "0.1.16a TabletManager.DeletePin 的技能豁免只对 Kaho 生效，本开关把它扩大到所有人；" +
+                "0.1.16b TabletManager.DeletePin 的技能豁免只对 Kaho 生效，本开关把它扩大到所有人；" +
                 "庭审开始与结算仍按原版清理")]
         public static bool KeepDeadPin = false;
 
         /// <summary>
         /// 运行时关闭：销毁全部常驻箭头，并把已替换的 pin 贴图还原为原版。
         /// 原版 RefreshPlayerPin 对已存在的 pin 只调 SetLocalPosition、不重设 sprite
-        ///（0.1.16a UI_GameScene.cs:852-868 / UI_GameTablet.cs:1211-1226 的 else 分支），
+        ///（0.1.16b UI_GameScene.cs:852-868 / UI_GameTablet.cs:1211-1226 的 else 分支），
         /// 所以热关闭后贴图不会自行还原，必须在这里按 PinSpriteKey 主动恢复（见 Ui.RestoreAllPins）。
         /// 死亡保留的 pin 先整批删除（玩家已 Despawn，原版不会替我们清理），再走常规还原。
         /// </summary>

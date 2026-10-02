@@ -8,7 +8,7 @@ namespace DT_Tools.Commands.Chat
 {
     /// <summary>
     /// /chat 业务：打字机选取 + 占机/发言/释放发包序列。
-    /// 包路径对齐 0.1.16a：
+    /// 包路径对齐 0.1.16b：
     ///   C_INTERACT_CHATDEVICE → DeviceManager.Interact → ChatDevice.Enter
     ///   C_CHAT_MESSAGE(DeviceChat) → RelayDeviceChat（要求已占机）
     ///   C_HANDLE_CHATDEVICE → DeviceManager.HandleEvent → ChatDevice.Exit

@@ -5,10 +5,10 @@ using Protocol;
 namespace DT_Tools.Patches.Experience.EmoteNoCd
 {
     /// <summary>
-    /// UseEmotion 整替：复刻 0.1.16a UI_EmotionSubItem.cs:87 的判断链，
+    /// UseEmotion 整替：复刻 0.1.16b UI_EmotionSubItem.cs:87 的判断链，
     /// 仅去掉 IsCooltime 门闩与冷却置位（并恒置 IsCooltime = false 清掉残留冷却）。
-    /// CanUseEmotion 为 private（0.1.16a UI_EmotionSubItem.cs:110），经 Traverse 调用。
-    /// 原版经全局 Log.Assert 报父面板缺失（0.1.16a UI_EmotionSubItem.cs:94），
+    /// CanUseEmotion 为 private（0.1.16b UI_EmotionSubItem.cs:110），经 Traverse 调用。
+    /// 原版经全局 Log.Assert 报父面板缺失（0.1.16b UI_EmotionSubItem.cs:94），
     /// 按日志规范改走本插件 Log 门面。
     /// </summary>
     [HarmonyPatch(typeof(UI_EmotionSubItem), nameof(UI_EmotionSubItem.UseEmotion))]

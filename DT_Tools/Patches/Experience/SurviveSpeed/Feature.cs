@@ -3,7 +3,7 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Patches.Experience.SurviveSpeed
 {
     /// <summary>
-    /// 对局移速：MyPlayer.FixedUpdateSurvive（0.1.16a MyPlayer.cs:1757）各状态倍率可配，
+    /// 对局移速：MyPlayer.FixedUpdateSurvive（0.1.16b MyPlayer.cs:1757）各状态倍率可配，
     /// 默认等同原版字面量（Controller 0.3 / 重物 0.75 / 攻击 0.5 / 搬运尸体 0.3 / 其余 1）。
     /// </summary>
     [PatchFeature(

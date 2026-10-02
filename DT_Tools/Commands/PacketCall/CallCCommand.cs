@@ -8,7 +8,7 @@ namespace DT_Tools.Commands.PacketCall
 {
     /// <summary>
     /// /call_c &lt;#id&gt; &lt;C_*包名&gt; [json] — 模拟指定玩家向 Host 提交 C_* 包
-    /// （走 PacketManager.HandlePacket，0.1.16a PacketManager.cs:84 HandlePacket、:16 Instance）。
+    /// （走 PacketManager.HandlePacket，0.1.16b PacketManager.cs:84 HandlePacket、:16 Instance）。
     /// 仅房主。
     /// </summary>
     internal sealed class CallCCommand : ICommand
@@ -103,7 +103,7 @@ namespace DT_Tools.Commands.PacketCall
                     return CommandResult.Success(new { packet = type.Name, protocol, pid = targetId, registered = true });
                 }
 
-                // 服务端对未注册 Protocol 静默丢弃（0.1.16a PacketManager.cs:84-91）——如实告知，勿谎称已注入
+                // 服务端对未注册 Protocol 静默丢弃（0.1.16b PacketManager.cs:84-91）——如实告知，勿谎称已注入
                 ctx.Warn($"已提交 {type.Name}（id={protocol}）← 身份 {found.Name}（#{targetId}），"
                          + "但 PacketManager 未注册该 Protocol 的处理器，包已被静默丢弃（无任何效果）。");
                 return CommandResult.Success(new { packet = type.Name, protocol, pid = targetId, registered = false });

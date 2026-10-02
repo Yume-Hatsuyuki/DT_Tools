@@ -6,7 +6,7 @@ namespace DT_Tools.Commands.GiveMission
 {
     /// <summary>
     /// /givemission 参数：任务类型（枚举名大小写不敏感 / 数字 / 中文别名）。
-    /// 枚举值核对：0.1.16a Protocol/ESchoolMission.cs（ScNone=0 … ScAquaticCapture=40）。
+    /// 枚举值核对：0.1.16b Protocol/ESchoolMission.cs（ScNone=0 … ScAquaticCapture=40）。
     /// </summary>
     internal static class GiveMissionArgs
     {

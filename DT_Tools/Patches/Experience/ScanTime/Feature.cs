@@ -4,7 +4,7 @@ namespace DT_Tools.Patches.Experience.ScanTime
 {
     /// <summary>
     /// 扫描读条：GameManagerEX.StartScanning 的 castingTime 可配置
-    /// （0.1.16a GameManagerEX.cs:809）。配置 ≥0.5 时仍尊重 ScanUp→0.5。
+    /// （0.1.16b GameManagerEX.cs:809）。配置 ≥0.5 时仍尊重 ScanUp→0.5。
     /// </summary>
     [PatchFeature(
         "福尔摩斯：可修改搜索读条时长（默认 2.0s）。配置<0.5s 忽略 ScanUp。",

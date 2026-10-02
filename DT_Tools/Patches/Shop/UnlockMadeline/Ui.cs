@@ -15,7 +15,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
     {
         // ─────────────────────────────────────────────────────────────
         // 裁切参数（来源：DT_Tools v1 实测标定，目标图集为游戏自带
-        // Madeline_standing.sprite / Mastermind_SD.sprite；0.1.16a 未改动这些
+        // Madeline_standing.sprite / Mastermind_SD.sprite；0.1.16b 未改动这些
         // 资源布局。Unity 纹理坐标 Y 向上。版本升级若立绘图集变化需重新标定。）
         // ─────────────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
 
         // ─────────────────────────────────────────────────────────────
 
-        /// <summary>ResourceManager 缓存字典（私有字段 _resources：0.1.16a ResourceManager.cs:11）。</summary>
+        /// <summary>ResourceManager 缓存字典（私有字段 _resources：0.1.16b ResourceManager.cs:11）。</summary>
         private static Dictionary<string, Object> ResourcesDict(ResourceManager rm)
             => AccessTools.Field(typeof(ResourceManager), "_resources")?.GetValue(rm)
                as Dictionary<string, Object>;
@@ -369,15 +369,15 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
 
         // ── UI_Base 私有绑定器助手（仅本功能使用）──
 
-        /// <summary>UI_Base.GetImage 为 protected：0.1.16a UI_Base.cs:113。</summary>
+        /// <summary>UI_Base.GetImage 为 protected：0.1.16b UI_Base.cs:113。</summary>
         internal static Image GetImage(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetImage")?.Invoke(ui, new object[] { idx }) as Image;
 
-        /// <summary>UI_Base.GetObject 为 protected：0.1.16a UI_Base.cs:93。</summary>
+        /// <summary>UI_Base.GetObject 为 protected：0.1.16b UI_Base.cs:93。</summary>
         internal static GameObject GetObject(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetObject")?.Invoke(ui, new object[] { idx }) as GameObject;
 
-        /// <summary>UI_Base.GetText 为 protected：0.1.16a UI_Base.cs:103。</summary>
+        /// <summary>UI_Base.GetText 为 protected：0.1.16b UI_Base.cs:103。</summary>
         internal static TMP_Text GetText(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetText")?.Invoke(ui, new object[] { idx }) as TMP_Text;
 
@@ -385,7 +385,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
 
         /// <summary>
         /// 选人面板立绘容器（UI_PickPopup.SetStanding 用 GetObject(6)，
-        /// 0.1.16a UI_PickPopup.cs:428）：原版 switch 未覆盖 Madeline，图区恒空，
+        /// 0.1.16b UI_PickPopup.cs:428）：原版 switch 未覆盖 Madeline，图区恒空，
         /// 此处创建/复用一个常驻 Image 并挂到容器上。
         /// </summary>
         internal static Image EnsureMadelineStandingImage(Transform container)

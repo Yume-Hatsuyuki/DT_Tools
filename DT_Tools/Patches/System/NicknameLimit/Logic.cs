@@ -9,7 +9,7 @@ using UnityEngine;
 namespace DT_Tools.Patches.System.NicknameLimit
 {
     /// <summary>
-    /// 昵称校验与大厅 UI 刷新：与原版 OnValidateNickname（0.1.16a UI_LobbyScene.cs:1699）
+    /// 昵称校验与大厅 UI 刷新：与原版 OnValidateNickname（0.1.16b UI_LobbyScene.cs:1772）
     /// 同一套字符白名单，仅去掉「权重 > 12」这一档；门禁 _isNickNameValid 的写法保持一致。
     /// </summary>
     internal static class NicknameLimitLogic
@@ -17,9 +17,9 @@ namespace DT_Tools.Patches.System.NicknameLimit
         /// <summary>TMP 硬上限；部分版本 0 表示无限制，为兼容统一抬到较大值。</summary>
         public const int SoftCap = 64;
 
-        // ── UI 元素索引（UI_Base 的 protected GetText/GetInputField，0.1.16a UI_Base.cs:98/:103，
+        // ── UI 元素索引（UI_Base 的 protected GetText/GetInputField，0.1.16b UI_Base.cs:98/:103，
         //    Traverse 定位）──
-        /// <summary>昵称错误提示文本（原版 UI_LobbyScene.cs:529 清空、UI_LobbyScene.cs:1730 写 LobbyNicknameTooLong）。</summary>
+        /// <summary>昵称错误提示文本（原版 UI_LobbyScene.cs:529 清空、UI_LobbyScene.cs:1803 写 LobbyNicknameTooLong）。</summary>
         private const int TextErrorTip = 15;
         /// <summary>三个大厅按钮文字，校验结果以灰/白着色（原版 UI_LobbyScene.cs:738-744 的着色与文案）。</summary>
         private const int TextCreateGame = 16;
@@ -28,7 +28,7 @@ namespace DT_Tools.Patches.System.NicknameLimit
 
         private static readonly int[] ButtonTextIds = { TextCreateGame, TextFindGame, TextEnterGame };
 
-        // 与原版 OnValidateNickname 白名单一致（0.1.16a UI_LobbyScene.cs:1699 的正则）
+        // 与原版 OnValidateNickname 白名单一致（0.1.16b UI_LobbyScene.cs:1772 的正则）
         private static readonly Regex Other = new Regex(
             "[^a-zA-Z0-9\\u3131-\\u318E\\uAC00-\\uD7A3\\u3040-\\u309F\\u30A0-\\u30FF\\u31F0-\\u31FF\\u4E00-\\u9FFF]",
             RegexOptions.Compiled);
@@ -114,7 +114,7 @@ namespace DT_Tools.Patches.System.NicknameLimit
 
         /// <summary>
         /// OnDisabled 还原：恢复抬限前的 characterLimit，并按原版权重规则
-        /// （CJK×2 + 字母数字 &gt; 12 即超长，0.1.16a UI_LobbyScene.cs:1725）重算门禁与按钮着色，
+        /// （CJK×2 + 字母数字 &gt; 12 即超长，0.1.16b UI_LobbyScene.cs:1798）重算门禁与按钮着色，
         /// 不给热关闭后遗留"超长名可进房"的窗口。
         /// </summary>
         public static void RestoreAllLobbyScenes()
@@ -141,7 +141,7 @@ namespace DT_Tools.Patches.System.NicknameLimit
             }
         }
 
-        /// <summary>原版三档校验（0.1.16a UI_LobbyScene.cs:1699-1741），仅供 OnDisabled 还原使用。</summary>
+        /// <summary>原版三档校验（0.1.16b UI_LobbyScene.cs:1772-1814），仅供 OnDisabled 还原使用。</summary>
         private static bool VanillaIsAcceptable(string name, out string failTip)
         {
             failTip = null;
@@ -171,7 +171,7 @@ namespace DT_Tools.Patches.System.NicknameLimit
         public static void ApplyValidUi(UI_LobbyScene scene, bool valid, string tip)
         {
             var t = Traverse(scene);
-            t.Field("_isNickNameValid").SetValue(valid);   // 0.1.16a UI_LobbyScene.cs:204
+            t.Field("_isNickNameValid").SetValue(valid);   // 0.1.16b UI_LobbyScene.cs:204
 
             try
             {

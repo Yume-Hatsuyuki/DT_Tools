@@ -7,7 +7,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
 {
     /// <summary>
     /// 击杀触发：Handle_S_KILL_PLAYER 是"本机击杀了人"的权威信号（服务端只发凶手，
-    /// 0.1.16a Server.Game/DeviceManager.cs:588-609）。PacketHandler 为 internal（PacketHandler.cs:9），
+    /// 0.1.16b Server.Game/DeviceManager.cs:588-609）。PacketHandler 为 internal（PacketHandler.cs:9），
     /// TargetMethod 运行时解析。
     /// </summary>
     [HarmonyPatch]
@@ -24,7 +24,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 递刀触发（黑幕侧）：UseHandWeapon 发包成功（return true，0.1.16a MyPlayer.cs:779）
+    /// 递刀触发（黑幕侧）：UseHandWeapon 发包成功（return true，0.1.16b MyPlayer.cs:779）
     /// 即黑幕把刀递出，黑幕本地播放递刀音乐。
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.UseHandWeapon))]
@@ -38,7 +38,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 阶段切换总触发：StartState（私有，0.1.16a GameManagerEX.cs:386）在每次
+    /// 阶段切换总触发：StartState（私有，0.1.16b GameManagerEX.cs:386）在每次
     /// State 变化时被调用且各 Start* 子方法已执行完——一个补丁覆盖
     /// 大厅/选角/生存/侦探/开庭/结算六阶段；未配置曲目的阶段会停掉当前播放。
     /// </summary>
@@ -78,7 +78,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 审判子阶段触发：UI_TrialEvent.StartState（私有，0.1.16a UI_TrialEvent.cs:1652）在
+    /// 审判子阶段触发：UI_TrialEvent.StartState（私有，0.1.16b UI_TrialEvent.cs:1652）在
     /// 审判内部 Discuss→VotePhase→VoteResult→Replay→TrialResult 每次切换时调用。
     /// 只覆盖前四个子阶段——TrialResult 子阶段沿用 StageMusicExecutionTrigger（更精确，
     /// 挂在裁决数据到达的 TrialResult 方法上，而非仅仅状态切换的瞬间），避免同一时机
@@ -113,7 +113,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
 
     /// <summary>
     /// 处刑触发（审判子演出）：TrialResult 为处刑演出序列起点
-    /// （0.1.16a UI_TrialEvent.cs:1214，public）。
+    /// （0.1.16b UI_TrialEvent.cs:1214，public）。
     /// </summary>
     [HarmonyPatch(typeof(UI_TrialEvent), nameof(UI_TrialEvent.TrialResult))]
     internal static class StageMusicExecutionTrigger
@@ -126,7 +126,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 主菜单大厅触发：UI_LobbyScene.OnEnable 播 MainTitleBGM（0.1.16a UI_LobbyScene.cs:2135），
+    /// 主菜单大厅触发：UI_LobbyScene.OnEnable 播 MainTitleBGM（0.1.16b UI_LobbyScene.cs:2209），
     /// 同一曲目与房内大厅互为去重。
     /// </summary>
     [HarmonyPatch(typeof(UI_LobbyScene), "OnEnable")]
@@ -140,7 +140,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 发现尸体触发：Handle_S_DISCOVER_CORPSE 仅发给发现者本人（0.1.16a
+    /// 发现尸体触发：Handle_S_DISCOVER_CORPSE 仅发给发现者本人（0.1.16b
     /// Server.Game/Corpse.cs:349 只 player.Session.Send，其余人仅收 SeeCorpseSfx 音效），
     /// 即本机发现尸体时播放。PacketHandler 为 internal，TargetMethod 运行时解析。
     /// </summary>
@@ -158,7 +158,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 自己死亡触发：S_DEAD 只发死者本人（0.1.16a Server.Game/Player.cs:827），
+    /// 自己死亡触发：S_DEAD 只发死者本人（0.1.16b Server.Game/Player.cs:827），
     /// 客户端 Handle_S_DEAD 调 Managers.Game.Dead()（PacketHandler.cs:392）。
     /// 不能挂 Handle_S_NOTIFY_DEAD——那是发给存活灵媒（SoulSense）的知晓通知，
     /// 不是受害者本人（Server.Game/Player.cs:935-946）。
@@ -180,7 +180,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
     /// <summary>
     /// 结局动画触发：Handle_S_ENDING_CAMERA 驱动电梯离场结局镜头，s_ENDING_CAMERA.IsEnd
     /// 区分"进入结局镜头"(true) 与"结局镜头结束"(false)，只在 true 时触发
-    /// （0.1.16a PacketHandler.cs:592，S_ENDING_CAMERA.cs:28）。
+    /// （0.1.16b PacketHandler.cs:592，S_ENDING_CAMERA.cs:28）。
     /// </summary>
     [HarmonyPatch]
     internal static class StageMusicEndingCutsceneTrigger
@@ -198,7 +198,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
     }
 
     /// <summary>
-    /// 黑幕继承触发：S_NOTIFY_BLACK 的接收者收到的都是"别人的 id"——0.1.16a
+    /// 黑幕继承触发：S_NOTIFY_BLACK 的接收者收到的都是"别人的 id"——0.1.16b
     /// Server.Game/Player.cs:220-238 的全部发送点：主脑收新黑幕 id、新黑幕本人收主脑 id、
     /// 死者收新黑幕 id，旧条件 PlayerId==本机 永假成死分支。
     /// 判据复刻客户端自己的分支语义（PacketHandler.cs:500）：收包瞬间新黑幕尚未收到

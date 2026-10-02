@@ -16,7 +16,7 @@ namespace DT_Tools.Commands.Agent
     ///     与包频率无关。未发现任何针对 C_INTERACT_*/C_HANDLE_* 的限频、去重或冷却判定。
     ///     故 TickInterval 下探到 0.25s 不会触发服务端限流。
     ///   · Mineral.HandleEvent 服务端零冷却，每次收到 C_HANDLE_MINERAL{IsSuccess=true}
-    ///     即无条件 CreateAndDropItem + Broadcast(S_SPAWN_DEVICE)（0.1.16a Server.Game/Mineral.cs:26/43）；
+    ///     即无条件 CreateAndDropItem + Broadcast(S_SPAWN_DEVICE)（0.1.16b Server.Game/Mineral.cs:26/43）；
     ///     MineralMineCooldown 纯粹是客户端侧"等网络回包 + Cache 刷新"的自保护，与服务器无关。
     ///   · MaxIdleTicks / MaxTicks 随 TickInterval 变化按时长等效换算，
     ///     以保持"空闲多久停止"和"最多运行多久"的实际秒数不变。
@@ -44,9 +44,9 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 任务全部完成判定阈值。依据 Server.Game/MissionManager.cs CheckAllClear：
-        /// Percent &gt;= 100 置 AllClear（0.1.16a :30 / :461）；客户端经
+        /// Percent &gt;= 100 置 AllClear（0.1.16b :30 / :461）；客户端经
         /// S_MISSION_PROGRESS_PERCENT → 场景事件 ChangeMissionPercent 收到同一值
-        /// （0.1.16a GameManagerEX.cs:258、Define.cs:170）。
+        /// （0.1.16b GameManagerEX.cs:258、Define.cs:170）。
         /// </summary>
         private const int AllClearPercent = 100;
 
@@ -90,7 +90,7 @@ namespace DT_Tools.Commands.Agent
         /// 订阅任务进度场景事件，用于检测"全部任务已完成"（见 AllClearPercent 依据）。
         ///
         /// 注意：Managers.Game.OnBroadcastSceneEvent 在每局游戏结束/重开时会被
-        /// GameManagerEX.Clear() 整体置 null（0.1.16a GameManagerEX.cs:280，Managers.Clear() 调用链），
+        /// GameManagerEX.Clear() 整体置 null（0.1.16b GameManagerEX.cs:280，Managers.Clear() 调用链），
         /// 不是移除单个订阅者，所以旧局的订阅不会自动带到新局——必须在每次 Runner 创建时
         /// 重新订阅，不能假设订阅一次全局有效。退订统一放在 OnDestroy 里。
         /// </summary>
@@ -163,7 +163,7 @@ namespace DT_Tools.Commands.Agent
         ///   · ChangesHand==true 的步骤（进/出/替换 Hand）仅在 <see cref="_handOpCooldown"/>
         ///     归零时才执行，且本 tick 最多执行 1 个，执行后重新进入
         ///     <see cref="HandOpCooldownTicks"/> tick 冷却——
-        ///     依据 1：Server.Game/ItemManager.cs InsertInven（0.1.16a:101）在 Hand 非空时会强制
+        ///     依据 1：Server.Game/ItemManager.cs InsertInven（0.1.16b:101）在 Hand 非空时会强制
         ///     DropItem 踢落已持物品（:105-108），同 tick 连发两个改 Hand 包会导致先发的被踢落地；
         ///     依据 2：HandItemId 的刷新依赖服务端回包（异步），冷却期给回包留出时间，
         ///     避免本地状态未及时刷新导致 Planner 对同一目标重复发送改 Hand 请求。

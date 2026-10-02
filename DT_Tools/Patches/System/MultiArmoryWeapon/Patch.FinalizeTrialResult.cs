@@ -5,7 +5,7 @@ using Protocol;
 namespace DT_Tools.Patches.System.MultiArmoryWeapon
 {
     /// <summary>
-    /// FinalizeTrialResult 前缀（私有方法，字符串定位：0.1.16a Server.Game/TrialManager.cs:780）：
+    /// FinalizeTrialResult 前缀（私有方法，字符串定位：0.1.16b Server.Game/TrialManager.cs:780）：
     /// 原版只有最高票 == 本庭绑定凶手才判白胜（TrialManager.cs:787-791），否则一律黑胜——
     /// 多刀场景下投中其他黑方会因此误判白方失败。命中「投票任意黑方胜利」时复刻原版白胜分支
     /// （ResultType=WhiteWin → ApplyTeamResults → TotalResult，TrialManager.cs:789-798）并跳过原版；
@@ -28,10 +28,10 @@ namespace DT_Tools.Patches.System.MultiArmoryWeapon
             }
 
             Server.Game.GameRoom room = __instance.Room;
-            room.ResultType = EResultType.WhiteWin;          // 0.1.16a Protocol/EResultType.cs:8
-            room.ApplyTeamResults();                          // 0.1.16a Server.Game/GameRoom.cs:725（WhiteWin 分支不设 PrimaryWinnerId）
+            room.ResultType = EResultType.WhiteWin;          // 0.1.16b Protocol/EResultType.cs:8
+            room.ApplyTeamResults();                          // 0.1.16b Server.Game/GameRoom.cs:725（WhiteWin 分支不设 PrimaryWinnerId）
             Log.Info<MultiArmoryWeaponFeature>($"投票任意黑方胜利：最高票 #{catchId} 为黑方，判白方胜利");
-            room.ChangeGameState(EGameState.TotalResult);     // 0.1.16a Server.Game/GameRoom.cs:573
+            room.ChangeGameState(EGameState.TotalResult);     // 0.1.16b Server.Game/GameRoom.cs:573
             return false;
         }
     }

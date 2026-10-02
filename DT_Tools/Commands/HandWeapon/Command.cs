@@ -6,7 +6,7 @@ namespace DT_Tools.Commands.HandWeapon
     /// /hand_weapon &lt;#playerId&gt; — 营图：黑幕无视距离把手中凶器交给任意一名 White
     /// （客户端发包，跟随控制台，非房主可用）。
     ///
-    /// 为什么不支持 all：服务端 Player.HandWeapon（0.1.16a Server.Game/Player.cs:1600）
+    /// 为什么不支持 all：服务端 Player.HandWeapon（0.1.16b Server.Game/Player.cs:1600）
     /// 成功时先移除自己唯一的刀，再给目标创建凶器；第一包生效后自己 Weapon==null，
     /// 后续包全部被拒，且目标必须是存活、空手的 White。一把刀只能递交一次，
     /// 因此仅支持单体 #id（与 /call_c 的身份包同理）。
@@ -15,7 +15,7 @@ namespace DT_Tools.Commands.HandWeapon
     ///   - 生存阶段；
     ///   - 本机颜色必须是 Dark（黑幕），且 Inventory.Weapon 有刀；
     ///   - 目标存在、不是自己；已知 Black（KnownBlackIds，黑幕通过 S_NOTIFY_BLACK 掌握，
-    ///     0.1.16a PlayerManager.cs:54）的目标会被拒绝，因为服务端只接受 White；
+    ///     0.1.16b PlayerManager.cs:54）的目标会被拒绝，因为服务端只接受 White；
     ///   - 其余条件（目标存活、空手）客户端无权威视图，交由服务端静默裁决。
     ///
     /// 实现原理：原版 MyPlayer.UseHandWeapon 要求 224 单位内且无墙体遮挡的目标

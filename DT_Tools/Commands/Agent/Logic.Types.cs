@@ -35,7 +35,7 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 是否改变 Hand 状态（进手/出手/替换手上物品）。
-        /// 依据：Server.Game/ItemManager.cs InsertInven（0.1.16a:101）在 Hand 非空时会强制
+        /// 依据：Server.Game/ItemManager.cs InsertInven（0.1.16b:101）在 Hand 非空时会强制
         /// DropItem 踢落已持物品（见 105-108 行），故同一 tick 内改 Hand 的步骤最多执行 1 个。
         /// 不改 Hand 的步骤（状态机推进、无道具直清）互不干扰，可在同一 tick 全部执行。
         /// </summary>

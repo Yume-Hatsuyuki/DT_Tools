@@ -4,7 +4,7 @@ namespace DT_Tools.Patches.System.ChatSanitize
 {
     /// <summary>
     /// 房主侧聊天长度过滤（服务端）：GameRoom.SanitizeChat 原版硬编码 100 截断
-    /// （0.1.16a Server.Game/GameRoom.cs:2524）。与客户端「ChatLimit」（输入框抬限）
+    /// （0.1.16b Server.Game/GameRoom.cs:2524）。与客户端「ChatLimit」（输入框抬限）
     /// 是不同机器上的两道独立闸门，各自配置、需数值配合（输入框上限 ≤ 过滤上限
     /// 才不会被截断）。
     /// </summary>

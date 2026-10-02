@@ -7,7 +7,7 @@ using Server.Game;
 namespace DT_Tools.Patches.System.DoorLockServer
 {
     /// <summary>
-    /// Door.HandleEvent 前缀（public override，0.1.16a Server.Game/Door.cs:63-82）：
+    /// Door.HandleEvent 前缀（public override，0.1.16b Server.Game/Door.cs:63-82）：
     /// 原方法体只有锁门一个分支（开关门走 Interact 通道），按 LockDoorMode 放行后
     /// 逐句复刻原版锁门序列（CanSabotage=false → 40s 恢复任务 → S_COOLTIME_SABOTAGE
     /// → StateList[2]=0 → LockDoor → 1s 后 TickDoor 启动自动解锁倒计时）。

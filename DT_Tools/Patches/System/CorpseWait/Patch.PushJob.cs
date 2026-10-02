@@ -7,7 +7,7 @@ namespace DT_Tools.Patches.System.CorpseWait
 {
     /// <summary>
     /// 尸体构造期内 PushSurvivalJob(..., EndSurvival) 的延迟改为同一随机值。
-    /// 目标重载 PushSurvivalJob(int, Action)：0.1.16a Server.Game/TimeManager.cs:77。
+    /// 目标重载 PushSurvivalJob(int, Action)：0.1.16b Server.Game/TimeManager.cs:77。
     /// </summary>
     [HarmonyPatch(typeof(TimeManager), nameof(TimeManager.PushSurvivalJob),
         new[] { typeof(int), typeof(Action) })]

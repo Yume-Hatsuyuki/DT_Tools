@@ -6,9 +6,9 @@ namespace DT_Tools.Patches.Experience.PassKnifeRange
 {
     /// <summary>
     /// GetHandWeaponTarget 整替：最近玩家搜索见 NearestTargetFinder（骨架与
-    /// 0.1.16a MyPlayer.cs:2191 一致），额外排除 KnownBlackIds
-    /// （0.1.16a MyPlayer.cs:2197 原文内联于循环，此处收敛为谓词）。
-    /// 方法为 private，字符串定位：0.1.16a MyPlayer.cs:2191。
+    /// 0.1.16b MyPlayer.cs:2191 一致），额外排除 KnownBlackIds
+    /// （0.1.16b MyPlayer.cs:2197 原文内联于循环，此处收敛为谓词）。
+    /// 方法为 private，字符串定位：0.1.16b MyPlayer.cs:2191。
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "GetHandWeaponTarget")]
     internal static class PassKnifeRangePatch

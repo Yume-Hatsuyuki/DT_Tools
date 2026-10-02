@@ -5,12 +5,12 @@ namespace DT_Tools.Patches.Fun.StageMusic
     /// <summary>
     /// 阶段音乐（客户端，实验性）：按游戏阶段播放自定义音乐（http 链接或本地文件，
     /// 由 TrackSource 统一指定来源，仅本地收听）。
-    /// 触发点审计（0.1.16a，含 2026-09 补充审计）——
+    /// 触发点审计（0.1.16b，含 2026-09 补充审计）——
     /// 击杀：Handle_S_KILL_PLAYER 只发凶手（PacketHandler.cs:953）；
     /// 递刀：UseHandWeapon 发包成功（MyPlayer.cs:779）；
     /// 阶段切换：GameManagerEX.StartState（GameManagerEX.cs:386，覆盖大厅/选角/生存/侦探/开庭/结算六阶段）；
     /// 处刑：UI_TrialEvent.TrialResult（UI_TrialEvent.cs:1214）；
-    /// 主菜单/房内大厅：UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2135）+ StartLobby（GameManagerEX.cs:447）；
+    /// 主菜单/房内大厅：UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2209）+ StartLobby（GameManagerEX.cs:447）；
     /// 审判子阶段：UI_TrialEvent.StartState（UI_TrialEvent.cs:1652，覆盖讨论/投票/唱票/回放四子阶段，
     /// TrialResult 子阶段沿用上面更精确的处刑触发，不重复挂载）；
     /// 发现尸体：Handle_S_DISCOVER_CORPSE（PacketHandler.cs:821，仅发现者本人，Server.Game/Corpse.cs:349）；

@@ -3,7 +3,7 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Patches.Experience.DestroyEvidence
 {
     /// <summary>
-    /// 销毁证据读条。DeviceBase.UseSabotage 原版 2.5f（0.1.16a DeviceBase.cs:460）
+    /// 销毁证据读条。DeviceBase.UseSabotage 原版 2.5f（0.1.16b DeviceBase.cs:460）
     /// → CastingTime（仅本地表现；服务端冷却与判定不受影响）。
     /// </summary>
     [PatchFeature(

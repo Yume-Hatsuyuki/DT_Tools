@@ -41,8 +41,8 @@ namespace DT_Tools.Commands.GiveDrink
             }
 
             // 发放前校验 DataId 存在：Item 构造用 ItemDic.Values.FirstOrDefault 匹配，未知 DataId
-            // 会得到 Data=null 的脏 Item（0.1.16a Server.Game/Item.cs），而 ItemManager.
-            // CreateAndInsertInven 先 Items.Add 再解引用 item.Data.Type（0.1.16a ItemManager.cs:17-22），
+            // 会得到 Data=null 的脏 Item（0.1.16b Server.Game/Item.cs），而 ItemManager.
+            // CreateAndInsertInven 先 Items.Add 再解引用 item.Data.Type（0.1.16b ItemManager.cs:17-22），
             // 脏 Item 会永久留在 Host 的 Items 列表。itemId<=0 是清空语义，不查表。
             if (args.ItemId > 0 && Managers.Data?.ItemDic?.ContainsKey(args.ItemId) != true)
             {

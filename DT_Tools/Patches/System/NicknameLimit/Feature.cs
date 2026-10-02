@@ -6,7 +6,7 @@ namespace DT_Tools.Patches.System.NicknameLimit
     /// 取消主页昵称限制（权重 CJK×2+字母数字 ≤12），可选放开字符白名单。
     /// 源码侧无 characterLimit；若 Prefab 仍设了硬上限，一并抬高。
     /// 门禁点：OnValidateNickname / EnsureNicknameOrShowError / StartLobbySection 重校验
-    /// （0.1.16a UI_LobbyScene.cs:855）/ 各进房入口读 _isNickNameValid——
+    /// （0.1.16b UI_LobbyScene.cs:855）/ 各进房入口读 _isNickNameValid——
     /// 全部经由 Logic.IsNameAcceptable 单一判定源，字符与字数两个维度在此正交。
     /// </summary>
     [PatchFeature(
