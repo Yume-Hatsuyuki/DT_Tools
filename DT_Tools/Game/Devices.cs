@@ -13,13 +13,13 @@ namespace DT_Tools.Game
     /// </summary>
     public static class Devices
     {
-        /// <summary>电闸损坏：StateList[0]==9999（0.1.15b Define.cs:562 DISCONNET_STATE；拉闸写入见 Server.Game/Fusebox.cs:122）。</summary>
+        /// <summary>电闸损坏：StateList[0]==9999（0.1.16a Define.cs:554 DISCONNET_STATE；拉闸写入见 Server.Game/Fusebox.cs:122）。</summary>
         public const int FuseboxStateBroken = 9999;
 
-        /// <summary>电闸完好：StateList[0]==0（0.1.15b Define.cs:564 NORMAL_STATE）。</summary>
+        /// <summary>电闸完好：StateList[0]==0（0.1.16a Define.cs:556 NORMAL_STATE）。</summary>
         public const int FuseboxStateIntact = 0;
 
-        /// <summary>破坏任务武装：MissionType==-1（开局 StartFuseboxSabotage → StartMission 写入，0.1.15b Server.Game/Fusebox.cs:141）。</summary>
+        /// <summary>破坏任务武装：MissionType==-1（开局 StartFuseboxSabotage → StartMission 写入，0.1.16a Server.Game/Fusebox.cs:141）。</summary>
         public const int FuseboxMissionArmed = -1;
 
         /// <summary>当前处于 OpenArmory（可拔刀）的武器架。</summary>
@@ -44,7 +44,7 @@ namespace DT_Tools.Game
                             && f.Info.StateList[0] == FuseboxStateIntact)
                 .ToList();
 
-        /// <summary>服务端设备管理器的全部货架（私有字段 _storages，0.1.15b Server.Game/DeviceManager.cs:32）。房主侧功能用。</summary>
+        /// <summary>服务端设备管理器的全部货架（私有字段 _storages，0.1.16a Server.Game/DeviceManager.cs:32）。房主侧功能用。</summary>
         public static List<Server.Game.Storage> GetStorages(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_storages").GetValue<List<Server.Game.Storage>>();
     }

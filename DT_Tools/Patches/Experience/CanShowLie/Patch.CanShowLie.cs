@@ -5,7 +5,7 @@ using Protocol;
 namespace DT_Tools.Patches.Experience.CanShowLie
 {
     /// <summary>
-    /// CanShowLie 整替：去掉原版的 Color==Black 限制（原版判定见 0.1.15b UI_GameTablet.cs:980）。
+    /// CanShowLie 整替：去掉原版的 Color==Black 限制（原版判定见 0.1.16a UI_GameTablet.cs:980）。
     /// 私有方法，字符串定位；其余条件（Trial + 讨论阶段 + 有本地玩家）与原版一致。
     /// </summary>
     [HarmonyPatch(typeof(UI_GameTablet), "CanShowLie")]

@@ -4,13 +4,13 @@ namespace DT_Tools.Patches.System.AttackRangeServer
 {
     /// <summary>
     /// 服务端攻击距离判定：GameRoom.AttackPlayer 用 Util.UnifiedAttackRect（攻击盒，
-    /// 0.1.15b Util.cs:57，前向 80 / 后向 40）对 PlayerHitRect 做 AABB 碰撞
-    /// （0.1.15b Server.Game/GameRoom.cs:2382-2402）——客户端 AttackRange 只放宽了
+    /// 0.1.16a Util.cs:57，前向 80 / 后向 40）对 PlayerHitRect 做 AABB 碰撞
+    /// （0.1.16a Server.Game/GameRoom.cs:2382-2402）——客户端 AttackRange 只放宽了
     /// 选人距离（MyPlayer.cs:2178 的 224），超原版范围的攻击会在服务端判定落空
     /// （表现为空挥不掉血）。本功能把攻击盒前向延伸 ExtraForwardReach 个单位，
     /// 客户端/服务端两端数值需配合调节。
     /// 注意：UnifiedAttackRect 同时被白方假武器试人判定 GetFakeWeaponPlayer
-    /// （0.1.15b MyPlayer.cs:2222）消费，同一静态属性无法分离——开启本功能后
+    /// （0.1.16a MyPlayer.cs:2222）消费，同一静态属性无法分离——开启本功能后
     /// 房主机上假武器可命中/可试出的范围同步变宽。
     /// </summary>
     [PatchFeature(

@@ -13,7 +13,7 @@ namespace DT_Tools.Commands.Fusebox
     /// 设备查询已上浮 Game/Devices.cs，不在此重复）。
     ///
     /// 原版机制：
-    ///   - 同一个 C_INTERACT_FUSEBOX 经 DeviceManager.Interact → Fusebox.Interact（0.1.15b
+    ///   - 同一个 C_INTERACT_FUSEBOX 经 DeviceManager.Interact → Fusebox.Interact（0.1.16a
     ///     Server.Game/Fusebox.cs:16），按 StateList[0] 分流：0→DisconnetCable（拉闸，:114），
     ///     9999→ConnetCable（修电，:97）。
     ///   - DisconnetCable 仅校验 MissionType==-1（开局 StartFuseboxSabotage 武装的 3 个电闸），

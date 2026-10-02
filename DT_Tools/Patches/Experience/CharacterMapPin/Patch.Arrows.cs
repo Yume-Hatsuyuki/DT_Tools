@@ -7,7 +7,7 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
 {
     /// <summary>
     /// HUD LateUpdate 后置（常驻角色箭头，独立开关 ShowCharacterArrow）。
-    /// LateUpdate 私有：0.1.15b UI_GameScene.cs:802；构建/更新/回收在 Ui，
+    /// LateUpdate 私有：0.1.16a UI_GameScene.cs:804；构建/更新/回收在 Ui，
     /// 追踪过滤在 Logic.ShouldTrack。与本目录 WhitePins 补丁同挂一方法，互不影响。
     /// </summary>
     [HarmonyPatch(typeof(UI_GameScene), "LateUpdate")]

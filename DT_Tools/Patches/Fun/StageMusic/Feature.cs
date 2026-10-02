@@ -5,19 +5,19 @@ namespace DT_Tools.Patches.Fun.StageMusic
     /// <summary>
     /// 阶段音乐（客户端，实验性）：按游戏阶段播放自定义音乐（http 链接或本地文件，
     /// 由 TrackSource 统一指定来源，仅本地收听）。
-    /// 触发点审计（0.1.15b，含 2026-09 补充审计）——
-    /// 击杀：Handle_S_KILL_PLAYER 只发凶手（PacketHandler.cs:952）；
+    /// 触发点审计（0.1.16a，含 2026-09 补充审计）——
+    /// 击杀：Handle_S_KILL_PLAYER 只发凶手（PacketHandler.cs:953）；
     /// 递刀：UseHandWeapon 发包成功（MyPlayer.cs:779）；
-    /// 阶段切换：GameManagerEX.StartState（GameManagerEX.cs:385，覆盖大厅/选角/生存/侦探/开庭/结算六阶段）；
+    /// 阶段切换：GameManagerEX.StartState（GameManagerEX.cs:386，覆盖大厅/选角/生存/侦探/开庭/结算六阶段）；
     /// 处刑：UI_TrialEvent.TrialResult（UI_TrialEvent.cs:1214）；
-    /// 主菜单/房内大厅：UI_LobbyScene.OnEnable（UI_LobbyScene.cs:1961）+ StartLobby（GameManagerEX.cs:446）；
+    /// 主菜单/房内大厅：UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2135）+ StartLobby（GameManagerEX.cs:447）；
     /// 审判子阶段：UI_TrialEvent.StartState（UI_TrialEvent.cs:1652，覆盖讨论/投票/唱票/回放四子阶段，
     /// TrialResult 子阶段沿用上面更精确的处刑触发，不重复挂载）；
-    /// 发现尸体：Handle_S_DISCOVER_CORPSE（PacketHandler.cs:820，仅发现者本人，Server.Game/Corpse.cs:349）；
-    /// 自己死亡：Handle_S_DEAD（PacketHandler.cs:391，仅死者本人——S_DEAD 只发死者
+    /// 发现尸体：Handle_S_DISCOVER_CORPSE（PacketHandler.cs:821，仅发现者本人，Server.Game/Corpse.cs:349）；
+    /// 自己死亡：Handle_S_DEAD（PacketHandler.cs:392，仅死者本人——S_DEAD 只发死者
     /// Server.Game/Player.cs:827；S_NOTIFY_DEAD 实为灵媒知晓通知，不能用作本机死亡信号）；
-    /// 结局动画：Handle_S_ENDING_CAMERA（PacketHandler.cs:591，仅 IsEnd=true 时触发）；
-    /// 黑幕继承：Handle_S_NOTIFY_BLACK（PacketHandler.cs:481，ByHand=false 非递刀时按客户端 Dark 分支
+    /// 结局动画：Handle_S_ENDING_CAMERA（PacketHandler.cs:592，仅 IsEnd=true 时触发）；
+    /// 黑幕继承：Handle_S_NOTIFY_BLACK（PacketHandler.cs:482，ByHand=false 非递刀时按客户端 Dark 分支
     /// 判定——收包瞬间本机颜色仍为 Dark 且存活；递刀 ByHand=true 已由 GiveKnife 覆盖）。
     /// 单播放槽治理：同曲目播放中不重播（连杀防重复）、切阶段只保留一首、限长到点停止。
     /// 原版 BGM 可选静音（各阶段原版会播 DetectiveBGM/TrialMainBGM/Beta_Result_BGM 等，

@@ -22,7 +22,7 @@ namespace DT_Tools.Commands.ListPlayers
         /// <summary>
         /// 房主 PlayerId：Host 端直接取 GameRoom.Host；客户端用 Steam Lobby 的 HostSteamId
         /// 在 Roster 里反查。识别失败返回 0
-        /// （0.1.15b DummyClient/SteamLobbyManager.cs:90 HostSteamId / :104 InLobby）。
+        /// （0.1.16a DummyClient/SteamLobbyManager.cs:90 HostSteamId / :104 InLobby）。
         /// </summary>
         public static int ResolveHostPlayerId()
         {

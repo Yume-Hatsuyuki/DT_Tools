@@ -9,7 +9,7 @@ namespace DT_Tools.Game
     ///   - FromDevice：设备摆放地区取 DeviceData.RoomType（配置写死，与服务端
     ///     AreaManager.GetArea(pos).Data 同源）→ TextDic 本地化名（与平板扫描 UI_GameTablet.SetWeaponInfo 同源）。
     ///   - FromPos：坐标按 224 网格反查 MapArray → ERoomType → TextDic，与服务端 GetArea 同款算法。
-    ///     见 0.1.15b Server.Game/AreaManager.cs:74-80（GetArea）、DataManager.cs:28(MapArray)/30(TextDic)、
+    ///     见 0.1.16a Server.Game/AreaManager.cs:74-80（GetArea）、DataManager.cs:28(MapArray)/30(TextDic)、
     ///     Data/DeviceData.cs:34(RoomType)、Data/TextData.cs:10(Text)。
     /// 返回 (本地化名称, raw 枚举名)；无文本时本地化名称回退为枚举名。
     /// </summary>

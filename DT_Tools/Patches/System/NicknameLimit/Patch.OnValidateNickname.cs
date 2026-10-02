@@ -6,8 +6,8 @@ namespace DT_Tools.Patches.System.NicknameLimit
 {
     /// <summary>
     /// OnValidateNickname 整替：保留「写 MyPlayerName + Prefs」与非法字符拦截，
-    /// 只移除权重 &gt;12 一档。私有方法，字符串定位：0.1.15b UI_LobbyScene.cs:1559；
-    /// 私有字段 _nicknameKey：0.1.15b UI_LobbyScene.cs:390。
+    /// 只移除权重 &gt;12 一档。私有方法，字符串定位：0.1.16a UI_LobbyScene.cs:1699；
+    /// 私有字段 _nicknameKey：0.1.16a UI_LobbyScene.cs:409。
     /// </summary>
     [HarmonyPatch(typeof(UI_LobbyScene), "OnValidateNickname")]
     internal static class NicknameLimitValidatePatch
@@ -19,7 +19,7 @@ namespace DT_Tools.Patches.System.NicknameLimit
 
             NicknameLimitLogic.LiftInputHardLimit(__instance, NicknameLimitLogic.GetNicknameField(__instance));
 
-            // 与原版一致（0.1.15b UI_LobbyScene.cs:1561-1565）：先写入；我们仅放宽长度，
+            // 与原版一致（0.1.16a UI_LobbyScene.cs:1701-1705）：先写入；我们仅放宽长度，
             // 非法名仍可被写进 Prefs，但门禁 _isNickNameValid 会挡住进房。
             Managers.Player.MyPlayerName = name;
             string key = Traverse.Create(__instance).Field("_nicknameKey").GetValue<string>();

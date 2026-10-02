@@ -32,7 +32,7 @@ namespace DT_Tools.Commands.Kill
 
         /// <summary>
         /// 单目标校验：观战者 / 已死亡不可处决。
-        /// （0.1.15b Server.Game/Player.cs:857-878），假会话只丢弃发给自己的包，死亡流程完整。
+        /// （0.1.16a Server.Game/Player.cs:857-878），假会话只丢弃发给自己的包，死亡流程完整。
         /// </summary>
         public static bool IsTargetKillable(Server.Game.Player target, out string text, out string code)
         {
@@ -57,7 +57,7 @@ namespace DT_Tools.Commands.Kill
         /// <summary>
         /// 执行处决：非审判阶段先预热（DeadDetective 标记 + Louis 瞄准镜 + 警告音），
         /// 再逐个调用原版 OnDeadCollarBomb——先立即广播 DyingVfx 倒地，PushAfter(6000)
-        /// 后才真死亡（0.1.15b Server.Game/Player.cs:857-878，JobTimer 按原版触发）。
+        /// 后才真死亡（0.1.16a Server.Game/Player.cs:857-878，JobTimer 按原版触发）。
         /// </summary>
         public static void Execute(GameRoom room, List<Server.Game.Player> targets, bool isTrial)
         {

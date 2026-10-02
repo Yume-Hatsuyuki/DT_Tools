@@ -6,7 +6,7 @@ using Server.Game;
 namespace DT_Tools.Patches.System.WhiteSabotageClue
 {
     /// <summary>
-    /// 白方销毁证据放行：Device.DestroyEvidence 前缀（public，0.1.15b Server.Game/Device.cs:217）。
+    /// 白方销毁证据放行：Device.DestroyEvidence 前缀（public，0.1.16a Server.Game/Device.cs:217）。
     /// 原版门禁硬编码仅黑方/黑幕（:219 的颜色判断），白方的销毁请求会被静默拒绝；
     /// 本前缀在白方请求且其余门禁条件（存活/设备有证据/个人冷却，与原版同式）满足时
     /// 接管执行白方销毁序列（Logic.DestroyEvidence，痕迹记真实身份），其余一律交回

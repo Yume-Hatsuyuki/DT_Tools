@@ -8,7 +8,7 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
     {
         /// <summary>
         /// 常驻箭头轨道半径：与 Kaho 角色箭头一致（原版 UI_Arrow.SetInfo(ECharacterType,...)
-        /// 写 _orbitRadius = 300，0.1.15b UI_Arrow.cs:77；字段默认 200，0.1.15b UI_Arrow.cs:14）。
+        /// 写 _orbitRadius = 300，0.1.16a UI_Arrow.cs:77；字段默认 200，0.1.16a UI_Arrow.cs:14）。
         /// </summary>
         public const float CharacterArrowOrbit = 300f;
 
@@ -17,7 +17,7 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
 
         /// <summary>
         /// 「死亡保留 Pin」拦下未删的玩家 id：TabletManager.DeletePin 前置拦截时记录
-        ///（0.1.15b TabletManager.cs:133）。玩家本体已 Despawn（0.1.15b PlayerManager.cs:424），
+        ///（0.1.16a TabletManager.cs:136）。玩家本体已 Despawn（0.1.16a PlayerManager.cs:434），
         /// 白方巡检与热关闭清理都按此集合识别保留 pin。集合残留跨回合无害：
         /// 新对局同 id 玩家的删除拦截行为与其身份无关，语义不变。
         /// </summary>

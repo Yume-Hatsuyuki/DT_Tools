@@ -14,7 +14,7 @@ namespace DT_Tools.Commands.Agent
     internal static class AgentItemHelper
     {
         // ═══════════════════════════════════════════════════
-        //  Agent 域设备 StateList 槽位布局表（0.1.15b Server.Game 行号锚点）
+        //  Agent 域设备 StateList 槽位布局表（0.1.16a Server.Game 行号锚点）
         //  —— 四条链（Delivery/Vacuum/Instant/Generate）+ 本文件全部槽位判断的唯一
         //     核对入口；游戏升级后按此表逐行复核（审计技术负债 #1 的收口）。
         // ═══════════════════════════════════════════════════
@@ -50,32 +50,32 @@ namespace DT_Tools.Commands.Agent
         //
         // ═══════════════════════════════════════════════════
         //  道具 DataId 具名常量（统一引用 Define.ITEM_ID_*，双权威收敛到游戏定义；
-        //  行号=0.1.15b Define.cs）
+        //  行号=0.1.16a Define.cs）
         // ═══════════════════════════════════════════════════
 
-        public const int ItemUsb = Define.ITEM_ID_USB;                       // 1008 U 盘 → ScFixPc 修电脑（Define.cs:640）
-        public const int ItemManikin = Define.ITEM_ID_MANIKIN;               // 1009 人体模型 → ScManikinStart 手术台（Define.cs:642）
-        public const int ItemEmptyBattery = Define.ITEM_ID_BATTERY_EMPTY;    // 1011 空电池 → ScChargeBattery 充电器（Define.cs:646）
-        public const int ItemBattery = Define.ITEM_ID_BATTERY_FULL;          // 1015 电池 → Miner/Warp/Bio 三处消耗（Define.cs:648）
-        public const int FlowerRed = Define.ITEM_ID_RED_FLOWER;              // 1021 红花（ScMakeSpray/ScDrink 目标花色，Define.cs:650）
-        public const int FlowerBlue = Define.ITEM_ID_BLUE_FLOWER;            // 1022 蓝花（Define.cs:652）
-        public const int FlowerYellow = Define.ITEM_ID_YELLOW_FLOWER;        // 1023 黄花（Define.cs:654）
-        public const int FlowerPink = Define.ITEM_ID_PINK_FLOWER;            // 1024 粉花（Define.cs:656）
-        public const int ItemSpray = Define.ITEM_ID_AMPLE;                   // 1025 喷雾 → ScSprayCancer（Define.cs:658）
-        public const int ItemMushroom = Define.ITEM_ID_MUSHROOM;             // 1026 蘑菇 → ScMushroomAlchemist（Define.cs:660）
-        public const int ItemHotWater = Define.ITEM_ID_ICE_WATER;            // 1028 热水/冰水 → ScBoiler 温控（Define.cs:662；Define 命名为 ICE_WATER，调酒台侧用它当热水）
-        public const int ItemAlchemyPotion = Define.ITEM_ID_ULTIMATEPOTION;  // 1030 炼金药 → ScPotionAlchemist（Define.cs:664）
-        public const int MineralBlue = Define.ITEM_ID_BLUEMINERAL;           // 1032 蓝矿（EMineralType.BlueMineral 产出，Define.cs:668）
-        public const int MineralGreen = Define.ITEM_ID_GREENMINERAL;         // 1033 绿矿（Define.cs:670）
-        public const int MineralRed = Define.ITEM_ID_REDMINERAL;             // 1034 红矿（Define.cs:672）
-        public const int ItemRawSake = Define.ITEM_ID_SHAKER_BALL_01;        // 1039 生酒 → ScShakeShaker（Define.cs:690；玩家摇动变 1040，无法直接发包）
-        public const int ItemShakenSake = Define.ITEM_ID_SHAKER_BALL_02;     // 1040 熟酒 → ScShakerDrink 献酒（Define.cs:692）
-        public const int PotionDataIdBase = Define.ITEM_ID_SYRINGE_YELLOW;   // 1045 药水色基：色 = DataId - 1045（1046红/1047绿/1048蓝/1049黄，Define.cs:702-710）
-        public const int ItemBookOne = Define.ITEM_ID_RED_BOOK;              // 1051 符文书 A → ScFire/ScBookRune 两用（Define.cs:712）
-        public const int ItemBookTwo = Define.ITEM_ID_BLUE_BOOK;             // 1052 符文书 B → 同上（Define.cs:714）
-        public const int FishNormal = Define.ITEM_ID_FISH_NORMAL;            // 1059 钓鱼产出：普通鱼（非任务道具，必丢，Define.cs:678）
-        public const int FishRare = Define.ITEM_ID_FISH_RARE;                // 1060 稀有鱼（Define.cs:680）
-        public const int FishGold = Define.ITEM_ID_FISH_GOLD;                // 1061 金鱼（Define.cs:682）
+        public const int ItemUsb = Define.ITEM_ID_USB;                       // 1008 U 盘 → ScFixPc 修电脑（Define.cs:632）
+        public const int ItemManikin = Define.ITEM_ID_MANIKIN;               // 1009 人体模型 → ScManikinStart 手术台（Define.cs:634）
+        public const int ItemEmptyBattery = Define.ITEM_ID_BATTERY_EMPTY;    // 1011 空电池 → ScChargeBattery 充电器（Define.cs:638）
+        public const int ItemBattery = Define.ITEM_ID_BATTERY_FULL;          // 1015 电池 → Miner/Warp/Bio 三处消耗（Define.cs:640）
+        public const int FlowerRed = Define.ITEM_ID_RED_FLOWER;              // 1021 红花（ScMakeSpray/ScDrink 目标花色，Define.cs:642）
+        public const int FlowerBlue = Define.ITEM_ID_BLUE_FLOWER;            // 1022 蓝花（Define.cs:644）
+        public const int FlowerYellow = Define.ITEM_ID_YELLOW_FLOWER;        // 1023 黄花（Define.cs:646）
+        public const int FlowerPink = Define.ITEM_ID_PINK_FLOWER;            // 1024 粉花（Define.cs:648）
+        public const int ItemSpray = Define.ITEM_ID_AMPLE;                   // 1025 喷雾 → ScSprayCancer（Define.cs:650）
+        public const int ItemMushroom = Define.ITEM_ID_MUSHROOM;             // 1026 蘑菇 → ScMushroomAlchemist（Define.cs:652）
+        public const int ItemHotWater = Define.ITEM_ID_ICE_WATER;            // 1028 热水/冰水 → ScBoiler 温控（Define.cs:654；Define 命名为 ICE_WATER，调酒台侧用它当热水）
+        public const int ItemAlchemyPotion = Define.ITEM_ID_ULTIMATEPOTION;  // 1030 炼金药 → ScPotionAlchemist（Define.cs:656）
+        public const int MineralBlue = Define.ITEM_ID_BLUEMINERAL;           // 1032 蓝矿（EMineralType.BlueMineral 产出，Define.cs:660）
+        public const int MineralGreen = Define.ITEM_ID_GREENMINERAL;         // 1033 绿矿（Define.cs:662）
+        public const int MineralRed = Define.ITEM_ID_REDMINERAL;             // 1034 红矿（Define.cs:664）
+        public const int ItemRawSake = Define.ITEM_ID_SHAKER_BALL_01;        // 1039 生酒 → ScShakeShaker（Define.cs:682；玩家摇动变 1040，无法直接发包）
+        public const int ItemShakenSake = Define.ITEM_ID_SHAKER_BALL_02;     // 1040 熟酒 → ScShakerDrink 献酒（Define.cs:684）
+        public const int PotionDataIdBase = Define.ITEM_ID_SYRINGE_YELLOW;   // 1045 药水色基：色 = DataId - 1045（1046红/1047绿/1048蓝/1049黄，Define.cs:694-702）
+        public const int ItemBookOne = Define.ITEM_ID_RED_BOOK;              // 1051 符文书 A → ScFire/ScBookRune 两用（Define.cs:704）
+        public const int ItemBookTwo = Define.ITEM_ID_BLUE_BOOK;             // 1052 符文书 B → 同上（Define.cs:706）
+        public const int FishNormal = Define.ITEM_ID_FISH_NORMAL;            // 1059 钓鱼产出：普通鱼（非任务道具，必丢，Define.cs:670）
+        public const int FishRare = Define.ITEM_ID_FISH_RARE;                // 1060 稀有鱼（Define.cs:672）
+        public const int FishGold = Define.ITEM_ID_FISH_GOLD;                // 1061 金鱼（Define.cs:674）
 
         /// <summary>矿物 DataId 区间（收矿/采矿共用判断）。</summary>
         public const int MineralMin = MineralBlue;
@@ -86,14 +86,14 @@ namespace DT_Tools.Commands.Agent
         public const int FlowerMax = FlowerPink;
 
         /// <summary>药水 DataId 区间。</summary>
-        public const int PotionMin = Define.ITEM_ID_POTION_RED;     // 1046（Define.cs:704）
-        public const int PotionMax = Define.ITEM_ID_POTION_YELLOW;  // 1049（Define.cs:710）
+        public const int PotionMin = Define.ITEM_ID_POTION_RED;     // 1046（Define.cs:696）
+        public const int PotionMax = Define.ITEM_ID_POTION_YELLOW;  // 1049（Define.cs:702）
 
         // ═══════════════════════════════════════════════════
         //  矿石 / 花 / 鱼映射（旧 AgentItemHelper）
         // ═══════════════════════════════════════════════════
 
-        /// <summary>矿点 SubType → 掉落 DataId（与 Server Mineral.HandleEvent 一致，0.1.15b Server.Game/Mineral.cs:26/43）。</summary>
+        /// <summary>矿点 SubType → 掉落 DataId（与 Server Mineral.HandleEvent 一致，0.1.16a Server.Game/Mineral.cs:26/43）。</summary>
         public static int MineralDataId(int subType)
         {
             switch ((EMineralType)subType)

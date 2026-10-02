@@ -9,7 +9,7 @@ namespace DT_Tools.Commands.Agent
     {
         /// <summary>
         /// 任务名/中文别名 → ESchoolMission 底层值。全部用枚举成员引用（编译期校验），
-        /// 枚举值变化时此处编译报错而非静默失配（0.1.15b Protocol/ESchoolMission.cs）。
+        /// 枚举值变化时此处编译报错而非静默失配（0.1.16a Protocol/ESchoolMission.cs）。
         /// </summary>
         private static readonly Dictionary<string, int> AliasMap =
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)

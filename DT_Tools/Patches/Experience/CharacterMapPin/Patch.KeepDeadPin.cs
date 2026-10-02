@@ -8,16 +8,19 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
     /// 平板 pin 不删、HUD 的 DeletePin 场景事件也不广播（两份 pin 一起保住）。
     ///
     /// 原版删除链路：玩家死亡 → 服务器 EnterGhostVisibility 广播 S_DESPAWN
-    ///（0.1.15b GameRoom.cs:435-437）→ 客户端 PlayerManager.Despawn
-    ///（PacketHandler.cs:205 → PlayerManager.cs:424-432）→ Managers.Tablet.DeletePin
-    ///（PlayerManager.cs:431）→ 平板删除 + BroadcastSceneEvent（本地事件，
-    /// 0.1.15b GameManagerEX.cs:844-847）→ HUD DeletePin（UI_GameScene.cs:1076）。
+    ///（0.1.16a GameRoom.cs:435-437）→ 客户端 PlayerManager.Despawn
+    ///（PacketHandler.cs:206 → PlayerManager.cs:434-442）→ Managers.Tablet.DeletePin
+    ///（PlayerManager.cs:441）→ 平板删除 + BroadcastSceneEvent（本地事件，
+    /// 0.1.16a GameManagerEX.cs:850-853）→ HUD DeletePin（UI_GameScene.cs:1078）。
     /// 原版只有 Kaho 目标豁免此删除（TabletManager.DeletePin 内 SkillState 判断，
-    /// 0.1.15b TabletManager.cs:133-141）；本前置把豁免扩大到对局内所有他人 pin。
+    /// 0.1.16a TabletManager.cs:136-144）；本前置把豁免扩大到对局内所有他人 pin。
     ///
-    /// pin 保留后位置自然定格：死者已 Despawn，原版 LateUpdate 不再刷新其 pin
-    /// （0.1.15b UI_GameScene.cs:823-828）。AOI/掉线同走 S_DESPAWN，按 MotionAfterimage
-    /// 先例统一"消失即定格"；玩家重回视野时原版 RefreshPlayerPin 恢复位置。
+    /// pin 保留后的位置语义（Patch.RespawnFollow.cs 配套）：死者已 Despawn，原版 LateUpdate
+    /// 不再刷新其 pin（0.1.16a UI_GameScene.cs:825-830 只遍历 Players）；S_DESPAWN 不只发生在
+    /// 死亡——躲柜（0.1.16a Server.Game/Player.cs:1898-1910 StartState(Hide)）与掉线走同一链路，
+    /// 所以保留 pin 由 HandleRespawn 后置跟随服务器广播的 S_RESPAWN 强制位移，与原版 Kaho 对
+    /// 被追踪者（含躲柜者）的 S_PIN_MOVE 推送同构（0.1.16a Server.Game/Player.cs:764-770）；
+    /// 玩家重回视野（S_SPAWN）时原版 RefreshPlayerPin 恢复逐帧跟踪。
     /// Kaho 主动解除追踪走 S_PIN_MOVE(pos=0) → UI 层自己的 DeletePin，不经此处。
     /// </summary>
     [HarmonyPatch(typeof(TabletManager), nameof(TabletManager.DeletePin))]

@@ -7,7 +7,7 @@ namespace DT_Tools.Patches.System.WhiteSabotageClue
 {
     /// <summary>
     /// 白方销毁证据执行序列（放行前缀见 Patch.DestroyEvidence）：
-    /// 逐句镜像 Server.Game/Device.DestroyEvidence（0.1.15b Server.Game/Device.cs:222-260），
+    /// 逐句镜像 Server.Game/Device.DestroyEvidence（0.1.16a Server.Game/Device.cs:222-260），
     /// 差异点仅一处——痕迹记录真实玩家身份而非固定假身份（黑方 66613 / 黑幕 11037，
     /// Device.cs:244-250）。
     /// </summary>
@@ -15,7 +15,7 @@ namespace DT_Tools.Patches.System.WhiteSabotageClue
     {
         /// <summary>
         /// 白方销毁证据：逐句镜像 Server.Game/Device.DestroyEvidence 的销毁序列
-        /// （0.1.15b Server.Game/Device.cs:222-260：30 秒冷却 → 标记既有证据链 →
+        /// （0.1.16a Server.Game/Device.cs:222-260：30 秒冷却 → 标记既有证据链 →
         /// 新增一条销毁痕迹），差异点仅一处——痕迹记录真实玩家身份（原版按行为人
         /// 颜色记固定假身份：黑方 66613 / 黑幕 11037，Device.cs:244-250）。
         /// 与 Game/SabotageClue.AddClue 的 30 秒窗口去重不同：原版销毁不走窗口去重，

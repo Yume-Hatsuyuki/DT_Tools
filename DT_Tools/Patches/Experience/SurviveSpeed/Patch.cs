@@ -9,26 +9,26 @@ using UnityEngine;
 namespace DT_Tools.Patches.Experience.SurviveSpeed
 {
     /// <summary>
-    /// FixedUpdateSurvive 整替：逐分支复刻 0.1.15b MyPlayer.cs:1757，仅倍率可配。
-    /// 被调用的私有成员（字符串定位）：UpdateMovePacket 0.1.15b MyPlayer.cs:1955、
+    /// FixedUpdateSurvive 整替：逐分支复刻 0.1.16a MyPlayer.cs:1757，仅倍率可配。
+    /// 被调用的私有成员（字符串定位）：UpdateMovePacket 0.1.16a MyPlayer.cs:1955、
     /// FixedUpdateMove(float) :1869、FixedKnockbackPlayer :1943——逐帧热路径，
     /// 反射缓存策略见 Core/Reflect.cs 头注释。
     /// 公共成员直接引用：Controller 属性 :87、ChangeMyPlayerState :338、
     /// Moving（Player.cs:358）、SetRigidBodyVelocity（Player.cs:1783）、
-    /// Define.HEAVY_ITEM_LIST（Define.cs:1503，int[]，Contains 走 LINQ）。
+    /// Define.HEAVY_ITEM_LIST（Define.cs:1495，int[]，Contains 走 LINQ）。
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "FixedUpdateSurvive")]
     internal static class SurviveSpeedPatch
     {
-        /// <summary>UpdateMovePacket() 私有：0.1.15b MyPlayer.cs:1955。</summary>
+        /// <summary>UpdateMovePacket() 私有：0.1.16a MyPlayer.cs:1955。</summary>
         private static readonly Action<MyPlayer> UpdateMovePacketOf =
             Reflect.Bind<Action<MyPlayer>>(typeof(MyPlayer), "UpdateMovePacket");
 
-        /// <summary>FixedUpdateMove(float deltaSpeed) 私有：0.1.15b MyPlayer.cs:1869。</summary>
+        /// <summary>FixedUpdateMove(float deltaSpeed) 私有：0.1.16a MyPlayer.cs:1869。</summary>
         private static readonly Action<MyPlayer, float> FixedUpdateMoveOf =
             Reflect.Bind<Action<MyPlayer, float>>(typeof(MyPlayer), "FixedUpdateMove", new[] { typeof(float) });
 
-        /// <summary>FixedKnockbackPlayer() 私有：0.1.15b MyPlayer.cs:1943。</summary>
+        /// <summary>FixedKnockbackPlayer() 私有：0.1.16a MyPlayer.cs:1943。</summary>
         private static readonly Action<MyPlayer> FixedKnockbackPlayerOf =
             Reflect.Bind<Action<MyPlayer>>(typeof(MyPlayer), "FixedKnockbackPlayer");
 

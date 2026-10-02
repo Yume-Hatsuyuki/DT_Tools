@@ -5,10 +5,10 @@ namespace DT_Tools.Patches.Shop.UnlockCharacters
 {
     /// <summary>
     /// SteamInventorySource.StampNewlyAcquired 打戳守卫（私有方法，字符串定位）：
-    /// 定义 0.1.15b SteamInventorySource.cs:719，唯一调用点 OnResultReady
+    /// 定义 0.1.16a SteamInventorySource.cs:719，唯一调用点 OnResultReady
     /// （SteamInventorySource.cs:377，每次库存解析成功即执行）。
     /// 方法体实读结论：仅空引用守卫 + 当前时间戳，随后对 OwnedCharacterIds /
-    /// OwnedEmoticonIds 逐项调 SaveManager.StampAcquiredIfNew（0.1.15b SaveManager.cs:427，
+    /// OwnedEmoticonIds 逐项调 SaveManager.StampAcquiredIfNew（0.1.16a SaveManager.cs:432，
     /// 首见即写 AcquiredAtUnix 并 MarkDirty 落盘），无其他必需副作用——装备校正
     /// （ReconcileEquippedWithOwnership）是调用点内的下一步，不受本补丁影响。
     /// 本功能开启时 OwnedCharacterIds 被整替为全量列表，原版打戳会把未拥有的角色也

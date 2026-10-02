@@ -6,12 +6,12 @@ namespace DT_Tools.Patches.Fun.LoginReward
 {
     /// <summary>
     /// 发放与弹窗流程：
-    ///   TryGrant → InventoryManager.GrantFreeFromStars（0.1.15b 走官方后端，
+    ///   TryGrant → InventoryManager.GrantFreeFromStars（0.1.16a 走官方后端，
     ///   服务端权威 + 每日限额）→ 回调经 OnChanged 到达 → TryShowPopup 终态裁决。
     /// 终态规则：earned&gt;0 走官方动画；earned&lt;=0 立即视为「服务端当日已满或拒绝」，
-    /// 不再死等（旧版在此死等 60 秒超时，即 0.1.15b 下登录奖励失效的根因）。
+    /// 不再死等（旧版在此死等 60 秒超时，即 0.1.16a 下登录奖励失效的根因）。
     ///
-    /// 在途竞态（0.1.15b 修复）：GrantFreeFromStars 入口把 _revealEarned 清 0
+    /// 在途竞态（0.1.16a 修复）：GrantFreeFromStars 入口把 _revealEarned 清 0
     /// （InventoryManager.cs:353），真终态要等 grant 回调写入（:356）。在途窗口内
     /// 任何其它来源的 OnChanged（价格缓存/库存全量刷新等）会被当成终态，读走 0
     /// 误判「服务端拒绝」。TryGrant 发请求前把 _revealEarned 置 InFlightEarned(-1)，
@@ -20,7 +20,7 @@ namespace DT_Tools.Patches.Fun.LoginReward
     internal static class LoginRewardLogic
     {
         /// <summary>
-        /// 0.1.15b InventoryManager.cs:40——公开属性 LastRevealEarned 的后备字段；
+        /// 0.1.16a InventoryManager.cs:40——公开属性 LastRevealEarned 的后备字段；
         /// 写点 :353（入口清 0）与 :356（grant 回调写终值）。游戏升级后按行号复核；
         /// 仅写需要反射（读走公开属性），字段缺失时跳过标记并告警，行为退回旧版。
         /// </summary>
@@ -122,8 +122,8 @@ namespace DT_Tools.Patches.Fun.LoginReward
                 return;
             }
 
-            // DailyEarned → 本地记账 Save.FreeEarnedToday（0.1.15b SteamInventorySource.cs:143）；
-            // DailyCap：0.1.15b InventoryManager.cs:38（public 属性，原版即硬编码 250）
+            // DailyEarned → 本地记账 Save.FreeEarnedToday（0.1.16a SteamInventorySource.cs:143）；
+            // DailyCap：0.1.16a InventoryManager.cs:38（public 属性，原版即硬编码 250）
             int earnedToday = inv.DailyEarned;
             int cap = inv.DailyCap;
             int want = Mathf.Clamp(LoginRewardFeature.GrantAmount, 0, cap);
@@ -171,14 +171,14 @@ namespace DT_Tools.Patches.Fun.LoginReward
                     $"请求发放 amount={want} → 金星={gold} 银星={silver}（今日 {earnedToday}/{cap}，ForceAnim={forceAnim}）");
 
                 // 在途标记：见类头注释「在途竞态」。必须在调用前写——GrantFreeFromStars
-                // 入口会清 0（0.1.15b InventoryManager.cs:353），真回调只写 0/正数
+                // 入口会清 0（0.1.16a InventoryManager.cs:353），真回调只写 0/正数
                 if (RevealEarnedField != null)
                     RevealEarnedField.SetValue(inv, LoginRewardState.InFlightEarned);
                 else
                     Log.Warn<LoginRewardFeature>(
-                        "InventoryManager._revealEarned 缺失（游戏升级？）——在途标记不可用，OnChanged 抢跑误判风险回归（0.1.15b InventoryManager.cs:40 核对）。");
+                        "InventoryManager._revealEarned 缺失（游戏升级？）——在途标记不可用，OnChanged 抢跑误判风险回归（0.1.16a InventoryManager.cs:40 核对）。");
 
-                // 0.1.15b InventoryManager.cs:349：置 pending 后经服务端异步发放，
+                // 0.1.16a InventoryManager.cs:349：置 pending 后经服务端异步发放，
                 // 其末尾会同步触发一次 OnChanged（InventoryManager.cs:360），先标记调用窗口
                 LoginRewardState.InGrantCall = true;
                 try
@@ -206,7 +206,7 @@ namespace DT_Tools.Patches.Fun.LoginReward
 
         /// <summary>
         /// 实验数据 → 金星/银星（gold×30+silver×10）。上限读库存组件 DailyCap
-        /// （0.1.15b InventoryManager.cs:38，原版即硬编码 250），由调用方传入。
+        /// （0.1.16a InventoryManager.cs:38，原版即硬编码 250），由调用方传入。
         /// </summary>
         private static void AmountToStars(int amount, int cap, out int gold, out int silver)
         {
@@ -273,10 +273,10 @@ namespace DT_Tools.Patches.Fun.LoginReward
                 if (earned > 0)
                 {
                     // 官方路径：仅真实发放。游戏自己进入大厅时也会调 TryShowDailyCapPopup
-                    //（0.1.15b UIManager.cs:208）；pending 已被消费时该方法为安全 no-op
+                    //（0.1.16a UIManager.cs:214）；pending 已被消费时该方法为安全 no-op
                     Log.Info<LoginRewardFeature>($"服务端发放 earned={earned}，播放官方动画。");
                     if (sceneUi != null)
-                        sceneUi.TryShowDailyCapPopup();     // 0.1.15b UI_GameScene.cs:2914
+                        sceneUi.TryShowDailyCapPopup();     // 0.1.16a UI_GameScene.cs:2922
                     else
                         PlayDirect(inv.FreeBalance, earned);
                 }
@@ -284,10 +284,10 @@ namespace DT_Tools.Patches.Fun.LoginReward
                 {
                     // 终态：服务端当日已满或拒绝发放（granted=0）。
                     // 拒绝路径同样要消费 pending——GrantFreeFromStars 先置位
-                    // _pendingDailyReveal（0.1.15b InventoryManager.cs:351），仅
+                    // _pendingDailyReveal（0.1.16a InventoryManager.cs:351），仅
                     // ConsumeDailyReveal 复位（InventoryManager.cs:363-368）；不消费的话
                     // 官方 "+0" 弹窗仍会被 UI_GameScene.TryShowDailyCapPopup
-                    // （0.1.15b UI_GameScene.cs:2914）拉出，与"不播放官方动画"的文档不符
+                    // （0.1.16a UI_GameScene.cs:2922）拉出，与"不播放官方动画"的文档不符
                     if (inv.HasPendingDailyReveal)                    // InventoryManager.cs:34
                         inv.ConsumeDailyReveal(out _, out _);
                     Log.Info<LoginRewardFeature>(
@@ -318,7 +318,7 @@ namespace DT_Tools.Patches.Fun.LoginReward
                 $"强制动画 Play(balance={balance}, before={before}, earned={earned}, cap={cap})");
             if (sceneUi != null)
             {
-                // 已 Consume 则不能走官方 TryShowDailyCapPopup，直接 Play（0.1.15b UI_DailyCapPopup.cs:95）
+                // 已 Consume 则不能走官方 TryShowDailyCapPopup，直接 Play（0.1.16a UI_DailyCapPopup.cs:95）
                 Managers.UI.ShowKeyUI<UI_DailyCapPopup>().Play(balance, before, earned, cap);
             }
             else

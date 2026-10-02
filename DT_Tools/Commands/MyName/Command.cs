@@ -13,7 +13,7 @@ namespace DT_Tools.Commands.MyName
     /// ① 本地昵称（MyPlayerName + PlayerPrefs + 大厅输入框）——总是立即生效，下次进房上报；
     /// ② 在房内且自己是房主：同步服务端记录（同 /nick 路径），新进入房间的玩家可见；
     /// ③ 在房内且是普通客户端：额外刷新本机显示；服务端记录在重新进出房间时
-    ///    随 C_ENTER_GAME（0.1.15b NetworkManager.cs:1236）携带新名字自然更新。
+    ///    随 C_ENTER_GAME（0.1.16a NetworkManager.cs:1243）携带新名字自然更新。
     /// </summary>
     internal sealed class MyNameCommand : ICommand
     {

@@ -6,7 +6,7 @@ namespace DT_Tools.Patches.System.CustomRoomName
 {
     /// <summary>
     /// 建房：把 roomName 入参替换为配置的自定义名。
-    /// CreateLobby 为公开方法：0.1.15b DummyClient/SteamLobbyManager.cs:128。
+    /// CreateLobby 为公开方法：0.1.16a DummyClient/SteamLobbyManager.cs:128。
     /// </summary>
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]
     internal static class CustomRoomNameCreateLobbyPatch

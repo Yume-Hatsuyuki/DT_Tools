@@ -22,7 +22,7 @@ namespace DT_Tools.Patches.Experience.IgnoreDarkness
 
         /// <summary>
         /// 强制「有光」表现：关玩家点光源、开摄像机全局光。
-        /// 对齐 ApplyDarkness 在 flag=false 时的分支（0.1.15b GameManagerEX.cs:260-267）。
+        /// 对齐 ApplyDarkness 在 flag=false 时的分支（0.1.16a GameManagerEX.cs:260-267）。
         /// </summary>
         public static void ForceLit()
         {

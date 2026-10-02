@@ -14,7 +14,7 @@ namespace DT_Tools.Commands.Kill
     /// DeadDetective 语义 buff + 全员广播 Louis 瞄准镜（S_PLAY_EFFECT 绕开原版 SendVFX
     /// 只发 Owner 的限制）+ LouisSkillSfx 警告音；随后调用 OnDeadCollarBomb——
     /// 该方法先立即广播 DyingVfx 倒地（896m 内可见），PushAfter(6000) 后才真死亡
-    /// （0.1.15b Server.Game/Player.cs:857-878，倒地在前、死亡在后）。
+    /// （0.1.16a Server.Game/Player.cs:857-878，倒地在前、死亡在后）。
     /// 风险：全员击杀会触发 4 秒后自动总结算；Trial 杀 Black 会让 EndTrial 无法正确处决黑方
     /// （OnDead 的 IsAlive 守卫兜底，已死直接 return）。
     /// </summary>

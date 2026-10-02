@@ -42,7 +42,7 @@ namespace DT_Tools.Commands.WorldExecute
                 return CommandResult.Fail("dead");
             }
 
-            // ── 阶段：服务端 UseWeapon 要求 Survive（0.1.15b Server.Game/Player.cs:1130-1133） ──
+            // ── 阶段：服务端 UseWeapon 要求 Survive（0.1.16a Server.Game/Player.cs:1130-1133） ──
             if (!LocalPlayer.IsSurvive)
             {
                 ctx.Reply($"当前阶段 {LocalPlayer.StateText} 无法自刀（服务端仅 Survive 接受 C_KILL_PLAYER）。");

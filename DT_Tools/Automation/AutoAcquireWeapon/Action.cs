@@ -9,7 +9,7 @@ namespace DT_Tools.Automation.AutoAcquireWeapon
     /// <summary>
     /// 动作：延迟等待 → 上限检查 → 持刀 / 颜色判定 → 选开放武器架 → 发送 C_INTERACT_ARMORY，
     /// 失败后按 RetryInterval 重试。发包路径与游戏一致：
-    /// 白方 Armory.InteractArmory（0.1.15b Armory.cs:233）、黑方 UseSabotageArmory（0.1.15b Armory.cs:265）。
+    /// 白方 Armory.InteractArmory（0.1.16a Armory.cs:233）、黑方 UseSabotageArmory（0.1.16a Armory.cs:265）。
     /// </summary>
     internal static class AutoAcquireWeaponAction
     {

@@ -212,8 +212,8 @@ namespace DT_Tools.Commands.PacketCall
         /// <summary>
         /// PacketManager 是否注册了该 Protocol 的处理器（仅 /call_c 注入路径需要）：
         /// HandlePacket 对未注册的 Protocol 静默丢弃、不做任何处理
-        /// （0.1.15b PacketManager.cs:84-91，:87 _handler.TryGetValue 未命中即无操作）。
-        /// _handler 是私有字典（0.1.15b PacketManager.cs:14），经反射读取；
+        /// （0.1.16a PacketManager.cs:84-91，:87 _handler.TryGetValue 未命中即无操作）。
+        /// _handler 是私有字典（0.1.16a PacketManager.cs:14），经反射读取；
         /// Instance 未就绪 / 反射失败时返回 true（无法判定则不断言，保持原回复语义）。
         /// </summary>
         public static bool IsProtocolRegistered(ushort protocol)
@@ -222,7 +222,7 @@ namespace DT_Tools.Commands.PacketCall
                 _handlerField = typeof(PacketManager).GetField(
                     "_handler", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            var instance = PacketManager.Instance;   // 0.1.15b PacketManager.cs:16
+            var instance = PacketManager.Instance;   // 0.1.16a PacketManager.cs:16
             if (_handlerField == null || instance == null)
                 return true;
 

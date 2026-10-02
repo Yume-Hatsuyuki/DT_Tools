@@ -15,10 +15,10 @@ namespace DT_Tools.Commands.Agent
     /// 因此是实时、无过期风险的权威数据。
     ///
     /// 可访问性说明（重要，直接引用会编译失败 CS0122）：
-    ///   Server.Game.MissionManager 类本身是 `internal class`（0.1.15b MissionManager.cs:10），
+    ///   Server.Game.MissionManager 类本身是 `internal class`（0.1.16a MissionManager.cs:10），
     ///   DT_Tools 是独立编译、引用 Assembly-CSharp.dll 的外部程序集，无法在编译期直接写
     ///   `Server.Game.MissionManager.Instance`。Server.Game.MissionMirror 则是
-    ///   `public static class`（0.1.15b Server.Game/MissionMirror.cs:5，HasState:11/ProgressTypes:7/WaitTypes:9），
+    ///   `public static class`（0.1.16a Server.Game/MissionMirror.cs:5，HasState:11/ProgressTypes:7/WaitTypes:9），
     ///   可以直接编译期引用，但它只在"当前客户端不是 Host"时才会被 PacketHandler 写入
     ///   （Host 自己不需要镜像，见 PacketHandler.Handle_S_MISSION_STATE 的判断），
     ///   Host 模式下永远为空。
@@ -44,7 +44,7 @@ namespace DT_Tools.Commands.Agent
             {
                 if (IsHost)
                     return MissionAccess.Available && MissionAccess.Instance != null;
-                return Server.Game.MissionMirror.HasState;   // 0.1.15b Server.Game/MissionMirror.cs:11
+                return Server.Game.MissionMirror.HasState;   // 0.1.16a Server.Game/MissionMirror.cs:11
             }
         }
 

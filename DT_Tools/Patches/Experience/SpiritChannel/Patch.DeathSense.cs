@@ -9,10 +9,10 @@ namespace DT_Tools.Patches.Experience.SpiritChannel
     /// 死亡感知：挂钩 S_SPAWN_DEVICE。
     /// 尸体（EDeviceType.Corpse）首次落地时，对存活且非 SoulSense（非 Lian）的本机玩家
     /// 播放 UI_SoulSence 蜡烛动画——与原版 S_NOTIFY_DEAD → Handle_S_NOTIFY_DEAD
-    /// （0.1.15b PacketHandler.cs:585-588）同一套表现。
+    /// （0.1.16a PacketHandler.cs:586-589）同一套表现。
     ///
     /// 触发依据：Murder 等路径 CreateCorpse → SpawnDevice → Broadcast(S_SPAWN_DEVICE)
-    /// （0.1.15b Server.Game/DeviceManager.cs:581-584 / :150-161）。
+    /// （0.1.16a Server.Game/DeviceManager.cs:581-584 / :150-161）。
     /// 本机是 Lian 时跳过：原版已单播 S_NOTIFY_DEAD（Server.Game/Player.cs:935-944），
     /// 再播一次会叠动画。
     /// PacketHandler 为 internal，TargetMethod 运行时解析（同 StageMusic 范本）。

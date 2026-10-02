@@ -7,10 +7,10 @@ namespace DT_Tools.Patches.Experience.SpiritChannel
     /// <summary>
     /// 亡者呢喃：EnqueueNormalChat 整替。
     /// 入队规则改为「发送者死亡 → _deadMessageQueue（不论本地生死），发送者存活 → _messageQueue」。
-    /// 私有队列字段字符串定位：_messageQueue 0.1.15b VoiceManager.cs:131、
+    /// 私有队列字段字符串定位：_messageQueue 0.1.16a VoiceManager.cs:131、
     /// _deadMessageQueue :133；ChatPayload 结构体 :35。
-    /// 公共成员用 nameof：EnqueueNormalChat、GetPlayerCache（PlayerManager.cs:186）、
-    /// KnownDeadIds（PlayerManager.cs:52）、DisplayName。
+    /// 公共成员用 nameof：EnqueueNormalChat、GetPlayerCache（PlayerManager.cs:193）、
+    /// KnownDeadIds（PlayerManager.cs:56）、DisplayName。
     /// </summary>
     [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.EnqueueNormalChat))]
     internal static class SpiritChannelGhostWhisperPatch

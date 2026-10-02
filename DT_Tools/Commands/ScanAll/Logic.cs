@@ -14,12 +14,12 @@ namespace DT_Tools.Commands.ScanAll
     /// 原版客户端 DeviceBase.Scan 要求本地物理接触并启动 2 秒扫描条，完成后才发
     /// C_SCAN_DEVICE{DeviceId}；服务端 DeviceManager.Scan → device.Scan(player)
     /// 全程无距离 / 阶段 / 颜色 / 存活检查，仅校验 !player.IsSpectator
-    /// （0.1.15b Server.Game/DeviceManager.cs:142-144 / Server.Game/Device.cs:89）。
+    /// （0.1.16a Server.Game/DeviceManager.cs:142-144 / Server.Game/Device.cs:89）。
     /// 故直接对每个可扫描 ID 发包即可一次性拿回全部线索（S_SCAN_DEVICE /
     /// S_SCAN_CORPSE / S_SCAN_ARMORY）。
     ///
     /// 设备筛选：Bubble == -1 是设备在 StartDetective 时被标记为「有线索可扫描」的状态
-    /// （0.1.15b：Device.cs:298-311 ClueList.Count &gt; 0 → -1；Server.Game/Corpse.cs:490-496
+    /// （0.1.16a：Device.cs:298-311 ClueList.Count &gt; 0 → -1；Server.Game/Corpse.cs:490-496
     /// !IsBombCorpse → -1；Server.Game/Armory.cs:277-284 StateList[6] != 0 → -1）。
     /// 三类同源，统一按 Bubble == -1 过滤即可覆盖设备 / 尸体 / 武器架全部线索源。
     /// 已扫描的设备 Bubble 被 SetBubble(0) 置 0，自然不再重复发包。

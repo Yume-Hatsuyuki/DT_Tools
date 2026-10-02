@@ -10,7 +10,7 @@ namespace DT_Tools.Commands.Fusebox
     /// 给服务端触发 ConnetCable 恢复供电（跟随控制台，非房主可用，仅生存阶段）。
     ///
     /// 实现原理：原版客户端 Fusebox.Interact 先 StartCasting(10f) 本地读条 10 秒，完成后才发
-    /// C_INTERACT_FUSEBOX；而服务端 Server.Game.Fusebox.Interact（0.1.15b Server.Game/Fusebox.cs:16）
+    /// C_INTERACT_FUSEBOX；而服务端 Server.Game.Fusebox.Interact（0.1.16a Server.Game/Fusebox.cs:16）
     /// 看到 StateList[0]==9999 直接调 ConnetCable()（:97）恢复供电，没有读条、距离、颜色、
     /// 存活状态校验。故直接发包即可秒修，绕过 10 秒读条。
     ///

@@ -66,7 +66,7 @@ namespace DT_Tools.Commands.Beacon
                         error = $"#{pid} 就是本机自己，当前位置即目标，无需瞬移。";
                         return false;
                     }
-                    // 0.1.15b PlayerManager.cs:42 Players——只含存活且已 Spawn 的玩家；
+                    // 0.1.16a PlayerManager.cs:42 Players——只含存活且已 Spawn 的玩家；
                     // 死亡玩家收到 S_DESPAWN 后被移出该表，旁观者不入表，本机 MyPlayer 不在表内。
                     var other = LocalPlayer.FindClientPlayer(pid);
                     if (other == null)
@@ -95,8 +95,8 @@ namespace DT_Tools.Commands.Beacon
 
         /// <summary>
         /// 越界预警（不阻断）：服务端 HandleMove 对存活玩家按 AreaManager.ValidPosition
-        /// （224 网格 + MapArray，0.1.15b Server.Game/AreaManager.cs:82）判定，越界时
-        /// <b>仅 Survive / Detective 阶段</b> fallback 到 ErrorPos（0.1.15b
+        /// （224 网格 + MapArray，0.1.16a Server.Game/AreaManager.cs:82）判定，越界时
+        /// <b>仅 Survive / Detective 阶段</b> fallback 到 ErrorPos（0.1.16a
         /// Server.Game/GameRoom.cs:2349-2354）；其余阶段（Lobby/Vote/Trial 等）整包
         /// 静默丢弃——本机已本地落位，但服务端不广播 S_MOVE，他人视角仍在原地。
         /// 这里只做粗略边界提示，不做精确可行走判定（避免依赖服务端 MapArray）。

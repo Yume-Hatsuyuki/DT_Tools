@@ -61,7 +61,7 @@ namespace DT_Tools.Core
                     m.GetParameters().Length == 4 &&
                     m.GetParameters()[2].ParameterType.IsGenericParameter &&
                     // 第 4 参必须锚定 ConfigDescription 重载：另有一个 (…,T,string) 重载同样
-                    // 满足前三个条件，命中它会在 Invoke 时抛 ArgumentException（0.1.15b 审计 F-M17）
+                    // 满足前三个条件，命中它会在 Invoke 时抛 ArgumentException（0.1.16a 审计 F-M17）
                     m.GetParameters()[3].ParameterType == typeof(ConfigDescription));
 
             var genericBind = bindMethod.MakeGenericMethod(valueType);

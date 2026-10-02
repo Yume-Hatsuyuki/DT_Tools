@@ -14,7 +14,7 @@ Deadly Trick 游戏的 BepInEx 5 插件（C# / netstandard2.1 / HarmonyX）。
 | ------------------------- | ---------------- | ------------------------------------------ |
 | `DT_Tools/`               | **模组项目**     | 插件源码 + `DT_Tools.csproj`                |
 | `webui-src/`              | **前端源码工程** | Vue 3 + Vite 桌面壳 WebUI 源码（见 §8）      |
-| `0.1.15b/`(版本可能有差异) | 只读             | 游戏反编译源码。**一切游戏 API 的核对基准**。 |
+| `0.1.16a/`(版本可能有差异) | 只读             | 游戏反编译源码。**一切游戏 API 的核对基准**。 |
 | `libs/`                   | 只读             | 游戏程序集，编译引用源                        |
 
 ## 2. 构建与验证
@@ -41,7 +41,7 @@ Plugin.cs（装配根）
   └ Automation/      自动化模块域（纯发包/只读）
   └ WebConsole/      HTTP+WebSocket 服务、路由、鉴权、API
       └ WebUI/       前端桌面壳（构建产物）
-        → 0.1.15b 游戏程序集（最底层，一切 API 的核对基准）
+        → 0.1.16a 游戏程序集（最底层，一切 API 的核对基准）
 ```
 
 依赖方向只能向下：功能域 → Game → Core → 游戏。**禁止 Patches/Commands/Automation 之间横向依赖**。例外：命令域引用功能的公开静态状态（如 `LobbyMaxPlayersFeature.MaxMembers`）；WebConsole API 层同命令域（如 DummyApi 读 `LobbyMaxPlayersFeature.MaxMembers` 解析房间容量）；功能之间共享的调用序列、数据表、设备读取一律上浮 Game——现有范本：`Game/RoomFlow`、`Game/ItemPools`、`Game/Devices.GetStorages`、`Game/AudioMix`、`Game/SabotageClue`、`Game/RoomLobbyData`、`Core/Reflect.Bind`、`Game/LocalPlayer.TryGetPlayer`。
@@ -67,14 +67,14 @@ Plugin.cs（装配根）
 - `ICommand` → `CommandRegistry` 注册主名+别名（别名冲突抛异常）。
 - `[ConfigSection]` → 基础设施配置段。
 
-**新增功能标准动作**：建目录 → `Feature.cs`（`[PatchFeature]` sealed class + `[Config]` 字段）→ `Patch.cs`（`[HarmonyPatch]` static class，首行 `if (!Engine.Enabled<本Feature>()) …` 门闩）→ 0.1.15b 核对 → 构建。生命周期钩子按名约定、全部可选：`OnLoaded` / `OnPatched` / `OnEnabled` / `OnDisabled`（**有 UI/音频/状态副作用的功能必须实现 OnDisabled 清理**，范本：StageMusic/LoginReward）。
+**新增功能标准动作**：建目录 → `Feature.cs`（`[PatchFeature]` sealed class + `[Config]` 字段）→ `Patch.cs`（`[HarmonyPatch]` static class，首行 `if (!Engine.Enabled<本Feature>()) …` 门闩）→ 0.1.16a 核对 → 构建。生命周期钩子按名约定、全部可选：`OnLoaded` / `OnPatched` / `OnEnabled` / `OnDisabled`（**有 UI/音频/状态副作用的功能必须实现 OnDisabled 清理**，范本：StageMusic/LoginReward）。
 
 **客户端/服务端拆分原则**：补丁运行在不同机器角色必须拆成独立功能、各自 Enabled 与配置（如 ChatLimit 客户端 / ChatSanitize 房主）；同机两半不拆。
 
 ## 5. 硬约束（违反即编译失败或运行时遮蔽）
 
 1. **命名空间 = 目录路径**，Core 层扁平豁免除外（§3）。
-2. **游戏在全局命名空间有 `public static class Log`**（0.1.15b/Log.cs）。日志门面必须在 `DT_Tools` 根命名空间——不要"修复"这个布局。
+2. **游戏在全局命名空间有 `public static class Log`**（0.1.16a/Log.cs）。日志门面必须在 `DT_Tools` 根命名空间——不要"修复"这个布局。
 3. **`Patches/System/` 分类遮蔽全局 `System`**：该链上任何 `DT_Tools.Patches.*` 文件体内**裸写** `System.X` 全限定都会解析失败——用 `global::System.*` 或 using + 短名；文件顶部 `using System…;` 不受影响。新增/迁入 Patches 下任何分类前先核对。
 4. **Feature/Module 类必须 `sealed class`（成员全 static）**；Patch 类保持 static。
 5. **配置零字符串**：段名=类名去后缀、键名=字段名，引擎推导；字段 = 普通类型 + 初始化器默认值 + `[Config("描述", Min=, Max=)]`。禁止 `ConfigEntry<T>` 字段、禁止声明 Enabled 字段、禁止段名/键名字符串。前端需要开关键名时走协议字段 `enabledKey`，**不硬编码 'Enabled'**。
@@ -82,12 +82,12 @@ Plugin.cs（装配根）
 7. **同名歧义一律全限定**：`Server.Game.Player` vs 客户端 `Player`；同名文件（如 `Server.Game/Door.cs` 与全局 `Door.cs`）的行号锚点**必须带子目录前缀**。
 8. 技术栈：netstandard2.1 —— 禁 `async/await` 语法、禁 `records`；`System.Text.Json` 不可用（用 Newtonsoft）。WebSocket 服务端（`HttpListenerContext.AcceptWebSocketAsync`）在 netstandard2.1 编译面可用，运行时以阻塞 `GetAwaiter().GetResult()` 在专用线程上等待——**只允许在非 Unity 线程阻塞**。
 
-## 6. 游戏版本一致性（当前基准 0.1.15b）
+## 6. 游戏版本一致性（当前基准 0.1.16a）
 
-- 引用游戏 API 前先在 `0.1.15b/` 源码核对（存在性/可见性/签名）。私有成员用字符串定位并在注释标注 `0.1.15b <文件>.cs:<行号>`（含子目录前缀）；能 `nameof` 必须 `nameof`。
+- 引用游戏 API 前先在 `0.1.16a/` 源码核对（存在性/可见性/签名）。私有成员用字符串定位并在注释标注 `0.1.16a <文件>.cs:<行号>`（含子目录前缀）；能 `nameof` 必须 `nameof`。
 - 全项目补丁点的行号注释是**游戏升级核对入口**：换新反编译源码后全文搜索行号注释逐个复核；行为变化处按语义判断漂移（v1 审计实测：119 个补丁点全部可控）。
 - 整段复制原版方法体的"整替补丁"升级时必须逐行 diff（范本：LobbyMaxPlayers/Patch.EnterPlayer.cs，锚点清单在文件头）。
-- **Agent 域槽位锚点**：/agent 四条链对服务端 StateList 槽位语义的逐项判断，集中核对入口在 `Commands/Agent/Logic.ItemHelper.cs` 头部的「设备 StateList 槽位布局表」（每行带 0.1.15b 行号）——游戏升级后按该表逐行复核，禁止在链文件里新增无锚点的槽位判断。
+- **Agent 域槽位锚点**：/agent 四条链对服务端 StateList 槽位语义的逐项判断，集中核对入口在 `Commands/Agent/Logic.ItemHelper.cs` 头部的「设备 StateList 槽位布局表」（每行带 0.1.16a 行号）——游戏升级后按该表逐行复核，禁止在链文件里新增无锚点的槽位判断。
 
 ## 7. 编码规范
 
@@ -121,8 +121,8 @@ Plugin.cs（装配根）
 - 配置：`GET /api/config/list` → 段 `[{section, group, enabledKey, entries:[{key,type,value,default,description,accepts}]}]`（`accepts`={options:[{value,label}],values} 或 {min,max}；`group`="automation"|"feature"，前端禁止硬编码段名）。`POST /api/config/update|save|reset|import`、`GET /api/config/export.cfg`。**reset 带 key 必须带 section**（后端拒绝跨段同名重置）。
 - 段/模块日志：`GET /api/config/section/{段}/log`、`GET /api/automation/modules/{id}/log` → `{ok, section/id, seq, lines:["HH:mm:ss [LEVEL] msg"]}` **对象**；`POST …/log/clear` 清空。
 - 自动化：`GET /api/automation/status`（模块含 `enabledKey`）、`POST /api/automation/host`。
-- 桌面壳：`POST /api/game/exit`（主线程 `Application.Quit()`，确认在前端做）、`GET /api/steam/players`、`GET /api/pick-file`（原生文件对话框，反射加载 System.Windows.Forms——游戏 Mono 加载不了 WinForms，实机必失败，仅作其它运行时后备）。
-- 目录浏览：`GET /api/fs/list?path=目录` → `{ok, path, parent, entries:[{name,path,isDir,audio,size}], truncated}`——只读列举本机目录，供 WebUI 内置文件选择器浏览（path 空=盘符根视图；path 指向文件=回退其所在目录；隐藏/系统属性条目不出现；上限 1000 条截断）。实现于 FilePickerApi（与原生对话框同域）；鉴权/跨站防护同其它 API。
+- 桌面壳：`POST /api/game/exit`（主线程 `Application.Quit()`，确认在前端做）、`GET /api/steam/players`。
+- 目录浏览：`GET /api/fs/list?path=目录` → `{ok, path, parent, entries:[{name,path,isDir,audio,size}], truncated}`——只读列举本机目录，供 WebUI 内置文件选择器浏览（path 空=盘符根视图；path 指向文件=回退其所在目录；隐藏/系统属性条目不出现；上限 1000 条截断）。实现于 FsApi；鉴权/跨站防护同其它 API。原生 WinForms 文件对话框在游戏 Mono 不可用，`/api/pick-file` 方案已整体移除——本机路径选择一律由后端代为目录浏览。
 - 能力发现：`GET /api/meta` → `{ok, wsPort}`（WebSocket 实时流独立端口，对应 `WebConsoleOptions.WsPort`，0=禁用）。
 - 鉴权：`Password` 空=不鉴权；非空=`POST /login` 发随机 token cookie（`dt_token`），插件重启轮换，401 统一跳登录。WS 握手同样过鉴权（未授权收 401）。
 - 监听与后台：`ListenIp`（默认 127.0.0.1；`0.0.0.0`/`*`=全部 IPv4；`::`=全部 IPv6；Unity(Mono) HttpListener 无 URL ACL 限制）；`RunInBackground` 强制 `Application.runInBackground=true`——游戏失焦致主线程停摆会让所有 /api/run 统一 5 秒超时（远程使用第一嫌疑，超时必写 Warn）。监听循环对 GetContext 异常分类：监听器失效才下线，瞬时异常重试继续接受。
@@ -130,17 +130,17 @@ Plugin.cs（装配根）
 ### 8.3 前端工程（webui-src/）
 
 - Vue 3 + Vite，`npm run build` 产物直出 `../DT_Tools/WebUI/`（无 hash 文件名）；`dotnet build` 的 BuildWebUI 目标自动增量构建并拷贝（`-p:SkipWebUIBuild=true` 可跳过）。
-- 结构：`src/desktop/`（桌面壳：Desktop/Window/TopBar/Dock + ParticleFlow 数据流粒子背景层 + SteamWidget 在线人数小组件（可拖动/可关闭，Dock 可重开，位置记忆在 localStorage），macOS 风格——顶栏=龙标+品牌名 DT_Tools（静态，图3）+ Kali 应用菜单风大面板（搜索/分类「应用/小组件/系统」/功能列表/底部用户栏：账户菜单弹层+独立退出键）+ 运行标签 + 图标化连接状态 + 中文时钟，底部 Dock 列出全部应用图标（鱼眼放大/运行点/右键备忘），八方向缩放 + 多实例窗口；应用图标不摆桌面；**右键菜单三处互不相通**：桌面=终端/壁纸/粒子效果开关/关于，Dock（任务栏）=打开终端/显示桌面/最小化所有进程/关闭所有进程/关于（批量窗口操作在 useWindowManager：showDesktop 带快照可再切回、minimizeAll/closeAll），应用图标=备忘菜单；**任务栏取色自适应**：自定义壁纸由 useWallpaper 在 48px 缩略图提平均主色压进深色玻璃区间存 `state.tint`，Desktop 经 `.desktop` 上的 CSS 变量继承覆写 `--dock-bg`/`--dock-border`（Dock 组件零改动，切回预设/提取失败即回默认色）；**粒子层可整体开关**（桌面右键「粒子效果」，ParticleFlow 挂 `v-if`））、`src/apps/`（terminal=Kali 终端、console=旧版控制台、config=配置、automation=自动化、**log=全量日志**；跨应用共享组件在 `apps/common/`：SuggestPopup/FolderGrid/LogPanel/EntryList/CropperHost/FileBrowser（本机文件选择弹窗，`*Track` 路径字段的文件夹按钮打开它， Teleport 到 body、数据源 /api/fs/list，弹窗底部保留「原生…」后备））、`src/composables/`（useLogStream=日志流单例 / useWindowManager / useConnectionStatus / 身份 / 壁纸 / 裁切）、`src/apps/console/useCommandInput.js`（命令表/历史/会话化执行共享件；终端内置命令以 `builtin: true` 混入补全候选、白名+「内置」徽标排在服务端命令之后，并跟随 help 输出末尾列出；**新版终端 TAB=采纳当前高亮候选**（↑↓/悬停选定后 TAB 即补全那条，与旧版一致），高亮未挪动时连按 TAB 循环切下一个候选）。
+- 结构：`src/desktop/`（桌面壳：Desktop/Window/TopBar/Dock + ParticleFlow 数据流粒子背景层 + SteamWidget 在线人数小组件（可拖动/可关闭，Dock 可重开，位置记忆在 localStorage），macOS 风格——顶栏=龙标+品牌名 DT_Tools（静态，图3）+ Kali 应用菜单风大面板（搜索/分类「应用/小组件/系统」/功能列表/底部用户栏：账户菜单弹层+独立退出键）+ 运行标签 + 图标化连接状态 + 中文时钟，底部 Dock 列出全部应用图标（鱼眼放大/运行点/右键备忘），八方向缩放 + 多实例窗口；应用图标不摆桌面；**右键菜单三处互不相通**：桌面=终端/壁纸/粒子效果开关/关于，Dock（任务栏）=打开终端/显示桌面/最小化所有进程/关闭所有进程/关于（批量窗口操作在 useWindowManager：showDesktop 带快照可再切回、minimizeAll/closeAll），应用图标=备忘菜单；**任务栏取色自适应**：自定义壁纸由 useWallpaper 在 48px 缩略图提平均主色压进深色玻璃区间存 `state.tint`，Desktop 经 `.desktop` 上的 CSS 变量继承覆写 `--dock-bg`/`--dock-border`（Dock 组件零改动，切回预设/提取失败即回默认色）；**粒子层可整体开关**（桌面右键「粒子效果」，ParticleFlow 挂 `v-if`））、`src/apps/`（terminal=Kali 终端、console=旧版控制台、config=配置、automation=自动化、**log=全量日志**；跨应用共享组件在 `apps/common/`：SuggestPopup/FolderGrid/LogPanel/EntryList/CropperHost/FileBrowser（本机文件选择弹窗，`*Track` 路径字段的文件夹按钮打开它， Teleport 到 body、数据源 /api/fs/list））、`src/composables/`（useLogStream=日志流单例 / useWindowManager / useConnectionStatus / 身份 / 壁纸 / 裁切）、`src/apps/console/useCommandInput.js`（命令表/历史/会话化执行共享件；终端内置命令以 `builtin: true` 混入补全候选、白名+「内置」徽标排在服务端命令之后，并跟随 help 输出末尾列出；**新版终端 TAB=采纳当前高亮候选**（↑↓/悬停选定后 TAB 即补全那条，与旧版一致），高亮未挪动时连按 TAB 循环切下一个候选）。
 - 控制台通用件：吸底滚动三条件（贴底、无文本选区、未暂停）才跟随；本地条目批量截断（禁止逐条 shift 扰动选区）；补全列表高亮必须 `scrollIntoView` 跟随（SuggestPopup 统一实现）。
 - 桌面壳本地状态（备忘录重命名/自定义图标/壁纸/粒子效果开关/用户名主机名头像）全存浏览器 localStorage，**不进后端配置**；`whoami/hostname/user` 是终端本地命令，不进 `/api/commands`。
 - 前端铁律：视图禁止裸 fetch 与字面量 API 路径（一律走 `src/api.js`）；动态文本进 DOM 必须 `textContent` 或 `esc()`；登录页样式自包含；图片导入统一走 `useCropper`（头像/图标=256×256 方/圆选区；壁纸=shape 'free' 按视口比例的矩形选区、**舞台即选区所见即所得**（弹窗可见画面=最终成图，输出 ≤1920px JPEG），换壁纸不再有独立压缩管线）；图标用 unplugin-icons + tabler（tabler 无 `brand-kali`，Kali 风图标用 `dragon`）。
 
 ## 9. 禁止事项清单
 
-- 禁止修改 `0.1.15b/`、`libs/`、`Assets/`。
+- 禁止修改 `0.1.16a/`、`libs/`、`Assets/`。
 - 禁止段名/键名字符串、`ConfigEntry<T>` 字段、`Debug.Log`、手拼 JSON、手拼 `[Tag]` 前缀、非中文日志。
 - 禁止 Patches/Commands/Automation 横向依赖；共享调用序列/数据表上浮 Game（§3 范本）。
-- 禁止未经 0.1.15b 核对就写 `typeof(X)` / 反射字符串 / Traverse 成员名；私有成员定位必须带 `0.1.15b 文件:行号` 注释（同名文件带子目录）。
+- 禁止未经 0.1.16a 核对就写 `typeof(X)` / 反射字符串 / Traverse 成员名；私有成员定位必须带 `0.1.16a 文件:行号` 注释（同名文件带子目录）。
 - 禁止依赖补丁挂载顺序的隐式契约（跨补丁顺序用 `[HarmonyPriority]` 显式固定）。
 - 禁止在多代理并行作业时运行 `dotnet build`。
 - 禁止重新引入全局作者常量/兜底——作者逐功能显式声明，未声明按「佚名」署名。

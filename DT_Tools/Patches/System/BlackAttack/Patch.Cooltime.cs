@@ -6,9 +6,9 @@ using Protocol;
 namespace DT_Tools.Patches.System.BlackAttack
 {
     /// <summary>
-    /// 仅改写原版攻击冷却入参：5（DelayAcquireWeapon，0.1.15b Server.Game/Player.cs:1005）与
-    /// 20（ConsumeKillAndRearm，0.1.15b Server.Game/Player.cs:1044）。方法本体（私有）：
-    /// 0.1.15b Server.Game/Player.cs:1008。Cooltime=0 时跳过原方法并立即恢复 CanAttack。
+    /// 仅改写原版攻击冷却入参：5（DelayAcquireWeapon，0.1.16a Server.Game/Player.cs:1005）与
+    /// 20（ConsumeKillAndRearm，0.1.16a Server.Game/Player.cs:1044）。方法本体（私有）：
+    /// 0.1.16a Server.Game/Player.cs:1008。Cooltime=0 时跳过原方法并立即恢复 CanAttack。
     /// </summary>
     [HarmonyPatch(typeof(Server.Game.Player), "StartWeaponCooltime")]
     internal static class BlackAttackCooltimePatch

@@ -4,7 +4,7 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
 {
     /// <summary>
     /// 破坏行为按钮身份放开（客户端）：锁门/拆电源/销毁证据的交互提示按钮原版仅黑幕
-    /// 可见（销毁证据目标黑方也可见：UI_GameScene.cs:1373 + DeviceBase.cs:395 两层判定），
+    /// 可见（销毁证据目标黑方也可见：UI_GameScene.cs:1376 + DeviceBase.cs:395 两层判定），
     /// 按档位放开显示。锁门/拆电源档位是"叠加"语义：Dark（默认）=仅黑幕（原版档位，
     /// 不额外放行）；Black=黑幕+黑方；White=黑幕+白方；All=黑幕+黑方+白方。
     /// 拆电源服务端无身份校验（Fusebox.Interact 全身份受理），放开即全场景生效；

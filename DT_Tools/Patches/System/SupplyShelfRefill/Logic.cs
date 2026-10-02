@@ -9,7 +9,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
     /// <summary>
     /// 必出与补货逻辑。
     /// 兜底道具集中于此（FallbackItems）：BELL(3009) / AIRHORN(3008)，与原版 InitStorage
-    /// 的内建投放池一致（0.1.15b Server.Game/DeviceManager.cs:353）；Define 常量：Define.cs:746 / :744。
+    /// 的内建投放池一致（0.1.16a Server.Game/DeviceManager.cs:353）；Define 常量：Define.cs:738 / :744。
     /// 补货池经 Game/ItemPools.ShelfPoolProvider 只读（由 SupplyShelf 装载时发布，含其
     /// Enabled/Mode 判定）；货架读取走 Game.Devices——无 Patches 间横向依赖（AGENTS §3）。
     /// </summary>
@@ -36,7 +36,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
             if (HasItemOnShelves(storages, guaranteed))
                 return;
 
-            // 1) 优先空槽（Storage.InsertItem：0.1.15b Server.Game/Storage.cs:94）
+            // 1) 优先空槽（Storage.InsertItem：0.1.16a Server.Game/Storage.cs:94）
             foreach (Server.Game.Storage s in storages)
             {
                 if (s.StorageType != EStorageType.StorageNormal)
@@ -98,13 +98,13 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
         {
             if (storage.Items[index] != null)
             {
-                Server.Game.ItemManager.Instance.RemoveItem(storage.Items[index]);   // 0.1.15b ItemManager.cs:240
+                Server.Game.ItemManager.Instance.RemoveItem(storage.Items[index]);   // 0.1.16a ItemManager.cs:240
                 storage.Items[index] = null;
             }
 
             storage.DeviceInfo.StateList[index] = itemId;
             storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // :43
-            storage.BroadcastStateInArea();                                          // 0.1.15b Server.Game/Device.cs:114
+            storage.BroadcastStateInArea();                                          // 0.1.16a Server.Game/Device.cs:114
         }
 
         // ── 拿取后补货 ────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
             if (interact == null)
                 return;
 
-            int index = interact.Index;                                    // 0.1.15b C_INTERACT_STORAGE.cs:45
+            int index = interact.Index;                                    // 0.1.16a C_INTERACT_STORAGE.cs:45
             if (index < 0 || index >= storage.Items.Count)
                 return;
             if (storage.Items[index] != null)
@@ -143,7 +143,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
             // 这一格仍会在到点后补回。理由：
             // 1) 补货是「拿取时功能开启」动作的延迟收口，最多补一格，影响有界；
             // 2) 残留任务随整局结束由 TimeManager.ClearSurvivalJob 统一清空
-            //    （0.1.15b GameRoom.cs:540 FullReset 内调用 → Server.Game/TimeManager.cs:129），
+            //    （0.1.16a GameRoom.cs:540 FullReset 内调用 → Server.Game/TimeManager.cs:129），
             //    不会跨局泄漏；
             // 3) RefillIntervalSeconds 默认 -1（不排程），常态下根本不会产生闭包。
             int storageId = storage.ID;
@@ -179,7 +179,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
 
         // 已知取舍：任务道具被取走后这里补回的是普通道具。原版 Storage.Interact 摘走任务道具时
         // 只复位格子并在无剩余任务道具时清 DeviceInfo.MissionType/IsInfected
-        // （0.1.15b Server.Game/Storage.cs:39/:48-51），任务语义挂在 Item.IsMissionItem /
+        // （0.1.16a Server.Game/Storage.cs:39/:48-51），任务语义挂在 Item.IsMissionItem /
         // InsertItem(missionType,…,true) 链路上（Server.Game/Storage.cs:94-106）；本补货直接
         // CreateAndStorage 普通道具，不恢复任务状态。RefillIntervalSeconds 默认 -1
         // 关闭补货，触发面收敛为「显式开启补货 + 任务道具恰好被取走」的组合，风险可控。
@@ -191,7 +191,7 @@ namespace DT_Tools.Patches.System.SupplyShelfRefill
                 return;
 
             storage.DeviceInfo.StateList[index] = itemId;
-            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // 0.1.15b ItemManager.cs:43
+            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // 0.1.16a ItemManager.cs:43
             storage.BroadcastStateInArea();
             Log.Info<SupplyShelfRefillFeature>(
                 $"refilled storage={storage.ID} slot={index} itemId={itemId}");

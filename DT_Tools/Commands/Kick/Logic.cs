@@ -24,7 +24,7 @@ namespace DT_Tools.Commands.Kick
         /// <summary>目标校验：房主对象存在、不能踢自己、目标在房间内。</summary>
         public static bool TryResolveTarget(GameRoom room, int targetId, out Server.Game.Player target, out string code, out string text)
         {
-            var host = room.Host;   // 0.1.15b Server.Game/GameRoom.cs:145
+            var host = room.Host;   // 0.1.16a Server.Game/GameRoom.cs:145
             if (host?.PublicInfo == null)
             {
                 target = null;

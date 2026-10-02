@@ -10,7 +10,7 @@ namespace DT_Tools.Commands.Fusebox
     /// 触发 DisconnetCable 拉断电闸（跟随控制台，非房主可用，仅生存阶段）。
     ///
     /// ⚠ 服务端 DisconnetCable 仅校验 MissionType==-1（开局武装的 3 个电闸，
-    /// 0.1.15b Server.Game/Fusebox.cs:114 DisconnetCable），没有任何 Black/Dark 颜色校验、
+    /// 0.1.16a Server.Game/Fusebox.cs:114 DisconnetCable），没有任何 Black/Dark 颜色校验、
     /// 没有距离、没有拔螺栓谜题校验——好人（White）也能拉闸停电，第 2 个电闸拉断时
     /// 还会获得 OnBlackout"主谋"成就。这是服务端缺失身份门导致的设计漏洞，本命令不额外限制颜色。
     ///
