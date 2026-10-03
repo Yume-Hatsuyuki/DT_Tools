@@ -1,7 +1,7 @@
 using DT_Tools.Core;
 using HarmonyLib;
 
-namespace DT_Tools.Patches.System.SupplyShelfRefill
+namespace DT_Tools.Patches.Fun.SupplyShelfRefill
 {
     /// <summary>
     /// 开局必出：原版 InitStorage（0.1.16b Server.Game/DeviceManager.cs:347）投放完成后，若指定道具

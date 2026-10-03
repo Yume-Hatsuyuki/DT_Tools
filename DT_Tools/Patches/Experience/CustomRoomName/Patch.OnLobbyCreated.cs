@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using DummyClient;
 using HarmonyLib;
 
-namespace DT_Tools.Patches.System.CustomRoomName
+namespace DT_Tools.Patches.Experience.CustomRoomName
 {
     /// <summary>
     /// Steam 回调写完默认 name 后，再用配置覆盖一次，避免时序丢配置。

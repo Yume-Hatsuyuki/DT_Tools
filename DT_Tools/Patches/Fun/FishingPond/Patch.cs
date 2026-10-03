@@ -3,7 +3,7 @@ using DT_Tools.Game;
 using HarmonyLib;
 using Protocol;
 
-namespace DT_Tools.Patches.System.FishingPond
+namespace DT_Tools.Patches.Fun.FishingPond
 {
     /// <summary>
     /// Fishing.HandleEvent 整替「起竿成功且有活跃任务」分支（HandleEvent：0.1.16b Server.Game/Fishing.cs:133；

@@ -4,7 +4,7 @@ using DT_Tools.Core;
 using DT_Tools.Game;
 using Protocol;
 
-namespace DT_Tools.Patches.System.SupplyShelfRefill
+namespace DT_Tools.Patches.Fun.SupplyShelfRefill
 {
     /// <summary>
     /// 必出与补货逻辑。

@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using DummyClient;
 using HarmonyLib;
 
-namespace DT_Tools.Patches.System.CustomRoomName
+namespace DT_Tools.Patches.Experience.CustomRoomName
 {
     /// <summary>
     /// 进房后成员数元数据更新时再尝试一次（幂等）。

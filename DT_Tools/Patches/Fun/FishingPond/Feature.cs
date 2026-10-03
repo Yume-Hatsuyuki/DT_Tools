@@ -1,7 +1,7 @@
 using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 
-namespace DT_Tools.Patches.System.FishingPond
+namespace DT_Tools.Patches.Fun.FishingPond
 {
     /// <summary>
     /// 许愿鱼池：从扩展道具池随机出道具（与货架共用 Game.ItemPools 池）。

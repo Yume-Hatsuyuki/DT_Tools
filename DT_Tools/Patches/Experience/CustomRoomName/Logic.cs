@@ -3,7 +3,7 @@ using DT_Tools.Game;
 using DummyClient;
 using Steamworks;
 
-namespace DT_Tools.Patches.System.CustomRoomName
+namespace DT_Tools.Patches.Experience.CustomRoomName
 {
     /// <summary>房间名清洗与写入 Steam Lobby 的业务逻辑（配置热改与各补丁点共用；骨架见 Game/RoomLobbyData）。</summary>
     internal static class CustomRoomNameLogic

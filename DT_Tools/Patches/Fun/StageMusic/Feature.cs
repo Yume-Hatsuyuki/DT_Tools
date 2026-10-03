@@ -21,18 +21,18 @@ namespace DT_Tools.Patches.Fun.StageMusic
     /// 判定——收包瞬间本机颜色仍为 Dark 且存活；递刀 ByHand=true 已由 GiveKnife 覆盖）。
     /// 单播放槽治理：同曲目播放中不重播（连杀防重复）、切阶段只保留一首、限长到点停止。
     /// 原版 BGM 可选静音（各阶段原版会播 DetectiveBGM/TrialMainBGM/Beta_Result_BGM 等，
-    /// 含主菜单 MainTitleBGM）。麦克风广播见 MicInject（实验性，失败自动降级仅本地）。
-    /// 未来扩展：新增阶段=加 MusicStage 成员 + 对应 [Config] 字段 + 触发补丁；
-    /// 「广播设备自动播放音乐」（音乐经广播室对全房间播放）预留为后续功能。
+    /// 含主菜单 MainTitleBGM）。麦克风广播（MicBroadcast 配置，默认关）：阶段音乐同时经
+    /// Game/MicBroadcast 虚拟麦克风混流发往全房（无需说话），本地仍由本功能播放器负责；
+    /// 广播随播放槽启停（切阶段未配置的阶段即停止），手动 /mic_music 与其互斥（后触发者接管）。
+    /// 未来扩展：新增阶段=加 MusicStage 成员 + 对应 [Config] 字段 + 触发补丁。
     /// </summary>
     [PatchFeature(
         "[实验性] 阶段音乐：按游戏阶段播放自定义音乐（TrackSource 统一选择在线链接或本地文件，" +
-        "仅本地收听）。17 个阶段独立配置曲目/音量/时长上限（原 8 阶段 + 选角/审判四子阶段/发现尸体/" +
+        "17 个阶段独立配置曲目/音量/时长上限——原 8 阶段 + 选角/审判四子阶段/发现尸体/" +
         "自己死亡/结局动画/黑幕继承，2026-09 补充审计，全部默认留空需自行配置），同曲目不重复播放、" +
         "切阶段自动只保留一首，可选静音原版 BGM（含主菜单）。" +
         "/play_audio 点播不读取本段配置，参数独立传入（见该命令）。\n" +
-        "麦克风广播（实验性）：开启且麦克风未静音时，音乐混入你的语音发给所有人；" +
-        "注入失败或麦克风静音时自动降级为仅本地播放。",
+        "可选「阶段音乐麦克风广播」：阶段音乐同时混入语音发往全房（与 /mic_music 共用引擎）。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         Author = "梦初雪")]
@@ -199,22 +199,8 @@ namespace DT_Tools.Patches.Fun.StageMusic
         [Config("静音原版 BGM：开启后原版各阶段背景音乐不再播放（含主菜单 MainTitleBGM，避免与自定义音乐混音）。")]
         public static bool MuteVanillaBgm = false;
 
-        [Config("麦克风广播（实验性）：开启且麦克风未静音时，阶段音乐混入你的语音发给所有人；注入失败自动降级为仅本地播放。")]
+        [Config("阶段音乐麦克风广播：开启后阶段音乐同时经虚拟麦克风混入你的语音发往全房（无需说话，游戏内麦克风不能静音；与 /mic_music 共用引擎，手动点歌会被阶段切换顶替）。默认关。")]
         public static bool MicBroadcast = false;
-
-        // 注意：麦克风广播用的 Harmony 实例归 StageMusicMicInject 自己持有（见该文件），
-        // 不能声明在本类——FeatureLoader.HasSelfManagedHarmony 会扫描 Feature 类上的任意
-        // static Harmony 字段来判定"自管挂载、引擎跳过 PatchAll"（见 DetectivePhaseFix 的
-        // 正当用法：Feature 自己调 PatchAll(typeof(Feature))）。本类从未自管主补丁挂载，
-        // 若在此处声明 Harmony 字段，会让引擎误判整个 StageMusic 为自管，从而跳过
-        // Patch.Triggers.cs 里全部 [HarmonyPatch] 类的自动挂载——历史事故复现（起因不同，
-        // 症状相同：全部阶段音乐静默失效，且启动日志仍显示"补丁已挂载"具有误导性）。
-
-        /// <summary>运行时开启：挂载麦克风广播注入（动态挂载，失败降级不抛出）。</summary>
-        private static void OnEnabled()
-        {
-            StageMusicMicInject.TryMount();
-        }
 
         /// <summary>运行时关闭：停播并销毁 AudioSource 与音频缓存、复位混音状态（有持续音频/对象副作用必须清理）。</summary>
         private static void OnDisabled()

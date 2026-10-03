@@ -67,7 +67,7 @@ Plugin.cs（装配根）
 - `ICommand` → `CommandRegistry` 注册主名+别名（别名冲突抛异常）。
 - `[ConfigSection]` → 基础设施配置段。
 
-**新增功能标准动作**：建目录 → `Feature.cs`（`[PatchFeature]` sealed class + `[Config]` 字段）→ `Patch.cs`（`[HarmonyPatch]` static class，首行 `if (!Engine.Enabled<本Feature>()) …` 门闩）→ 0.1.16b 核对 → 构建。生命周期钩子按名约定、全部可选：`OnLoaded` / `OnPatched` / `OnEnabled` / `OnDisabled`（**有 UI/音频/状态副作用的功能必须实现 OnDisabled 清理**，范本：StageMusic/LoginReward）。
+**新增功能标准动作**：建目录 → `Feature.cs`（`[PatchFeature]` sealed class + `[Config]` 字段）→ `Patch.cs`（`[HarmonyPatch]` static class，首行 `if (!Engine.Enabled<本Feature>()) …` 门闩）→ 0.1.16b 核对 → 构建。生命周期钩子按名约定、全部可选：`OnLoaded` / `OnPatched` / `OnEnabled` / `OnDisabled`（**有 UI/音频/状态副作用的功能必须实现 OnDisabled 清理**，范本：StageMusic/LoginReward）。**`OnEnabled` 只在热切换时触发（WireLifecycle 接 SettingChanged；Bind 读档不触发）——依赖 OnEnabled 做初始化的功能必须在 `OnPatched` 里按 `Engine.Enabled<T>()` 补挂，否则 cfg 持久化启用后重启即静默丢初始化**（范本：DestroyEvidenceCooldownServer；事故实录：StageMusic 麦克风注入 2026-10 重启后缺席、广播失效——该 Harmony 注入已随 /mic_music 虚拟麦克风重构移除）。
 
 **客户端/服务端拆分原则**：补丁运行在不同机器角色必须拆成独立功能、各自 Enabled 与配置（如 ChatLimit 客户端 / ChatSanitize 房主）；同机两半不拆。
 

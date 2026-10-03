@@ -1,6 +1,6 @@
 using DT_Tools.Core.Attributes;
 
-namespace DT_Tools.Patches.System.CustomRoomName
+namespace DT_Tools.Patches.Experience.CustomRoomName
 {
     /// <summary>
     /// 自定义房间名：建房与已在房内时写入 Steam Lobby 的 name。

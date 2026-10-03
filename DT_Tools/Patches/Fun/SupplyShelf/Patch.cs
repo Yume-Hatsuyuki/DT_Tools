@@ -3,7 +3,7 @@ using DT_Tools.Core;
 using DT_Tools.Game;
 using HarmonyLib;
 
-namespace DT_Tools.Patches.System.SupplyShelf
+namespace DT_Tools.Patches.Fun.SupplyShelf
 {
     /// <summary>
     /// 原版 InitStorage（0.1.16b Server.Game/DeviceManager.cs:347）固定投放 {BELL(3009), AIRHORN(3008)}

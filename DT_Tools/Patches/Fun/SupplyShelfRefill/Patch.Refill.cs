@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using HarmonyLib;
 using Protocol;
 
-namespace DT_Tools.Patches.System.SupplyShelfRefill
+namespace DT_Tools.Patches.Fun.SupplyShelfRefill
 {
     /// <summary>
     /// 拿取后补货：原版 Storage.Interact（0.1.16b Server.Game/Storage.cs:33）取走道具后，按

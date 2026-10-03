@@ -13,8 +13,9 @@ namespace DT_Tools.Patches.Fun.StageMusic
     /// <summary>
     /// 阶段音乐播放器（单播放槽）：同 URI 播放中不重播（连杀防重复）、新触发停旧播新
     /// （切阶段只保留一首）、限长到点停止（-1/0 不限）。音频按 URI 缓存，
-    /// 配置指纹变化时全部销毁重建（资源释放）。麦克风广播：播放时提取 PCM，
-    /// 由 MicInjectPatch 在语音编码前混入（见 Patch.MicInject）。
+    /// 配置指纹变化时全部销毁重建（资源释放）。本地播放；MicBroadcast 配置开启时
+    /// 同时经 Game/MicBroadcast 虚拟麦克风混流发往全房（仅混流不本地重播，
+    /// 广播随本播放槽启停；与 /mic_music 手动点歌互斥、后触发者接管）。
     /// 控制台点播已迁至 Game/AudioPlayback（独立引擎，互不共享状态）。
     /// </summary>
     internal static class StageMusicPlayer
@@ -22,7 +23,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
         private static AudioSource _source;
         private static Coroutine _stopCo;
         private static string _playingUri;
-        private static float _currentVolume = 1f;   // 当前播放会话的音量（MixIntoMic 读取，随每次播放调用刷新）
 
         private static readonly Dictionary<string, AudioClip> _clips = new Dictionary<string, AudioClip>();
         private static readonly Queue<string> _clipOrder = new Queue<string>();   // 插入序，供上限淘汰
@@ -33,12 +33,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
         private static long _pendingGeneration;
         private static float _pendingVolume = 1f;      // 异步加载期间暂存本次播放的音量/时长（加载完成后交给 StartPlayback）
         private static float _pendingMaxSeconds = -1f;
-
-        // ── 麦克风混音状态（MicInjectPatch 读取）──
-        internal static float[] MixSamples;
-        internal static int MixSampleRate;
-        internal static float MixStartRealtime;
-        internal static bool MixActive;
 
         /// <summary>阶段曲目配置（空 = 该阶段不播放）。</summary>
         private static string TrackOf(MusicStage stage)
@@ -134,8 +128,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
         }
 
         /// <summary>
-        /// 播放核心（uri 已解析）：同 URI 播放中不重播，新触发停旧播新；
-        /// 麦克风广播遵循 MicBroadcast 配置与静音状态（注入点与游戏阶段无关，全阶段可混入）。
+        /// 播放核心（uri 已解析）：同 URI 播放中不重播，新触发停旧播新。
         /// </summary>
         private static void PlayInternal(string uri, float volume, float maxSeconds)
         {
@@ -155,11 +148,10 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 CoroutineHost.Start(CoLoadAndPlay(uri));
         }
 
-        /// <summary>停止当前阶段音乐（阶段切换触发与未配置阶段共用）。</summary>
+        /// <summary>停止当前阶段音乐（阶段切换触发与未配置阶段共用）。麦克风广播随播放槽一起停止。</summary>
         public static void StopCurrent()
         {
             _playingUri = null;
-            MixActive = false;
             _loadGeneration++;   // 作废在途加载
             if (_stopCo != null)
             {
@@ -168,9 +160,11 @@ namespace DT_Tools.Patches.Fun.StageMusic
             }
             if (_source != null && _source.isPlaying)
                 _source.Stop();
+            if (StageMusicFeature.MicBroadcast)
+                MicBroadcast.Stop();
         }
 
-        /// <summary>热关闭清理（Feature.OnDisabled 调用）：停播并销毁 AudioSource 与全部缓存片段、复位混音状态。</summary>
+        /// <summary>热关闭清理（Feature.OnDisabled 调用）：停播并销毁 AudioSource 与全部缓存片段。</summary>
         public static void Shutdown()
         {
             StopCurrent();
@@ -186,7 +180,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
             }
             _clips.Clear();
             _clipOrder.Clear();
-            MixSamples = null;
         }
 
         private static IEnumerator CoLoadAndPlay(string uri)
@@ -252,14 +245,17 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 _stopCo = null;
             }
             _playingUri = uri;
-            _currentVolume = volume;
             src.Stop();
             src.clip = clip;
             src.volume = volume;
             src.Play();
             Log.Info<StageMusicFeature>($"阶段音乐播放: {uri}");
 
-            PrepareMicMix(clip);
+            // 麦克风广播（总闸配置）：同一首曲子经虚拟麦克风混流发往全房。
+            // 仅混流、本地仍由本播放器负责（不双源齐响）；时长跟随阶段配置。
+            // 注：广播端有约 0.6s 编码器重建等待，对端起点略晚于本地，属预期。
+            if (StageMusicFeature.MicBroadcast)
+                MicBroadcast.PlayResolved(uri, volume, maxSeconds, localPlayback: false);
 
             if (maxSeconds > 0f)
                 _stopCo = CoroutineHost.Start(CoStopAfter(maxSeconds));
@@ -331,33 +327,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
             _source.playOnAwake = false;
             VoiceMixerHub.Route(_source, false);
             return _source;
-        }
-
-        // ── 麦克风混音（MicInjectPatch 调用）──
-
-        /// <summary>播放时提取单声道 PCM 供语音编码前混入。</summary>
-        private static void PrepareMicMix(AudioClip clip)
-        {
-            MixActive = false;
-            if (!StageMusicFeature.MicBroadcast)
-                return;
-            var mono = AudioMix.ExtractMono(clip, Engine.SectionOf<StageMusicFeature>());
-            if (mono == null)
-                return;
-            MixSamples = mono;
-            MixSampleRate = clip.frequency;
-            MixStartRealtime = Time.realtimeSinceStartup;
-            MixActive = true;
-        }
-
-        /// <summary>
-        /// 语音编码前把音乐混入麦克风帧（EncoderPipeline 收到的缓冲原地改写）。
-        /// 麦克风静音时不混入（不强制开启麦克风）；音乐读完自动停止混入。
-        /// </summary>
-        public static void MixIntoMic(ArraySegment<float> buffer, int outputRate)
-        {
-            MixActive = AudioMix.MixInto(MixSamples, MixSampleRate, MixStartRealtime,
-                _currentVolume, MixActive && StageMusicFeature.MicBroadcast, buffer, outputRate);
         }
     }
 }

@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 
-namespace DT_Tools.Patches.System.SupplyShelf
+namespace DT_Tools.Patches.Fun.SupplyShelf
 {
     /// <summary>
     /// 货架随机道具（房主权威）：开局整替 DeviceManager.InitStorage，从扩展池刷道具。

@@ -3,7 +3,7 @@ using System.Linq;
 using HarmonyLib;
 using Protocol;
 
-namespace DT_Tools.Patches.System.SupplyShelf
+namespace DT_Tools.Patches.Fun.SupplyShelf
 {
     /// <summary>货架投放：清空 → 按池构造道具袋 → 逐 StorageNormal 架切片投放。</summary>
     internal static class SupplyShelfLogic

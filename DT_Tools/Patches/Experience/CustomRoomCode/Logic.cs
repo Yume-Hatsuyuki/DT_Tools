@@ -4,7 +4,7 @@ using DT_Tools.Game;
 using DummyClient;
 using Steamworks;
 
-namespace DT_Tools.Patches.System.CustomRoomCode
+namespace DT_Tools.Patches.Experience.CustomRoomCode
 {
     /// <summary>房间码清洗与写入 Steam Lobby 的业务逻辑（配置热改与建房补丁共用；骨架见 Game/RoomLobbyData）。</summary>
     internal static class CustomRoomCodeLogic

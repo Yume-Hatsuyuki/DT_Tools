@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using DT_Tools.Game;
 using Protocol;
 
-namespace DT_Tools.Patches.System.FishingPond
+namespace DT_Tools.Patches.Fun.FishingPond
 {
     /// <summary>
     /// 完成水下捕捉任务的收口调用。MissionManager 在发行程序集中为 internal

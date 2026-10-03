@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using DummyClient;
 using HarmonyLib;
 
-namespace DT_Tools.Patches.System.CustomRoomName
+namespace DT_Tools.Patches.Experience.CustomRoomName
 {
     /// <summary>
     /// 建房：把 roomName 入参替换为配置的自定义名。

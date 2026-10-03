@@ -1,6 +1,6 @@
 using DT_Tools.Core.Attributes;
 
-namespace DT_Tools.Patches.System.CustomRoomCode
+namespace DT_Tools.Patches.Experience.CustomRoomCode
 {
     /// <summary>
     /// 自定义房间码：建房用自定义码替代随机码。加入方按 Steam lobby data "code"

@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using DummyClient;
 using HarmonyLib;
 
-namespace DT_Tools.Patches.System.CustomRoomCode
+namespace DT_Tools.Patches.Experience.CustomRoomCode
 {
     /// <summary>
     /// 建房：把 roomCode 入参替换为配置的自定义码。
