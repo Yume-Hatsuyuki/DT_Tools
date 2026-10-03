@@ -16,7 +16,7 @@ namespace DT_Tools.Patches.Experience.BlackKillNotify
     {
         private static void Postfix(S_MODIFY_MY_PLAYER pkt)
         {
-            if (!Engine.Enabled<BlackKillNotifyFeature>())
+            if (!Engine.Enabled<BlackKillNotifyFeature>() || !BlackKillNotifyFeature.ClientSide)
                 return;
             if (pkt == null || pkt.Type != EModifyMyPlayerEvent.RemainKill)
                 return;

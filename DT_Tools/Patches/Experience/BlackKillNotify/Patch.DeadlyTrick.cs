@@ -17,7 +17,7 @@ namespace DT_Tools.Patches.Experience.BlackKillNotify
     {
         private static void Prefix(MyPlayer __instance)
         {
-            if (!Engine.Enabled<BlackKillNotifyFeature>())
+            if (!Engine.Enabled<BlackKillNotifyFeature>() || !BlackKillNotifyFeature.ClientSide)
                 return;
             if (!__instance.IsDeadlyTrickReady
                 || __instance.DeadlyTrickTarget == null

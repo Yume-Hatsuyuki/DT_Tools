@@ -3,24 +3,31 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Patches.Experience.BlackKillNotify
 {
     /// <summary>
-    /// 黑方击杀通报（客户端）：本机为持刀凶手（Black）且击杀被主机接受（RemainKill
-    /// 下降——持刀 C_KILL_PLAYER 与处决技 C_DEADLY_TRICK 共用 ConsumeKillAndRearm 扣减）
-    /// 时，自动挑一台空闲打字机「模拟触碰」：C_INTERACT_CHATDEVICE 占用 →
-    /// VoiceManager.SendSecretChatMessage 发送 → C_HANDLE_CHATDEVICE 释放，把战报以
-    /// 原版秘密通话浮文送达黑幕——「游戏内时间」换行「黑方在 [地名] 处击杀了 [角色]，
-    /// 剩余 [次数] 攻击次数。」。服务端 Interact 无距离校验，任意空闲打字机均可触碰
-    /// （0.1.16b Server.Game/DeviceManager.cs:79-99），占用期间 InteractLock 500ms 自动
-    /// 释放（Server.Game/Player.cs:171-176）。发送走原版接口：自带自身回声抑制（凶手
-    /// 本人不见浮文，与原版一致），且通知与手动打字共用原版 7 秒秘密通话冷却——
-    /// 7 秒内连杀的第二条自动跳过。未装插件的客户端（黑幕）原生渲染浮文。
+    /// 黑方击杀通报（两端一体单功能，side: Both，范本 SpectatorJoin）：黑方击杀后，
+    /// 以原版秘密通话浮文（打字机逐字上屏）向黑幕发送战报——「游戏内时间」换行
+    /// 「黑方在【地名】处击杀了【角色】，剩余【次数】攻击次数。」。两个子功能按
+    /// 机器角色择一开启：
+    /// ClientSide——客户端半：本机黑方击杀被主机接受（RemainKill 下降，该包只发
+    /// 攻击者本人）后，模拟触碰一台空闲打字机发送（服务端 Interact 无距离校验，
+    /// InteractLock 500ms 自释）。走原版发送接口：与手动打字共用 7 秒秘密通话冷却
+    /// （7 秒内连杀的第二条自动跳过），自带自身回声抑制（凶手本人不见浮文）。
+    /// ServerSide——房主半：房主检测到黑方击杀（OnDeadMurder，持刀与处决技共用）
+    /// 后直发黑方频道，黑方无需安装插件；不占用打字机与冷却，凶手本人也会收到浮文。
+    /// 两路同开且两端都装插件时，同一次击杀黑幕会收到两条——建议按部署二选一。
     /// </summary>
     [PatchFeature(
-        "黑方击杀通报：黑方击杀后自动借用一台空闲打字机，以秘密通话浮文向黑幕发送战报" +
-        "（游戏内时间/击杀地点/角色/剩余攻击次数）。仅本机为黑方时生效；与手动打字共用 7 秒冷却。",
+        "黑方击杀通报：黑方击杀后以秘密通话浮文向黑幕发送战报（游戏内时间/击杀地点/角色/剩余攻击次数）。\n" +
+        "ClientSide（客户端）：本机黑方模拟触碰空闲打字机发送，需凶手端安装；与手动打字共用 7 秒冷却。\n" +
+        "ServerSide（房主）：房主检测到击杀后直发黑方频道，仅需房主安装；不占用打字机与冷却。两路同开会重复上报，建议二选一。",
         defaultEnabled: true,
-        side: FeatureSide.Client,
+        side: FeatureSide.Both,
         Author = "梦初雪")]
     public sealed class BlackKillNotifyFeature
     {
+        [Config("客户端通报：本机黑方击杀被主机接受后，模拟触碰一台空闲打字机发送战报（需凶手端安装本插件）。")]
+        public static bool ClientSide = true;
+
+        [Config("房主通报：房主检测到黑方击杀后直接通知黑幕（仅需房主安装本插件，黑方无需插件；不占用打字机与秘密通话冷却）。")]
+        public static bool ServerSide = false;
     }
 }
