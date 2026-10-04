@@ -9,6 +9,7 @@ namespace DT_Tools.Patches.Experience.LobbySpeed
     [PatchFeature(
         "大厅移速调整：可修改大厅内移动倍率（默认 1.0）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class LobbySpeedFeature
     {

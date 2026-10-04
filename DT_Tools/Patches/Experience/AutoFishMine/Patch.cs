@@ -69,11 +69,11 @@ namespace DT_Tools.Patches.Experience.AutoFishMine
             int phase = GetPhase(__instance);
             if (phase == 1) // Phase.Bite：咬钩瞬间自动提竿
             {
-                TryInvoke(__instance, "EnterCatchIntro");
+                TryInvoke(__instance, "EnterCatchIntro"); // 0.1.16b UI_FishingSlider.cs:164
             }
             else if (phase == 3) // Phase.Reeling：自动连按收线
             {
-                TryInvoke(__instance, "AddGauge");
+                TryInvoke(__instance, "AddGauge"); // 0.1.16b UI_FishingSlider.cs:205
             }
         }
 
@@ -81,11 +81,11 @@ namespace DT_Tools.Patches.Experience.AutoFishMine
         {
             try
             {
-                return Convert.ToInt32(Traverse.Create(popup).Field("_phase").GetValue<object>());
+                return Convert.ToInt32(Traverse.Create(popup).Field("_phase").GetValue<object>()); // 0.1.16b UI_FishingSlider.cs:40
             }
             catch (Exception ex)
             {
-                Log.Error("AutoFishMine", $"读取钓鱼阶段失败：{ex.GetType().Name}: {ex.Message}");
+                Log.Error<AutoFishMineFeature>($"读取钓鱼阶段失败：{ex.GetType().Name}: {ex.Message}");
                 return -1;
             }
         }
@@ -98,7 +98,7 @@ namespace DT_Tools.Patches.Experience.AutoFishMine
             }
             catch (Exception ex)
             {
-                Log.Error("AutoFishMine", $"{methodName} 调用失败：{ex.GetType().Name}: {ex.Message}");
+                Log.Error<AutoFishMineFeature>($"{methodName} 调用失败：{ex.GetType().Name}: {ex.Message}");
             }
         }
     }
@@ -113,20 +113,20 @@ namespace DT_Tools.Patches.Experience.AutoFishMine
                 return;
             try
             {
-                if (!Traverse.Create(__instance).Field("_isCatch").GetValue<bool>())
+                if (!Traverse.Create(__instance).Field("_isCatch").GetValue<bool>()) // 0.1.16b UI_MineralSlider.cs:28
                     return;
                 if (!__instance.CheckCatch())
                     return; // 滑块未到位，等它摆回来
 
-                // 滑块到位：执行与"按键成功"等价的分支（0.1.16b UI_MineralSlider.cs:82-100）
+                // 滑块到位：执行与"按键成功"等价的分支（0.1.16b UI_MineralSlider.cs:81-100）
                 Managers.Sound.PlaySystem("AxeSfx");
-                Traverse.Create(__instance).Field("_mineral").GetValue<Mineral>()?.PlayAxeEffect();
+                Traverse.Create(__instance).Field("_mineral").GetValue<Mineral>()?.PlayAxeEffect(); // _mineral: 0.1.16b UI_MineralSlider.cs:22
 
-                int count = Traverse.Create(__instance).Field("_successCount").GetValue<int>() + 1;
+                int count = Traverse.Create(__instance).Field("_successCount").GetValue<int>() + 1; // _successCount: 0.1.16b UI_MineralSlider.cs:24
                 Traverse.Create(__instance).Field("_successCount").SetValue(count);
                 if (count < 3)
                 {
-                    Traverse.Create(__instance).Method("Refresh").GetValue();
+                    Traverse.Create(__instance).Method("Refresh").GetValue(); // 0.1.16b UI_MineralSlider.cs:65
                 }
                 else
                 {
@@ -140,7 +140,7 @@ namespace DT_Tools.Patches.Experience.AutoFishMine
             }
             catch (Exception ex)
             {
-                Log.Error("AutoFishMine", $"自动挖矿失败：{ex.GetType().Name}: {ex.Message}");
+                Log.Error<AutoFishMineFeature>($"自动挖矿失败：{ex.GetType().Name}: {ex.Message}");
             }
         }
     }

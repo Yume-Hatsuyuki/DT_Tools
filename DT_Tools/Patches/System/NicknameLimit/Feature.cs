@@ -12,6 +12,7 @@ namespace DT_Tools.Patches.System.NicknameLimit
     [PatchFeature(
         "取消主页昵称字数上限：可超过原版权重 12；AllowAnyChar 开启后允许空格、符号、emoji 等任意字符（空名仍不可用）。\n服务端不过滤昵称字符。关闭时自动还原输入框上限与原版门禁。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class NicknameLimitFeature
     {

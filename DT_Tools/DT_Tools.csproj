@@ -112,9 +112,6 @@
   </ItemGroup>
 
   <ItemGroup>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="WebUI/**" CopyToOutputDirectory="PreserveNewest" Link="WebUI/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 

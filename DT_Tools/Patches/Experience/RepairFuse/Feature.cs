@@ -9,6 +9,7 @@ namespace DT_Tools.Patches.Experience.RepairFuse
     [PatchFeature(
         "专业电工：可修改修电闸默认读条时长（默认 10s，优先结算来自服务端的剩余时间）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class RepairFuseFeature
     {

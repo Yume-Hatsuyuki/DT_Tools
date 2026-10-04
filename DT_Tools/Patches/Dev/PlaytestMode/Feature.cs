@@ -15,6 +15,7 @@ namespace DT_Tools.Patches.Dev.PlaytestMode
     [PatchFeature(
         "测试模式：按测试服逻辑运行（例如可更少人数开局），支付与库存仍走正式服。房主开启会改变全房间开局人数下限/任务规模（全房间生效）。",
         defaultEnabled: false,
+        side: FeatureSide.Host,
         Author = "梦初雪")]
     public sealed class PlaytestModeFeature
     {

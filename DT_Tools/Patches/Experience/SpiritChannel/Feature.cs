@@ -15,6 +15,7 @@ namespace DT_Tools.Patches.Experience.SpiritChannel
     [PatchFeature(
         "通灵：亡者呢喃（活人可见死聊）与死亡感知（尸体落地时播放 Lian 蜡烛动画）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class SpiritChannelFeature
     {

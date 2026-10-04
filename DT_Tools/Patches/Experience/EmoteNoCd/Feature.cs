@@ -6,6 +6,7 @@ namespace DT_Tools.Patches.Experience.EmoteNoCd
     [PatchFeature(
         "表情发送无冷却：可连续使用表情动作。",
         defaultEnabled: true,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class EmoteNoCdFeature
     {

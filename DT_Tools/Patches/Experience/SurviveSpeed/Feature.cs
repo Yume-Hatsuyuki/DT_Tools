@@ -9,6 +9,7 @@ namespace DT_Tools.Patches.Experience.SurviveSpeed
     [PatchFeature(
         "全状态移速调整：分别调整各动作移速倍率，默认与游戏一致。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class SurviveSpeedFeature
     {

@@ -4,7 +4,10 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Automation.AutoPickCharacter
 {
     /// <summary>大厅同步外观 + 选角阶段自动 C_PICK_CHARACTER（角色列表运行时读 CharacterDic，含梅德琳）。</summary>
-    [AutomationModule("自动选择角色", "大厅使用所选角色模型；进入选角阶段后自动发送 C_PICK_CHARACTER（指定或随机）。", Author = "梦初雪")]
+    [AutomationModule("自动选择角色",
+        "大厅使用所选角色模型；进入选角阶段后自动发送 C_PICK_CHARACTER（指定或随机）。",
+        side: FeatureSide.Client,
+        Author = "梦初雪")]
     public sealed class AutoPickCharacterModule
     {
         [Config("选角方式：Fixed=使用下方角色；Random=随机（发包 CharacterId=-2）。")]

@@ -13,6 +13,7 @@ namespace DT_Tools.Patches.Experience.RemoveWallCollision
     [PatchFeature(
         "移除墙体碰撞：本地玩家可穿墙移动（客户端）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class RemoveWallCollisionFeature
     {

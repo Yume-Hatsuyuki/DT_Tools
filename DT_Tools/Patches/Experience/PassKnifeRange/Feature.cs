@@ -10,6 +10,7 @@ namespace DT_Tools.Patches.Experience.PassKnifeRange
     [PatchFeature(
         "递刀距离：可修改黑幕最大递交武器的距离（默认 224）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class PassKnifeRangeFeature
     {

@@ -9,6 +9,7 @@ namespace DT_Tools.Patches.Experience.ShowTrueName
     [PatchFeature(
         "吾之真名：进入游戏后头顶名字持续可见。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class ShowTrueNameFeature
     {

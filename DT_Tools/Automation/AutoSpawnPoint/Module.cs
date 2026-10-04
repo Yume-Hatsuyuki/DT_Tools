@@ -4,7 +4,10 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Automation.AutoSpawnPoint
 {
     /// <summary>进入 Survive 后传送到指定出生点或自定义坐标（与 /beacon 同源）。</summary>
-    [AutomationModule("开局指定出生点", "进入生存阶段后传送到 StartPosList 出生点（下拉）或自定义坐标。", Author = "梦初雪")]
+    [AutomationModule("开局指定出生点",
+        "进入生存阶段后传送到 StartPosList 出生点（下拉）或自定义坐标。",
+        side: FeatureSide.Client,
+        Author = "梦初雪")]
     public sealed class AutoSpawnPointModule
     {
         [Config("选择方式：Index=按出生点序号，Custom=使用下方 PosX / PosY 自定义坐标。")]

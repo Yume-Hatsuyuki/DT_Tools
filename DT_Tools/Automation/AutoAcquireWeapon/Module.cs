@@ -4,7 +4,10 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Automation.AutoAcquireWeapon
 {
     /// <summary>进入 Survive 后自动从开放武器架取刀（C_INTERACT_ARMORY，无视距离）。</summary>
-    [AutomationModule("开局自动取刀", "进入生存阶段后自动对开放武器架发送 C_INTERACT_ARMORY（白方拔刀 / 黑幕截刀）。", Author = "梦初雪")]
+    [AutomationModule("开局自动取刀",
+        "进入生存阶段后自动对开放武器架发送 C_INTERACT_ARMORY（白方拔刀 / 黑幕截刀）。",
+        side: FeatureSide.Client,
+        Author = "梦初雪")]
     public sealed class AutoAcquireWeaponModule
     {
         [Config("首次尝试前等待（秒）。进入生存阶段以后多久开始拔刀。", Min = 0, Max = 300)]

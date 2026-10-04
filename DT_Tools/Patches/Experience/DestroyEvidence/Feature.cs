@@ -11,6 +11,7 @@ namespace DT_Tools.Patches.Experience.DestroyEvidence
     [PatchFeature(
         "专业清洁：可修改 Dark/Black 销毁证据读条时长（默认 2.5s，仅本地表现；'多久能破坏一次'的服务端冷却见「DestroyEvidenceCooldownServer」）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class DestroyEvidenceFeature
     {

@@ -6,6 +6,7 @@ namespace DT_Tools.Patches.Experience.EmoteTaunt
     [PatchFeature(
         "表情喊话器：发指定表情时自动在聊天区喊出毒舌台词（走聊天广播，全房可见）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "花语")]
     public sealed class EmoteTauntFeature
     {

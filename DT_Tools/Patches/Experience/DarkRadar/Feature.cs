@@ -15,6 +15,7 @@ namespace DT_Tools.Patches.Experience.DarkRadar
     [PatchFeature(
         "黑幕情报共享：白方/持刀者在平板地图上也能看到凶器刷新位置和可破坏电闸标记（原版仅黑幕 Dark 可见）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class DarkRadarFeature
     {

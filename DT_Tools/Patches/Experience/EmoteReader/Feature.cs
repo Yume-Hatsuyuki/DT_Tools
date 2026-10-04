@@ -10,6 +10,7 @@ namespace DT_Tools.Patches.Experience.EmoteReader
     [PatchFeature(
         "表情解读机：别人发表情时自动广播解说（带玩家名与表情含义），台词可在配置中修改，全房可见，无需房主。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "花语")]
     public sealed class EmoteReaderFeature
     {

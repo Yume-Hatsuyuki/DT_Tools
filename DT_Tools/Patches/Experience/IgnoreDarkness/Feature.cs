@@ -10,6 +10,7 @@ namespace DT_Tools.Patches.Experience.IgnoreDarkness
     [PatchFeature(
         "断电不影响视野：黑暗时保持全局照明与远距可见（名牌/特效/尸体发现距离不受 224 限制）。不解除黑暗交互限制（见「断电可交互」）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class IgnoreDarknessFeature
     {

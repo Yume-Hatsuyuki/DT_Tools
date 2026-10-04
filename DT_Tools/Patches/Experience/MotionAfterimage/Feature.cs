@@ -10,6 +10,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
     [PatchFeature(
         "运动残影：地图内（生存/调查）按间隔刷彩色淡出剪影；死亡后保留黑色最后一帧。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class MotionAfterimageFeature
     {

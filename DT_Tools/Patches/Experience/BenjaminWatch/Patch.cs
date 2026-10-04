@@ -95,7 +95,8 @@ namespace DT_Tools.Patches.Experience.BenjaminWatch
                 if (Managers.Player == null || Managers.Player.MyPlayer == null)
                     return;
 
-                // 与游戏一致的本杰明检测判定（0.1.16b Summon.DetectNearbyPlayer：椭圆范围+Raycast 挡墙）。
+                // 与游戏一致的本杰明检测判定（0.1.16b Summon.cs:243 DetectNearbyPlayer：
+                // 椭圆范围 448×410.6667 :266-267、Raycast 挡墙 layerMask=4096 :258）。
                 // 注意：不排除本机自己（本杰明通常跟随主人，排除自己会误报"无人"）；也不排除假人
                 // （IsDummy，制作假人/挂机占位也要能看见），自己以"我"标记。
                 Vector2 pos = benjamin.Position;
@@ -113,7 +114,7 @@ namespace DT_Tools.Patches.Experience.BenjaminWatch
                     float magnitude = direction.magnitude;
                     bool wallBlocked = !BenjaminWatchFeature.IgnoreWalls
                         && magnitude > 0.01f
-                        && Physics2D.Raycast(pos, direction, magnitude, 4096);
+                        && Physics2D.Raycast(pos, direction, magnitude, 4096); // layerMask 与原版一致（0.1.16b Summon.cs:258）
                     if (!wallBlocked)
                     {
                         bool isMe = value == Managers.Player.MyPlayer;
@@ -128,7 +129,7 @@ namespace DT_Tools.Patches.Experience.BenjaminWatch
             }
             catch (Exception ex)
             {
-                Log.Error("BenjaminWatch", $"刷新检测数据失败：{ex.GetType().Name}: {ex.Message}");
+                Log.Error<BenjaminWatchFeature>($"刷新检测数据失败：{ex.GetType().Name}: {ex.Message}");
             }
         }
 

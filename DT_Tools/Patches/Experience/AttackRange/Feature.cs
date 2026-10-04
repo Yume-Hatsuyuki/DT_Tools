@@ -9,6 +9,7 @@ namespace DT_Tools.Patches.Experience.AttackRange
     [PatchFeature(
         "黑方攻击距离：可修改最大攻击距离（默认 224）。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class AttackRangeFeature
     {
