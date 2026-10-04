@@ -140,6 +140,24 @@ namespace DT_Tools.WebConsole
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
             router.Add("GET", "/api/fs/list", Api.FsApi.HandleList);   // WebUI 内置文件选择器（只读目录浏览）
+            // 随身MP3：全部端点经 RunOnMain 主线程执行。playlist/* 必须注册在 play 之前——
+            // Router 前缀匹配，/api/mp3/play 会截走 /api/mp3/playlist/*
+            router.Add("POST", "/api/mp3/playlist/add", Api.Mp3Api.HandlePlaylistAdd);
+            router.Add("POST", "/api/mp3/playlist/remove", Api.Mp3Api.HandlePlaylistRemove);
+            router.Add("POST", "/api/mp3/playlist/move", Api.Mp3Api.HandlePlaylistMove);
+            router.Add("POST", "/api/mp3/playlist/clear", Api.Mp3Api.HandlePlaylistClear);
+            router.Add("GET", "/api/mp3/state", Api.Mp3Api.HandleState);
+            router.Add("POST", "/api/mp3/play", Api.Mp3Api.HandlePlay);
+            router.Add("POST", "/api/mp3/index", Api.Mp3Api.HandleIndex);
+            router.Add("POST", "/api/mp3/next", Api.Mp3Api.HandleNext);
+            router.Add("POST", "/api/mp3/pause", Api.Mp3Api.HandlePause);
+            router.Add("POST", "/api/mp3/resume", Api.Mp3Api.HandleResume);
+            router.Add("POST", "/api/mp3/seek", Api.Mp3Api.HandleSeek);
+            router.Add("POST", "/api/mp3/volume", Api.Mp3Api.HandleVolume);
+            router.Add("POST", "/api/mp3/mic", Api.Mp3Api.HandleMic);
+            router.Add("POST", "/api/mp3/local", Api.Mp3Api.HandleLocal);
+            router.Add("POST", "/api/mp3/mode", Api.Mp3Api.HandleMode);
+            router.Add("POST", "/api/mp3/stop", Api.Mp3Api.HandleStop);
             // 假人管理（假人应用）：全部经 RunOnMain 在主线程读写 GameRoom。
             // remove-all 必须注册在 remove 之前——Router 按注册顺序做前缀匹配，
             // 否则 /api/dummy/remove-all 会被更短的 /api/dummy/remove 截走报 invalid body
@@ -232,7 +250,9 @@ namespace DT_Tools.WebConsole
                     return;
                 }
 
-                var parts = raw.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                // 引号感知分词：token 起始引号跨空格成组并剥除（带空格路径可加引号），
+                // token 中部引号保持字面，无引号输入与旧纯空格切分完全等价
+                var parts = CommandTokenizer.Tokenize(raw);
                 if (!CommandRegistry.TryGet(parts[0], out var command))
                 {
                     Log.Warn("WebConsole", $"未知命令: {parts[0]}");

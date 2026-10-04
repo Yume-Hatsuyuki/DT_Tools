@@ -13,6 +13,7 @@ import { useCropper } from '../composables/useCropper.js';
 // 桌面挂载即启动全局日志流（WebSocket 单例）：连接状态（顶栏）从桌面加载起
 // 就由日志流驱动，不依赖任何窗口是否打开。
 import { useLogStream } from '../composables/useLogStream.js';
+import { API } from '../api.js';
 
 import ConsoleApp from '../apps/console/ConsoleApp.vue';
 import TerminalApp from '../apps/console/TerminalApp.vue';
@@ -20,6 +21,7 @@ import ConfigApp from '../apps/config/ConfigApp.vue';
 import AutomationApp from '../apps/automation/AutomationApp.vue';
 import LogApp from '../apps/log/LogApp.vue';
 import DummyApp from '../apps/dummy/DummyApp.vue';
+import Mp3App from '../apps/mp3/Mp3App.vue';
 
 import IconTerminal from '~icons/tabler/terminal';
 import IconPhoto from '~icons/tabler/photo';
@@ -35,6 +37,7 @@ import IconAdjustmentsHorizontal from '~icons/tabler/adjustments-horizontal';
 import IconRobot from '~icons/tabler/robot';
 import IconListDetails from '~icons/tabler/list-details';
 import IconUsersGroup from '~icons/tabler/users-group';
+import IconDeviceAudioTape from '~icons/tabler/device-audio-tape';
 import IconBrandSteam from '~icons/tabler/brand-steam';
 
 /**
@@ -42,6 +45,8 @@ import IconBrandSteam from '~icons/tabler/brand-steam';
  * 终端有两套：terminal=Kali 风格新版（不带 / 前缀），console=旧版（/ 命令 + 发送按钮），
  * 两套只显示各自会话的命令输出；log=全量日志应用。
  * 应用图标不再摆桌面——全部整合进底部 Dock（macOS 风），桌面只留壁纸/粒子/窗口。
+ * onClose（可选）：窗口被关闭（红点 / 关闭所有进程）时的联动，当前仅随身MP3使用——
+ * 关窗=同步销毁音乐（引擎会话销毁、语音管线还原）；未声明的应用零联动。
  */
 const apps = [
   { id: 'terminal', title: '控制台', icon: markRaw(IconDragon), component: markRaw(TerminalApp), defaults: { x: 60, y: 50, w: 760, h: 520 } },
@@ -49,6 +54,7 @@ const apps = [
   { id: 'config', title: 'DT 配置', icon: markRaw(IconAdjustmentsHorizontal), component: markRaw(ConfigApp), defaults: { x: 140, y: 110, w: 860, h: 580 } },
   { id: 'automation', title: '自动化', icon: markRaw(IconRobot), component: markRaw(AutomationApp), defaults: { x: 180, y: 140, w: 720, h: 520 } },
   { id: 'dummy', title: '假人管理', icon: markRaw(IconUsersGroup), component: markRaw(DummyApp), defaults: { x: 220, y: 170, w: 780, h: 480 } },
+  { id: 'mp3', title: '随身MP3', icon: markRaw(IconDeviceAudioTape), component: markRaw(Mp3App), defaults: { x: 300, y: 230, w: 620, h: 560 }, onClose: () => API.mp3Stop() },
   { id: 'log', title: '日志', icon: markRaw(IconListDetails), component: markRaw(LogApp), defaults: { x: 260, y: 200, w: 820, h: 560 } },
 ];
 
@@ -87,6 +93,22 @@ function launchApp(appId) {
   if (!app) return;
   const win = open(appId, { title: app.title, icon: app.icon, defaults: app.defaults });
   win.appDef = markRaw(app);
+}
+
+/**
+ * 关窗联动：应用声明了 onClose 就在窗口销毁前触发（随身MP3=同步销毁音乐）。
+ * 联动失败不阻塞关窗；多实例下关闭任意一个 MP3 窗口都会停掉共享的后端播放会话
+ * （播放器本体是服务端单例，窗口只是遥控器）。
+ */
+function onWindowClose(win) {
+  try { windowFor(win)?.onClose?.(); } catch { /* 联动失败不阻塞关窗 */ }
+  close(win.id);
+}
+
+/** 「关闭所有进程」：逐窗触发 onClose 联动后再整体关闭（与单个红点语义一致）。 */
+function closeAllWindows() {
+  windows.forEach(w => { try { windowFor(w)?.onClose?.(); } catch { /* 同上 */ } });
+  closeAll();
 }
 
 // ---- 桌面 / Dock 右键菜单 ----
@@ -156,7 +178,7 @@ const dockMenuItems = [
   { label: '打开终端', icon: IconTerminal, action: () => { closeMenus(); launchApp('terminal'); } },
   { label: '显示桌面', icon: IconLayoutBottombarCollapse, action: () => { closeMenus(); showDesktop(); } },
   { label: '最小化所有进程', icon: IconArrowBarToDown, action: () => { closeMenus(); minimizeAll(); } },
-  { label: '关闭所有进程', icon: IconSquareX, danger: true, action: () => { closeMenus(); closeAll(); } },
+  { label: '关闭所有进程', icon: IconSquareX, danger: true, action: () => { closeMenus(); closeAllWindows(); } },
   { label: '关于', icon: IconInfoCircle, action: () => { closeMenus(); busyInfo.value = true; } },
 ];
 
@@ -248,7 +270,7 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       v-for="win in windows"
       :key="win.id"
       :win="win"
-      @close="close(win.id)"
+      @close="onWindowClose(win)"
       @focus="focus(win.id)"
       @minimize="minimize(win.id)"
       @toggle-maximize="toggleMaximize(win.id)"

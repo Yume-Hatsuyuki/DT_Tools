@@ -12,7 +12,7 @@ namespace DT_Tools.Commands.PlayAudio
                 _ => "自动识别（http(s)=在线，其余本地）",
             };
 
-        public static string Reply(PlayAudioArgs args)
+        public static string Reply(AudioSourceArgs args)
         {
             string durationText = args.MaxSeconds > 0f ? $"{args.MaxSeconds:0.##} 秒" : "完整播放";
             return $"已点播：{args.Source}\n"

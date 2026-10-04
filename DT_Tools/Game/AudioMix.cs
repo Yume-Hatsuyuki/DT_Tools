@@ -20,6 +20,11 @@ namespace DT_Tools.Game
         internal static string ResolveSource(string raw, AudioPlaybackSource kind, string tag)
         {
             string trimmed = raw?.Trim() ?? "";
+            // 兜底剥首尾引号：命令行分词器（CommandTokenizer）已剥 token 引号，这里
+            // 兜住经配置/API 等非分词通道直入的整串引号路径——"C:\a b.mp3" 原样进
+            // Path.GetFullPath 会抛 Illegal characters。
+            if (trimmed.Length >= 2 && trimmed[0] == '"' && trimmed[trimmed.Length - 1] == '"')
+                trimmed = trimmed.Substring(1, trimmed.Length - 2).Trim();
             if (trimmed.Length == 0)
             {
                 Log.Warn(tag, "音频来源为空");

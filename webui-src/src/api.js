@@ -86,6 +86,24 @@ export const API = {
   dummyRemoveAll: () => post('/api/dummy/remove-all'),
   dummyReady: (name, ready) => post('/api/dummy/ready', { name, ready }),
   dummyPick: (name, characterId) => post('/api/dummy/pick', { name, characterId }),
+
+  // 随身MP3（服务端播放器：本地出声 + 可选混入麦克风；歌单在 BepInEx/config 持久化）
+  mp3State: () => request('/api/mp3/state'),
+  mp3Play: (path) => post('/api/mp3/play', { path }),
+  mp3Index: (index) => post('/api/mp3/index', { index }),
+  mp3Next: (delta = 1) => post('/api/mp3/next', { delta }),
+  mp3Pause: () => post('/api/mp3/pause'),
+  mp3Resume: () => post('/api/mp3/resume'),
+  mp3Stop: () => post('/api/mp3/stop'),
+  mp3Seek: (position) => post('/api/mp3/seek', { position }),
+  mp3Volume: (volume) => post('/api/mp3/volume', { volume }),
+  mp3Mic: (enabled) => post('/api/mp3/mic', { enabled }),
+  mp3Local: (enabled) => post('/api/mp3/local', { enabled }),
+  mp3Mode: (mode) => post('/api/mp3/mode', { mode }),
+  mp3PlaylistAdd: (path) => post('/api/mp3/playlist/add', { path }),
+  mp3PlaylistRemove: (index) => post('/api/mp3/playlist/remove', { index }),
+  mp3PlaylistMove: (from, to) => post('/api/mp3/playlist/move', { from, to }),
+  mp3PlaylistClear: () => post('/api/mp3/playlist/clear'),
 };
 
 /**

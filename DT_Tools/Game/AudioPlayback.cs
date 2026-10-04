@@ -40,14 +40,16 @@ namespace DT_Tools.Game
         /// <summary>
         /// 点播入口：kind 指定来源类型（Local/Online 显式指定，Auto 按前缀识别），
         /// volume 0~1（调用方决定默认值），maxSeconds &lt;=0 表示完整播放。
-        /// 解析失败只告警不打断当前播放（输错来源不应清空正在响的音乐）。
+        /// 解析失败返回 false（原因已在 ResolveSource 内告警），不打断当前播放
+        /// （输错来源不应清空正在响的音乐）。
         /// </summary>
-        public static void Play(string rawSource, AudioPlaybackSource kind, float volume, float maxSeconds)
+        public static bool Play(string rawSource, AudioPlaybackSource kind, float volume, float maxSeconds)
         {
             string uri = ResolveUri(rawSource, kind);
             if (uri == null)
-                return;
+                return false;
             PlayResolved(uri, Mathf.Clamp01(volume), maxSeconds);
+            return true;
         }
 
         /// <summary>停止当前点播（仅本引擎，不触碰阶段音乐与虚拟麦克风）。</summary>
