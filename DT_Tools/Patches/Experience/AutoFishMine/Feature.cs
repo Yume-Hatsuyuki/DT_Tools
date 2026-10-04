@@ -10,7 +10,8 @@ namespace DT_Tools.Patches.Experience.AutoFishMine
     /// </summary>
     [PatchFeature(
         "一键钓鱼挖矿：走近钓鱼点/矿机自动开始，自动完成钓鱼（咬钩提竿+收线连按）与挖矿（滑块连击）小游戏，自动收获。",
-        defaultEnabled: true)]
+        defaultEnabled: false,
+        Author = "花语")]
     public sealed class AutoFishMineFeature
     {
         [Config("自动开始：走近钓鱼点/矿机自动开始，无需按键。")]
