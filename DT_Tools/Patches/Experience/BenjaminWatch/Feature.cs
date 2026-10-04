@@ -12,7 +12,7 @@ namespace DT_Tools.Patches.Experience.BenjaminWatch
     /// </summary>
     [PatchFeature(
         "本杰明观察窗：屏幕角落常驻小窗显示本杰明检测状态（是否部署、附近是否有人、名字），不用按 R 附身查看。",
-        defaultEnabled: true,
+        defaultEnabled: false,
         Author = "花语")]
     public sealed class BenjaminWatchFeature
     {
