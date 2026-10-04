@@ -9,7 +9,8 @@ namespace DT_Tools.Patches.Experience.EmoteReader
     /// </summary>
     [PatchFeature(
         "表情解读机：别人发表情时自动广播解说（带玩家名与表情含义），台词可在配置中修改，全房可见，无需房主。",
-        defaultEnabled: true)]
+        defaultEnabled: false,
+        Author = "花语")]
     public sealed class EmoteReaderFeature
     {
         [Config("解读冷却时间（秒），防止连发表情刷屏，0 表示无冷却。", Min = 0f, Max = 60f)]
