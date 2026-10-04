@@ -155,6 +155,9 @@ Deadly Trick/winhttp.dll
 - **架构图 GitDiagram**：自动生成可交互的系统架构图，点击模块可跳转到对应源码。  
   https://gitdiagram.com/yume-hatsuyuki/dt_tools
 
+- **代码摘要 DeepWiki**：生成可交互的仓库 Wiki / 文档，便于问答和分析。  
+  https://deepwiki.com/yume-hatsuyuki/dt_tools
+
 - **代码摘要 GitIngest**：将整个仓库整理成适合 AI / LLM 阅读的文本，便于问答和分析。  
   https://gitingest.com/yume-hatsuyuki/dt_tools
 
