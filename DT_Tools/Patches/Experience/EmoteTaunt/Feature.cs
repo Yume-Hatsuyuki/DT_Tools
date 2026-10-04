@@ -5,7 +5,8 @@ namespace DT_Tools.Patches.Experience.EmoteTaunt
     /// <summary>表情喊话器：自己发送指定表情时，自动在聊天区发出毒舌台词，全房可见，无需房主与对方装插件。</summary>
     [PatchFeature(
         "表情喊话器：发指定表情时自动在聊天区喊出毒舌台词（走聊天广播，全房可见）。",
-        defaultEnabled: true)]
+        defaultEnabled: false,
+        Author = "花语")]
     public sealed class EmoteTauntFeature
     {
         [Config("喊话冷却时间（秒），防止连发表情刷屏，0 表示无冷却。", Min = 0f, Max = 60f)]
