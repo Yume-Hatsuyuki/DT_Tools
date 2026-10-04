@@ -1,6 +1,6 @@
 using DT_Tools.Core.Attributes;
 
-namespace DT_Tools.Patches.Experience.EmoteReader
+namespace DT_Tools.Patches.Fun.EmoteReader
 {
     /// <summary>
     /// 表情解读机：监听全房玩家的表情，别人发表情时自动在聊天区广播"解说"（带玩家名与表情含义），全房可见。

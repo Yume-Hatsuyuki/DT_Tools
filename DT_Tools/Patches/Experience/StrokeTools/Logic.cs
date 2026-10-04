@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Protocol;
 using UnityEngine;
 
-namespace DT_Tools.Patches.Experience.StrokeRoute
+namespace DT_Tools.Patches.Experience.StrokeTools
 {
     /// <summary>
     /// 路线解读辅助逻辑（独立于补丁类，避免 Harmony 补丁参数静态分析误报）。
@@ -37,7 +37,7 @@ namespace DT_Tools.Patches.Experience.StrokeRoute
         {
             if (!TryGetRoom(world, map, cell, out ERoomType type))
                 return;
-            if (!StrokeRouteFeature.IncludeCorridors && IsCorridorLike(type))
+            if (!StrokeToolsFeature.IncludeCorridors && IsCorridorLike(type))
                 return;
             string name = Managers.GetText(Enum.GetName(typeof(ERoomType), type));
             if (string.IsNullOrEmpty(name))

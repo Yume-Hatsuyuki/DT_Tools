@@ -81,7 +81,9 @@ const logOpen = ref(false);
 </template>
 
 <style scoped>
-.section-detail { display: flex; flex-direction: column; height: 100%; background: var(--surface-0); }
+/* flex 子项排在 .toolbar 之后：必须 flex:1 + min-height:0 占据剩余空间，
+   height:100% 会把工具栏高度叠加成整体溢出，列表底部被窗口永久裁掉（滚动/缩放均不可见）。 */
+.section-detail { display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--surface-0); }
 
 .detail-header {
   display: flex;

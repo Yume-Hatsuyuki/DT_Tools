@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using HarmonyLib;
 using UnityEngine;
 
-namespace DT_Tools.Patches.Experience.EmoteReader
+namespace DT_Tools.Patches.Fun.EmoteReader
 {
     /// <summary>
     /// UseEmotion 后置：与 EmoteTaunt 共用同一方法但方向相反——这里只解读"别人"的表情
