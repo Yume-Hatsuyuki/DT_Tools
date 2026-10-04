@@ -3,12 +3,13 @@ using DT_Tools.Core;
 using HarmonyLib;
 using UnityEngine;
 
-namespace DT_Tools.Patches.Experience.StrokeTimer
+namespace DT_Tools.Patches.Experience.StrokeTools
 {
     /// <summary>
-    /// 钩住 DrawingManager.EndLocalStroke（本地玩家松笔画完时调用，0.1.16b DrawingManager.cs:390）。
+    /// 画线测速补丁：钩住 DrawingManager.EndLocalStroke（本地玩家松笔画完时调用，0.1.16b DrawingManager.cs:390）。
     /// 用 Prefix 在 _active 置空（DrawingManager.cs:397）前读取当前笔画；EndLocalStroke 只由本地画布
     /// （UI_DrawSurface）调用，远端笔画走网络通道不经此方法，天然只测自己画的线。
+    /// 与路线解读（Patch.Route.cs）同钩同方法，各自 Prefix 互不干扰。
     ///
     /// 坐标系换算：Stroke.Points 是平板地图画布（对象88 MapBoundsRect）的局部坐标
     /// （0.1.16b UI_DrawSurface.cs:43 ScreenPointToLocalPointInRectangle），画布与地图显示区域（对象10）重叠，
@@ -30,7 +31,7 @@ namespace DT_Tools.Patches.Experience.StrokeTimer
 
         private static void Prefix(DrawingManager __instance)
         {
-            if (!Engine.Enabled<StrokeTimerFeature>())
+            if (!Engine.Enabled<StrokeToolsFeature>() || !StrokeToolsFeature.Timer)
                 return;
 
             if (Managers.Player == null)
@@ -69,8 +70,8 @@ namespace DT_Tools.Patches.Experience.StrokeTimer
                 prev = cur;
             }
 
-            float runSpeed = Mathf.Max(1f, StrokeTimerFeature.Speed);
-            float walkSpeed = Mathf.Max(1f, StrokeTimerFeature.WalkSpeed);
+            float runSpeed = Mathf.Max(1f, StrokeToolsFeature.Speed);
+            float walkSpeed = Mathf.Max(1f, StrokeToolsFeature.WalkSpeed);
             float seconds = EstimateWithStamina(length, runSpeed, walkSpeed);
             float walkOnlySeconds = length / walkSpeed;
             string message = $"画线测速（跑{(int)runSpeed}走{(int)walkSpeed}）：线长{length:F0}｜估约{seconds:F1}秒｜纯走{walkOnlySeconds:F1}秒";

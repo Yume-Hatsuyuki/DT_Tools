@@ -5,14 +5,14 @@ using HarmonyLib;
 using Protocol;
 using UnityEngine;
 
-namespace DT_Tools.Patches.Experience.StrokeRoute
+namespace DT_Tools.Patches.Experience.StrokeTools
 {
     /// <summary>
-    /// 钩住 DrawingManager.EndLocalStroke（本地玩家松笔画完时调用，0.1.16b DrawingManager.cs:390），
-    /// 与画线测速（StrokeTimer）同钩，各自 Prefix 互不干扰。Prefix 在 _active 置空（DrawingManager.cs:397）前
+    /// 路线解读补丁：钩住 DrawingManager.EndLocalStroke（本地玩家松笔画完时调用，0.1.16b DrawingManager.cs:390），
+    /// 与画线测速（Patch.Timer.cs）同钩，各自 Prefix 互不干扰。Prefix 在 _active 置空（DrawingManager.cs:397）前
     /// 读取笔画；EndLocalStroke 只由本地画布（UI_DrawSurface）调用，远端笔画不经此方法。
     ///
-    /// 坐标系换算与 StrokeTimer 相同：Stroke.Points 是平板画布（对象88 MapBoundsRect）局部坐标，
+    /// 坐标系换算与画线测速相同：Stroke.Points 是平板画布（对象88 MapBoundsRect）局部坐标，
     /// 官方世界→平板比例 = MapData.MinimapScale（0.1.16b UI_TutorialTablet.cs:2157），兜底 0.094
     /// （0.1.16b Util.cs:887 GetMinimapPosition）。世界坐标 = 局部坐标 ÷ scale。
     ///
@@ -31,7 +31,7 @@ namespace DT_Tools.Patches.Experience.StrokeRoute
 
         private static void Prefix(DrawingManager __instance)
         {
-            if (!Engine.Enabled<StrokeRouteFeature>())
+            if (!Engine.Enabled<StrokeToolsFeature>() || !StrokeToolsFeature.Route)
                 return;
 
             if (Managers.Player == null || Managers.Data?.MapData == null)
@@ -47,7 +47,7 @@ namespace DT_Tools.Patches.Experience.StrokeRoute
             if (map.MapOffset == null || Managers.Data.MapArray == null || Managers.Data.MapArray.Count == 0)
                 return;
 
-            // 世界→平板比例（同 StrokeTimer）：优先地图配置 MinimapScale，兜底 0.094。
+            // 世界→平板比例（同画线测速）：优先地图配置 MinimapScale，兜底 0.094。
             float scale = FallbackRatio;
             try
             {
@@ -59,8 +59,8 @@ namespace DT_Tools.Patches.Experience.StrokeRoute
                 // 维持兜底比例
             }
 
-            float cell = Mathf.Max(1f, StrokeRouteFeature.CellSize);
-            float step = Mathf.Max(1f, StrokeRouteFeature.SampleStep);
+            float cell = Mathf.Max(1f, StrokeToolsFeature.CellSize);
+            float step = Mathf.Max(1f, StrokeToolsFeature.SampleStep);
             Vector2 origin = StrokeRouteLogic.GetMapOrigin(map);
 
             // 沿线细分采样：相邻笔画点间按 step 步长补点，识别各自房间。
@@ -84,12 +84,12 @@ namespace DT_Tools.Patches.Experience.StrokeRoute
             if (route.Count < 2)
             {
                 // 排障日志：房间数不足不广播，输出换算参数与起点坐标便于定位（正常画线很少触发）。
-                Log.Info<StrokeRouteFeature>($"路线解读未广播：采样后房间数 {route.Count}，scale={scale:F4} origin=({origin.x:F0},{origin.y:F0})，offset=({map.MapOffset.X},{map.MapOffset.Y})，笔画点 {active.Points.Count} 个，起点局部=({active.Points[0].x:F1},{active.Points[0].y:F1})");
+                Log.Info<StrokeToolsFeature>($"路线解读未广播：采样后房间数 {route.Count}，scale={scale:F4} origin=({origin.x:F0},{origin.y:F0})，offset=({map.MapOffset.X},{map.MapOffset.Y})，笔画点 {active.Points.Count} 个，起点局部=({active.Points[0].x:F1},{active.Points[0].y:F1})");
                 return;
             }
 
             string path = string.Join(" - ", route);
-            Log.Info<StrokeRouteFeature>($"路线解读广播：{path}");
+            Log.Info<StrokeToolsFeature>($"路线解读广播：{path}");
             Managers.Voice?.SendChatMessage($"路线解读：{path}");
         }
     }

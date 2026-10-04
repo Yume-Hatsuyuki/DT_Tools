@@ -2,7 +2,7 @@ using DT_Tools.Core;
 using HarmonyLib;
 using UnityEngine;
 
-namespace DT_Tools.Patches.Experience.EmoteTaunt
+namespace DT_Tools.Patches.Fun.EmoteTaunt
 {
     /// <summary>
     /// UseEmotion 后置：只对本地玩家（Managers.Player.MyPlayer）发出的表情触发喊话。

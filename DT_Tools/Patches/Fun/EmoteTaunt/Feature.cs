@@ -1,6 +1,6 @@
 using DT_Tools.Core.Attributes;
 
-namespace DT_Tools.Patches.Experience.EmoteTaunt
+namespace DT_Tools.Patches.Fun.EmoteTaunt
 {
     /// <summary>表情喊话器：自己发送指定表情时，自动在聊天区发出毒舌台词，全房可见，无需房主与对方装插件。</summary>
     [PatchFeature(
