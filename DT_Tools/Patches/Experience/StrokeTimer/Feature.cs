@@ -3,7 +3,7 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Patches.Experience.StrokeTimer
 {
     /// <summary>
-    /// 画线测速：用画笔（庭审平板）在地图上画完一条线，松开后按「耐力约束下的移动模型」折算所需时间。
+    /// 画线测速：用画笔（庭审平板）在地图上画完一条线，松开后按实测校准的「跑走各半」均速折算所需时间。
     /// 线长 = Stroke.Points（MapBoundsRect 局部坐标）换算到世界坐标后的折线总长
     /// （0.1.16b UI_GameTablet.cs:924 InitConstMap(9184,7235)，官方比例 Util.cs:887 GetMinimapPosition）。
     /// 时间模型（按实测校准）：实测线长 3843 单位跑约 6 秒 → 实际平均速度 ≈ 640 ≈ (奔跑 728 + 走路 560)/2。
@@ -15,8 +15,9 @@ namespace DT_Tools.Patches.Experience.StrokeTimer
     /// 结果经聊天广播（Managers.Voice.SendChatMessage）显示，无需房主与对方装插件。
     /// </summary>
     [PatchFeature(
-        "画线测速：用画笔在地图上画一条线，松开后按耐力模型（跑满耐力→走路恢复→循环）折算所需时间并广播，全房可见。",
+        "画线测速：用画笔在地图上画一条线，松开后按实测校准的跑走均速折算所需时间并广播，全房可见。",
         defaultEnabled: false,
+        side: FeatureSide.Client,
         Author = "花语")]
     public sealed class StrokeTimerFeature
     {
