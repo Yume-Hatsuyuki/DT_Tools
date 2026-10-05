@@ -141,34 +141,49 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>Chair.Interact（0.1.16b Chair.cs）：Lobby 阶段且 CafeSit=true 时改走本地坐（不发送 C_INTERACT_CHAIR）。</summary>
+        /// <summary>Chair.Interact（0.1.16b Chair.cs）：Lobby 阶段且 CafeSit=true 时改走本地坐
+        /// （不发送 C_INTERACT_CHAIR）；对局内（非 Lobby）本地立即坐（GameSit），
+        /// 同时照发原版 C_INTERACT_CHAIR（房主装了则全房同步，没装也不影响本地坐）。</summary>
         [HarmonyPatch(typeof(Chair), "Interact")]
         internal static class ChairLocalSitPatch
         {
             private static bool Prefix(Chair __instance)
             {
-                if (!LocalSit.Enabled)
+                if (!Engine.Enabled<SitOnChairsFeature>())
                 {
                     return true;
                 }
-                if (Managers.Game == null || Managers.Game.State != EGameState.Lobby)
+                if (Managers.Game == null)
                 {
                     return true;
                 }
-                LocalSit.Toggle(__instance);
-                return false;
+                if (Managers.Game.State == EGameState.Lobby)
+                {
+                    if (LocalSit.Enabled)
+                    {
+                        LocalSit.Toggle(__instance);
+                        return false;
+                    }
+                    return true;
+                }
+                // 对局内（调查/生存等）：本地立即坐/起身，原版网络包照发（return true）
+                if (Managers.Game.State == EGameState.Survive || Managers.Game.State == EGameState.Detective)
+                {
+                    GameSit.Toggle(__instance);
+                }
+                return true;
             }
         }
 
         // ===== 4. 本地坐姿时暂停玩家动画/移动 =====
 
-        /// <summary>Player.UpdateAnimation（0.1.16b Player.cs）：本地坐着时跳过玩家动画更新。</summary>
+        /// <summary>Player.UpdateAnimation（0.1.16b Player.cs）：本地坐着（等待室/对局内）时跳过玩家动画更新。</summary>
         [HarmonyPatch(typeof(Player), "UpdateAnimation")]
         internal static class LocalSitAnimPatch
         {
             private static bool Prefix()
             {
-                return !LocalSit.IsSitting;
+                return !LocalSit.IsSitting && !GameSit.IsSitting;
             }
         }
 
@@ -178,12 +193,17 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
         {
             private static bool Prefix()
             {
-                if (!LocalSit.IsSitting)
+                if (LocalSit.IsSitting)
                 {
-                    return true;
+                    LocalSit.Hold();
+                    return false;
                 }
-                LocalSit.Hold();
-                return false;
+                if (GameSit.IsSitting)
+                {
+                    GameSit.Hold();
+                    return false;
+                }
+                return true;
             }
         }
 
@@ -450,6 +470,129 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             private static void Postfix()
             {
                 ChairFurnitureOnTopPatch.EnsureRestored();
+            }
+        }
+
+        // ===== 7. 坐姿同步接收（SyncSitting）=====
+
+        /// <summary>接收端：聊天接收入口识别坐姿指令（零宽前缀）→ 拦截聊天显示 +
+        /// 远端椅子换角色坐姿形象 + 隐藏该玩家模型；起身时还原。无需房主，装本 mod 即可互见。</summary>
+        [HarmonyPatch(typeof(VoiceManager), "EnqueueNormalChat")]
+        internal static class SitSyncReceivePatch
+        {
+            [HarmonyPriority(Priority.First)]
+            private static bool Prefix(int playerId, string message, bool isDeadByHost)
+            {
+                try
+                {
+                    if (!Engine.Enabled<SitOnChairsFeature>() || !SitOnChairsFeature.SyncSitting)
+                    {
+                        return true;
+                    }
+                    if (string.IsNullOrEmpty(message) || !message.StartsWith(GameSit.SyncPrefix) || !message.EndsWith(GameSit.SyncSuffix))
+                    {
+                        return true;
+                    }
+
+                    // 自己发的广播：本地已在显示，只拦截聊天显示
+                    if (Managers.Player != null && playerId == Managers.Player.MyPlayerID)
+                    {
+                        return false;
+                    }
+
+                    string body = message.Substring(GameSit.SyncPrefix.Length, message.Length - GameSit.SyncPrefix.Length - GameSit.SyncSuffix.Length);
+                    if (body.StartsWith("SIT|"))
+                    {
+                        string[] parts = body.Substring(4).Split('|');
+                        if (parts.Length >= 2 && int.TryParse(parts[0], out int chairId) && int.TryParse(parts[1], out int charId))
+                        {
+                            ApplyRemoteSit(playerId, chairId, charId);
+                        }
+                    }
+                    else if (body.StartsWith("RISE|"))
+                    {
+                        if (int.TryParse(body.Substring(5), out int chairId))
+                        {
+                            ApplyRemoteRise(playerId, chairId);
+                        }
+                    }
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn<SitOnChairsFeature>("[可坐椅子] 坐姿同步接收异常：" + ex.Message);
+                    return false;
+                }
+            }
+
+            /// <summary>远端玩家坐下：隐藏其模型 + 把椅子 Spine 换成该角色坐姿形象。</summary>
+            private static void ApplyRemoteSit(int playerId, int chairId, int charId)
+            {
+                Chair chair = FindChair(chairId);
+                Player p = FindPlayer(playerId);
+                if (p != null)
+                {
+                    SetPlayerStealth(p, true);
+                }
+                if (chair != null)
+                {
+                    chair.ChangeCharacter(charId, isInit: false);
+                }
+            }
+
+            /// <summary>远端玩家起身：显示其模型 + 椅子形象还原（Spine 转透明）。</summary>
+            private static void ApplyRemoteRise(int playerId, int chairId)
+            {
+                Chair chair = FindChair(chairId);
+                Player p = FindPlayer(playerId);
+                if (p != null)
+                {
+                    SetPlayerStealth(p, false);
+                }
+                if (chair != null)
+                {
+                    chair.ChangeCharacter(0, isInit: true);
+                }
+            }
+
+            /// <summary>按设备 ID 找对局内的椅子（装本 mod 的客户端注入同一份椅子数据，DeviceId 一致）。</summary>
+            private static Chair FindChair(int chairId)
+            {
+                if (Managers.Device?.Cache == null)
+                {
+                    return null;
+                }
+                foreach (DeviceBase device in Managers.Device.Cache.Values)
+                {
+                    if (device is Chair chair && chair.Info != null && chair.Info.DeviceId == chairId)
+                    {
+                        return chair;
+                    }
+                }
+                return null;
+            }
+
+            private static Player FindPlayer(int playerId)
+            {
+                if (Managers.Player?.Players == null)
+                {
+                    return null;
+                }
+                return Managers.Player.Players.TryGetValue(playerId, out Player p) ? p : null;
+            }
+
+            /// <summary>远端玩家模型隐藏/显示：PlayerStealth 把模型 Spine/Sprite 全部变透明（原版 Sit 状态的同款表现）。</summary>
+            private static void SetPlayerStealth(Player p, bool stealth)
+            {
+                try
+                {
+                    global::System.Reflection.MethodInfo m = AccessTools.Method(typeof(Player), "PlayerStealth");
+                    m?.Invoke(p, new object[] { stealth });
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn<SitOnChairsFeature>("[可坐椅子] 远端玩家模型" + (stealth ? "隐藏" : "显示") + "失败：" + ex.Message);
+                }
             }
         }
     }
