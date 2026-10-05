@@ -18,6 +18,10 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
     /// </summary>
     internal static class GameSit
     {
+        /// <summary>坐姿同步广播前缀（零宽字符 + 左方括号，与表情动作同步的前缀区分开）。</summary>
+        internal const string SyncPrefix = "\u200B[";
+        internal const string SyncSuffix = "]";
+
         private static Chair _chair;
 
         private static Vector3 _savedPos;
@@ -54,6 +58,8 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 int charId = FindMyCharacterId(my);
                 chair.ChangeCharacter(charId, isInit: false);
                 Log.Info<SitOnChairsFeature>($"[可坐椅子] 对局内坐下 @({chair.transform.position.x:F0},{chair.transform.position.y:F0}) charId={charId}");
+                // 3) 按配置广播坐姿（装本 mod 的玩家互见，无需房主）
+                BroadcastSit(chair, charId);
             }
             catch (Exception ex)
             {
@@ -73,6 +79,8 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             _chair = null;
             try
             {
+                // 0) 按配置广播起身（装本 mod 的玩家互见还原）
+                BroadcastRise(chair);
                 // 1) 椅子形象还原（Spine 转透明）
                 chair.ChangeCharacter(0, isInit: true);
                 // 2) 玩家模型重新显示，回到坐下前位置
@@ -131,6 +139,40 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 Log.Error<SitOnChairsFeature>("[可坐椅子] 查找角色ID失败：" + ex.Message);
             }
             return 0;
+        }
+
+        /// <summary>广播坐下：零宽前缀指令，房主当作普通聊天原样转发全房，装本 mod 的客户端解析。</summary>
+        private static void BroadcastSit(Chair chair, int charId)
+        {
+            if (!SitOnChairsFeature.SyncSitting)
+            {
+                return;
+            }
+            try
+            {
+                Managers.Voice?.SendChatMessage(SyncPrefix + "SIT|" + chair.Info.DeviceId + "|" + charId + SyncSuffix);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn<SitOnChairsFeature>("[可坐椅子] 坐姿同步广播(坐下)失败：" + ex.Message);
+            }
+        }
+
+        /// <summary>广播起身：装本 mod 的客户端据此还原椅子形象并显示该玩家模型。</summary>
+        private static void BroadcastRise(Chair chair)
+        {
+            if (!SitOnChairsFeature.SyncSitting)
+            {
+                return;
+            }
+            try
+            {
+                Managers.Voice?.SendChatMessage(SyncPrefix + "RISE|" + chair.Info.DeviceId + SyncSuffix);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn<SitOnChairsFeature>("[可坐椅子] 坐姿同步广播(起身)失败：" + ex.Message);
+            }
         }
 
         private static void TryRestore(MyPlayer my, Chair chair)

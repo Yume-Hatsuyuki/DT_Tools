@@ -12,7 +12,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
     /// 关闭本功能后回到完全原版地图（数据不注入、椅子条目消失）。
     /// </summary>
     [PatchFeature(
-        "可坐椅子：花园长椅×2、炼金室沙发×1 可坐下/起身（全房同步）；等待室咖啡椅默认仅装饰，可开启本地坐。按 E 交互，复用游戏自带坐姿动画。",
+        "可坐椅子：花园长椅×2、炼金室沙发×1 可坐下/起身（房主装了即全房同步）；等待室咖啡椅默认仅装饰，可开启本地坐；可选开启坐姿同步（SyncSitting）——装本 mod 的玩家互见坐姿，无需房主。按 E 交互，复用游戏自带坐姿动画。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         Author = "花语")]
@@ -35,6 +35,9 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
 
         [Config("等待室咖啡椅坐姿纵向微调（世界单位，仅 CafeSit=true 时有用）。")]
         public static float CafeYOffset = 0f;
+
+        [Config("对局坐姿同步：装本 mod 的玩家之间互见坐下/起身（经聊天广播通道，无需房主、无需其他玩家装 mod）。房主装了仍走原生网络同步。")]
+        public static bool SyncSitting = false;
 
         [Config("调试日志：周期性输出玩家坐标/状态、每把椅子的坐标/距离/是否在交互框内/渲染层级。建议调好后关闭。")]
         public static bool Debug = false;
