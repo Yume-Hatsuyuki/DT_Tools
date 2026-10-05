@@ -1,0 +1,1384 @@
+{
+  "devices": [
+    {
+      "DataId": 10001,
+      "Name": "DoorGorgeous",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 3360.0,
+        "Y": 2236.0
+      },
+      "Positions": [
+        {
+          "X": 3360.0,
+          "Y": 2600.0
+        },
+        {
+          "X": 3360.0,
+          "Y": 2205.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 172.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorGorgeous"
+    },
+    {
+      "DataId": 10002,
+      "Name": "DoorMachine",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 408.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 1,
+      "Pos": {
+        "X": 4480.0,
+        "Y": 2681.0
+      },
+      "Positions": [
+        {
+          "X": 4480.0,
+          "Y": 3046.0
+        },
+        {
+          "X": 4480.0,
+          "Y": 2651.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorMachine"
+    },
+    {
+      "DataId": 10003,
+      "Name": "DoorAutoV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 1,
+      "Pos": {
+        "X": 5152.0,
+        "Y": 1879.0
+      },
+      "Positions": [
+        {
+          "X": 5222.0,
+          "Y": 2016.0
+        },
+        {
+          "X": 5082.0,
+          "Y": 2016.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorAutoV"
+    },
+    {
+      "DataId": 10004,
+      "Name": "DoorCleanHL",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 6272.0,
+        "Y": 2681.0
+      },
+      "Positions": [
+        {
+          "X": 6272.0,
+          "Y": 3045.0
+        },
+        {
+          "X": 6272.0,
+          "Y": 2650.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorCleanHL"
+    },
+    {
+      "DataId": 10005,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 5152.0,
+        "Y": 3335.0
+      },
+      "Positions": [
+        {
+          "X": 5222.0,
+          "Y": 3471.0
+        },
+        {
+          "X": 5082.0,
+          "Y": 3471.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10006,
+      "Name": "DoorCleanHL",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 8736.0,
+        "Y": 2233.0
+      },
+      "Positions": [
+        {
+          "X": 8736.0,
+          "Y": 2597.0
+        },
+        {
+          "X": 8736.0,
+          "Y": 2202.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorCleanHL"
+    },
+    {
+      "DataId": 10007,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 6496.0,
+        "Y": 1879.0
+      },
+      "Positions": [
+        {
+          "X": 6566.0,
+          "Y": 2015.0
+        },
+        {
+          "X": 6426.0,
+          "Y": 2015.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10008,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 8960.0,
+        "Y": 1767.0
+      },
+      "Positions": [
+        {
+          "X": 9030.0,
+          "Y": 1903.0
+        },
+        {
+          "X": 8890.0,
+          "Y": 1903.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10009,
+      "Name": "DoorAutoV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 2,
+      "Pos": {
+        "X": 6496.0,
+        "Y": 3895.0
+      },
+      "Positions": [
+        {
+          "X": 6566.0,
+          "Y": 4032.0
+        },
+        {
+          "X": 6426.0,
+          "Y": 4032.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorAutoV"
+    },
+    {
+      "DataId": 10010,
+      "Name": "DoorAutoV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 3,
+      "Pos": {
+        "X": 7168.0,
+        "Y": 2551.0
+      },
+      "Positions": [
+        {
+          "X": 7238.0,
+          "Y": 2688.0
+        },
+        {
+          "X": 7098.0,
+          "Y": 2688.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorAutoV"
+    },
+    {
+      "DataId": 10011,
+      "Name": "DoorCleanHR",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 8064.0,
+        "Y": 3577.0
+      },
+      "Positions": [
+        {
+          "X": 8064.0,
+          "Y": 3941.0
+        },
+        {
+          "X": 8064.0,
+          "Y": 3546.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorCleanHR"
+    },
+    {
+      "DataId": 10012,
+      "Name": "DoorCleanHR",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 7168.0,
+        "Y": 5145.0
+      },
+      "Positions": [
+        {
+          "X": 7168.0,
+          "Y": 5509.0
+        },
+        {
+          "X": 7168.0,
+          "Y": 5114.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorCleanHR"
+    },
+    {
+      "DataId": 10013,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 8288.0,
+        "Y": 2663.0
+      },
+      "Positions": [
+        {
+          "X": 8358.0,
+          "Y": 2799.0
+        },
+        {
+          "X": 8218.0,
+          "Y": 2799.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10014,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 9632.0,
+        "Y": 2663.0
+      },
+      "Positions": [
+        {
+          "X": 9702.0,
+          "Y": 2799.0
+        },
+        {
+          "X": 9562.0,
+          "Y": 2799.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10015,
+      "Name": "DoorGorgeousVL",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": 22.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 2912.0,
+        "Y": 4094.0
+      },
+      "Positions": [
+        {
+          "X": 2982.0,
+          "Y": 4255.0
+        },
+        {
+          "X": 2842.0,
+          "Y": 4255.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 274.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorGorgeousVL"
+    },
+    {
+      "DataId": 10016,
+      "Name": "DoorClassroom",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 2240.0,
+        "Y": 5369.0
+      },
+      "Positions": [
+        {
+          "X": 2240.0,
+          "Y": 5733.0
+        },
+        {
+          "X": 2240.0,
+          "Y": 5338.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorClassroom"
+    },
+    {
+      "DataId": 10017,
+      "Name": "DoorClassroom",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 3136.0,
+        "Y": 4473.0
+      },
+      "Positions": [
+        {
+          "X": 3136.0,
+          "Y": 4837.0
+        },
+        {
+          "X": 3136.0,
+          "Y": 4442.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorClassroom"
+    },
+    {
+      "DataId": 10018,
+      "Name": "DoorClassroom",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 3136.0,
+        "Y": 6265.0
+      },
+      "Positions": [
+        {
+          "X": 3136.0,
+          "Y": 6629.0
+        },
+        {
+          "X": 3136.0,
+          "Y": 6234.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorClassroom"
+    },
+    {
+      "DataId": 10019,
+      "Name": "DoorSteel",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 4256.0,
+        "Y": 4473.0
+      },
+      "Positions": [
+        {
+          "X": 4256.0,
+          "Y": 4837.0
+        },
+        {
+          "X": 4256.0,
+          "Y": 4442.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorSteel"
+    },
+    {
+      "DataId": 10020,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 3360.0,
+        "Y": 3783.0
+      },
+      "Positions": [
+        {
+          "X": 3430.0,
+          "Y": 3919.0
+        },
+        {
+          "X": 3290.0,
+          "Y": 3919.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10021,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 4704.0,
+        "Y": 4119.0
+      },
+      "Positions": [
+        {
+          "X": 4774.0,
+          "Y": 4255.0
+        },
+        {
+          "X": 4634.0,
+          "Y": 4255.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10022,
+      "Name": "DoorCleanHR",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 4928.0,
+        "Y": 3801.0
+      },
+      "Positions": [
+        {
+          "X": 4928.0,
+          "Y": 4165.0
+        },
+        {
+          "X": 4928.0,
+          "Y": 3770.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorCleanHR"
+    },
+    {
+      "DataId": 10023,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 3808.0,
+        "Y": 2999.0
+      },
+      "Positions": [
+        {
+          "X": 3878.0,
+          "Y": 3135.0
+        },
+        {
+          "X": 3738.0,
+          "Y": 3135.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10024,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 2016.0,
+        "Y": 6695.0
+      },
+      "Positions": [
+        {
+          "X": 2086.0,
+          "Y": 6831.0
+        },
+        {
+          "X": 1946.0,
+          "Y": 6831.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10025,
+      "Name": "DoorCleanHL",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -210.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 420.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 4256.0,
+        "Y": 6265.0
+      },
+      "Positions": [
+        {
+          "X": 4256.0,
+          "Y": 6629.0
+        },
+        {
+          "X": 4256.0,
+          "Y": 6234.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 175.0
+        },
+        "Size": {
+          "X": 420.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorCleanHL"
+    },
+    {
+      "DataId": 10026,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 2464.0,
+        "Y": 7255.0
+      },
+      "Positions": [
+        {
+          "X": 2534.0,
+          "Y": 7391.0
+        },
+        {
+          "X": 2394.0,
+          "Y": 7391.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10027,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 4480.0,
+        "Y": 7255.0
+      },
+      "Positions": [
+        {
+          "X": 4550.0,
+          "Y": 7391.0
+        },
+        {
+          "X": 4410.0,
+          "Y": 7391.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10028,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 3808.0,
+        "Y": 6583.0
+      },
+      "Positions": [
+        {
+          "X": 3878.0,
+          "Y": 6719.0
+        },
+        {
+          "X": 3738.0,
+          "Y": 6719.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    },
+    {
+      "DataId": 10029,
+      "Name": "DoorSideSteel",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -196.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 196.0,
+            "Y": 470.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 6258.0,
+        "Y": 7836.0
+      },
+      "Positions": [
+        {
+          "X": 6258.0,
+          "Y": 8200.0
+        },
+        {
+          "X": 6258.0,
+          "Y": 7805.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": -98.0,
+          "Y": 172.0
+        },
+        "Size": {
+          "X": 196.0,
+          "Y": 336.0
+        }
+      },
+      "PrefabName": "DoorSideSteel"
+    },
+    {
+      "DataId": 10030,
+      "Name": "DoorCleanV",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -3.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 252.0
+          }
+        }
+      ],
+      "DeviceType": 0,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Type": 0,
+      "Pos": {
+        "X": 4928.0,
+        "Y": 7479.0
+      },
+      "Positions": [
+        {
+          "X": 4998.0,
+          "Y": 7615.0
+        },
+        {
+          "X": 4858.0,
+          "Y": 7615.0
+        }
+      ],
+      "Collider": {
+        "Pos": {
+          "X": 0.0,
+          "Y": 249.0
+        },
+        "Size": {
+          "X": 28.0,
+          "Y": 448.0
+        }
+      },
+      "PrefabName": "DoorCleanV"
+    }
+  ]
+}
