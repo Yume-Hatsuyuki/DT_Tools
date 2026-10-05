@@ -141,34 +141,49 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>Chair.Interact（0.1.16b Chair.cs）：Lobby 阶段且 CafeSit=true 时改走本地坐（不发送 C_INTERACT_CHAIR）。</summary>
+        /// <summary>Chair.Interact（0.1.16b Chair.cs）：Lobby 阶段且 CafeSit=true 时改走本地坐
+        /// （不发送 C_INTERACT_CHAIR）；对局内（非 Lobby）本地立即坐（GameSit），
+        /// 同时照发原版 C_INTERACT_CHAIR（房主装了则全房同步，没装也不影响本地坐）。</summary>
         [HarmonyPatch(typeof(Chair), "Interact")]
         internal static class ChairLocalSitPatch
         {
             private static bool Prefix(Chair __instance)
             {
-                if (!LocalSit.Enabled)
+                if (!Engine.Enabled<SitOnChairsFeature>())
                 {
                     return true;
                 }
-                if (Managers.Game == null || Managers.Game.State != EGameState.Lobby)
+                if (Managers.Game == null)
                 {
                     return true;
                 }
-                LocalSit.Toggle(__instance);
-                return false;
+                if (Managers.Game.State == EGameState.Lobby)
+                {
+                    if (LocalSit.Enabled)
+                    {
+                        LocalSit.Toggle(__instance);
+                        return false;
+                    }
+                    return true;
+                }
+                // 对局内（调查/生存等）：本地立即坐/起身，原版网络包照发（return true）
+                if (Managers.Game.State == EGameState.Survive || Managers.Game.State == EGameState.Detective)
+                {
+                    GameSit.Toggle(__instance);
+                }
+                return true;
             }
         }
 
         // ===== 4. 本地坐姿时暂停玩家动画/移动 =====
 
-        /// <summary>Player.UpdateAnimation（0.1.16b Player.cs）：本地坐着时跳过玩家动画更新。</summary>
+        /// <summary>Player.UpdateAnimation（0.1.16b Player.cs）：本地坐着（等待室/对局内）时跳过玩家动画更新。</summary>
         [HarmonyPatch(typeof(Player), "UpdateAnimation")]
         internal static class LocalSitAnimPatch
         {
             private static bool Prefix()
             {
-                return !LocalSit.IsSitting;
+                return !LocalSit.IsSitting && !GameSit.IsSitting;
             }
         }
 
@@ -178,12 +193,17 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
         {
             private static bool Prefix()
             {
-                if (!LocalSit.IsSitting)
+                if (LocalSit.IsSitting)
                 {
-                    return true;
+                    LocalSit.Hold();
+                    return false;
                 }
-                LocalSit.Hold();
-                return false;
+                if (GameSit.IsSitting)
+                {
+                    GameSit.Hold();
+                    return false;
+                }
+                return true;
             }
         }
 
