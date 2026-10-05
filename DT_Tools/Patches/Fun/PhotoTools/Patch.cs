@@ -1,6 +1,7 @@
 using System;
 using DT_Tools.Core;
 using HarmonyLib;
+using Protocol;
 using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.PhotoTools
@@ -79,6 +80,91 @@ namespace DT_Tools.Patches.Fun.PhotoTools
                 catch (Exception ex)
                 {
                     Log.Warn<PhotoToolsFeature>("[拍照工具] 滤镜应用异常：" + ex.Message);
+                }
+            }
+        }
+
+        // ===== 4. 庭审阶段拍照 =====
+
+        /// <summary>
+        /// CanStayInPhotoMode（0.1.16b PhotoManager.cs:224）Postfix：原版要求
+        /// Managers.Game.State == EGameState.Detective 才允许拍照，庭审（Trial）被挡。
+        /// AllowTrialPhoto 开启且处于庭审阶段时，按原版其余条件（存活/非旁观/可控制/
+        /// 非聊天/非表情/非加载/非平板）重新判定，满足则放行。
+        /// </summary>
+        [HarmonyPatch(typeof(PhotoManager), "CanStayInPhotoMode")]
+        internal static class PhotoTrialStayPatch
+        {
+            private static void Postfix(ref bool __result)
+            {
+                try
+                {
+                    if (__result || !Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.AllowTrialPhoto)
+                    {
+                        return;
+                    }
+                    if (Managers.Game == null || Managers.Game.State != EGameState.Trial)
+                    {
+                        return;
+                    }
+                    if (!Managers.Game.IsAlive || Managers.Game.IsSpectator || !Managers.Game.CanControl)
+                    {
+                        return;
+                    }
+                    if (Managers.Game.IsChat || Managers.Game.IsOpenEmote)
+                    {
+                        return;
+                    }
+                    if (Managers.UI == null || Managers.UI.IsLoading || Managers.UI.KeyCount > 0)
+                    {
+                        return;
+                    }
+                    if (Managers.Tablet?.Tablet != null && Managers.Tablet.Tablet.IsOpen)
+                    {
+                        return;
+                    }
+                    __result = true;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn<PhotoToolsFeature>("[拍照工具] 庭审拍照判定异常：" + ex.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Managers.Update（0.1.16b Managers.cs:325）Postfix：庭审阶段按 TrialPhotoKey
+        /// 直接进入拍照模式（庭审界面可能挡住拍照按钮，快捷键兜底），
+        /// 与按钮入口同一检查（CanEnterPhotoMode）。
+        /// </summary>
+        [HarmonyPatch(typeof(Managers), "Update")]
+        internal static class PhotoTrialKeyPatch
+        {
+            private static void Postfix()
+            {
+                try
+                {
+                    if (!Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.AllowTrialPhoto
+                        || PhotoToolsFeature.TrialPhotoKey == KeyCode.None)
+                    {
+                        return;
+                    }
+                    if (Managers.Game == null || Managers.Game.State != EGameState.Trial)
+                    {
+                        return;
+                    }
+                    if (Managers.Photo == null || Managers.Photo.IsPhotoMode || !Input.GetKeyDown(PhotoToolsFeature.TrialPhotoKey))
+                    {
+                        return;
+                    }
+                    if (Managers.Photo.CanEnterPhotoMode())
+                    {
+                        Managers.Photo.SetPhotoMode(true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn<PhotoToolsFeature>("[拍照工具] 庭审拍照快捷键异常：" + ex.Message);
                 }
             }
         }

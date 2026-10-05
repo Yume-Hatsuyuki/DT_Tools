@@ -1,4 +1,5 @@
 using DT_Tools.Core.Attributes;
+using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.PhotoTools
 {
@@ -20,6 +21,8 @@ namespace DT_Tools.Patches.Fun.PhotoTools
     /// 2. Filter：拍照时对截图应用滤镜（黑白/复古/冷色/反转/拍立得边框/暗角），
     ///    处理发生在本地 JPEG 编码前，发送给全房的照片就是 P 完的效果，
     ///    接收方无需安装本 mod（照片是游戏原生 C_CHAT_PHOTO 全房广播）。
+    /// 3. AllowTrialPhoto + TrialPhotoKey：庭审阶段也能进入拍照模式（原版仅调查阶段可拍），
+    ///    并支持用快捷键直接进入（庭审界面可能挡住拍照按钮）。
     /// 发送防刷限速（约 5 秒一张）与单张 160KB 上限为游戏原生，保留不变。
     /// </summary>
     [PatchFeature(
@@ -34,5 +37,11 @@ namespace DT_Tools.Patches.Fun.PhotoTools
 
         [Config("照片滤镜：None=原版；BlackWhite=黑白；Retro=复古泛黄；Cool=冷色；Invert=反转负片；Polaroid=拍立得白边框；Vignette=暗角。")]
         public static PhotoFilterType Filter = PhotoFilterType.None;
+
+        [Config("允许庭审阶段进入拍照模式（原版仅调查阶段可拍）。")]
+        public static bool AllowTrialPhoto = false;
+
+        [Config("庭审阶段拍照快捷键（庭审界面可能挡住拍照按钮时用这个直接进拍照）。设为 None 关闭。")]
+        public static KeyCode TrialPhotoKey = KeyCode.None;
     }
 }
