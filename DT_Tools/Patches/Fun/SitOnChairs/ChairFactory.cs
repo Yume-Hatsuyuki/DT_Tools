@@ -220,7 +220,14 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             try
             {
                 string name = chair?.Data?.Name;
-                return !string.IsNullOrEmpty(name) && name.IndexOf("Sofa", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (string.IsNullOrEmpty(name))
+                {
+                    return false;
+                }
+                // 数据名可能是中文（如"炼金室沙发"）或英文（"Sofa"/"Couch"），都算沙发
+                return name.IndexOf("Sofa", StringComparison.OrdinalIgnoreCase) >= 0
+                    || name.IndexOf("Couch", StringComparison.OrdinalIgnoreCase) >= 0
+                    || name.IndexOf("沙发", StringComparison.Ordinal) >= 0;
             }
             catch
             {
