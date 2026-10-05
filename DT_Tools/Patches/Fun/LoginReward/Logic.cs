@@ -24,7 +24,7 @@ namespace DT_Tools.Patches.Fun.LoginReward
         /// 写点 :353（入口清 0）与 :356（grant 回调写终值）。游戏升级后按行号复核；
         /// 仅写需要反射（读走公开属性），字段缺失时跳过标记并告警，行为退回旧版。
         /// </summary>
-        // 注意:Patches 命名空间链遮蔽全局 System(工作守则 §5.3),须 global:: 全限定
+        // 注意:Patches 命名空间链遮蔽全局 System(AGENTS.md §9 约束 3),须 global:: 全限定
         private static readonly global::System.Reflection.FieldInfo RevealEarnedField =
             AccessTools.Field(typeof(InventoryManager), "_revealEarned");
         /// <summary>

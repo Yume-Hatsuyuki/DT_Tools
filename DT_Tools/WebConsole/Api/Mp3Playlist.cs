@@ -8,7 +8,7 @@ namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
     /// 随身MP3 歌单与播放偏好持久化：BepInEx/config/DT_Tools_Mp3Playlist.json。
-    /// 数据不是配置（无段/键结构，AGENTS §5 的零字符串约定只约束 [Config] 体系），
+    /// 数据不是配置（无段/键结构，AGENTS.md §9 约束 5 的零字符串约定只约束 [Config] 体系），
     /// 走独立 JSON 文件（Core.Json，Newtonsoft）。所有读写只在 Unity 主线程
     /// （Mp3Api 全部端点经 RunOnMain），无需加锁；每次变更即落盘（文件很小）。
     /// 播放即入歌单（按路径去重）；文件损坏/缺失即重建空歌单。

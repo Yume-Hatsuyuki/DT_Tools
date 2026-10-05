@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>DT_Tools</AssemblyName>
     <Description>Deadly Trick Plugin</Description>
-    <Version>1.0.8.6</Version>
+    <Version>1.0.8.9</Version>
     <LangVersion>latest</LangVersion>
     <TargetName>$(AssemblyName)_$(Configuration)_$(Version)</TargetName>
     <!-- 相对 csproj 所在目录，上一级的 libs -->
@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <!--
-    前端增量构建（AGENTS.md §2）：源码晚于产物时经 npm 重建，产物直出 DT_Tools/WebUI，
+    前端增量构建（AGENTS.md §3）：源码晚于产物时经 npm 重建，产物直出 DT_Tools/WebUI，
     再随下方 None 项拷进输出目录。SkipWebUIBuild=true 整体跳过（CI 已显式构建前端、
     或多代理并行作业禁止构建时使用）。需要 Node/npm 环境。
   -->

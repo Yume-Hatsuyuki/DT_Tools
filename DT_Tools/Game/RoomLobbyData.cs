@@ -7,7 +7,7 @@ namespace DT_Tools.Game
 {
     /// <summary>
     /// Steam 大厅自定义数据（房间码/房间名）骨架：CustomRoomCode / CustomRoomName
-    /// 两个功能域同构的「配置热改订阅 + 房主写 Lobby」收口于此（§3 ≥2 处才上浮）。
+    /// 两个功能域同构的「配置热改订阅 + 房主写 Lobby」收口于此（AGENTS.md §4：≥2 处才上浮）。
     /// 清洗规则各域不同（码=A–Z/0–9 共 7 位、名=去富文本后 64 字符），留在各自 Logic。
     /// 统一门闩语义：功能未开启时静默返回 false（原先两域一个静默、一个打日志，不一致）。
     /// </summary>

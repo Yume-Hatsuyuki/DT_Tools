@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 namespace DT_Tools.WebConsole
 {
     /// <summary>
-    /// WebConsole API 层内共享的请求体解析工具（§3 ≥2 处才上浮；仅本层使用）：
+    /// WebConsole API 层内共享的请求体解析工具（AGENTS.md §4：≥2 处才上浮；仅本层使用）：
     /// ParseBody（ConfigApi/AutomationApi/DummyApi 三份同构）、ReadBool（AutomationApi/DummyApi 两份）、
     /// NormalizeRaw（ConfigApi 的 JToken → 配置原始字符串搬移于此）。
     /// Core/ConfigService 另有一份 object 版 NormalizeRaw（与导出格式互逆、输入类型不同，
