@@ -58,12 +58,24 @@ namespace DT_Tools.WebConsole
             {
                 if (timedOut)
                     Log.Warn("WebConsole", "主线程动作在超时回包后仍被延迟执行（如 /api/dummy/create 的写操作可能已实际生效）——结果与用户预期可能背离。");
+                // 延迟完成通道：work 返回占位结果时由回调稍后回填（同在主线程的异步收尾）
+                DeferredCompletion.Begin(r =>
+                {
+                    result = r;
+                    if (timedOut)
+                        Log.Warn("WebConsole", "延迟完成的结果在超时回包后到达，已丢弃。");
+                    try { done.Set(); }
+                    catch (ObjectDisposedException) { /* 超时路径已回包 Fail("timeout") */ }
+                });
                 try { result = work(); }
                 catch (Exception ex)
                 {
                     Log.Exception("WebConsole", ex, "主线程动作执行异常");
                     result = CommandResult.Fail("action error");
                 }
+                finally { DeferredCompletion.End(); }
+                if (result != null && result.IsDeferred)
+                    return; // 占位结果：等待方由上面的回调在异步收尾时唤醒
                 // 竞态防护同 Complete()：HTTP 线程超时后已 Dispose，晚到的 Set() 必须吞掉
                 try { done.Set(); }
                 catch (ObjectDisposedException) { /* 超时路径已回包 Fail("timeout") */ }
@@ -170,6 +182,10 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/dummy/pick", Api.DummyApi.HandlePick);
             router.Add("GET", "/api/meta", Api.SystemApi.HandleMeta);
             router.Add("POST", "/api/game/exit", Api.SystemApi.HandleExit);
+
+            // MCP 桥接子域（挂件状态面 + /mcp 兜底门）：MCP 另有独立监听（McpBridge，
+            // 独立 Port/ListenIp/Password），两条路由面共用同一套处理器
+            Mcp.McpServer.RegisterRoutes(router);
         }
 
         private void OnDestroy()
@@ -238,33 +254,11 @@ namespace DT_Tools.WebConsole
             string session = pending.Session;
             if (!string.IsNullOrEmpty(session))
                 CommandSession.Begin(session);
+            // 延迟完成通道：命令经 ctx.Defer() 占位返回时，真实结果由异步收尾经此回调回填
+            DeferredCompletion.Begin(r => Complete(pending, r));
             try
             {
-                // 去掉前导 / 或 !
-                if (raw.StartsWith("/") || raw.StartsWith("!"))
-                    raw = raw.Substring(1);
-
-                if (string.IsNullOrWhiteSpace(raw))
-                {
-                    Complete(pending, CommandResult.Fail("empty command"));
-                    return;
-                }
-
-                // 引号感知分词：token 起始引号跨空格成组并剥除（带空格路径可加引号），
-                // token 中部引号保持字面，无引号输入与旧纯空格切分完全等价
-                var parts = CommandTokenizer.Tokenize(raw);
-                if (!CommandRegistry.TryGet(parts[0], out var command))
-                {
-                    Log.Warn("WebConsole", $"未知命令: {parts[0]}");
-                    Complete(pending, CommandResult.Fail("unknown command"));
-                    return;
-                }
-
-                string[] args = parts.Length > 1
-                    ? parts.Skip(1).ToArray()
-                    : Array.Empty<string>();
-
-                Complete(pending, CommandRegistry.Execute(command, args));
+                Complete(pending, ExecuteCommandText(raw));
             }
             catch (Exception ex)
             {
@@ -274,13 +268,43 @@ namespace DT_Tools.WebConsole
             }
             finally
             {
+                DeferredCompletion.End();
                 if (!string.IsNullOrEmpty(session))
                     CommandSession.End();
             }
         }
 
+        /// <summary>
+        /// 命令文本执行核心：剥前缀 → 引号感知分词 → 查表 → 执行。只在主线程调用；
+        /// 供本类命令队列泵与 MCP 的 run_command 工具共用（单一实现，行为不漂移）。
+        /// </summary>
+        internal static CommandResult ExecuteCommandText(string raw)
+        {
+            if (raw.StartsWith("/") || raw.StartsWith("!"))
+                raw = raw.Substring(1);
+
+            if (string.IsNullOrWhiteSpace(raw))
+                return CommandResult.Fail("empty command");
+
+            var parts = CommandTokenizer.Tokenize(raw);
+            if (!CommandRegistry.TryGet(parts[0], out var command))
+            {
+                Log.Warn("WebConsole", $"未知命令: {parts[0]}");
+                return CommandResult.Fail("unknown command");
+            }
+
+            string[] args = parts.Length > 1
+                ? parts.Skip(1).ToArray()
+                : Array.Empty<string>();
+
+            return CommandRegistry.Execute(command, args);
+        }
+
         private static void Complete(PendingRequest pending, CommandResult result)
         {
+            // 延迟完成占位：跳过回填，等待方由 CommandResult.Complete 的回调稍后唤醒
+            if (result != null && result.IsDeferred)
+                return;
             pending.Result = result;
             // 竞态防护：HTTP 线程 Wait(5000) 超时后已 Dispose 掉 Done，而主线程卡顿（如加载
             // 场景）时命令仍会稍后执行完毕，这里晚到的 Set() 若不吞 ObjectDisposedException，

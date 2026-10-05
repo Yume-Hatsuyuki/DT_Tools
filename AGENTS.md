@@ -27,6 +27,7 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 | 游戏升级后复核 | §10 |
 | 写日志、命令、JSON、线程代码 | §11 |
 | 改 WebUI 或 API | §12 |
+| 新增一个 MCP 工具、改 MCP 桥接 | §13 |
 
 ### 红线速查
 
@@ -44,6 +45,7 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 10. 多代理并行作业时，禁止运行 `dotnet build`（§3）。
 11. 禁止在仓库文件里写本机绝对路径（§3）。
 12. `Patches/System/` 下的文件，禁止裸写 `System.X`（§9 约束 3）。
+13. MCP 工具实现触 Unity API，必须经 `WebConsole.RunOnMain`（§13）。
 
 ### 术语
 
@@ -172,7 +174,7 @@ Plugin.cs（装配根）
   ├ Patches/     Harmony 补丁功能域（Dev/Experience/Fun/Shop/System）
   ├ Commands/    命令域（主线程命令泵执行）
   ├ Automation/  自动化模块域（纯发包/只读）
-  └ WebConsole/  HTTP+WebSocket 服务、路由、鉴权、API
+  └ WebConsole/  HTTP+WebSocket 服务、路由、鉴权、API（含 Mcp/ 桥接子域）
       └ WebUI/   前端桌面壳（构建产物）
 最底层：0.1.16b 游戏程序集
 ```
@@ -567,6 +569,8 @@ public sealed class XxxModule { }
 | `/api/automation/modules/{id}/log` | GET / POST | 查询或清空模块日志 |
 | `/api/game/exit` | POST | 在主线程调用 `Application.Quit()`。确认步骤在前端做 |
 | `/api/steam/players` | GET | Steam 在线人数 |
+| `/api/mcp/status` | GET | MCP 桥接状态（端点/协议版本/工具表/调用计数） |
+| `/api/mcp/toggle` | POST | MCP 桥接开关。body `{enabled: bool}`，经 ConfigService 落盘 |
 | `/api/dummy/state`、`/api/dummy/characters` | GET | 假人：房间快照、角色目录 |
 | `/api/dummy/create`、`remove`、`remove-all`、`ready`、`pick` | POST | 假人操作（见下） |
 | `/api/mp3/state` | GET | 随身MP3：引擎快照、暂停书签、歌单 |
@@ -675,3 +679,48 @@ public sealed class XxxModule { }
 
 - 图标库：unplugin-icons + tabler。
 - tabler 没有 `brand-kali`。Kali 风图标用 `dragon`。
+
+## 13. MCP 桥接
+
+MCP 服务器寄生于 WebConsole（同端口、同鉴权）。AI 客户端经 `/mcp` 连接，协议为 MCP Streamable HTTP（无状态）。
+
+- Skill 文档在 `.github/skills/MCP/`（客户端无关，任何 MCP 客户端可接入）：`SKILL.md` = 接入说明与自增长维护协议；`MCP.md` = 功能列表（发包命令、协议包目录、风险速查）。发包前先查 `MCP.md`。
+- MCP 桥接有**独立监听**（配置段 `Mcp`：Enabled / Port=19452 / ListenIp 支持 IPv6 / Password / RunInBackground），与 WebConsole 互不依赖。WebUI 的 MCP 挂件与「DT 配置」页两处读写同一份配置，天然同步；Port/ListenIp/Password 修改后重启生效。`/mcp` 同时注册在两条路由面（独立监听 + WebConsole 兜底门）。
+- AI 的行动能力不在 MCP 工具里堆：全部走命令域，MCP 的 `run_command` 是唯一入口。
+- 新行动能力优先落命令域（`Commands/`）。只有"AI 需要结构化参数"时才做专用 MCP 工具。
+- **禁止运行期代码执行**：invoke 白名单直调、Roslyn/脚本执行一律不做——存在安全风险，扩展能力一律写独立命令（重编+重启可接受），命令域相对可控。
+
+### 13.1 目录地图
+
+| 位置 | 用途 |
+| --- | --- |
+| `WebConsole/Mcp/McpOptions.cs` | 配置段 `Mcp`：Enabled / Port / ListenIp（支持 IPv6）/ Password / RunInBackground |
+| `WebConsole/Mcp/McpBridge.cs` | 独立监听组件（Auth/Router/HttpServer 装配与生命周期） |
+| `WebConsole/Mcp/McpToolAttribute.cs` | 工具元数据 `[McpTool(name, description, Author)]` |
+| `WebConsole/Mcp/McpToolLoader.cs` | 反射发现工具。零注册代码 |
+| `WebConsole/Mcp/McpRpc.cs` | JSON-RPC 2.0 信封 |
+| `WebConsole/Mcp/McpServer.cs` | `/mcp` 路由与分发（initialize/tools/list/tools/call/ping）。注册到两条路由面 |
+| `WebConsole/Mcp/McpStatusApi.cs` | `/api/mcp/status`、`/api/mcp/toggle`（挂件用，含配置字段回显） |
+| `WebConsole/Mcp/Tools/<工具名>/Tool.cs` | 一个目录 = 一个工具 |
+| `.github/skills/MCP/SKILL.md` | Skill 入口：接入说明 + 自增长维护协议 |
+| `.github/skills/MCP/MCP.md` | 功能列表：发包命令、协议包目录、风险速查 |
+
+前端挂件：`webui-src/src/desktop/McpWidget.vue`（SteamWidget 同款，Dock 与顶栏可开可关；配置区与「DT 配置」页同步）。
+
+### 13.2 新增一个 MCP 工具
+
+1. 新建目录 `DT_Tools/WebConsole/Mcp/Tools/<工具名>/`，写 `Tool.cs`。
+2. 类写 `sealed static class`，标 `[McpTool("snake_case 名", "中文说明", Author = "<实名>")]`。参数写全，漏 `Author` 加载即报错。
+3. 提供 `static JObject Schema()`（inputSchema）与 `static CommandResult Execute(JObject args)`。
+4. 工具描述写给 AI 看：何时用、与谁搭配（如"先 list_commands 查阅"）。
+5. 触 Unity API 的逻辑，必须 `WebConsole.RunOnMain`。纯内存读（CommandRegistry、Log 环形缓冲、ConfigService）可以直接调。
+6. 构建。用 curl 对 `/mcp` 冒烟：`initialize → tools/list → tools/call`。
+7. 本节工具表如有变化，同步更新 `.github/skills/MCP/MCP.md`（功能列表）与 `SKILL.md` 的工具表。
+
+### 13.3 红线
+
+- HTTP 线程禁止碰 Unity API。工具实现一律 `WebConsole.RunOnMain`，或只用线程安全的纯内存读。
+- JSON 只走 `DT_Tools.Core.Json`。响应体用 JObject 构建，禁止手拼字符串。
+- 工具名、描述全中文或 snake_case 英文名 + 中文描述。`Author` 逐工具实名。
+- 禁止在 MCP 工具里实现本可以做成命令的行动能力。命令是通用入口（聊天/WebUI/MCP 三通道），MCP 工具只是桥。
+- 协议包相关的一切以 `.github/skills/MCP/MCP.md` 为知识源；它与运行期不一致时，以 `packets` 命令的运行期真值为准并回写该文件。

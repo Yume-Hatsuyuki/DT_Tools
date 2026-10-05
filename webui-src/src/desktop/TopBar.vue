@@ -41,6 +41,7 @@ const props = defineProps({
   windows: { type: Array, required: true },
   /** Steam 在线小组件是否开着（面板里的开关态展示）。 */
   steamWidgetOpen: { type: Boolean, default: false },
+  mcpWidgetOpen: { type: Boolean, default: false },
 });
 const emit = defineEmits(['focus-window', 'about', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch']);
 
@@ -163,20 +164,26 @@ const kmItems = computed(() => {
     pushApps(true);
     if ('steam 在线'.toLowerCase().includes(q) || 'steam'.includes(q) || '小组件'.includes(q))
       rows.push({ kind: 'widget', id: 'steam', label: 'Steam 在线', icon: IconPuzzle, tag: '小组件' });
+    if ('mcp 桥接 ai 接入'.toLowerCase().includes(q) || 'mcp'.includes(q) || '小组件'.includes(q))
+      rows.push({ kind: 'widget', id: 'mcp', label: 'MCP 桥接（AI 接入）', icon: IconPuzzle, tag: '小组件' });
     for (const s of SYSTEM_ITEMS)
       if (s.label.toLowerCase().includes(q)) rows.push({ kind: 'system', id: s.id, label: s.label, icon: s.icon, tag: '系统' });
     return rows;
   }
   if (activeCat.value === 'app') pushApps(false);
-  if (activeCat.value === 'widget')
+  if (activeCat.value === 'widget') {
     rows.push({ kind: 'widget', id: 'steam', label: 'Steam 在线', icon: IconPuzzle });
+    rows.push({ kind: 'widget', id: 'mcp', label: 'MCP 桥接（AI 接入）', icon: IconPuzzle });
+  }
   if (activeCat.value === 'system')
     for (const s of SYSTEM_ITEMS) rows.push({ kind: 'system', id: s.id, label: s.label, icon: s.icon });
   return rows;
 });
 
 function widgetStateText(id) {
-  return id === 'steam' ? (props.steamWidgetOpen ? '已开启' : '已关闭') : '';
+  if (id === 'steam') return props.steamWidgetOpen ? '已开启' : '已关闭';
+  if (id === 'mcp') return props.mcpWidgetOpen ? '已开启' : '已关闭';
+  return '';
 }
 
 function runItem(item) {
@@ -273,7 +280,7 @@ async function exitGame() {
               <component :is="item.icon" v-else class="km-item-fallback" />
             </span>
             <span class="km-item-label">{{ item.label }}</span>
-            <span v-if="item.kind === 'widget'" class="km-item-state" :class="{ on: steamWidgetOpen }">{{ widgetStateText(item.id) }}</span>
+            <span v-if="item.kind === 'widget'" class="km-item-state" :class="{ on: item.id === 'steam' ? steamWidgetOpen : mcpWidgetOpen }">{{ widgetStateText(item.id) }}</span>
             <span v-else-if="item.tag" class="km-item-state">{{ item.tag }}</span>
           </button>
           <div v-if="!kmItems.length" class="km-empty">无匹配项。</div>

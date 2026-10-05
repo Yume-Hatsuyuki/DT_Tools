@@ -46,6 +46,18 @@ namespace DT_Tools
                 Log.Info("Plugin", "WebConsole 已在配置中禁用，跳过启动。");
             }
 
+            // MCP 桥接独立监听（按配置启停；与 WebConsole 互不依赖）
+            if (DT_Tools.WebConsole.Mcp.McpOptions.Enabled)
+            {
+                var mcpGo = new GameObject("DT_Mcp");
+                Object.DontDestroyOnLoad(mcpGo);
+                mcpGo.AddComponent<DT_Tools.WebConsole.Mcp.McpBridge>().Init(Logger);
+            }
+            else
+            {
+                Log.Info("Plugin", "MCP 桥接已在配置中禁用，跳过启动（/mcp 仍可经 WebConsole 端口兜底接入）。");
+            }
+
             // 装配摘要走 Log 门面：进全局环形缓冲，WebUI 日志应用可见启动结果
             if (result.FailedCount > 0)
             {

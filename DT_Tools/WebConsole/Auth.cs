@@ -52,6 +52,11 @@ namespace DT_Tools.WebConsole
             if (Disabled)
                 return true;
             var req = ctx.Request;
+            // MCP 客户端 / 本机脚本通道：Authorization: Bearer <Password>（常量时间比较），
+            // 免去浏览器登录换 cookie 的流程。仅接受明文密码本身，与 /login 同级。
+            string auth = req.Headers["Authorization"];
+            if (auth != null && auth.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                return FixedTimeEquals(auth.Substring("Bearer ".Length).Trim(), _password);
             return CheckToken(req.Cookies["dt_token"]?.Value ?? "", req.QueryString["token"] ?? "");
         }
 

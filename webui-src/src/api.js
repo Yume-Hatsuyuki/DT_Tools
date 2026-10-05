@@ -54,6 +54,10 @@ export const API = {
   commands: () => request('/api/commands'),
   steamPlayers: () => request('/api/steam/players'),
 
+  // MCP 桥接（WebUI 挂件）：状态读取与开关（toggle 走后端 ConfigService，落盘 .cfg）
+  mcpStatus: () => request('/api/mcp/status'),
+  mcpToggle: (enabled) => post('/api/mcp/toggle', { enabled }),
+
   // 本机目录浏览（WebUI 内置文件选择器的数据源；path 为空=盘符根视图）
   fsList: (path) => request('/api/fs/list' + (path ? '?path=' + encodeURIComponent(path) : '')),
 

@@ -33,11 +33,81 @@ namespace DT_Tools.Patches.System.SpectatorJoin
         [Config("同时观战人数上限（1–16）。实际还受 Steam 大厅 16 人总上限约束。", Min = 1, Max = 16)]
         public static int MaxSpectators = 8;
 
+        [Config("开局参与人数上限（1–16，默认 8 = 原版）。当房间真实玩家数超过该值时，开局前自动将最后准备的人转为观战者（按准备倒序，房主除外）。", Min = 1, Max = 16)]
+        public static int PlayMaxPlayersEntry = 8;
+
         internal static int MaxSpectatorsValue =>
             Math.Clamp(MaxSpectators, 1, 16);
 
+        internal static int PlayMaxPlayersValue =>
+            Math.Clamp(PlayMaxPlayersEntry, 1, 16);
+
         internal static int SpectatorCount(GameRoom room) =>
             room.Players.Count(p => p.IsSpectator);
+
+        /// <summary>最后准备顺序（PlayerId 按准备时间升序；转观战时取倒序 = 最后准备者优先）。</summary>
+        private static readonly List<int> _readyOrder = new List<int>();
+
+        /// <summary>
+        /// 记录准备顺序：每次有人点准备（isReady=true）即移到列表末尾（=最后准备），
+        /// 取消准备（isReady=false）则移除。开局前由转观战逻辑按倒序选取"最后准备者"。
+        /// </summary>
+        [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.HandleReady))]
+        [HarmonyPostfix]
+        private static void PostfixHandleReady(GameRoom __instance, GamePlayer player, bool isReady)
+        {
+            if (!Engine.EnabledOf(typeof(SpectatorJoinFeature)))
+                return;
+            if (player?.PublicInfo == null)
+                return;
+
+            int pid = player.PublicInfo.PlayerId;
+            if (isReady)
+            {
+                _readyOrder.Remove(pid);
+                _readyOrder.Add(pid);
+            }
+            else
+            {
+                _readyOrder.Remove(pid);
+            }
+
+            // 清理已离开房间 / 已转观战 / 房主的旧记录（房主转观战时排除）
+            _readyOrder.RemoveAll(pid2 => !__instance.Players.Any(p =>
+                p.PublicInfo.PlayerId == pid2 && !p.IsSpectator));
+        }
+
+        /// <summary>
+        /// 超员转观战：真实玩家数超过开局参与上限时，按"最后准备倒序"（房主除外）
+        /// 将多余玩家转为观战者，并置脏 roster 同步全员。此逻辑在房主点开始
+        /// （全员已准备）时执行，使"谁当观战者"由准备顺序而非进房顺序决定。
+        /// </summary>
+        private static void ConvertExcessToSpectators(GameRoom room)
+        {
+            int cap = PlayMaxPlayersValue;
+            int real = room.Players.Count(p => !p.IsSpectator);
+            if (real <= cap)
+                return;
+
+            int need = real - cap;
+            List<GamePlayer> candidates = _readyOrder.AsEnumerable().Reverse()
+                .Where(pid => room.Players.Any(p => p.PublicInfo.PlayerId == pid
+                    && !p.IsSpectator && p != room.Host))
+                .Select(pid => room.Players.First(p => p.PublicInfo.PlayerId == pid))
+                .Take(need)
+                .ToList();
+
+            foreach (GamePlayer sp in candidates)
+            {
+                sp.IsSpectator = true;   // 0.1.16a Player.cs:1728 SetSpectator 等价赋值
+                real--;
+                Log.Info<SpectatorJoinFeature>(
+                    $"超员转观战：{sp.Name}(#{sp.PublicInfo.PlayerId})（最后准备者），真实玩家 {real + 1} → {real}（参与上限 {cap}）");
+            }
+
+            if (candidates.Count > 0)
+                room.MarkRosterDirty();
+        }
 
         private static bool InvokeIsSamePairIdentity(GamePlayer a, GamePlayer b)
         {
@@ -94,6 +164,8 @@ namespace DT_Tools.Patches.System.SpectatorJoin
                 && realCount >= Define.LOBBY_MIN_PLAYER
                 && __instance.Players.All(p => p == __instance.Host || p.IsSpectator || p.Ready))
             {
+                // 超员转观战：最后准备者转观战（按准备倒序、房主除外），凑够参与上限
+                ConvertExcessToSpectators(__instance);
                 __instance.BroadcastSystemSFX(ESoundType.ElevatorSfx);
                 __instance.ChangeGameState(EGameState.PickCharacter);
             }
@@ -224,6 +296,39 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             if (__instance.IsSpectator)
                 return false;
             return true;
+        }
+
+        // ── 客户端：已在房间的玩家被转观战（开局前最后准备者）→ 同步观战标记 ──
+        // 进房观战通过 S_ENTER_GAME.IsSpectator 通知（EnterGameAckPatch）；
+        // 开局前转观战者已在房间内，唯一的变化是服务端 roster 中自己的
+        // IsSpectator=true（GameRoom.MarkRosterDirty → S_PLAYER_ROSTER）。
+        // 这里在 ApplyRoster 后若发现"自己"被标记观战，则同步 Managers.Game.IsSpectator
+        // （此后 StartPick 弹窗跳过、S_DEAD 后幽灵自由移动等现有补丁即自动生效）。
+        [HarmonyPatch]
+        private static class RosterSpectatorPatch
+        {
+            static MethodBase TargetMethod() =>
+                AccessTools.Method(AccessTools.TypeByName("PlayerManager"), "ApplyRoster");
+
+            [HarmonyPostfix]
+            private static void Postfix(S_PLAYER_ROSTER pkt)
+            {
+                if (!Engine.EnabledOf(typeof(SpectatorJoinFeature)))
+                    return;
+                if (pkt?.Entries == null || Managers.Player?.MyPlayer?.PublicInfo == null)
+                    return;
+
+                int me = Managers.Player.MyPlayer.PublicInfo.PlayerId;
+                foreach (RosterEntry entry in pkt.Entries)
+                {
+                    if (entry.PlayerId == me && entry.IsSpectator)
+                    {
+                        Managers.Game.IsSpectator = true;
+                        Log.Info<SpectatorJoinFeature>($"客户端已同步观战标记（局内准备阶段转观战） pid={me}");
+                        return;
+                    }
+                }
+            }
         }
     }
 }

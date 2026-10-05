@@ -92,30 +92,35 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             {
                 bool roomFullByMembers = !reclaimDummy && __instance.RoomMemberCountForMetadata() >= maxMembers;
                 bool seatAvailable = ObjectUtils.HasFreeSeat();
-                // 满房观战加入窗口：等待中（Lobby）与进行中（Survive/Detective，
+                // 观战加入窗口：等待中（Lobby）与进行中（Survive/Detective，
                 // 以及允许观战的审判阶段）均可接受观战加入；其余阶段拒绝。
                 bool stateAllowsSpectate = __instance.State == EGameState.Lobby
                     || __instance.State == EGameState.Survive
                     || __instance.State == EGameState.Detective
                     || (__instance.State == EGameState.Trial && TrialManager.Instance.AcceptsSpectator);
-                if (roomFullByMembers && seatAvailable
-                    && stateAllowsSpectate
-                    && SpectatorCount(__instance) < MaxSpectatorsValue)
+                if (!seatAvailable)
+                {
+                    // 座位硬满（Steam 大厅 16 上限）：拒绝（观战者也占用座位，无法进入）
+                    Log.Info<SpectatorJoinFeature>($"拒绝：Steam 大厅座位已满（16 上限）人数={__instance.RoomMemberCountForMetadata()}");
+                    s_ENTER_GAME.Success = false;
+                    s_ENTER_GAME.Name = "ErrorRoomFull";
+                }
+                else if (__instance.State == EGameState.Lobby)
+                {
+                    // Lobby 阶段不再"满员即观战"：允许超员真实进房（受 Steam 16 座位约束），
+                    // 超员者由开局前"最后准备者转观战"机制确定（见 HandleStart 补丁），
+                    // 使"谁当观战者"由准备顺序而非进房顺序决定。
+                    spectating = false;
+                    Log.Info<SpectatorJoinFeature>($"Lobby 超员真实进房 name={pkt.PlayerName}（配置上限 {maxMembers}，参与上限 {PlayMaxPlayersValue}，开局时按最后准备顺序转观战）");
+                }
+                else if (stateAllowsSpectate && SpectatorCount(__instance) < MaxSpectatorsValue)
                 {
                     spectating = true;
-                    Log.Info<SpectatorJoinFeature>($"满房（state={__instance.State}）允许以观战者加入 name={pkt.PlayerName} 人数={__instance.RoomMemberCountForMetadata()}/{maxMembers} 观战者={SpectatorCount(__instance)}");
+                    Log.Info<SpectatorJoinFeature>($"局内（state={__instance.State}）观战加入 name={pkt.PlayerName} 观战者={SpectatorCount(__instance)}");
                 }
                 else
                 {
-                    // 诊断：区分三种拒绝原因，便于定位
-                    if (roomFullByMembers && !seatAvailable)
-                        Log.Info<SpectatorJoinFeature>($"拒绝：Steam 大厅无空位（16 上限）人数={__instance.RoomMemberCountForMetadata()}");
-                    else if (roomFullByMembers && seatAvailable && !stateAllowsSpectate)
-                        Log.Info<SpectatorJoinFeature>($"拒绝：state={__instance.State} 不允许观战");
-                    else if (roomFullByMembers && seatAvailable && stateAllowsSpectate)
-                        Log.Info<SpectatorJoinFeature>($"拒绝：观战者已达上限 {SpectatorCount(__instance)}/{MaxSpectatorsValue}");
-                    else
-                        Log.Info<SpectatorJoinFeature>($"拒绝：无空位（Steam 16 上限），人数={__instance.RoomMemberCountForMetadata()}");
+                    Log.Info<SpectatorJoinFeature>($"拒绝：state={__instance.State} 不允许观战或观战者已达上限 {SpectatorCount(__instance)}/{MaxSpectatorsValue}");
                     s_ENTER_GAME.Success = false;
                     s_ENTER_GAME.Name = "ErrorRoomFull";
                 }
