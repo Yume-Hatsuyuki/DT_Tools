@@ -75,6 +75,10 @@
       <HintPath>$(GameManaged)\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(GameManaged)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>$(GameManaged)\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>false</Private>
@@ -113,6 +117,11 @@
 
   <ItemGroup>
     <None Include="WebUI/**" CopyToOutputDirectory="PreserveNewest" Link="WebUI/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- 可坐椅子（SitOnChairs）：岛屿地图数据（原版+11条椅子设备）内嵌进 dll，运行时注入，无需外部 data 文件夹 -->
+  <ItemGroup>
+    <EmbeddedResource Include="Patches/Fun/SitOnChairs/data/**" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,416 @@
+{
+  "rooms": [
+    {
+      "DataId": 100001,
+      "Type": 1,
+      "AdjacentArea": [
+        100001
+      ],
+      "PrefabName": "WaitingRoom"
+    },
+    {
+      "DataId": 100002,
+      "Type": 2,
+      "AdjacentArea": [
+        100002,
+        100004,
+        100003,
+        100005,
+        100017,
+        100020
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100003,
+      "Type": 3,
+      "AdjacentArea": [
+        100002,
+        100003,
+        100004,
+        100005,
+        100017,
+        100020,
+        100018,
+        100019
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100004,
+      "Type": 4,
+      "AdjacentArea": [
+        100002,
+        100003,
+        100004,
+        100006,
+        100005,
+        100007
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100005,
+      "Type": 5,
+      "AdjacentArea": [
+        100002,
+        100003,
+        100020,
+        100004,
+        100005,
+        100006,
+        100007,
+        100008
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100006,
+      "Type": 6,
+      "AdjacentArea": [
+        100004,
+        100006,
+        100009,
+        100013,
+        100011,
+        100005,
+        100007
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100007,
+      "Type": 7,
+      "AdjacentArea": [
+        100004,
+        100005,
+        100020,
+        100006,
+        100007,
+        100008,
+        100009,
+        100011,
+        100013,
+        100012
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100008,
+      "Type": 8,
+      "AdjacentArea": [
+        100007,
+        100008,
+        100011,
+        100013,
+        100012,
+        100005,
+        100020,
+        100018,
+        100019,
+        100021,
+        100014
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100009,
+      "Type": 9,
+      "AdjacentArea": [
+        100006,
+        100009,
+        100010,
+        100013,
+        100015,
+        100016,
+        100011,
+        100007
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100010,
+      "Type": 10,
+      "AdjacentArea": [
+        100009,
+        100010,
+        100013,
+        100015,
+        100016
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100011,
+      "Type": 11,
+      "AdjacentArea": [
+        100006,
+        100007,
+        100009,
+        100011,
+        100013,
+        100008,
+        100012
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100012,
+      "Type": 12,
+      "AdjacentArea": [
+        100007,
+        100008,
+        100011,
+        100012,
+        100013,
+        100015,
+        100022,
+        100021,
+        100014
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100013,
+      "Type": 13,
+      "AdjacentArea": [
+        100006,
+        100007,
+        100009,
+        100011,
+        100013,
+        100015,
+        100010,
+        100008,
+        100012
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100014,
+      "Type": 14,
+      "AdjacentArea": [
+        100008,
+        100021,
+        100014,
+        100012,
+        100022,
+        100028,
+        100019,
+        100025,
+        100027,
+        100026
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100015,
+      "Type": 15,
+      "AdjacentArea": [
+        100009,
+        100013,
+        100015,
+        100010,
+        100016,
+        100012,
+        100022
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100016,
+      "Type": 16,
+      "AdjacentArea": [
+        100009,
+        100015,
+        100010,
+        100016,
+        100022
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100017,
+      "Type": 17,
+      "AdjacentArea": [
+        100017,
+        100002,
+        100003,
+        100018,
+        100020,
+        100024,
+        100023
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100018,
+      "Type": 18,
+      "AdjacentArea": [
+        100017,
+        100003,
+        100018,
+        100020,
+        100019,
+        100021,
+        100008,
+        100024,
+        100025
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100019,
+      "Type": 19,
+      "AdjacentArea": [
+        100003,
+        100018,
+        100020,
+        100019,
+        100021,
+        100008,
+        100014,
+        100025,
+        100027,
+        100026
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100020,
+      "Type": 20,
+      "AdjacentArea": [
+        100002,
+        100017,
+        100003,
+        100020,
+        100005,
+        100008,
+        100007,
+        100018,
+        100019,
+        100021
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100021,
+      "Type": 21,
+      "AdjacentArea": [
+        100020,
+        100018,
+        100019,
+        100021,
+        100008,
+        100014,
+        100012,
+        100025,
+        100028
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100022,
+      "Type": 22,
+      "AdjacentArea": [
+        100012,
+        100014,
+        100022,
+        100015,
+        100016,
+        100028,
+        100029
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100023,
+      "Type": 23,
+      "AdjacentArea": [
+        100023,
+        100017,
+        100024,
+        100025
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100024,
+      "Type": 24,
+      "AdjacentArea": [
+        100023,
+        100017,
+        100024,
+        100018,
+        100025
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100025,
+      "Type": 25,
+      "AdjacentArea": [
+        100024,
+        100018,
+        100025,
+        100019,
+        100027,
+        100021,
+        100014,
+        100026,
+        100023
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100026,
+      "Type": 26,
+      "AdjacentArea": [
+        100025,
+        100019,
+        100027,
+        100014,
+        100026,
+        100028
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100027,
+      "Type": 27,
+      "AdjacentArea": [
+        100025,
+        100019,
+        100027,
+        100014,
+        100026,
+        100028
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100028,
+      "Type": 28,
+      "AdjacentArea": [
+        100014,
+        100028,
+        100022,
+        100029,
+        100021,
+        100026,
+        100027
+      ],
+      "PrefabName": "SchoolMain"
+    },
+    {
+      "DataId": 100029,
+      "Type": 29,
+      "AdjacentArea": [
+        100028,
+        100022,
+        100029
+      ],
+      "PrefabName": "SchoolMain"
+    }
+  ]
+}
