@@ -47,6 +47,11 @@
       <HintPath>$(GameManaged)\UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- /shot 截图：EncodeToPNG 所在模块（Commands/Screenshot/Logic.cs） -->
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(GameManaged)\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>$(GameManaged)\UnityEngine.dll</HintPath>
       <Private>false</Private>

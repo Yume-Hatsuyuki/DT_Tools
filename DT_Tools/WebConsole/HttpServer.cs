@@ -14,32 +14,77 @@ namespace DT_Tools.WebConsole
     public sealed class HttpServer
     {
         private readonly Router _router;
+        private readonly string _threadName;
         private HttpListener _listener;
         private Thread _thread;
         private volatile bool _running;
 
-        public HttpServer(Router router)
+        public HttpServer(Router router, string threadName = "DT_WebConsole")
         {
             _router = router ?? throw new ArgumentNullException(nameof(router));
+            _threadName = threadName;
         }
 
         public void Start(string listenIp, int port)
         {
             string ip = NormalizeIp(listenIp);
+            string primary = $"http://{ip}:{port}/";
+
+            // Unity(Mono) 的 HttpListener 解析不了方括号 IPv6 的 Host 头（按首个冒号切割：
+            // Host "[::]:19452" 会拼出 "http://[:19452/…" 直接 Invalid url；IPv4 的 Host
+            // 又与 v6 前缀不匹配而报 Invalid host）——IPv6 前缀实际收不到任何标准客户端。
+            // 补一条 IPv4 前缀保证可达：通配 [::]（"所有网卡"语义）补 http://*:port/；
+            // 具体 v6 地址只补回环，不擅自扩大暴露面。
+            string companion = ip == "[::]" ? $"http://*:{port}/"
+                : ip.StartsWith("[") ? $"http://127.0.0.1:{port}/"
+                : null;
+
+            if (TryStart(new[] { primary, companion }, out var error))
+            {
+                Log.Info("WebConsole", $"已启动 → {primary}" + (companion != null ? $"（补 IPv4 → {companion}）" : ""));
+                return;
+            }
+
+            if (companion == null)
+            {
+                // 堆栈进 BepInEx 主日志（端口占用/权限不足等常见原因需可诊断）
+                Log.Exception("WebConsole", error, $"启动失败（监听 {listenIp}:{port}）");
+                return;
+            }
+
+            // v6+v4 双前缀可能同端口冲突（v6 any 双栈收 v4 时占用 v4 any）——降级为仅 IPv4 副本
+            Log.Warn("WebConsole", $"IPv6+IPv4 双前缀监听失败（{error.Message}），降级为仅 {companion}");
+            if (!TryStart(new[] { companion }, out error))
+                Log.Exception("WebConsole", error, $"启动失败（监听 {listenIp}:{port}）");
+            else
+                Log.Info("WebConsole", $"已启动 → {companion}（IPv6 前缀未生效）");
+        }
+
+        /// <summary>按序注册前缀并启动监听线程；失败时清理 listener 并带出异常。</summary>
+        private bool TryStart(string[] prefixes, out Exception error)
+        {
+            error = null;
             _listener = new HttpListener();
-            _listener.Prefixes.Add($"http://{ip}:{port}/");
+            foreach (string prefix in prefixes)
+            {
+                if (prefix == null) continue;
+                _listener.Prefixes.Add(prefix);
+            }
             try
             {
                 _listener.Start();
                 _running = true;
-                _thread = new Thread(Loop) { IsBackground = true, Name = "DT_WebConsole" };
+                _thread = new Thread(Loop) { IsBackground = true, Name = _threadName };
                 _thread.Start();
-                Log.Info("WebConsole", $"已启动 → http://{ip}:{port}/");
+                return true;
             }
             catch (Exception ex)
             {
-                // 堆栈进 BepInEx 主日志（端口占用/权限不足等常见原因需可诊断）
-                Log.Exception("WebConsole", ex, $"启动失败（监听 {listenIp}:{port}）");
+                error = ex;
+                _running = false;
+                try { _listener.Close(); } catch { /* 启动失败清理忽略 */ }
+                _listener = null;
+                return false;
             }
         }
 

@@ -1,3 +1,4 @@
+using System;
 using Newtonsoft.Json;
 
 namespace DT_Tools.Commands
@@ -17,6 +18,15 @@ namespace DT_Tools.Commands
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public object Data { get; private set; }
 
+        /// <summary>
+        /// 延迟完成回调（ctx.Defer() 通道挂入）：非空表示本结果是占位、真实结果稍后经
+        /// <see cref="Complete"/> 回填。等待方（pump/RunOnMain）据此跳过立即回填。
+        /// </summary>
+        private Action<CommandResult> _deferredComplete;
+
+        [JsonIgnore]
+        public bool IsDeferred => _deferredComplete != null;
+
         private CommandResult(bool ok, string error, object data)
         {
             Ok = ok;
@@ -28,5 +38,17 @@ namespace DT_Tools.Commands
 
         public static CommandResult Fail(string error, object data = null)
             => new CommandResult(false, string.IsNullOrEmpty(error) ? "error" : error, data);
+
+        /// <summary>构造延迟占位结果：Execute 直接 return 它，真实结果稍后 Complete(final) 回填。</summary>
+        public static CommandResult Defer(Action<CommandResult> complete)
+            => new CommandResult(true, null, null) { _deferredComplete = complete ?? throw new ArgumentNullException(nameof(complete)) };
+
+        /// <summary>回填真实结果（只认第一次；主线程调用）。</summary>
+        public void Complete(CommandResult final)
+        {
+            var sink = _deferredComplete;
+            _deferredComplete = null;
+            sink?.Invoke(final ?? Fail("no result"));
+        }
     }
 }

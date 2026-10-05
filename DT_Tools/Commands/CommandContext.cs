@@ -33,6 +33,18 @@ namespace DT_Tools.Commands
         /// <summary>警告回复。</summary>
         public void Warn(string message) => Write(m => Log.Warn(_tag, m), message);
 
+        /// <summary>
+        /// 延迟完成：Execute 返回本结果（占位），异步收尾（主线程）把真实结果经返回值的
+        /// <see cref="CommandResult.Complete"/> 回填，等待命令结果的通道（WebUI /api/run、
+        /// MCP run_command）随即拿到终值——用于"结果必须晚于本帧"的命令（如 shot 的帧末
+        /// 捕获）。当前通道不支持等待时返回 null，调用方应退化为只发起 + 日志查询。
+        /// </summary>
+        public CommandResult Defer()
+        {
+            var sink = DeferredCompletion.Current;
+            return sink == null ? null : CommandResult.Defer(sink);
+        }
+
         /// <summary>同步路径上标记本来就一致，直接写；不一致则按快照恢复标记，写完还原
         /// （还原而非清空：回调若恰好插在另一命令的同步执行段中，不破坏对方的标记）。</summary>
         private void Write(Action<string> write, string message)

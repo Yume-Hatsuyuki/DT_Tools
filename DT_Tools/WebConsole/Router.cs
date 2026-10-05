@@ -23,12 +23,15 @@ namespace DT_Tools.WebConsole
         private readonly List<Route> _routes = new List<Route>();
         private readonly string _listenIp;
         private readonly string[] _localHostWhitelist;
+        private readonly bool _serveStaticFiles;
 
-        public Router(Auth auth, string listenIp)
+        public Router(Auth auth, string listenIp, bool serveStaticFiles = true)
         {
             _auth = auth ?? throw new ArgumentNullException(nameof(auth));
             _listenIp = (listenIp ?? "").Trim();
             _localHostWhitelist = BuildLocalHostWhitelist();
+            // MCP 独立监听等纯 API 门不服务 WebUI 静态文件（路由未命中直接 404）
+            _serveStaticFiles = serveStaticFiles;
         }
 
         /// <summary>注册路由；method 用 "*" 匹配任意方法（handler 内自行校验）。</summary>
@@ -101,7 +104,7 @@ namespace DT_Tools.WebConsole
                 }
             }
 
-            if (StaticFiles.TryServe(req, resp))
+            if (_serveStaticFiles && StaticFiles.TryServe(req, resp))
                 return;
 
             resp.StatusCode = 404;

@@ -167,8 +167,8 @@ async function changeAppIcon(app) {
   <div class="dock-wrap" @mousemove="onDockMove" @mouseleave="onDockLeave" @click="closeMenu">
     <div class="dock">
       <template v-for="(entry, i) in entries" :key="entry.kind + ':' + entry.id">
-        <!-- 应用与小组件之间加细分隔线（macOS Dock 惯例） -->
-        <div v-if="entry.kind === 'widget'" class="dock-sep" />
+        <!-- 分组分隔线：仅应用区与组件区之间一条（[应用] | [组件]），组件之间不画线 -->
+        <div v-if="entry.kind === 'widget' && entries[i - 1]?.kind !== 'widget'" class="dock-sep" />
         <div
           :ref="el => (itemEls[i] = el)"
           class="dock-item"

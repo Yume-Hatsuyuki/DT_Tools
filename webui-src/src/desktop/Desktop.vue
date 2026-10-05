@@ -4,6 +4,7 @@ import TopBar from './TopBar.vue';
 import Dock from './Dock.vue';
 import ParticleFlow from './ParticleFlow.vue';
 import SteamWidget from './SteamWidget.vue';
+import McpWidget from './McpWidget.vue';
 import Window from './Window.vue';
 import CropperHost from '../apps/common/CropperHost.vue';
 import { useWindowManager } from '../composables/useWindowManager.js';
@@ -39,6 +40,7 @@ import IconListDetails from '~icons/tabler/list-details';
 import IconUsersGroup from '~icons/tabler/users-group';
 import IconDeviceAudioTape from '~icons/tabler/device-audio-tape';
 import IconBrandSteam from '~icons/tabler/brand-steam';
+import IconModelAi from '~icons/tabler/model-ai';
 
 /**
  * 桌面应用注册表。id 同时是备忘录键（app:<id>）与窗口布局键；
@@ -68,24 +70,33 @@ const desktopMenu = ref(null);           // { x, y } —— 桌面右键菜单
 const dockMenu = ref(null);              // { x, y } —— Dock（任务栏）右键菜单
 const busyInfo = ref(false);
 
-// ---- Steam 在线小组件（Dock 可开可关，位置/关闭态由 SteamWidget 自持）----
+// ---- 挂件（Dock 可开可关，位置/关闭态由各自组件自持）----
 
 const WIDGET_STORE_KEY = 'dt_steam_widget_v1';
-function widgetClosedAtStart() {
-  try { return !!(JSON.parse(localStorage.getItem(WIDGET_STORE_KEY)) || {}).closed; }
+const MCP_STORE_KEY = 'dt_mcp_widget_v1';
+function widgetClosedAtStart(key) {
+  try { return !!(JSON.parse(localStorage.getItem(key)) || {}).closed; }
   catch { return false; }
 }
-const steamWidgetOpen = ref(!widgetClosedAtStart());
+const steamWidgetOpen = ref(!widgetClosedAtStart(WIDGET_STORE_KEY));
+const mcpWidgetOpen = ref(!widgetClosedAtStart(MCP_STORE_KEY));
 
 /** Dock 小组件定义（与应用图标同列，运行点表示弹窗开着）。 */
 const widgets = [
   { id: 'steam', title: 'Steam 当前（全球）玩家数统计', icon: markRaw(IconBrandSteam) },
+  { id: 'mcp', title: 'MCP 桥接（AI 接入）', icon: markRaw(IconModelAi) },
 ];
 
 function toggleWidget(id) {
-  if (id !== 'steam') return;
-  steamWidgetOpen.value = !steamWidgetOpen.value;
+  if (id === 'steam') steamWidgetOpen.value = !steamWidgetOpen.value;
+  else if (id === 'mcp') mcpWidgetOpen.value = !mcpWidgetOpen.value;
 }
+
+/** 当前打开的挂件 id 集合（Dock 运行指示点）。 */
+const openWidgets = computed(() => [
+  ...(steamWidgetOpen.value ? ['steam'] : []),
+  ...(mcpWidgetOpen.value ? ['mcp'] : []),
+]);
 
 /** 多实例：每次启动都开新窗口（Dock 指示点/顶栏标签负责找回已开窗口）。 */
 function launchApp(appId) {
@@ -283,6 +294,7 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       :apps="apps"
       :windows="windows"
       :steam-widget-open="steamWidgetOpen"
+      :mcp-widget-open="mcpWidgetOpen"
       @focus-window="toggleFocus"
       @about="busyInfo = true"
       @change-wallpaper="changeWallpaper"
@@ -295,13 +307,14 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       :apps="apps"
       :windows="windows"
       :widgets="widgets"
-      :open-widgets="steamWidgetOpen ? ['steam'] : []"
+      :open-widgets="openWidgets"
       @launch="launchApp"
       @focus-window="toggleFocus"
       @toggle-widget="toggleWidget"
     />
 
     <SteamWidget v-if="steamWidgetOpen" @close="steamWidgetOpen = false" />
+    <McpWidget v-if="mcpWidgetOpen" @close="mcpWidgetOpen = false" />
 
     <CropperHost />
 
