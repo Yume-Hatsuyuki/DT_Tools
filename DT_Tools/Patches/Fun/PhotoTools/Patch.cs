@@ -1,5 +1,7 @@
 using System;
+using System.Reflection;
 using DT_Tools.Core;
+using DT_Tools.Game;
 using HarmonyLib;
 using Protocol;
 using UnityEngine;
@@ -8,10 +10,12 @@ namespace DT_Tools.Patches.Fun.PhotoTools
 {
     /// <summary>
     /// 拍照工具补丁集合（基于 0.1.16b PhotoManager）：
-    /// 1. get_MaxFilm：UnlimitFilm 开启时胶卷上限改为 999；
-    /// 2. TryShoot Postfix：每次拍照成功立即补满胶卷（RefillFilm → Film=MaxFilm），实现拍不完；
-    /// 3. EncodeAdaptive Prefix：Filter 非 None 时在 JPEG 编码前对截图像素应用滤镜，
-    ///    发送给全房的照片即为 P 完效果（EncodeAdaptive 是拍照编码唯一入口，0.1.16b PhotoManager.cs:600）。
+    /// 1. EncodeAdaptive Prefix：Filter 非 None 时在 JPEG 编码前对截图像素应用滤镜，
+    ///    发送给全房的照片即为处理后的效果（接收方无需装 mod）；
+    /// 2. CanStayInPhotoMode Postfix：GhostCamera 开启时死亡（幽灵）也放行，
+    ///    其余条件保持原版一致（阶段限制与原版一致：仅调查阶段可拍）；
+    /// 3. CanEnterPhotoMode Postfix：幽灵放行（跳过待机态检查）。
+    /// 胶卷次数/上限、阶段限制均与原版一致，不做任何放宽。
     /// </summary>
     internal static class Patches
     {
@@ -21,44 +25,7 @@ namespace DT_Tools.Patches.Fun.PhotoTools
         /// <summary>暗角强度：1=边缘完全变黑，0.4=轻微。</summary>
         private const float VignetteStrength = 0.55f;
 
-        // ===== 1. 胶卷上限 =====
-
-        [HarmonyPatch(typeof(PhotoManager), "MaxFilm", MethodType.Getter)]
-        internal static class PhotoMaxFilmPatch
-        {
-            private static void Postfix(ref int __result)
-            {
-                if (!Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.UnlimitFilm)
-                {
-                    return;
-                }
-                __result = 999;
-            }
-        }
-
-        // ===== 2. 拍完自动补满 =====
-
-        [HarmonyPatch(typeof(PhotoManager), "TryShoot")]
-        internal static class PhotoRefillPatch
-        {
-            private static void Postfix(PhotoManager __instance, bool __result)
-            {
-                try
-                {
-                    if (!Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.UnlimitFilm || !__result)
-                    {
-                        return;
-                    }
-                    __instance.RefillFilm();
-                }
-                catch (Exception ex)
-                {
-                    Log.Warn<PhotoToolsFeature>("[拍照工具] 补满胶卷异常：" + ex.Message);
-                }
-            }
-        }
-
-        // ===== 3. 照片滤镜 =====
+        // ===== 1. 照片滤镜 =====
 
         [HarmonyPatch(typeof(PhotoManager), "EncodeAdaptive")]
         internal static class PhotoFilterPatch
@@ -67,47 +34,45 @@ namespace DT_Tools.Patches.Fun.PhotoTools
             {
                 try
                 {
-                    if (!Engine.Enabled<PhotoToolsFeature>() || PhotoToolsFeature.Filter == PhotoFilterType.None)
+                    if (!Engine.Enabled<PhotoToolsFeature>() || tex == null)
                     {
                         return;
                     }
-                    if (tex == null)
+                    if (PhotoToolsFeature.Filter != PhotoFilterType.None)
                     {
-                        return;
+                        ApplyFilter(tex, PhotoToolsFeature.Filter);
                     }
-                    ApplyFilter(tex, PhotoToolsFeature.Filter);
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<PhotoToolsFeature>("[拍照工具] 滤镜应用异常：" + ex.Message);
+                    Log.Warn<PhotoToolsFeature>("[拍照工具] 照片处理异常：" + ex.Message);
                 }
             }
         }
 
-        // ===== 4. 庭审阶段拍照 =====
+        // ===== 2. 幽灵放行（持续判定） =====
 
         /// <summary>
-        /// CanStayInPhotoMode（0.1.16b PhotoManager.cs:224）Postfix：原版要求
-        /// Managers.Game.State == EGameState.Detective 才允许拍照，庭审（Trial）被挡。
-        /// AllowTrialPhoto 开启且处于庭审阶段时，按原版其余条件（存活/非旁观/可控制/
-        /// 非聊天/非表情/非加载/非平板）重新判定，满足则放行。
+        /// CanStayInPhotoMode（0.1.16b PhotoManager.cs:224）Postfix：原版要求存活。
+        /// GhostCamera 开启时死亡（幽灵视角）按原版其余条件（可控制/非聊天/非表情/
+        /// 非加载/非平板）重新判定放行；阶段限制保持原版（仅调查阶段）。
         /// </summary>
         [HarmonyPatch(typeof(PhotoManager), "CanStayInPhotoMode")]
-        internal static class PhotoTrialStayPatch
+        internal static class PhotoGhostStayPatch
         {
             private static void Postfix(ref bool __result)
             {
                 try
                 {
-                    if (__result || !Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.AllowTrialPhoto)
+                    if (__result || !Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.GhostCamera)
                     {
                         return;
                     }
-                    if (Managers.Game == null || Managers.Game.State != EGameState.Trial)
+                    if (Managers.Game == null)
                     {
                         return;
                     }
-                    if (!Managers.Game.IsAlive || Managers.Game.IsSpectator || !Managers.Game.CanControl)
+                    if (Managers.Game.IsAlive || Managers.Game.IsSpectator || !Managers.Game.CanControl)
                     {
                         return;
                     }
@@ -127,47 +92,52 @@ namespace DT_Tools.Patches.Fun.PhotoTools
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<PhotoToolsFeature>("[拍照工具] 庭审拍照判定异常：" + ex.Message);
+                    Log.Warn<PhotoToolsFeature>("[拍照工具] 拍照判定异常：" + ex.Message);
                 }
             }
         }
 
+        // ===== 3. 幽灵放行（进入判定） =====
+
         /// <summary>
-        /// Managers.Update（0.1.16b Managers.cs:325）Postfix：庭审阶段按 TrialPhotoKey
-        /// 直接进入拍照模式（庭审界面可能挡住拍照按钮，快捷键兜底），
-        /// 与按钮入口同一检查（CanEnterPhotoMode）。
+        /// CanEnterPhotoMode（0.1.16b PhotoManager.cs:195）Postfix：幽灵死亡态下
+        /// State 不是待机/移动/交互会被原版挡掉，GhostCamera 开启时跳过该检查。
         /// </summary>
-        [HarmonyPatch(typeof(Managers), "Update")]
-        internal static class PhotoTrialKeyPatch
+        [HarmonyPatch(typeof(PhotoManager), "CanEnterPhotoMode")]
+        internal static class PhotoGhostEnterPatch
         {
-            private static void Postfix()
+            private static void Postfix(PhotoManager __instance, ref bool __result)
             {
                 try
                 {
-                    if (!Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.AllowTrialPhoto
-                        || PhotoToolsFeature.TrialPhotoKey == KeyCode.None)
+                    if (__result || !Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.GhostCamera)
                     {
                         return;
                     }
-                    if (Managers.Game == null || Managers.Game.State != EGameState.Trial)
+                    if (Managers.Game == null || Managers.Game.IsAlive)
                     {
                         return;
                     }
-                    if (Managers.Photo == null || Managers.Photo.IsPhotoMode || !Input.GetKeyDown(PhotoToolsFeature.TrialPhotoKey))
+                    if (Traverse.Create(__instance).Field("_frame").GetValue() == null
+                        || Traverse.Create(__instance).Field("_overlay").GetValue() == null)
                     {
                         return;
                     }
-                    if (Managers.Photo.CanEnterPhotoMode())
+                    // 复用 CanStayInPhotoMode（已被 GhostCamera 放行）
+                    if (!__instance.CanStayInPhotoMode())
                     {
-                        Managers.Photo.SetPhotoMode(true);
+                        return;
                     }
+                    __result = true;
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<PhotoToolsFeature>("[拍照工具] 庭审拍照快捷键异常：" + ex.Message);
+                    Log.Warn<PhotoToolsFeature>("[拍照工具] 幽灵拍照判定异常：" + ex.Message);
                 }
             }
         }
+
+        // ===== 滤镜 =====
 
         /// <summary>对截图应用滤镜（就地修改像素）。</summary>
         private static void ApplyFilter(Texture2D tex, PhotoFilterType filter)
