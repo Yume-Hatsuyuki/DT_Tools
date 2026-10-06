@@ -473,6 +473,25 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
+        // ===== 6.5 本地模拟椅子（非房主补丁）=====
+
+        /// <summary>Managers.Update Postfix：节流检查本地是否缺椅子设备（房主未装 mod 时非房主本地没有椅子），缺则补 spawn。</summary>
+        [HarmonyPatch(typeof(Managers), "Update")]
+        internal static class LocalChairSpawnPatch
+        {
+            private static float _nextCheck;
+
+            private static void Postfix()
+            {
+                if (Time.unscaledTime < _nextCheck)
+                {
+                    return;
+                }
+                _nextCheck = Time.unscaledTime + 1f;
+                LocalChairSpawn.Check();
+            }
+        }
+
         // ===== 7. 坐姿同步接收（SyncSitting）=====
 
         /// <summary>接收端：聊天接收入口识别坐姿指令（零宽前缀）→ 拦截聊天显示 +
