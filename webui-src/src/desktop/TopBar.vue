@@ -44,8 +44,10 @@ const props = defineProps({
   /** Steam 在线小组件是否开着（面板里的开关态展示）。 */
   steamWidgetOpen: { type: Boolean, default: false },
   mcpWidgetOpen: { type: Boolean, default: false },
+  /** 平铺模式是否开启（tray 的切换按钮据此换图标与高亮）。 */
+  tileMode: { type: Boolean, default: false },
 });
-const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch']);
+const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch', 'toggle-tile']);
 
 const conn = useConnectionStatus();
 const shell = useShellUser();
@@ -358,6 +360,15 @@ async function exitGame() {
 
     <!-- 右：连接状态（图标式）+ 中文时间 -->
     <div class="topbar-tray">
+      <button
+        class="tray-item tray-btn"
+        :class="{ on: tileMode }"
+        :title="tileMode ? '平铺模式已开启：点此回到可拖动窗口' : '平铺模式：窗口铺满工作区，标签页式切换'"
+        @click.stop="emit('toggle-tile')"
+      >
+        <IconLayoutGrid v-if="tileMode" />
+        <IconMaximize v-else />
+      </button>
       <div class="tray-item conn" :class="{ ok: conn.online }" :title="conn.online ? '已连接' : '连接中…'">
         <IconWifi />
       </div>
@@ -762,6 +773,11 @@ async function exitGame() {
   color: var(--text-2);
 }
 .tray-item { display: flex; align-items: center; gap: 6px; }
+/* 平铺模式开关：无边框图标按钮，开启时点青（与其它 tray 项的静默风格一致） */
+.tray-btn { background: none; border: none; padding: 0 3px; cursor: pointer; color: var(--text-1); }
+.tray-btn svg { width: 15px; height: 15px; }
+.tray-btn:hover { color: var(--text-0); }
+.tray-btn.on { color: var(--accent-cyan); }
 
 /* 连接状态：图标式（学习 NoriOS 顶栏的信号图标），绿=已连接 / 红=连接中 */
 .tray-item.conn svg { width: 15px; height: 15px; color: var(--accent-red); }
