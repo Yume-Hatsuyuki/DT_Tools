@@ -50,11 +50,28 @@ namespace DT_Tools.Patches.Fun.PhotoSend
                     return "图片解码失败：" + path;
                 }
 
-                // 2. 缩放（长边 <= MaxSide）
+                // 2. 按缩放模式计算缩放比例（0.1.16b PhotoManager 无缩放，此为本功能扩展）
                 int maxSide = Mathf.Clamp(PhotoSendFeature.MaxSide, 128, 1024);
-                float scale = Mathf.Min(1f, (float)maxSide / Mathf.Max(source.width, source.height));
+                int minSide = Mathf.Clamp(PhotoSendFeature.MinSide, 64, 512);
+                float srcMax = Mathf.Max(source.width, source.height);
+                float srcMin = Mathf.Min(source.width, source.height);
+                float scale;
+                switch (PhotoSendFeature.ScaleMode)
+                {
+                    case ScaleModeType.Original:
+                        scale = 1f; // 尽量保原分辨率，靠降质量压 160KB
+                        break;
+                    case ScaleModeType.Fixed:
+                        scale = Mathf.Min(1f, maxSide / srcMax); // 只缩大图
+                        break;
+                    default: // Auto：大图缩到 MaxSide，小图放大到 MinSide（放大不超 MaxSide 上限）
+                        float cap = maxSide / srcMax;
+                        float lift = minSide / srcMin;
+                        scale = srcMin < minSide ? Mathf.Min(cap, lift) : Mathf.Min(1f, cap);
+                        break;
+                }
                 Texture2D resized = source;
-                if (scale < 1f)
+                if (scale < 1f || scale > 1.0001f)
                 {
                     int w = Mathf.Max(1, Mathf.RoundToInt(source.width * scale));
                     int h = Mathf.Max(1, Mathf.RoundToInt(source.height * scale));
