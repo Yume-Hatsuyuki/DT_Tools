@@ -146,14 +146,11 @@ cd webui-src && npm run build
 - `main` 是发布线。打 tag 发版。
 - `dev` 是开发线。PR 先合入 `dev`。验证后，再合回 `main`。
 
-### 本机 worktree
+### 本机工作区
 
-- 本机用 git worktree。主目录在 `main` 分支。
-- `dev` 分支在 `../DT_Tools-dev`。
-- worktree 里没有 `libs/`。构建时必须指定游戏程序集目录。
-- 不指定时，csproj 的默认值是 `DT_Tools/` 上一级的 `libs`。
-
-指定游戏程序集目录的写法：
+- 本机主工作区直接检出 `dev` 分支，`libs/` 齐全，直接按上方命令构建。
+- csproj 的游戏程序集目录默认值是 `DT_Tools/` 上一级的 `libs`。
+- 缺少 `libs/` 的检出可显式指定游戏程序集目录：
 
 ```bash
 dotnet build DT_Tools/DT_Tools.csproj -p:GameManaged="<libs 的绝对路径>"
@@ -192,7 +189,7 @@ Plugin.cs（装配根）
 - `Game/` 只放行为，不放类型包装。
 - 同一段代码有 ≥2 处调用，才上浮到 `Game/`。
 - 两个功能共享的调用序列、数据表、设备读取，一律上浮到 `Game/`。
-- 现有范本共 9 个：`RoomFlow`、`ItemPools`、`Devices`、`AudioMix`、`SabotageClue`、`RoomLobbyData`、`MicBroadcast`、`FakePlayers`、`LocalPlayer`。
+- 现有范本：`RoomFlow`、`ItemPools`、`Devices`、`AudioMix`、`SabotageClue`、`RoomLobbyData`、`MicBroadcast`、`FakePlayers`、`LocalPlayer`。
 
 ## 5. 功能注册
 
