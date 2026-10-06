@@ -16,7 +16,7 @@ namespace DT_Tools.Patches.System.BackendProxy
     /// </summary>
     [PatchFeature(
         "出站接口反代：把支付/装扮目击后端与 Discord 反馈上报改道到自建服务器。\n配置值整替原版域名，游戏路径自动保留（/pay、/pay-dev、/v1/…、/api/webhooks/…）；留空 = 游戏原版链接，改完即时生效、无需重启。\n后端地址只填域名（例：https://example.com）；Discord 地址填转发前缀，\n反代需要路径前缀时一并填入（例：https://example.com/discord）。与「测试模式」同开时以本配置为准。",
-        defaultEnabled: true,
+        defaultEnabled: false,
         side: FeatureSide.Client,
         Author = "梦初雪")]
     public sealed class BackendProxyFeature
