@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { API } from '../../api.js';
 import { useConfigToolbar } from '../../composables/useConfigToolbar.js';
 import { useSectionMeta } from '../../composables/useSectionMeta.js';
+import { useFolderView } from '../../composables/useFolderView.js';
 import FolderGrid from '../common/FolderGrid.vue';
 import EntryList from '../common/EntryList.vue';
 import LogPanel from '../common/LogPanel.vue';
@@ -15,6 +16,8 @@ import IconTrash from '~icons/tabler/trash';
 import IconHistory from '~icons/tabler/history';
 import IconArrowLeft from '~icons/tabler/arrow-left';
 import IconRotateClockwise2 from '~icons/tabler/rotate-clockwise-2';
+import IconLayoutGrid from '~icons/tabler/layout-grid';
+import IconList from '~icons/tabler/list';
 
 const hostEnabled = ref(false);
 const modules = ref([]);
@@ -23,6 +26,8 @@ const query = ref('');
 const openModuleId = ref(null);   // 展开中的模块 id，null=文件夹网格视图
 const logOpen = ref(false);
 const sectionMeta = useSectionMeta();
+// 网格/列表视图状态与切换：与 DT 配置页**共用一份**（切换按钮在各自页面的工具栏上）
+const { viewMode, toggleView } = useFolderView();
 
 async function reload() {
   const data = await API.automationStatus();
@@ -125,6 +130,21 @@ onMounted(async () => {
   startAutoRefresh();
 });
 onUnmounted(stopAutoRefresh);
+
+/**
+ * 列表视图每行的说明：与模块详情页**同一来源** ——
+ * 优先用协议给的模块描述，退回开关键描述里 splitDesc 出来的正文。
+ *
+ * ⚠️ 参数是 FolderGrid 的 **item 对象**（不是 key 字符串）—— 与 DT 配置页的 descOf 同一约定。
+ * 早先这里收的是 key，而组件传的是整个 item ⇒ find 永不命中、整列说明为空。
+ */
+function moduleInfoText(item) {
+  const m = modules.value.find(x => x.id === item.key);
+  if (!m) return '';
+  const enabledEntry = (m.entries || []).find(e => e.key === (m.enabledKey || 'Enabled'));
+  const parsed = enabledEntry ? splitDesc(enabledEntry.description) : { text: '' };
+  return m.description || parsed.text || '';
+}
 </script>
 
 <template>
@@ -140,6 +160,13 @@ onUnmounted(stopAutoRefresh);
       </div>
       <div class="toolbar-right">
         <span v-if="dirty" class="dirty-mark">●未保存</span>
+        <button class="tb-btn"
+                :title="viewMode === 'list' ? '切换到磁贴网格' : '切换到列表（每条带说明）'"
+                @click="toggleView">
+          <IconList v-if="viewMode === 'grid'" />
+          <IconLayoutGrid v-else />
+          {{ viewMode === 'grid' ? '列表' : '网格' }}
+        </button>
         <button class="tb-btn" :class="{ active: autoRefresh }" @click="autoRefresh = !autoRefresh">
           <IconRefresh /> 自动刷新:{{ autoRefresh ? '开' : '关' }}
         </button>
@@ -161,7 +188,7 @@ onUnmounted(stopAutoRefresh);
 
     <div v-if="loadError" class="panel-empty">{{ loadError }}</div>
 
-    <FolderGrid v-else-if="!openModuleId" :items="folderItems" @open="openDetail" />
+    <FolderGrid v-else-if="!openModuleId" :items="folderItems" :desc-of="moduleInfoText" @open="openDetail" />
 
     <div v-else-if="currentModule" class="module-detail">
       <div class="detail-header">

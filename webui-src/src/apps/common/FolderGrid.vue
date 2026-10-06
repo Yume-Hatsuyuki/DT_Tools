@@ -3,16 +3,24 @@ import { computed, ref } from 'vue';
 import { useSectionMeta } from '../../composables/useSectionMeta.js';
 import { pickImageFile } from '../../composables/pickImage.js';
 import { useCropper } from '../../composables/useCropper.js';
+import { useFolderView } from '../../composables/useFolderView.js';
 import IconFolder from '~icons/tabler/folder';
 
 const props = defineProps({
   /** [{ key, label, count, enabled: bool|null }] —— key 是稳定标识（段名/模块 id）。 */
   items: { type: Array, required: true },
+  /**
+   * 列表视图每行右侧的说明文字（item → string）；不传则列表只显示名字与计数。
+   * 各页自备来源：DT 配置页给分类说明 / 段摘要，自动化页给模块说明。
+   */
+  descOf: { type: Function, default: null },
 });
 const emit = defineEmits(['open']);
 
 const sectionMeta = useSectionMeta();
 const cropper = useCropper();
+// 网格/列表共用一份状态：切换按钮在各自页面的工具栏上（useFolderView）
+const { viewMode } = useFolderView();
 
 const menu = ref(null);   // { x, y, item }
 const renaming = ref(null);   // { key, value }
@@ -82,29 +90,61 @@ const filtered = computed(() => props.items);   // 过滤由父级完成（父�
 </script>
 
 <template>
-  <div class="folder-grid" @click="closeMenu">
-    <button
-      v-for="item in filtered"
-      :key="item.key"
-      class="folder-tile"
-      type="button"
-      :title="item.label"
-      @click="open(item)"
-      @contextmenu="openMenu($event, item)"
-    >
-      <span class="tile-icon">
-        <img v-if="sectionMeta.get(item.key)?.icon" :src="sectionMeta.get(item.key).icon" alt="" class="tile-img">
-        <IconFolder v-else class="tile-fallback" />
+  <div :class="viewMode === 'list' ? 'folder-list' : 'folder-grid'" @click="closeMenu">
+    <!-- 网格视图（原样式） -->
+    <template v-if="viewMode === 'grid'">
+      <button
+        v-for="item in filtered"
+        :key="item.key"
+        class="folder-tile"
+        type="button"
+        :title="item.label"
+        @click="open(item)"
+        @contextmenu="openMenu($event, item)"
+      >
+        <span class="tile-icon">
+          <img v-if="sectionMeta.get(item.key)?.icon" :src="sectionMeta.get(item.key).icon" alt="" class="tile-img">
+          <IconFolder v-else class="tile-fallback" />
+          <span
+            v-if="item.enabled !== null && item.enabled !== undefined"
+            class="enabled-dot"
+            :class="{ on: item.enabled }"
+            :title="item.enabled ? '已启用' : '已禁用'"
+          />
+        </span>
+        <span class="tile-label">{{ labelOf(item) }}</span>
+        <span class="tile-count">{{ item.count }} 项</span>
+      </button>
+    </template>
+
+    <!-- 列表视图：每行右侧一句说明（说明文本由父级的 descOf 提供；两个页面各给各的来源） -->
+    <template v-else>
+      <div
+        v-for="item in filtered"
+        :key="item.key"
+        class="list-row"
+        :title="item.label"
+        @click="open(item)"
+        @contextmenu="openMenu($event, item)"
+      >
+        <span class="row-icon">
+          <img v-if="sectionMeta.get(item.key)?.icon" :src="sectionMeta.get(item.key).icon" alt="" class="row-img">
+          <IconFolder v-else class="row-fallback" />
+        </span>
+        <span class="row-main">
+          <span class="row-label">{{ labelOf(item) }}</span>
+          <span class="row-desc">{{ descOf ? descOf(item) : '' }}</span>
+        </span>
         <span
           v-if="item.enabled !== null && item.enabled !== undefined"
-          class="enabled-dot"
+          class="row-dot"
           :class="{ on: item.enabled }"
           :title="item.enabled ? '已启用' : '已禁用'"
         />
-      </span>
-      <span class="tile-label">{{ labelOf(item) }}</span>
-      <span class="tile-count">{{ item.count }} 项</span>
-    </button>
+        <span class="row-count">{{ item.count }} 项</span>
+      </div>
+    </template>
+
     <div v-if="!filtered.length" class="empty">无匹配项。</div>
 
     <!-- 菜单/遮罩必须 Teleport 到 body：窗口外壳 .win 带 backdrop-filter，
@@ -213,6 +253,46 @@ const filtered = computed(() => props.items);   // 过滤由父级完成（父�
 }
 .folder-tile:hover .tile-label { color: var(--text-0); }
 .tile-count { font-size: 10px; color: var(--text-2); }
+
+/* 列表视图：一条一行，右侧带说明（分类说明 / 功能摘要 / 模块说明） */
+.folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px 16px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  align-content: flex-start;
+}
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.list-row:hover { border-color: var(--line-strong); background: var(--surface-2); }
+.row-icon { display: flex; align-items: center; flex-shrink: 0; color: var(--text-2); }
+.row-icon :deep(svg) { width: 16px; height: 16px; }
+.row-img { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; }
+.row-fallback { width: 16px; height: 16px; }
+.row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.row-label { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-0); }
+.row-desc {
+  font-size: 11.5px;
+  color: var(--text-2);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-count { font-size: 11px; color: var(--text-2); flex-shrink: 0; }
+.row-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); flex-shrink: 0; }
+.row-dot.on { background: var(--accent-green); }
 
 .empty { grid-column: 1 / -1; text-align: center; color: var(--text-2); padding: 40px 0; font-size: 12.5px; }
 

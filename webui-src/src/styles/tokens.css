@@ -13,6 +13,9 @@
 
   /* 壳层 chrome（顶栏 / Dock）：毛玻璃深青 */
   --topbar-h: 32px;
+  /* Dock（任务栏）总高 = 上下 padding 9+13 + 图标 52 + 边框 —— 平铺模式据此给它让位。
+     改 Dock.vue 的那几个数时必须同步这里。 */
+  --dock-h: 76px;
   --topbar-bg: rgba(8, 15, 22, 0.72);
   --topbar-border: rgba(140, 220, 255, 0.14);
   --dock-bg: rgba(10, 20, 28, 0.52);
