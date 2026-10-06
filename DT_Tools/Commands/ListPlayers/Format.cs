@@ -15,13 +15,14 @@ namespace DT_Tools.Commands.ListPlayers
             foreach (var e in players)
             {
                 string steamStr = e.SteamId != 0 ? e.SteamId.ToString() : "未知";
+                string steamName = string.IsNullOrEmpty(e.SteamName) ? "未知" : e.SteamName;
 
                 string tag = "";
                 if (e.IsHost && e.IsSelf) tag = "  ← 房主·你";
                 else if (e.IsHost)        tag = "  ← 房主";
                 else if (e.IsSelf)        tag = "  ← 你";
 
-                sb.AppendLine($"  #{e.Pid,-4} {e.Name,-16} steam_id={steamStr}{tag}");
+                sb.AppendLine($"  #{e.Pid,-4} {e.Name,-16} steam_id={steamStr} steam_name={steamName}{tag}");
             }
 
             if (hostId == 0)
@@ -42,6 +43,7 @@ namespace DT_Tools.Commands.ListPlayers
                     playerId = e.Pid,
                     name = e.Name ?? "",
                     steamId = e.SteamId != 0 ? e.SteamId.ToString() : "",
+                    steamName = e.SteamName ?? "",
                     isHost = e.IsHost,
                     isSelf = e.IsSelf,
                 }),
