@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Net;
-using System.Reflection;
 using System.Threading;
 using DT_Tools.Core;
 using HarmonyLib;
@@ -93,7 +92,7 @@ namespace DT_Tools.Patches.Fun.PhotoSend
             catch (Exception ex)
             {
                 Log.Warn<PhotoSendFeature>("[PhotoSend] 发送失败：" + ex);
-                return "照片发送失败：" + ex.Message;
+                return "照片发送失败。";
             }
         }
 
@@ -121,7 +120,7 @@ namespace DT_Tools.Patches.Fun.PhotoSend
 
         /// <summary>
         /// 解析图片来源：http(s) 链接 → url；本地绝对路径或相对图片目录的路径 → path；
-        /// 目录内裸文件名按扩展名试探（.jpg/.jpeg/.png/.bmp/.gif）。都失败时给带可用图片列表的提示。
+        /// 目录内裸文件名按扩展名试探（.jpg/.jpeg/.png/.bmp/.gif）。
         /// </summary>
         private static bool TryResolveSource(string raw, out string url, out string path, out string error)
         {
@@ -157,13 +156,7 @@ namespace DT_Tools.Patches.Fun.PhotoSend
                 return true;
             }
 
-            string[] files = Directory.Exists(PhotoDirectory)
-                ? Directory.GetFiles(PhotoDirectory, "*.*")
-                : Array.Empty<string>();
-            string hint = files.Length > 0
-                ? "；可用图片：" + string.Join("、", Array.ConvertAll(files, f => Path.GetFileNameWithoutExtension(f)))
-                : "；目录不存在，请先创建 " + PhotoDirectory;
-            error = "未找到本地图片 " + arg + hint;
+            error = "未找到该本地图片；请确认文件名（含扩展名，.jpg/.jpeg/.png/.bmp/.gif）";
             return false;
         }
 
@@ -213,31 +206,31 @@ namespace DT_Tools.Patches.Fun.PhotoSend
                 {
                     int w = Mathf.Max(1, Mathf.RoundToInt(source.width * scale));
                     int h = Mathf.Max(1, Mathf.RoundToInt(source.height * scale));
-                    toEncode = new Texture2D(w, h, TextureFormat.RGBA32, false);
-                    RenderTexture rt = RenderTexture.GetTemporary(w, h);
-                    Graphics.Blit(source, rt);
-                    RenderTexture prev = RenderTexture.active;
-                    RenderTexture.active = rt;
-                    toEncode.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-                    toEncode.Apply();
-                    RenderTexture.active = prev;
-                    RenderTexture.ReleaseTemporary(rt);
-                    UnityEngine.Object.Destroy(source);
+                    toEncode = ResizeTexture(source, w, h);
                     outW = w;
                     outH = h;
                 }
-                // 质量迭代降级直至 ≤160KB 原版上限
-                for (; quality >= 30; quality -= 10)
+                // 质量比例搜索：与原版 EncodeAdaptive 同思路（0.1.16b PhotoManager.cs:600-623），
+                // 按体积比例估算下一档质量，比线性盲降更快贴住 160KB 且不跌进低质量糊图；
+                // Original 模式放宽到 30（用户选择了分辨率优先）
+                int floorQuality = PhotoSendFeature.ScaleMode == ScaleModeType.Original ? 30 : 55;
+                for (int attempt = 0; attempt < 5; attempt++)
                 {
                     jpeg = toEncode.EncodeToJPG(quality);
-                    if (jpeg == null)
+                    if (jpeg == null || jpeg.Length <= JpegLimitBytes)
                     {
                         break;
                     }
-                    if (jpeg.Length <= JpegLimitBytes)
+                    if (quality <= floorQuality)
                     {
                         break;
                     }
+                    int next = NextQuality(quality, jpeg.Length, floorQuality);
+                    if (next >= quality)
+                    {
+                        break;
+                    }
+                    quality = next;
                 }
                 // 释放用过的纹理（缩放过则销毁缩放结果，未缩放则销毁原图）
                 UnityEngine.Object.Destroy(toEncode == source ? source : toEncode);
@@ -258,17 +251,6 @@ namespace DT_Tools.Patches.Fun.PhotoSend
             return null;
         }
 
-        /// <summary>主线程：图片字节 → JPEG 压缩 → 直发。返回错误文案或 null。</summary>
-        private static string LoadCompressSend(byte[] image, string name)
-        {
-            string error = CompressToJpeg(image, out byte[] jpeg, out int outW, out int outH);
-            if (error != null)
-            {
-                return error;
-            }
-            return SendPhoto(jpeg, name, outW, outH);
-        }
-
         /// <summary>直发：构造 C_CHAT_PHOTO（SlotIndex=-1）直接发，不触碰相册。须主线程。</summary>
         private static string SendPhoto(byte[] jpeg, string name, int outW, int outH)
         {
@@ -286,6 +268,63 @@ namespace DT_Tools.Patches.Fun.PhotoSend
             ConsumeBudgetMethod?.Invoke(Managers.Photo, null);
             Log.Info<PhotoSendFeature>($"[PhotoSend] {name} 已发送：{jpeg.Length / 1024}KB（{outW}x{outH}px）");
             return null;
+        }
+
+        /// <summary>按体积比例估算下一档 JPEG 质量（原版 EncodeAdaptive 的 0.55 次幂公式），永不低于 floor。</summary>
+        private static int NextQuality(int quality, int jpegSize, int floorQuality)
+        {
+            float f = (float)JpegLimitBytes / jpegSize;
+            int next = (int)Math.Round(quality * Math.Pow(f, 0.55));
+            if (next < floorQuality)
+            {
+                return floorQuality;
+            }
+            if (next > quality - 5)
+            {
+                return quality - 5;
+            }
+            return next;
+        }
+
+        /// <summary>
+        /// 逐级减半降采样（原版 ResampleTo 同思路，0.1.16b PhotoManager.cs:566，级数不封顶）：
+        /// Unity Blit 只做单次线性采样，大比例一次缩会跳像素发糊；先 box 逐级减半到 2 倍内，
+        /// 末次再 bilinear 到目标。输入纹理一律销毁，返回新纹理。须主线程。
+        /// </summary>
+        private static Texture2D ResizeTexture(Texture2D source, int w, int h)
+        {
+            Texture2D current = source;
+            while (current.width > w * 2 || current.height > h * 2)
+            {
+                Texture2D half = BlitToTexture(current, Mathf.Max(1, current.width / 2), Mathf.Max(1, current.height / 2));
+                if (current != source)
+                {
+                    UnityEngine.Object.Destroy(current);
+                }
+                current = half;
+            }
+            Texture2D result = BlitToTexture(current, w, h);
+            if (current != source)
+            {
+                UnityEngine.Object.Destroy(current);
+            }
+            UnityEngine.Object.Destroy(source);
+            return result;
+        }
+
+        /// <summary>GPU 缩放一步：Blit 到临时 RT 后 ReadPixels 回 CPU 纹理。须主线程。</summary>
+        private static Texture2D BlitToTexture(Texture2D src, int w, int h)
+        {
+            var target = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            RenderTexture rt = RenderTexture.GetTemporary(w, h);
+            Graphics.Blit(src, rt);
+            RenderTexture prev = RenderTexture.active;
+            RenderTexture.active = rt;
+            target.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            target.Apply();
+            RenderTexture.active = prev;
+            RenderTexture.ReleaseTemporary(rt);
+            return target;
         }
 
         private static string FindImage(string name)
@@ -370,7 +409,11 @@ namespace DT_Tools.Patches.Fun.PhotoSend
                     {
                         return; // 下载期间功能被关闭，放弃发送
                     }
-                    string error = LoadCompressSend(image, "网络图片");
+                    string error = CompressToJpeg(image, out byte[] jpeg, out int outW, out int outH);
+                    if (error == null)
+                    {
+                        error = SendPhoto(jpeg, "网络图片", outW, outH);
+                    }
                     if (error != null)
                     {
                         Log.Warn<PhotoSendFeature>("[PhotoSend] " + error);
@@ -380,9 +423,9 @@ namespace DT_Tools.Patches.Fun.PhotoSend
             }
             catch (Exception ex)
             {
-                Log.Warn<PhotoSendFeature>("[PhotoSend] 远程图片下载失败：" + ex.Message);
+                Log.Warn<PhotoSendFeature>("[PhotoSend] 远程图片下载失败：" + ex);
                 VoiceManager chat = job.Chat;
-                string text = "远程图片下载失败：" + ex.Message;
+                string text = "远程图片下载失败（详细原因见本地日志）";
                 CoroutineHost.Post(() => ReportChatError(chat, text));
             }
         }

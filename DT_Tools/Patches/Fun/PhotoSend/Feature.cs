@@ -38,13 +38,13 @@ namespace DT_Tools.Patches.Fun.PhotoSend
         [Config("缩放模式：Auto=按分辨率自适应（大图缩小/小图放大，推荐）；Fixed=只缩大图不放大；Original=尽量保原分辨率。")]
         public static ScaleModeType ScaleMode = ScaleModeType.Auto;
 
-        [Config("照片长边像素：大图缩放到的上限（越大越清晰，注意 160KB 大小上限）。", Min = 128, Max = 1024)]
-        public static int MaxSide = 512;
+        [Config("照片长边像素：大图缩放到的上限（越大越清晰，注意 160KB 大小上限）。800=与原版手机拍照同分辨率。", Min = 128, Max = 1024)]
+        public static int MaxSide = 800;
 
         [Config("照片短边像素：Auto 模式下小图放大到的下限（避免小图发出去太小）。", Min = 64, Max = 512)]
         public static int MinSide = 96;
 
-        [Config("JPEG 质量（0-100），越小体积越小。", Min = 30, Max = 95)]
-        public static int JpegQuality = 75;
+        [Config("JPEG 质量（0-100），越小体积越小。85=接近原版拍照画质（原版 q90 起步按体积自适应下调）。", Min = 30, Max = 95)]
+        public static int JpegQuality = 85;
     }
 }
