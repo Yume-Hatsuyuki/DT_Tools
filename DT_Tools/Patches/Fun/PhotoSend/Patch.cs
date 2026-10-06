@@ -5,12 +5,13 @@ using System.Reflection;
 namespace DT_Tools.Patches.Fun.PhotoSend
 {
     /// <summary>
-    /// 聊天触发补丁：本地发送聊天消息时，若以 `!photo` 开头则拦截（不发出去）并执行照片发送。
-    /// 其余消息原样放行。
+    /// 聊天触发补丁：本地发送聊天消息时，若以 `!图片名`（或兼容的 `!photo 图片名`）开头
+    /// 且能在图片文件夹里找到对应文件，则拦截（不发出去）并执行照片发送；
+    /// `!` 开头但找不到文件的消息原样放行（不误伤普通感叹号聊天）。
     /// </summary>
     internal static class Patch
     {
-        private const string Tag = "!photo";
+        private const string LegacyTag = "!photo";
 
         /// <summary>PhotoManager._shots 私有字段（0.1.16b PhotoManager.cs:39，注入本地相册用）。</summary>
         internal static readonly FieldInfo PhotoShotsField =
@@ -31,12 +32,29 @@ namespace DT_Tools.Patches.Fun.PhotoSend
                 }
 
                 string trimmed = message.TrimStart();
-                if (!trimmed.StartsWith(Tag, global::System.StringComparison.OrdinalIgnoreCase))
+                // 半角 ! 或全角 ！ 开头才视为指令
+                if (!trimmed.StartsWith("!", global::System.StringComparison.Ordinal) &&
+                    !trimmed.StartsWith("！", global::System.StringComparison.Ordinal))
                 {
                     return true;
                 }
 
-                string name = trimmed.Substring(Tag.Length).Trim();
+                bool legacy = trimmed.StartsWith(LegacyTag, global::System.StringComparison.OrdinalIgnoreCase);
+                string name = legacy
+                    ? trimmed.Substring(LegacyTag.Length).Trim()
+                    : trimmed.Substring(1).Trim();
+
+                if (name.Length == 0)
+                {
+                    return !legacy; // 空指令：旧格式拦截并提示，新格式放行
+                }
+
+                // 旧格式 !photo xxx 找不到也拦截报错；新格式 !xxx 找不到则当普通消息放行
+                if (!legacy && !PhotoSendLogic.TryResolve(name, out _))
+                {
+                    return true;
+                }
+
                 string error = PhotoSendLogic.Execute(name);
                 if (error == null)
                 {

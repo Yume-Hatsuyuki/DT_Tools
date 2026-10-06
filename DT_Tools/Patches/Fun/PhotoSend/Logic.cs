@@ -11,9 +11,24 @@ namespace DT_Tools.Patches.Fun.PhotoSend
     /// </summary>
     internal static class PhotoSendLogic
     {
-        /// <summary>Photos 目录（BepInEx/plugins/DT_Tools/Photos/）。</summary>
-        public static string PhotoDirectory =>
-            Path.Combine(BepInEx.Paths.PluginPath, "DT_Tools", "Photos");
+        /// <summary>图片目录：配置了 PhotoFolder 用配置路径，否则用默认目录（BepInEx/plugins/DT_Tools/Photos/）。</summary>
+        public static string PhotoDirectory
+        {
+            get
+            {
+                string folder = PhotoSendFeature.PhotoFolder?.Trim();
+                return string.IsNullOrEmpty(folder)
+                    ? Path.Combine(BepInEx.Paths.PluginPath, "DT_Tools", "Photos")
+                    : folder;
+            }
+        }
+
+        /// <summary>尝试解析图片路径（供指令前缀判断用，找不到返回 false）。</summary>
+        public static bool TryResolve(string fileName, out string path)
+        {
+            path = FindImage(fileName);
+            return path != null;
+        }
 
         public static string Execute(string fileName)
         {
@@ -21,7 +36,7 @@ namespace DT_Tools.Patches.Fun.PhotoSend
             {
                 if (string.IsNullOrEmpty(fileName))
                 {
-                    return "用法：!photo &lt;图片名&gt;（图片需放到 DT_Tools/Photos/ 目录，支持 jpg/png）";
+                    return "用法：!图片名 或 !photo 图片名（图片放到配置的图片文件夹，支持 jpg/png）";
                 }
 
                 PhotoManager manager = Managers.Photo;

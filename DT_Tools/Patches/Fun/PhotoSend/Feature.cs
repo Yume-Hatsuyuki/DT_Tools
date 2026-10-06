@@ -23,13 +23,16 @@ namespace DT_Tools.Patches.Fun.PhotoSend
     /// 完全走原版照片协议：无需房主权限、无需对方安装本 mod，庭审阶段也可直接发。
     /// </summary>
     [PatchFeature(
-        "照片发送器：聊天输入 !photo 图片名，把 DT_Tools/Photos/ 目录里的本地图片作为照片发送给全房。\n" +
+        "照片发送器：聊天输入 !图片名 或 !photo 图片名，把指定图片文件夹里的本地图片作为照片发送给全房。\n" +
         "走原版照片广播，全房可见，无需房主或对方安装本 MOD，庭审阶段可直接发。",
         defaultEnabled: false,
         side: FeatureSide.Client,
         Author = "花语")]
     public sealed class PhotoSendFeature
     {
+        [Config("图片文件夹路径（绝对路径，例如 D:/我的照片）。留空则用默认目录 BepInEx/plugins/DT_Tools/Photos/。")]
+        public static string PhotoFolder = "";
+
         [Config("缩放模式：Auto=按分辨率自适应（大图缩小/小图放大，推荐）；Fixed=只缩大图不放大；Original=尽量保原分辨率。")]
         public static ScaleModeType ScaleMode = ScaleModeType.Auto;
 
