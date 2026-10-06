@@ -54,6 +54,13 @@ export const API = {
   commands: () => request('/api/commands'),
   steamPlayers: () => request('/api/steam/players'),
 
+  // 更新检测与下载（数据源 GitHub Releases latest；status 走后端 3 分钟缓存，
+  // check 手动绕过缓存，download 启动后台下载、进度经 status 轮询）
+  updateStatus: () => request('/api/update/status'),
+  updateCheck: () => post('/api/update/check'),
+  updateDownload: () => post('/api/update/download'),
+  updateReveal: () => post('/api/update/reveal'),
+
   // MCP 桥接（WebUI 挂件）：状态读取与开关（toggle 走后端 ConfigService，落盘 .cfg）
   mcpStatus: () => request('/api/mcp/status'),
   mcpToggle: (enabled) => post('/api/mcp/toggle', { enabled }),

@@ -6,11 +6,13 @@ import ParticleFlow from './ParticleFlow.vue';
 import SteamWidget from './SteamWidget.vue';
 import McpWidget from './McpWidget.vue';
 import Window from './Window.vue';
+import UpdateModal from './UpdateModal.vue';
 import CropperHost from '../apps/common/CropperHost.vue';
 import { useWindowManager } from '../composables/useWindowManager.js';
 import { pickImageFile } from '../composables/pickImage.js';
 import { useWallpaper } from '../composables/useWallpaper.js';
 import { useCropper } from '../composables/useCropper.js';
+import { useUpdateCheck } from '../composables/useUpdateCheck.js';
 // 桌面挂载即启动全局日志流（WebSocket 单例）：连接状态（顶栏）从桌面加载起
 // 就由日志流驱动，不依赖任何窗口是否打开。
 import { useLogStream } from '../composables/useLogStream.js';
@@ -28,6 +30,7 @@ import IconTerminal from '~icons/tabler/terminal';
 import IconPhoto from '~icons/tabler/photo';
 import IconPhotoOff from '~icons/tabler/photo-off';
 import IconInfoCircle from '~icons/tabler/info-circle';
+import IconRefresh from '~icons/tabler/refresh';
 import IconSparkles from '~icons/tabler/sparkles';
 import IconArrowBarToDown from '~icons/tabler/arrow-bar-to-down';
 import IconSquareX from '~icons/tabler/square-x';
@@ -62,6 +65,11 @@ const apps = [
 
 useLogStream();
 
+// 更新检测全局单例：桌面挂载即启动（3 分钟轮询），顶栏徽标/气泡、关于弹窗、
+// 更新信息弹窗共用同一份状态
+const upd = useUpdateCheck();
+upd.start();
+
 const { windows, open, close, focus, minimize, toggleFocus, toggleMaximize, updateGeometry, showDesktop, minimizeAll, closeAll } = useWindowManager();
 const wallpaper = useWallpaper();
 const cropper = useCropper();
@@ -69,6 +77,7 @@ const cropper = useCropper();
 const desktopMenu = ref(null);           // { x, y } —— 桌面右键菜单
 const dockMenu = ref(null);              // { x, y } —— Dock（任务栏）右键菜单
 const busyInfo = ref(false);
+const showUpdate = ref(false);           // 软件更新弹窗（顶栏徽标/气泡、关于弹窗均可打开）
 
 // ---- 挂件（Dock 可开可关，位置/关闭态由各自组件自持）----
 
@@ -297,6 +306,7 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       :mcp-widget-open="mcpWidgetOpen"
       @focus-window="toggleFocus"
       @about="busyInfo = true"
+      @show-update="showUpdate = true"
       @change-wallpaper="changeWallpaper"
       @reset-wallpaper="resetWallpaper"
       @toggle-widget="toggleWidget"
@@ -322,6 +332,22 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       <div class="about-box">
         <div class="about-title">DT_Tools WebUI</div>
         <div class="about-line">Deadly Trick 游戏工具插件</div>
+        <div class="about-line mono">当前版本 v{{ upd.state.current || '…' }}</div>
+
+        <!-- 检查更新：手动触发（绕过后端缓存），结果直接显示在关于框内 -->
+        <div class="about-check-row">
+          <button type="button" class="about-check" :disabled="upd.state.checking" @click="upd.manualCheck()">
+            <IconRefresh :class="{ spin: upd.state.checking }" />
+            {{ upd.state.checking ? '检查中…' : '检查更新' }}
+          </button>
+        </div>
+        <div v-if="!upd.state.checking && upd.state.error" class="about-upd err">检查失败：{{ upd.state.error }}</div>
+        <div v-else-if="!upd.state.checking && upd.state.hasUpdate" class="about-upd new">
+          发现新版本 {{ upd.state.latest && upd.state.latest.tag }}
+          <button type="button" class="about-upd-link" @click="busyInfo = false; showUpdate = true">查看详情</button>
+        </div>
+        <div v-else-if="!upd.state.checking && upd.state.lastChecked" class="about-upd ok">已是最新版本</div>
+
         <div class="about-line">所有配置 / 重命名 / 壁纸 / 图标仅存于本浏览器。</div>
         <div class="about-refs">
           <div class="about-refs-title">主题参考：</div>
@@ -331,6 +357,9 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
         <button type="button" class="about-close" @click="busyInfo = false">关闭</button>
       </div>
     </div>
+
+    <!-- 软件更新弹窗：新版本信息 + 更新说明 + 下载（顶栏徽标/气泡与关于弹窗共用） -->
+    <UpdateModal v-if="showUpdate" @close="showUpdate = false" />
   </div>
 </template>
 
@@ -400,6 +429,42 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
 }
 .about-title { font-size: 15px; font-weight: 700; color: var(--shell-glow); font-family: var(--font-mono); margin-bottom: 8px; }
 .about-line { font-size: 12px; color: var(--text-1); line-height: 1.7; }
+.about-line.mono { font-family: var(--font-mono); color: var(--text-0); }
+
+/* 检查更新（手动）：按钮 + 结果行（错误红 / 有新版绿可跳详情 / 已最新绿） */
+.about-check-row { display: flex; justify-content: center; margin-top: 10px; }
+.about-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(150, 225, 255, 0.08);
+  border: 1px solid rgba(150, 225, 255, 0.18);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: 12px;
+  padding: 5px 14px;
+  cursor: pointer;
+}
+.about-check svg { width: 13px; height: 13px; color: var(--shell-glow); }
+.about-check:hover { background: rgba(150, 225, 255, 0.14); color: var(--text-0); }
+.about-check:disabled { opacity: 0.5; cursor: default; }
+.spin { animation: about-spin 1s linear infinite; }
+@keyframes about-spin { to { transform: rotate(360deg); } }
+
+.about-upd { margin-top: 8px; font-size: 12px; }
+.about-upd.err { color: var(--accent-red); }
+.about-upd.ok { color: var(--accent-green); }
+.about-upd.new { color: var(--accent-green); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.about-upd-link {
+  background: rgba(71, 212, 185, 0.12);
+  border: 1px solid rgba(71, 212, 185, 0.4);
+  border-radius: var(--radius-sm);
+  color: var(--accent-green);
+  font-size: 11.5px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.about-upd-link:hover { background: rgba(71, 212, 185, 0.22); }
 .about-refs { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .about-refs-title { font-size: 12px; color: var(--text-1); margin-bottom: 4px; }
 .about-refs a {

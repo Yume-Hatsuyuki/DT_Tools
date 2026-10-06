@@ -151,6 +151,11 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/automation/host", Api.AutomationApi.HandleHost);
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
+            // 更新检测与下载（GitHub Releases latest）：状态轮询 / 手动检查 / 后台下载 / 定位文件
+            router.Add("GET", "/api/update/status", Api.UpdateApi.HandleStatus);
+            router.Add("POST", "/api/update/check", Api.UpdateApi.HandleCheck);
+            router.Add("POST", "/api/update/download", Api.UpdateApi.HandleDownload);
+            router.Add("POST", "/api/update/reveal", Api.UpdateApi.HandleReveal);
             router.Add("GET", "/api/fs/list", Api.FsApi.HandleList);   // WebUI 内置文件选择器（只读目录浏览）
             // 随身MP3：全部端点经 RunOnMain 主线程执行。playlist/* 必须注册在 play 之前——
             // Router 前缀匹配，/api/mp3/play 会截走 /api/mp3/playlist/*

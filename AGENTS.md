@@ -569,6 +569,10 @@ public sealed class XxxModule { }
 | `/api/automation/modules/{id}/log` | GET / POST | 查询或清空模块日志 |
 | `/api/game/exit` | POST | 在主线程调用 `Application.Quit()`。确认步骤在前端做 |
 | `/api/steam/players` | GET | Steam 在线人数 |
+| `/api/update/status` | GET | 更新检测状态（GitHub Releases latest，后端缓存 3 分钟；含当前版本、最新版本、下载进度） |
+| `/api/update/check` | POST | 手动检查更新。绕过缓存立即请求 GitHub |
+| `/api/update/download` | POST | 启动新版 zip 后台下载（专用线程；进度经 status 轮询） |
+| `/api/update/reveal` | POST | 资源管理器定位已下载的 zip（仅 Windows） |
 | `/api/mcp/status` | GET | MCP 桥接状态（端点/协议版本/工具表/调用计数） |
 | `/api/mcp/toggle` | POST | MCP 桥接开关。body `{enabled: bool}`，经 ConfigService 落盘 |
 | `/api/dummy/state`、`/api/dummy/characters` | GET | 假人：房间快照、角色目录 |
@@ -645,6 +649,13 @@ public sealed class XxxModule { }
 
 - 跨应用共享组件在 `apps/common/`，共 6 个：`SuggestPopup`、`FolderGrid`、`LogPanel`、`EntryList`、`CropperHost`、`FileBrowser`。
 - `FileBrowser` 是本机文件选择弹窗。数据源是 `/api/fs/list`。
+
+#### 更新检测
+
+- `useUpdateCheck()` 是模块级单例。Desktop 挂载即 `start()`：立即拉一次 + 3 分钟轮询 `/api/update/status`（页面隐藏时暂停）。
+- 顶栏更新徽标/气泡（TopBar）、关于弹窗的"检查更新"按钮、`UpdateModal` 更新信息弹窗，共用同一份状态。
+- 手动检查走 `/api/update/check`（后端绕过缓存）。下载激活期间前端切 1 秒快轮询读进度。
+- 后端当前版本来自 csproj 的 `<Version>`（编译期注入 `MyPluginInfo.PLUGIN_VERSION`），前端不自持版本号。
 
 #### 前端铁律
 

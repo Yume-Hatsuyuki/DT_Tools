@@ -6,6 +6,7 @@ import { useSectionMeta } from '../composables/useSectionMeta.js';
 import { useWindowManager } from '../composables/useWindowManager.js';
 import { pickImageFile } from '../composables/pickImage.js';
 import { useCropper } from '../composables/useCropper.js';
+import { useUpdateCheck } from '../composables/useUpdateCheck.js';
 import { API } from '../api.js';
 import IconDragon from '~icons/tabler/dragon';
 import IconWifi from '~icons/tabler/wifi';
@@ -24,6 +25,7 @@ import IconArrowBarToDown from '~icons/tabler/arrow-bar-to-down';
 import IconMaximize from '~icons/tabler/maximize';
 import IconMinimize from '~icons/tabler/minimize';
 import IconX from '~icons/tabler/x';
+import IconDownload from '~icons/tabler/download';
 
 /**
  * 顶栏（macOS 菜单栏 / Kali 面板位）。
@@ -43,11 +45,12 @@ const props = defineProps({
   steamWidgetOpen: { type: Boolean, default: false },
   mcpWidgetOpen: { type: Boolean, default: false },
 });
-const emit = defineEmits(['focus-window', 'about', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch']);
+const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch']);
 
 const conn = useConnectionStatus();
 const shell = useShellUser();
 const cropper = useCropper();
+const upd = useUpdateCheck();   // 更新徽标/气泡只读全局状态（轮询由 Desktop 启动）
 const metaStore = useSectionMeta();
 const wm = useWindowManager();   // 窗口操作（模块级单例，与 Desktop 持有同一份状态）
 
@@ -78,6 +81,16 @@ function toggleAcct() {
 function closeMenus() {
   logoOpen.value = false;
   acctOpen.value = false;
+}
+
+// ---- 更新徽标 / 气泡（有新版本时出现在品牌名旁；点击打开更新弹窗并收起气泡）----
+
+const latestTag = computed(() => (upd.state.latest && upd.state.latest.tag) || '');
+
+function openUpdate() {
+  closeMenus();
+  upd.dismissBubble();
+  emit('show-update');
 }
 
 // 外点关闭：菜单挂在顶栏组件里，点桌面/窗口不经过顶栏的 @click，
@@ -236,6 +249,21 @@ async function exitGame() {
         <IconDragon />
       </button>
       <span class="brand-name">DT_Tools</span>
+      <!-- 更新徽标：存在新版本时呼吸绿光，点击打开更新弹窗 -->
+      <button
+        v-if="upd.state.hasUpdate"
+        class="upd-badge"
+        :title="'发现新版本 ' + latestTag + '，点击查看'"
+        @click.stop="openUpdate"
+      >
+        <IconDownload />
+      </button>
+
+      <!-- 更新气泡：徽标出现后从品牌名下方弹出，说明有新版本；点开弹窗或 × 关闭 -->
+      <div v-if="upd.state.hasUpdate && !upd.state.bubbleDismissed" class="upd-bubble" @click.stop="openUpdate">
+        <span class="upd-bubble-text">发现新版本 <b>{{ latestTag }}</b>，点击查看更新内容</span>
+        <button class="upd-bubble-x" title="知道了" @click.stop="upd.dismissBubble()"><IconX /></button>
+      </div>
     </div>
 
     <!-- Kali 应用菜单风面板：搜索 + 分类导航 + 功能列表 + 底部用户栏 -->
@@ -355,7 +383,7 @@ async function exitGame() {
   font-size: 12px;
 }
 
-.topbar-left { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.topbar-left { display: flex; align-items: center; gap: 7px; flex-shrink: 0; position: relative; }
 
 .brand {
   display: grid;
@@ -381,6 +409,83 @@ async function exitGame() {
   letter-spacing: 0.02em;
   color: var(--text-0);
   user-select: none;
+}
+
+/* ---- 更新徽标 + 气泡（有新版本时出现）---- */
+
+.upd-badge {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: rgba(71, 212, 185, 0.14);
+  border: 1px solid rgba(71, 212, 185, 0.45);
+  border-radius: 50%;
+  color: var(--accent-green);
+  cursor: pointer;
+  animation: upd-pulse 2s ease-in-out infinite;
+}
+.upd-badge svg { width: 12px; height: 12px; }
+.upd-badge:hover { background: rgba(71, 212, 185, 0.28); border-color: rgba(71, 212, 185, 0.7); }
+@keyframes upd-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(71, 212, 185, 0.0); }
+  50% { box-shadow: 0 0 8px 2px rgba(71, 212, 185, 0.35); }
+}
+
+/* 气泡锚在品牌行正下方（topbar-left 已设 relative）；箭头大致对准徽标 */
+.upd-bubble {
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--win-bg);
+  border: 1px solid rgba(71, 212, 185, 0.55);
+  border-radius: var(--radius-md);
+  box-shadow: var(--menu-shadow);
+  backdrop-filter: blur(20px) saturate(150%);
+  color: var(--text-1);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 5500;
+  animation: upd-bubble-in 0.25s ease-out;
+}
+.upd-bubble::before {
+  content: '';
+  position: absolute;
+  top: -4.5px;
+  left: 100px;
+  width: 8px;
+  height: 8px;
+  background: var(--win-bg);
+  border-left: 1px solid rgba(71, 212, 185, 0.55);
+  border-top: 1px solid rgba(71, 212, 185, 0.55);
+  transform: rotate(45deg);
+}
+.upd-bubble:hover { border-color: rgba(71, 212, 185, 0.85); color: var(--text-0); }
+.upd-bubble-text b { color: var(--accent-green); font-family: var(--font-mono); font-weight: 600; }
+.upd-bubble-x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.upd-bubble-x svg { width: 12px; height: 12px; }
+.upd-bubble-x:hover { background: rgba(150, 225, 255, 0.10); color: var(--text-0); }
+@keyframes upd-bubble-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: none; }
 }
 
 .topbar-menu {
