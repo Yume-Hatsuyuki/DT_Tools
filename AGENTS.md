@@ -3,7 +3,7 @@
 DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 - 技术栈：C#、netstandard2.1、HarmonyX。
-- 游戏版本基准：`0.1.16b`。
+- 游戏版本基准：`0.1.17a`。
 - 正式版本号：`DT_Tools/DT_Tools.csproj` 里的 `<Version>`。
 - 本文件是本仓库唯一的架构与操作规则。
 - 改架构、改 API、改目录之前，必须先读本文件。
@@ -406,7 +406,7 @@ public sealed class XxxModule { }
 
 ## 10. 游戏版本核对
 
-当前基准：`0.1.16b`。
+当前基准：`0.1.17a`。
 
 ### 写代码时
 
