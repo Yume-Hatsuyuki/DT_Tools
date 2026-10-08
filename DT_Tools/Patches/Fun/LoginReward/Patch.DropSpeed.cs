@@ -16,7 +16,7 @@ namespace DT_Tools.Patches.Fun.LoginReward
     /// </summary>
     internal static class LoginRewardDropSpeed
     {
-        private const float VanillaResultTimeout = 20f;
+        internal const float VanillaResultTimeout = 20f;
 
         public static void Resolve(out float resultTimeout, out float recheck, out float retryMin, out float retryMax)
         {
@@ -65,7 +65,7 @@ namespace DT_Tools.Patches.Fun.LoginReward
 
             LoginRewardDropSpeed.Resolve(out float resultTimeout, out _, out _, out _);
             // 仅当配置比官方更短时提前触发；≥20 交给原版
-            if (resultTimeout >= VanillaResultTimeout)
+            if (resultTimeout >= LoginRewardDropSpeed.VanillaResultTimeout)
                 return;
 
             float inFlightAt = (float)InFlightAtField.GetValue(__instance);
