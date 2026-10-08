@@ -224,6 +224,36 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             return true;
         }
 
+        // ── 服务端：迁移恢复后给观战者补发区域包 ────────────────────────────
+        // 迁移（例如房主转让后原房主掉线、新房主接管）完成时，观战者
+        // （IsAlive=false）不会因 Move 触发 ChangeArea，原版不会向其补发
+        // S_AREA_PUBLIC；若观战者此前地图未加载（CurrentArea 为空）或区域
+        // 状态被重置，将黑屏。此补丁在迁移恢复 tick（GameRoom.cs:553
+        // ResumeTickAfterMigration，由 MigrationOrchestrator.cs:238 调用）
+        // 对全体观战者强制重发当前区域包。
+        // 幂等性：客户端 MapChangeAreaPatch 仅在区域 RoomId 变化时才重新加载，
+        // 重复同区域包不会导致重复加载。
+        [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.ResumeTickAfterMigration))]
+        [HarmonyPostfix]
+        private static void PostfixResumeTickAfterMigration(GameRoom __instance)
+        {
+            if (!Engine.EnabledOf(typeof(SpectatorJoinFeature)))
+                return;
+            if (__instance == null || __instance.IsMigrating)
+                return;
+            var spectators = __instance.Players
+                .Where(p => p != null && p.IsSpectator && p.Session != null).ToList();
+            foreach (var p in spectators)
+            {
+                p.ChangeArea(p.PublicInfo.Pos, force: true);
+            }
+            if (spectators.Count > 0)
+            {
+                Log.Info<SpectatorJoinFeature>(
+                    $"迁移恢复：已向 {spectators.Count} 名观战者补发区域包");
+            }
+        }
+
         // ── 客户端：满房大厅观战 —— 保持存活、可见、可自由移动 ──────────────
         // 原版对 IsSpectator=true 的加入一律执行 Dead()（隐藏、锁定），
         // 那只适合"局中加入"。等待阶段的观战者应像普通大厅成员一样活动，
@@ -296,6 +326,44 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             if (__instance.IsSpectator)
                 return false;
             return true;
+        }
+
+        // ── 客户端：观战者切换区域时强制加载地图 ────────────────────────────
+        // 根因（MapManager.ChangeArea）：
+        //   flag = !Managers.Game.IsAlive；仅当 (!flag || CurrentArea == null) 时
+        //   才执行 ChangeRoom 加载地图。观战者（IsAlive=false）若 CurrentArea
+        //   已非空（如 Lobby 进房时已收到 Lobby 区域包、或迁移前已有旧区域），
+        //   后续收到游戏区域 S_AREA_PUBLIC 会被原版跳过 → 地图不加载（黑屏）。
+        // 覆盖场景：超员转观战者（Lobby→游戏）、房主转让后观战者区域重发、
+        // 局内观战者切换区域等。
+        // 修复：观战者收到与当前区域不同 RoomId 的区域包时，先清空 CurrentArea，
+        // 使原版走 (flag && CurrentArea==null) 分支真正加载新地图。
+        [HarmonyPatch]
+        private static class MapChangeAreaPatch
+        {
+            static MethodBase TargetMethod() =>
+                AccessTools.Method(AccessTools.TypeByName("MapManager"), "ChangeArea",
+                    new[] { typeof(S_AREA_PUBLIC) });
+
+            [HarmonyPrefix]
+            private static bool Prefix(MapManager __instance, S_AREA_PUBLIC pkt)
+            {
+                if (!Engine.EnabledOf(typeof(SpectatorJoinFeature)))
+                    return true;
+                if (pkt == null || pkt.RoomId == 0)
+                    return true;
+                if (!Managers.Game.IsSpectator)
+                    return true;
+
+                var cur = __instance.CurrentArea;
+                if (cur != null && cur.AreaInfo != null && cur.AreaInfo.RoomId != pkt.RoomId)
+                {
+                    Traverse.Create(__instance).Property("CurrentArea").SetValue(null);
+                    Log.Info<SpectatorJoinFeature>(
+                        $"观战者区域切换 {cur.AreaInfo.RoomId} → {pkt.RoomId}，强制重新加载地图");
+                }
+                return true;
+            }
         }
 
         // ── 客户端：已在房间的玩家被转观战（开局前最后准备者）→ 同步观战标记 ──
