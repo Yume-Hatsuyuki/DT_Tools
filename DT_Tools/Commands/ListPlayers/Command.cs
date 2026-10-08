@@ -3,13 +3,13 @@ using DT_Tools.Commands;
 
 namespace DT_Tools.Commands.ListPlayers
 {
-    /// <summary>/list_players — 列出房间内所有玩家的 PlayerId / SteamId / Steam 昵称 / 游戏昵称，并标注房主。</summary>
+    /// <summary>/list_players — 列出房间内所有玩家的 PlayerId / SteamId / Steam 昵称 / 游戏昵称 / P2P IP，并标注房主。</summary>
     internal sealed class ListPlayersCommand : ICommand
     {
         public string Name => "list_players";
         public string[] Aliases => new[] { "list", "who" };
         public string Usage => "list_players";
-        public string Description => "列出所有玩家的 PlayerId / SteamId / Steam 昵称 / 游戏昵称，并标注房主。";
+        public string Description => "列出所有玩家的 PlayerId / SteamId / Steam 昵称 / 游戏昵称 / P2P 远端 IP（及是否中继、ping），并标注房主。";
         public string Author => "梦初雪";
 
         public bool RequireHost => false;
