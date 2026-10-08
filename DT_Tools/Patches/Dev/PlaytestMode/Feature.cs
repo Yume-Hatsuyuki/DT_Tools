@@ -15,7 +15,7 @@ namespace DT_Tools.Patches.Dev.PlaytestMode
     /// 故房主开启即改变全房间开局人数下限/任务规模（Define 静态属性按本机 AppId 求值，全房间生效）。
     /// </summary>
     [PatchFeature(
-        "测试模式：按测试服逻辑运行（例如可更少人数开局），库存校验仍走正式服。房主开启会改变全房间开局人数下限/任务规模（全房间生效）。0.1.17a 起不再改写已删除的 PAY_BACKEND_URL。",
+        "测试模式：按测试服逻辑运行（例如可更少人数开局），库存校验仍走正式服。房主开启会改变全房间开局人数下限/任务规模（全房间生效）。",
         defaultEnabled: false,
         side: FeatureSide.Host,
         Author = "梦初雪")]

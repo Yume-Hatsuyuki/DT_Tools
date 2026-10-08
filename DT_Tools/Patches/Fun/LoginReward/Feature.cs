@@ -12,8 +12,8 @@ namespace DT_Tools.Patches.Fun.LoginReward
     /// 每日上限仍为 250（InventoryManager.DailyCap / FreeCurrencyDrops 硬编码），
     /// 由客户端按当日已用生成器数 ×10 记账（SteamInventorySource.DailyEarned → _drops.DailyUsed）。
     ///
-    /// 与 0.1.16b 的差异：不再 POST 官方后端 /v1/free-currency/grant；发放改为
-    /// 串行 Steam 掉落（单次结果超时 20s、空结果复查 65s、指数退避），批量可能数分钟。
+    /// 掉落为串行。玩家可自设结果超时 / 空结果复查 / 失败重试退避（默认=官方 20/65/2~60）。
+    /// 仅影响客户端等待，不能让 Steam 掉落本身更快；过短可能把慢响应误判为空结果。
     /// OnProgress 会在每次成功掉落时中间回调，终态以 FreeDropPendingUnits 回落到请求前基线为准。
     /// </summary>
     [PatchFeature(
@@ -32,6 +32,30 @@ namespace DT_Tools.Patches.Fun.LoginReward
             "每次登录请求发放的实验数据量（建议为10的倍数）。\n换算为金星=30 银星=10；由 Steam 掉落按当日剩余生成器钳制。\n默认 250 = 8 金星 + 1 银星。",
             Min = 0, Max = 250)]
         public static int GrantAmount = 250;
+
+        /// <summary>官方 FreeCurrencyDrops.RESULT_TIMEOUT = 20（0.1.17a FreeCurrencyDrops.cs:24）。</summary>
+        [Config(
+            "掉落结果超时（秒）。官方默认 20。\n在途请求超过此时长仍无结果则客户端提前重试。\n短于 20 可加快重试；大于 20 时游戏原版仍会在 20s 超时（无法单靠配置延长）。\n过短可能误判慢响应。",
+            Min = 3, Max = 120)]
+        public static int ResultTimeoutSec = 20;
+
+        /// <summary>官方 RECHECK_WAIT = 65（0.1.17a FreeCurrencyDrops.cs:26）。</summary>
+        [Config(
+            "空结果复查等待（秒）。官方默认 65。\n首次意外空结果后等待此时长再复查；第二次仍空则记为今日已用。\n缩短可加快发放，过短易误判。",
+            Min = 3, Max = 300)]
+        public static int EmptyRecheckSec = 65;
+
+        /// <summary>官方 RETRY_MIN = 2（0.1.17a FreeCurrencyDrops.cs:28）。</summary>
+        [Config(
+            "失败重试退避下限（秒）。官方默认 2。\n指数退避：min(上限, 下限×2^失败次数)。",
+            Min = 1, Max = 60)]
+        public static int RetryMinSec = 2;
+
+        /// <summary>官方 RETRY_MAX = 60（0.1.17a FreeCurrencyDrops.cs:30）。</summary>
+        [Config(
+            "失败重试退避上限（秒）。官方默认 60。\n单次失败后下次尝试前最多等待此时长。",
+            Min = 1, Max = 300)]
+        public static int RetryMaxSec = 60;
 
         private static void OnEnabled()
         {
