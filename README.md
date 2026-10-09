@@ -107,6 +107,12 @@ https://github.com/Yume-Hatsuyuki/DT_Tools/blob/main/README.md
 
 无 `WEBUI/` 时页面返回 503，HTTP API 与补丁仍可用。
 
+### 4. MCP 接入 AI（可选）
+
+手动下载下列文档并提交给支持 MCP 的 AI：
+- `.github/skills/MCP/MCP.md`
+- `.github/skills/MCP/SKILL.md`
+
 ---
 
 ## 更新

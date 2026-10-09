@@ -74,6 +74,24 @@ const { windows, open, close, focus, minimize, toggleFocus, toggleMaximize, upda
 const wallpaper = useWallpaper();
 const cropper = useCropper();
 
+/**
+ * 平铺模式：窗口不再浮动，只留当前激活的一个铺满「顶栏之下、Dock 之上」，
+ * 切换靠顶栏标签与 Dock（标签页式）—— 对着"仿 macOS 桌面太重"的反馈做的简洁模式。
+ * 状态与其它壳层本地状态一样进 localStorage。
+ */
+const TILE_KEY = 'dt_desktop_tile_v1';
+const tileMode = ref(localStorage.getItem(TILE_KEY) === '1');
+function toggleTileMode() {
+  tileMode.value = !tileMode.value;
+  localStorage.setItem(TILE_KEY, tileMode.value ? '1' : '0');
+}
+/** 平铺模式下谁占着工作区：z 最大且未最小化的那个（其余窗口保持挂载但隐藏）。 */
+const tiledActiveId = computed(() => {
+  if (!tileMode.value) return null;
+  const top = windows.filter(w => !w.minimized).reduce((a, b) => (!a || b.z > a.z ? b : a), null);
+  return top ? top.id : null;
+});
+
 const desktopMenu = ref(null);           // { x, y } —— 桌面右键菜单
 const dockMenu = ref(null);              // { x, y } —— Dock（任务栏）右键菜单
 const busyInfo = ref(false);
@@ -248,7 +266,7 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
 
 <template>
   <div class="desktop" :style="desktopStyle" @click="closeMenus" @contextmenu="onDesktopContextMenu">
-    <ParticleFlow v-if="particlesOn" :decorative="decorative" />
+    <ParticleFlow v-if="particlesOn && !tileMode" :decorative="decorative" />
 
     <div
       v-if="desktopMenu"
@@ -290,6 +308,8 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       v-for="win in windows"
       :key="win.id"
       :win="win"
+      :tiled="tileMode"
+      :active="win.id === tiledActiveId"
       @close="onWindowClose(win)"
       @focus="focus(win.id)"
       @minimize="minimize(win.id)"
@@ -304,6 +324,8 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       :windows="windows"
       :steam-widget-open="steamWidgetOpen"
       :mcp-widget-open="mcpWidgetOpen"
+      :tile-mode="tileMode"
+      @toggle-tile="toggleTileMode"
       @focus-window="toggleFocus"
       @about="busyInfo = true"
       @show-update="showUpdate = true"

@@ -3,7 +3,7 @@
 DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 - 技术栈：C#、netstandard2.1、HarmonyX。
-- 游戏版本基准：`0.1.16b`。
+- 游戏版本基准：`0.1.17a`。
 - 正式版本号：`DT_Tools/DT_Tools.csproj` 里的 `<Version>`。
 - 本文件是本仓库唯一的架构与操作规则。
 - 改架构、改 API、改目录之前，必须先读本文件。
@@ -406,7 +406,7 @@ public sealed class XxxModule { }
 
 ## 10. 游戏版本核对
 
-当前基准：`0.1.16b`。
+当前基准：`0.1.17a`。
 
 ### 写代码时
 
@@ -638,14 +638,34 @@ public sealed class XxxModule { }
 | --- | --- |
 | `terminal` | Kali 终端 |
 | `console` | 旧版控制台 |
-| `config` | 配置。两级导航：分类文件夹 → 功能段。根视图搜索跨分类平铺 |
-| `automation` | 自动化 |
+| `config` | 配置。两级导航：分类文件夹 → 功能段。根视图搜索跨分类平铺。网格 / 列表两种视图 |
+| `automation` | 自动化。同款两种视图（列表行给模块说明） |
 | `log` | 全量日志 |
 | `dummy` | 假人管理 |
 | `mp3` | 随身MP3 |
 
 - 跨应用共享组件在 `apps/common/`，共 6 个：`SuggestPopup`、`FolderGrid`、`LogPanel`、`EntryList`、`CropperHost`、`FileBrowser`。
 - `FileBrowser` 是本机文件选择弹窗。数据源是 `/api/fs/list`。
+
+#### 文件夹视图（`FolderGrid` 的网格 / 列表）
+
+- `FolderGrid` 有两种视图，**状态是模块级单例**（`composables/useFolderView.js`，存 `dt_foldergrid_view_v1`）：
+  在 DT 配置页切换，自动化页跟着变 —— 两页共用一份，不各写一套。
+- 切换按钮在**各页自己的工具栏**上（不进组件、不做浮动按钮），样式沿用 `tb-btn`。
+- 列表行的说明由**父级**经 `descOf` prop 提供，参数是 `FolderGrid` 的 **item 对象**（不是 key）：
+  DT 配置页给分类说明 / 段摘要，自动化页给模块说明。
+  ⚠️ 两页的实现必须都收 item —— 2026-10-07 实际踩过：自动化页写成收 key，
+  `find(x => x.id === key)` 永不命中，整列说明为空。
+- 段摘要的取法：段开关键（`enabledKey`）描述的正文，用 `configUtils.splitDesc` 剥掉
+  `Author:` / `Side:` 行。**直接取原文第一行会整列显示成作者名**（也实际踩过）。
+
+#### 平铺模式（窗口层，顶栏右侧开关）
+
+- `Window.vue` 的 `tiled` prop：窗口铺满「顶栏之下、Dock 之上」、隐藏标题栏、
+  不接受拖动与缩放；非激活窗口只 `display: none` 而**不卸载**（切标签不丢应用内状态）。
+- 高度由 `tokens.css` 的 `--topbar-h` 与 `--dock-h` 算出；改 Dock 的 padding / 图标高度时
+  **必须同步 `--dock-h`**。
+- 开关状态存 `dt_desktop_tile_v1`（`Desktop.vue`）；开启时不渲染桌面粒子。
 
 #### 更新检测
 
@@ -674,7 +694,7 @@ public sealed class XxxModule { }
 #### 本地状态
 
 - 桌面壳的本地状态，全存浏览器 localStorage。
-- 本地状态含：备忘录、图标、壁纸、粒子开关、用户名头像。
+- 本地状态含：备忘录、图标、壁纸、粒子开关、用户名头像、文件夹视图模式（`dt_foldergrid_view_v1`）、平铺模式（`dt_desktop_tile_v1`）。
 - 本地状态不进后端配置。
 
 #### 图片导入

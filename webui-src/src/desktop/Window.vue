@@ -6,6 +6,10 @@ import IconPlus from '~icons/tabler/plus';
 
 const props = defineProps({
   win: { type: Object, required: true },
+  /** 平铺模式：窗口铺满「顶栏之下、Dock 之上」，不接受拖动/缩放（标签页式的简洁切换）。 */
+  tiled: { type: Boolean, default: false },
+  /** 平铺模式下是否为当前激活窗口；非激活窗口保持挂载但隐藏，切换标签不丢应用内状态。 */
+  active: { type: Boolean, default: true },
 });
 const emit = defineEmits(['close', 'focus', 'minimize', 'toggle-maximize', 'update-geometry']);
 
@@ -21,6 +25,18 @@ const MIN_H = 240;
 const TOPBAR_H = 32;
 
 const style = computed(() => {
+  // 平铺模式：只让激活窗口占满工作区，其余隐藏但**不卸载** ——
+  // 终端历史、输入框草稿这类应用内状态不能因为切一下标签就没了。
+  if (props.tiled) {
+    if (!props.active) return { display: 'none' };
+    return {
+      left: '0',
+      top: 'var(--topbar-h)',
+      width: '100%',
+      height: 'calc(100% - var(--topbar-h) - var(--dock-h))',
+      zIndex: props.win.z,
+    };
+  }
   if (props.win.maximized) {
     // macOS 全屏语义近似：盖过 Dock 但给顶栏（菜单栏）让位
     return {
@@ -42,7 +58,7 @@ const style = computed(() => {
 
 function onTitlebarPointerDown(e) {
   emit('focus');
-  if (props.win.maximized) return;
+  if (props.tiled || props.win.maximized) return;
   if (e.target.closest('.traffic')) return;
   const startX = e.clientX, startY = e.clientY;
   const startWinX = props.win.x, startWinY = props.win.y;
@@ -69,7 +85,7 @@ const DIRS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 function onResizePointerDown(dir, e) {
   e.stopPropagation();
   emit('focus');
-  if (props.win.maximized) return;
+  if (props.tiled || props.win.maximized) return;
   const startX = e.clientX, startY = e.clientY;
   const s = { x: props.win.x, y: props.win.y, w: props.win.w, h: props.win.h };
   const goEast = dir.includes('e');
@@ -109,11 +125,13 @@ function onResizePointerDown(dir, e) {
   <div
     v-show="!win.minimized"
     class="win"
-    :class="{ maximized: win.maximized }"
+    :class="{ maximized: win.maximized, tiled: tiled }"
     :style="style"
     @pointerdown="emit('focus')"
   >
-    <div class="win-titlebar" @pointerdown="onTitlebarPointerDown" @dblclick="emit('toggle-maximize')">
+    <!-- 平铺模式不显示标题栏：切换交给顶栏标签/Dock（更像浏览器标签页），内容区因此多出一整条高度。
+         要关闭应用：右键顶栏标签或 Dock 图标，或切回窗口模式。 -->
+    <div v-if="!tiled" class="win-titlebar" @pointerdown="onTitlebarPointerDown" @dblclick="emit('toggle-maximize')">
       <div class="traffic">
         <button class="tl tl-close" title="关闭" @click="emit('close')"><IconX /></button>
         <button class="tl tl-min" title="最小化" @click="emit('minimize')"><IconMinus /></button>
@@ -127,7 +145,7 @@ function onResizePointerDown(dir, e) {
     <div class="win-body">
       <slot />
     </div>
-    <template v-if="!win.maximized">
+    <template v-if="!win.maximized && !tiled">
       <div
         v-for="dir in DIRS"
         :key="dir"
@@ -154,6 +172,16 @@ function onResizePointerDown(dir, e) {
   min-height: 240px;
 }
 .win.maximized { border-radius: 0; border: none; }
+/* 平铺：去掉圆角/阴影/毛玻璃 —— 它此刻就是工作区本身，不是什么浮在上面的窗 */
+.win.tiled {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  background: var(--surface-0);
+  min-width: 0;
+  min-height: 0;
+}
 
 .win-titlebar {
   position: relative;

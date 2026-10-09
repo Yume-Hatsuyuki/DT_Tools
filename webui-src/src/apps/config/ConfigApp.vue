@@ -3,14 +3,17 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { API } from '../../api.js';
 import { useConfigToolbar } from '../../composables/useConfigToolbar.js';
 import { useSectionMeta } from '../../composables/useSectionMeta.js';
+import { useFolderView } from '../../composables/useFolderView.js';
 import FolderGrid from '../common/FolderGrid.vue';
 import SectionDetail from './SectionDetail.vue';
-import { sectionMatches } from './configUtils.js';
+import { sectionMatches, splitDesc } from './configUtils.js';
 import IconDeviceFloppy from '~icons/tabler/device-floppy';
 import IconDownload from '~icons/tabler/download';
 import IconUpload from '~icons/tabler/upload';
 import IconRefresh from '~icons/tabler/refresh';
 import IconTrash from '~icons/tabler/trash';
+import IconLayoutGrid from '~icons/tabler/layout-grid';
+import IconList from '~icons/tabler/list';
 
 /**
  * 分类显示名：键 = 后端 Patches/<分类>/ 目录名（协议 category 字段），前端只认这套
@@ -28,9 +31,28 @@ const CATEGORY_LABELS = {
 const CATEGORY_ORDER = ['Dev', 'Experience', 'Fun', 'Shop', 'System'];
 const OTHER_KEY = '__other';   // 无分类段的归并键（后端 category 缺省）
 
+/**
+ * 分类说明：列表显示模式下每行右侧的那一句（说明这个分类是干什么的）。
+ * 与 CATEGORY_LABELS 同一套路：只认稳定的目录名键，未知分类**留空**而不是编造。
+ * 注：「捉迷藏」是 HideAndSeek 通过反射登记进上游 SectionCategories 的分类，
+ * 上游源码里没有它，所以说明也只能在这里给。
+ */
+const CATEGORY_DESCS = {
+  Dev: '开发调试用，正常游玩不需要开。',
+  Experience: '改善操作手感与信息可读性，不改动胜负规则。',
+  Fun: '娱乐性功能，与平衡无关。',
+  Shop: '商店、角色与表情的解锁相关。',
+  System: '房间、流程与游戏系统层面的调整。',
+  捉迷藏: 'HideAndSeek 捉迷藏玩法的房主端功能与参数。',
+};
+
 function categoryLabel(key) {
   if (key === OTHER_KEY) return '其他';
   return CATEGORY_LABELS[key] || key;
+}
+function categoryDesc(key) {
+  if (key === OTHER_KEY) return '不属于以上分类的基础设施配置段。';
+  return CATEGORY_DESCS[key] || '';
 }
 function categoryRank(key) {
   const i = CATEGORY_ORDER.indexOf(key);
@@ -45,6 +67,11 @@ const query = ref('');
 const openCategory = ref(null);  // 展开中的分类键，null=分类网格视图
 const openSection = ref(null);   // 展开中的段名，null=未进入段详情
 const sectionMeta = useSectionMeta();
+
+// 网格/列表视图状态与切换：与自动化页**共用一份**（切换按钮在各自页面的工具栏上）
+const { viewMode, toggleView } = useFolderView();
+/** 根视图且无搜索 = 分类列表（行右侧给分类说明）；否则是段列表（给段摘要）。 */
+const isCategoryView = computed(() => !openCategory.value && !query.value.trim());
 
 async function reload() {
   const list = await API.configList();
@@ -155,6 +182,29 @@ function enabledOf(section) {
   return e ? !!e.value : null;
 }
 
+/**
+ * 段摘要 = 该段 Enabled 项的 description。
+ *
+ * 功能说明本来就写在那儿（上游与 HideAndSeek 绑 Enabled 时都把 [PatchFeature] 的描述带过去），
+ * 所以列表模式既不用让后端补字段，也不用前端维护第二份文案 —— 加功能时自动跟上。
+ */
+/**
+ * 列表行的右侧说明：分类行给分类说明，段行给**功能说明**。
+ *
+ * 段说明取自该段开关键（enabledKey）的描述，并用上游既有的 splitDesc 剥掉
+ * 「Author: … / Side: …」元数据行 —— 直接用原文的话，列表里整列都是作者名。
+ */
+function descOf(item) {
+  if (isCategoryView.value) return categoryDesc(item.key);
+
+  const s = sections.value.find(x => x.section === item.key);
+  if (!s) return '';
+  const key = s.enabledKey || 'Enabled';
+  const e = (s.entries || []).find(en => en.key === key);
+  const text = splitDesc(e && e.description).text;
+  return text.split('\n').map(t => t.trim()).filter(Boolean)[0] || '';
+}
+
 onMounted(async () => {
   await reload();
   startAutoRefresh();
@@ -189,6 +239,13 @@ onUnmounted(stopAutoRefresh);
       </div>
       <div class="toolbar-right">
         <span v-if="dirty" class="dirty-mark" title="有未保存的更改">●未保存</span>
+        <button class="tb-btn"
+                :title="viewMode === 'list' ? '切换到磁贴网格' : '切换到列表（每条带说明）'"
+                @click="toggleView">
+          <IconList v-if="viewMode === 'grid'" />
+          <IconLayoutGrid v-else />
+          {{ viewMode === 'grid' ? '列表' : '网格' }}
+        </button>
         <button class="tb-btn" :class="{ active: autoRefresh }" @click="autoRefresh = !autoRefresh">
           <IconRefresh /> 自动刷新:{{ autoRefresh ? '开' : '关' }}
         </button>
@@ -202,7 +259,7 @@ onUnmounted(stopAutoRefresh);
 
     <div v-if="toast" class="toast" :class="{ error: toast.error }">{{ toast.text }}</div>
 
-    <FolderGrid v-if="!openSection" :items="folderItems" @open="onOpen" />
+    <FolderGrid v-if="!openSection" :items="folderItems" :desc-of="descOf" @open="onOpen" />
     <SectionDetail
       v-if="currentSection"
       :section="currentSection"
@@ -265,6 +322,7 @@ onUnmounted(stopAutoRefresh);
 .tb-btn:hover { color: var(--text-0); border-color: var(--line-strong); }
 .tb-btn.active { color: var(--accent-cyan); border-color: var(--accent-cyan-dim); }
 .tb-btn.danger:hover { color: var(--accent-red); border-color: var(--accent-red); }
+
 
 .toast {
   position: absolute;

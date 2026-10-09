@@ -15,13 +15,20 @@ namespace DT_Tools.Commands.ListPlayers
             foreach (var e in players)
             {
                 string steamStr = e.SteamId != 0 ? e.SteamId.ToString() : "未知";
+                string steamName = string.IsNullOrEmpty(e.SteamName) ? "未知" : e.SteamName;
 
                 string tag = "";
                 if (e.IsHost && e.IsSelf) tag = "  ← 房主·你";
                 else if (e.IsHost)        tag = "  ← 房主";
                 else if (e.IsSelf)        tag = "  ← 你";
 
-                sb.AppendLine($"  #{e.Pid,-4} {e.Name,-16} steam_id={steamStr}{tag}");
+                // #1 Alice [direct]ip_src=x.x.x.x:port steam_id=... steam_name=...
+                string transport = e.Relayed == null ? "unknown" : (e.Relayed.Value ? "relay" : "direct");
+                string ipStr = string.IsNullOrEmpty(e.RemoteIp) ? "—" : e.RemoteIp;
+                string pingStr = e.PingMs >= 0 ? $" ping={e.PingMs}ms" : "";
+
+                sb.AppendLine(
+                    $"  #{e.Pid} {e.Name} [{transport}]ip_src={ipStr} steam_id={steamStr} steam_name={steamName}{pingStr}{tag}");
             }
 
             if (hostId == 0)
@@ -42,6 +49,10 @@ namespace DT_Tools.Commands.ListPlayers
                     playerId = e.Pid,
                     name = e.Name ?? "",
                     steamId = e.SteamId != 0 ? e.SteamId.ToString() : "",
+                    steamName = e.SteamName ?? "",
+                    ip = e.RemoteIp ?? "",
+                    relayed = e.Relayed,
+                    pingMs = e.PingMs,
                     isHost = e.IsHost,
                     isSelf = e.IsSelf,
                 }),

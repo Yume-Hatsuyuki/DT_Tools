@@ -3,15 +3,15 @@ namespace DT_Tools.Patches.System.BackendProxy
     /// <summary>
     /// 反代前缀的归一化。唯一的防呆是空值回退原版；不做 URL 解析、
     /// 不与任何特定反代的路径约定耦合（各人自建反代的路径自行决定）。
-    /// 原版 origin 锚点：支付后端 0.1.16b Define.cs:380/:382（/pay、/pay-dev 同源），
-    /// Discord webhook 0.1.16b BugReporter.cs:18-22。
+    /// 原版 origin 锚点：库存校验 0.1.17a Define.cs:384/:386（/pay、/pay-dev 同源），
+    /// Discord webhook 0.1.17a BugReporter.cs 常量。
     /// </summary>
     internal static class BackendProxyLogic
     {
-        /// <summary>游戏原版支付后端 origin（0.1.16b Define.cs:380/:382，正式/测试同源）。</summary>
+        /// <summary>游戏原版支付/库存后端 origin（0.1.17a Define.cs:380/:382/:384/:386，正式/测试同源）。</summary>
         internal const string VanillaPayOrigin = "https://deadlytrick.finalblow.org";
 
-        /// <summary>游戏原版 Discord 上报 origin（0.1.16b BugReporter.cs:18-22，三条 webhook 同源）。</summary>
+        /// <summary>游戏原版 Discord 上报 origin（BugReporter webhook 常量，三条同源）。</summary>
         internal const string VanillaDiscordOrigin = "https://discord.com";
 
         /// <summary>
