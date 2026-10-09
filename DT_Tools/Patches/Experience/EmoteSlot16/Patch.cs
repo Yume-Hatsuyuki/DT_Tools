@@ -29,6 +29,9 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
         /// <summary>商店配置页当前激活面板（用于放置/卸下/交换后刷新槽位图）。</summary>
         public static UI_Shop_EmoticonCustom ActiveShopCustom;
 
+        /// <summary>表情板上次构建时的功能开关状态（用于热开关后自动重建面板）。</summary>
+        public static bool LastBuiltEnabled;
+
         /// <summary>解析配置键为 KeyCode；非法时回退。</summary>
         public static KeyCode ParseKey(string name, KeyCode fallback)
         {
@@ -60,8 +63,8 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
         {
             try
             {
-                if (!Engine.Enabled<EmoteSlot16Feature>())
-                    return;
+                // 数据保护：无论功能开关状态，只要存档已是 32 槽就先备份，
+                // 防止原版 EnsureSchema 按 Length!=8 把 32 槽重置为默认 8 槽。
                 var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
                 if (data?.EquippedEmoticonIds != null
                     && data.EquippedEmoticonIds.Length == EmoteSlot16State.TotalSlots)
@@ -83,12 +86,10 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
         {
             try
             {
-                if (!Engine.Enabled<EmoteSlot16Feature>())
-                    return;
                 var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
                 if (data == null)
                     return;
-                // 原版因 Length!=8 把 32 槽重置为默认 8 槽：用备份恢复第 9-32 槽的表情
+                // 1) 原版因 Length!=8 把 32 槽重置为默认 8 槽：用备份恢复第 9-32 槽的表情（数据保护，始终执行）
                 if (_backup32 != null)
                 {
                     // 对齐原版 EnsureSchema 的无效表情清理：未拥有的表情从槽位移除
@@ -105,9 +106,12 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
                 int[] arr = data.EquippedEmoticonIds;
                 if (arr == null || arr.Length == EmoteSlot16State.TotalSlots)
                     return;
+                // 2) 老存档（8/16 槽）迁移到 32 槽是功能行为：仅在功能开启时执行
+                if (!Engine.Enabled<EmoteSlot16Feature>())
+                    return;
                 if (arr.Length < EmoteSlot16State.TotalSlots)
                 {
-                    // 老存档（8/16 槽）迁移到 32 槽：原槽位保留，新槽位置空（与原版默认空槽 -1 一致）
+                    // 原槽位保留，新槽位置空（与原版默认空槽 -1 一致）
                     int[] n = new int[EmoteSlot16State.TotalSlots];
                     Array.Copy(arr, n, arr.Length);
                     for (int i = arr.Length; i < EmoteSlot16State.TotalSlots; i++)
@@ -321,6 +325,8 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
     {
         private static bool Prefix(UI_EmotionPanel __instance)
         {
+            // 记录本次构建时的开关状态，供 Update 检测热开关变化后自动重建
+            EmoteSlot16State.LastBuiltEnabled = Engine.Enabled<EmoteSlot16Feature>();
             if (!Engine.Enabled<EmoteSlot16Feature>())
                 return true;
 
@@ -373,7 +379,18 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
         {
             try
             {
-                if (!Engine.Enabled<EmoteSlot16Feature>())
+                bool nowEnabled = Engine.Enabled<EmoteSlot16Feature>();
+                // 热开关变化：立即重建表情板（开→32槽，关→原版8槽），无需重启或重新初始化
+                if (nowEnabled != EmoteSlot16State.LastBuiltEnabled)
+                {
+                    EmoteSlot16State.LastBuiltEnabled = nowEnabled;
+                    var t = Traverse.Create(__instance);
+                    t.Method("ClearSelection").GetValue(); // 先清空旧选中高亮
+                    t.Field("_currentSelectIndex").SetValue(-1);
+                    __instance.SetEmotions();
+                    return;
+                }
+                if (!nowEnabled)
                     return;
                 bool isOpen = Traverse.Create(__instance).Field("_isOpen").GetValue<bool>();
                 if (!isOpen)
