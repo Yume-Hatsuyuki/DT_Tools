@@ -26,6 +26,12 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
         /// <summary>总页数。</summary>
         public const int TotalPages = TotalSlots / SlotsPerPage;
 
+        /// <summary>商店配置页当前激活面板（用于放置/卸下/交换后刷新槽位图）。</summary>
+        public static UI_Shop_EmoticonCustom ActiveShopCustom;
+
+        /// <summary>表情板上次构建时的功能开关状态（用于热开关后自动重建面板）。</summary>
+        public static bool LastBuiltEnabled;
+
         /// <summary>解析配置键为 KeyCode；非法时回退。</summary>
         public static KeyCode ParseKey(string name, KeyCode fallback)
         {
@@ -43,28 +49,69 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
     }
 
     /// <summary>
-    /// 存档：老 8 槽存档迁移到 16 槽（EnsureSchema 完成后：原 8 槽保留、新 8 槽置空）。
+    /// 存档：老 8 槽存档迁移到 32 槽（原槽位保留、新槽位置空）。
+    /// 注意：原版 EnsureSchema 在 EquippedEmoticonIds.Length != 8 时会重置为默认 8 槽，
+    /// 因此 32 槽数据必须在 Prefix 备份、Postfix 恢复，否则重启游戏后第 9-32 槽表情会丢失。
     /// </summary>
     [HarmonyPatch(typeof(SaveManager), "EnsureSchema")]
     internal static class SaveSchemaMigratePatch
     {
+        /// <summary>本次 EnsureSchema 调用前的 32 槽数据备份（防止原版按 Length!=8 重置为默认 8 槽）。</summary>
+        private static int[] _backup32;
+
+        private static void Prefix(SaveManager __instance)
+        {
+            try
+            {
+                // 数据保护：无论功能开关状态，只要存档已是 32 槽就先备份，
+                // 防止原版 EnsureSchema 按 Length!=8 把 32 槽重置为默认 8 槽。
+                var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
+                if (data?.EquippedEmoticonIds != null
+                    && data.EquippedEmoticonIds.Length == EmoteSlot16State.TotalSlots)
+                {
+                    _backup32 = (int[])data.EquippedEmoticonIds.Clone();
+                }
+                else
+                {
+                    _backup32 = null;
+                }
+            }
+            catch (Exception)
+            {
+                // 备份失败可忽略
+            }
+        }
+
         private static void Postfix(SaveManager __instance)
         {
             try
             {
-                if (!Engine.Enabled<EmoteSlot16Feature>())
-                    return;
                 var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
                 if (data == null)
                     return;
-                int[] arr = data.EquippedEmoticonIds;
-                if (arr == null)
+                // 1) 原版因 Length!=8 把 32 槽重置为默认 8 槽：用备份恢复第 9-32 槽的表情（数据保护，始终执行）
+                if (_backup32 != null)
+                {
+                    // 对齐原版 EnsureSchema 的无效表情清理：未拥有的表情从槽位移除
+                    var owned = data.OwnedEmoticonIds;
+                    for (int i = 0; i < _backup32.Length; i++)
+                    {
+                        if (_backup32[i] > 0 && owned != null && !owned.Contains(_backup32[i]))
+                            _backup32[i] = -1;
+                    }
+                    data.EquippedEmoticonIds = _backup32;
+                    _backup32 = null;
                     return;
-                if (arr.Length == EmoteSlot16State.TotalSlots)
+                }
+                int[] arr = data.EquippedEmoticonIds;
+                if (arr == null || arr.Length == EmoteSlot16State.TotalSlots)
+                    return;
+                // 2) 老存档（8/16 槽）迁移到 32 槽是功能行为：仅在功能开启时执行
+                if (!Engine.Enabled<EmoteSlot16Feature>())
                     return;
                 if (arr.Length < EmoteSlot16State.TotalSlots)
                 {
-                    // 老存档（8/16 槽）迁移到 32 槽：原槽位保留，新槽位置空
+                    // 原槽位保留，新槽位置空（与原版默认空槽 -1 一致）
                     int[] n = new int[EmoteSlot16State.TotalSlots];
                     Array.Copy(arr, n, arr.Length);
                     for (int i = arr.Length; i < EmoteSlot16State.TotalSlots; i++)
@@ -106,20 +153,50 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
         {
             if (!Engine.Enabled<EmoteSlot16Feature>())
                 return true;
-            var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
-            if (data?.EquippedEmoticonIds == null || slot < 0 || slot >= EmoteSlot16State.TotalSlots)
-                return false;
-            if (data.EquippedEmoticonIds[slot] == id)
-                return false;
-            data.EquippedEmoticonIds[slot] = id;
             try
             {
-                Traverse.Create(__instance).Method("MarkDirty").GetValue();
+                var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
+                if (data?.EquippedEmoticonIds == null || slot < 0 || slot >= EmoteSlot16State.TotalSlots)
+                    return false;
+                if (data.EquippedEmoticonIds[slot] == id)
+                    return false;
+                data.EquippedEmoticonIds[slot] = id;
+                try
+                {
+                    Traverse.Create(__instance).Method("MarkDirty").GetValue();
+                }
+                catch (Exception)
+                {
+                    // 存档脏标记失败可忽略，下次存档仍会写入
+                }
+                return false;
             }
             catch (Exception)
             {
-                // 存档脏标记失败可忽略，下次存档仍会写入
+                // 槽位越界等异常可忽略（防止旧存档未迁移时炸日志）
+                return false;
             }
+        }
+    }
+
+    /// <summary>装备按钮的"第一个空槽"：放宽到 32 槽（原版仅查前 8 个）。</summary>
+    [HarmonyPatch(typeof(InventoryManager), "FirstEmptyEmoticonSlot")]
+    internal static class FirstEmptySlotPatch
+    {
+        private static bool Prefix(InventoryManager __instance, ref int __result)
+        {
+            if (!Engine.Enabled<EmoteSlot16Feature>())
+                return true;
+            var equipped = __instance.EquippedEmoticonIds;
+            for (int i = 0; i < EmoteSlot16State.TotalSlots; i++)
+            {
+                if (i >= equipped.Count || equipped[i] <= 0)
+                {
+                    __result = i;
+                    return false;
+                }
+            }
+            __result = -1;
             return false;
         }
     }
@@ -136,6 +213,22 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
             catch (Exception)
             {
                 // 事件字段访问失败可忽略
+            }
+        }
+
+        /// <summary>商店配置页打开时刷新槽位图（放置/卸下/交换后立即可见）。</summary>
+        public static void RefreshShopSlots()
+        {
+            try
+            {
+                var panel = EmoteSlot16State.ActiveShopCustom;
+                if (panel == null || !panel.isActiveAndEnabled)
+                    return;
+                Traverse.Create(panel).Method("RefreshSlots").GetValue();
+            }
+            catch (Exception)
+            {
+                // 商店未打开或刷新失败可忽略
             }
         }
     }
@@ -173,6 +266,10 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
             Traverse.Create(__instance).Field("_source")
                 .Method("SetEquippedEmoticon", slot, id).GetValue();
             __result = true;
+            // 对齐原版 EquipEmoticon：触发 OnChanged，刷新商店槽位与游戏内表情板（否则需重进商店才显示）
+            InvokeChangedHelper.InvokeChanged(__instance);
+            // 放置成功后同步刷新商店配置页槽位图（原版 Equip 后不刷新商店，翻页放置时看不到结果）
+            InvokeChangedHelper.RefreshShopSlots();
             return false;
         }
     }
@@ -190,6 +287,7 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
                 Traverse.Create(__instance).Field("_source")
                     .Method("SetEquippedEmoticon", slot, -1).GetValue();
                 InvokeChangedHelper.InvokeChanged(__instance);
+                InvokeChangedHelper.RefreshShopSlots();
             }
             return false;
         }
@@ -212,6 +310,7 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
                 src.Method("SetEquippedEmoticon", a, id2).GetValue();
                 src.Method("SetEquippedEmoticon", b, id).GetValue();
                 InvokeChangedHelper.InvokeChanged(__instance);
+                InvokeChangedHelper.RefreshShopSlots();
             }
             return false;
         }
@@ -226,6 +325,8 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
     {
         private static bool Prefix(UI_EmotionPanel __instance)
         {
+            // 记录本次构建时的开关状态，供 Update 检测热开关变化后自动重建
+            EmoteSlot16State.LastBuiltEnabled = Engine.Enabled<EmoteSlot16Feature>();
             if (!Engine.Enabled<EmoteSlot16Feature>())
                 return true;
 
@@ -278,7 +379,18 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
         {
             try
             {
-                if (!Engine.Enabled<EmoteSlot16Feature>())
+                bool nowEnabled = Engine.Enabled<EmoteSlot16Feature>();
+                // 热开关变化：立即重建表情板（开→32槽，关→原版8槽），无需重启或重新初始化
+                if (nowEnabled != EmoteSlot16State.LastBuiltEnabled)
+                {
+                    EmoteSlot16State.LastBuiltEnabled = nowEnabled;
+                    var t = Traverse.Create(__instance);
+                    t.Method("ClearSelection").GetValue(); // 先清空旧选中高亮
+                    t.Field("_currentSelectIndex").SetValue(-1);
+                    __instance.SetEmotions();
+                    return;
+                }
+                if (!nowEnabled)
                     return;
                 bool isOpen = Traverse.Create(__instance).Field("_isOpen").GetValue<bool>();
                 if (!isOpen)
@@ -353,8 +465,10 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
     }
 
     /// <summary>
-    /// 商店配置页翻页与选中：鼠标中键点击径向板翻页；
-    /// 左键选中时把页内索引换算为实际槽位（页*8 + 页内索引）。
+    /// 商店配置页点击径向板：把页内索引换算为实际槽位（页*8 + 页内索引）后选中。
+    /// 原版 SelectSlot/UpdateSelectionVisuals 对实际槽位 >=8 不会高亮（_slots 只有 8 个元素，
+    /// i == _selectedSlot 永远不匹配），这里手动维护选中态：槽位高亮页内槽、列表按 _selectedEmoteId 高亮。
+    /// （翻页键在 UI_ShopPopup.Update 中处理，中键也走那里；本方法不重复处理中键，避免双翻页。）
     /// </summary>
     [HarmonyPatch(typeof(UI_Shop_EmoticonCustom), "OnClickBoard")]
     internal static class ShopClickBoardPatch
@@ -370,28 +484,179 @@ namespace DT_Tools.Patches.Experience.EmoteSlot16
                 if (dragging)
                     return false;
 
-                // 鼠标中键：切换页面并刷新槽位
-                if (Input.GetMouseButtonDown(2))
-                {
-                    EmoteSlot16State.ShopPage = (EmoteSlot16State.ShopPage + 1) % EmoteSlot16State.TotalPages;
-                    Traverse.Create(__instance).Method("RefreshSlots").GetValue();
-                    t.Field("_selectedSlot").SetValue(-1);
-                    t.Method("ClearSelection").GetValue();
-                    return false;
-                }
-
                 int num = t.Method("SlotFromScreenPoint", e.position).GetValue<int>();
                 if (num >= 0)
                 {
                     int real = EmoteSlot16State.ShopPage * EmoteSlot16State.SlotsPerPage + num;
                     int selected = t.Field("_selectedSlot").GetValue<int>();
-                    t.Method("SelectSlot", selected == real ? -1 : real).GetValue();
+                    int newSelected = selected == real ? -1 : real;
+                    t.Field("_selectedSlot").SetValue(newSelected);
+                    // 复刻原版 SelectSlot 语义：选中槽里的表情 id（>0 时），供列表高亮
+                    int selectedEmote = -1;
+                    if (newSelected >= 0)
+                    {
+                        var equipped = Managers.Inventory?.EquippedEmoticonIds;
+                        if (equipped != null && newSelected < equipped.Count)
+                            selectedEmote = equipped[newSelected];
+                    }
+                    t.Field("_selectedEmoteId").SetValue(selectedEmote);
+                    var slots = t.Field("_slots").GetValue<UI_EmoteRadialSlot[]>();
+                    if (slots != null)
+                    {
+                        for (int i = 0; i < slots.Length; i++)
+                        {
+                            if (slots[i] != null)
+                                slots[i].SetSelected(i == num && newSelected >= 0);
+                        }
+                    }
+                    // 复刻原版 UpdateSelectionVisuals：列表按选中的表情 id 高亮
+                    var items = t.Field("_items").GetValue<List<UI_EmoticonCustomSubItem>>();
+                    if (items != null)
+                    {
+                        foreach (var item in items)
+                        {
+                            if (item != null)
+                                item.SetSelected(item.ItemId == selectedEmote && selectedEmote > 0);
+                        }
+                    }
                 }
                 return false;
             }
             catch (Exception ex)
             {
                 Log.Warn<EmoteSlot16Feature>("配置页点击处理失败（可忽略）：" + ex.Message);
+                return true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 商店配置页翻页：Unity 事件系统不会为中键产生 UI click 事件（OnClickBoard 里的中键分支实际不触发），
+    /// 改为在 UI_ShopPopup.Update 中检测键盘翻页键（Q/E，与游戏内表情板一致，可配置）——
+    /// 仅当当前面板为表情配置页（EShopSection.EmoticonCustom）时翻页并刷新槽位；鼠标中键保留为备用。
+    /// </summary>
+    [HarmonyPatch(typeof(UI_ShopPopup), "Update")]
+    internal static class ShopPopupUpdatePatch
+    {
+        private static void Postfix(UI_ShopPopup __instance)
+        {
+            try
+            {
+                if (!Engine.Enabled<EmoteSlot16Feature>())
+                    return;
+                if (__instance == null || !__instance.gameObject.activeInHierarchy)
+                    return;
+                var t = Traverse.Create(__instance);
+                EShopSection section = t.Field("_section").GetValue<EShopSection>();
+                if (section != EShopSection.EmoticonCustom)
+                    return;
+
+                var comps = t.Field("_panelComponents").GetValue<IShopPanel[]>();
+                if (comps == null)
+                    return;
+                var custom = comps[(int)EShopSection.EmoticonCustom] as UI_Shop_EmoticonCustom;
+                if (custom == null)
+                    return;
+
+                // 记录当前激活面板（商店打开即记录，供放置/卸下后刷新槽位图）
+                EmoteSlot16State.ActiveShopCustom = custom;
+
+                // 键盘翻页键（可配置，默认 Q=下一页 E=上一页）；中键作为备用翻页
+                KeyCode next = EmoteSlot16State.ParseKey(EmoteSlot16Feature.PageNextKey, KeyCode.Q);
+                KeyCode prev = EmoteSlot16State.ParseKey(EmoteSlot16Feature.PagePrevKey, KeyCode.E);
+                bool nextPressed = Input.GetKeyDown(next) || Input.GetMouseButtonDown(2);
+                bool prevPressed = Input.GetKeyDown(prev);
+                if (!nextPressed && !prevPressed)
+                    return;
+
+                if (nextPressed)
+                    EmoteSlot16State.ShopPage = (EmoteSlot16State.ShopPage + 1) % EmoteSlot16State.TotalPages;
+                else
+                    EmoteSlot16State.ShopPage = (EmoteSlot16State.ShopPage + EmoteSlot16State.TotalPages - 1) % EmoteSlot16State.TotalPages;
+
+                Traverse.Create(custom).Method("RefreshSlots").GetValue();
+                var ct = Traverse.Create(custom);
+                ct.Field("_selectedSlot").SetValue(-1);
+                ct.Field("_selectedEmoteId").SetValue(-1);
+                ct.Method("UpdateSelectionVisuals").GetValue();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn<EmoteSlot16Feature>("配置页翻页失败（可忽略）：" + ex.Message);
+            }
+        }
+    }
+
+    /// <summary>径向板拖拽开始：把页内索引换算为实际槽位（原版 _dragFromSlot 是页内索引，翻页后会错位）。</summary>
+    [HarmonyPatch(typeof(UI_Shop_EmoticonCustom), "OnBoardBeginDrag")]
+    internal static class ShopBoardBeginDragPatch
+    {
+        private static bool Prefix(UI_Shop_EmoticonCustom __instance, PointerEventData e)
+        {
+            if (!Engine.Enabled<EmoteSlot16Feature>())
+                return true;
+            try
+            {
+                var t = Traverse.Create(__instance);
+                int num = t.Method("SlotFromScreenPoint", e.position).GetValue<int>();
+                if (num >= 0)
+                {
+                    int real = EmoteSlot16State.ShopPage * EmoteSlot16State.SlotsPerPage + num;
+                    int id = Managers.Inventory.EquippedEmoticonIds[real];
+                    if (id > 0)
+                        t.Method("StartDrag", id, real, e).GetValue();
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn<EmoteSlot16Feature>("径向板拖拽处理失败（可忽略）：" + ex.Message);
+                return true;
+            }
+        }
+    }
+
+    /// <summary>拖拽放置结束：槽位索引换算为实际槽位（页*8 + 页内索引）。</summary>
+    [HarmonyPatch(typeof(UI_Shop_EmoticonCustom), "OnDragEnd")]
+    internal static class ShopDragEndPatch
+    {
+        private static bool Prefix(UI_Shop_EmoticonCustom __instance, PointerEventData e)
+        {
+            if (!Engine.Enabled<EmoteSlot16Feature>())
+                return true;
+            try
+            {
+                var t = Traverse.Create(__instance);
+                bool dragging = t.Field("_dragging").GetValue<bool>();
+                if (!dragging)
+                    return false;
+                int dragEmoteId = t.Field("_dragEmoteId").GetValue<int>();
+                int dragFromSlot = t.Field("_dragFromSlot").GetValue<int>();
+                int num = t.Method("SlotFromScreenPoint", e.position).GetValue<int>();
+                if (num >= 0)
+                {
+                    int realTo = EmoteSlot16State.ShopPage * EmoteSlot16State.SlotsPerPage + num;
+                    if (dragFromSlot >= 0 && realTo != dragFromSlot)
+                    {
+                        Managers.Inventory.SwapEquippedEmoticons(dragFromSlot, realTo);
+                        Managers.Sound.PlaySystem("PC_EquipSfx");
+                    }
+                    else
+                    {
+                        Managers.Inventory.EquipEmoticon(realTo, dragEmoteId);
+                        Managers.Sound.PlaySystem("PC_EquipSfx");
+                    }
+                }
+                else if (dragFromSlot >= 0)
+                {
+                    Managers.Inventory.UnequipEmoticon(dragFromSlot);
+                }
+                t.Method("EndDragCleanup").GetValue();
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn<EmoteSlot16Feature>("拖拽放置处理失败（可忽略）：" + ex.Message);
                 return true;
             }
         }
