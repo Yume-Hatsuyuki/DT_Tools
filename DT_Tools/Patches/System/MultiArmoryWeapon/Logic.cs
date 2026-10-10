@@ -234,10 +234,23 @@ namespace DT_Tools.Patches.System.MultiArmoryWeapon
             CloseArmory(from, room);
             OpenArmory(to, room);
 
-            // 同步 CurrentArmory / _lastArmory / ArmoryPos，兼容原版取刀与任务箭头
-            Traverse.Create(dm).Property("CurrentArmory").SetValue(to);
-            Traverse.Create(dm).Field("_lastArmory").SetValue(to);
-            Traverse.Create(dm).Property("ArmoryPos").SetValue(to.DeviceInfo.Pos);
+            // 同步 CurrentArmory / _lastArmory / ArmoryPos，兼容原版取刀与任务箭头。
+            // 仅当被转移的就是当前权威架时才推进指针：若 CurrentArmory 已指向另一架
+            // （典型为已拔刀、WeaponTime>0 的取证架），则不得覆盖，否则
+            // GameRoom.SendForensics（0.1.17a Server.Game/GameRoom.cs:2161）只会扫到
+            // 新空架的 WeaponTime=0，庭审/平板上显示 00:00。
+            Server.Game.Armory current = dm.CurrentArmory;
+            if (current == null || current == from)
+            {
+                Traverse.Create(dm).Property("CurrentArmory").SetValue(to);
+                Traverse.Create(dm).Field("_lastArmory").SetValue(to);
+                Traverse.Create(dm).Property("ArmoryPos").SetValue(to.DeviceInfo.Pos);
+            }
+            else
+            {
+                Log.Debug<MultiArmoryWeaponFeature>(
+                    $"转移不推进 CurrentArmory：权威架仍为 #{current.ID}（WeaponTime={current.WeaponTime}），本跳 {from.ID} → {to.ID}");
+            }
 
             Server.Game.Player masterMind = room.MasterMind;
             foreach (Server.Game.Player player in room.Players)
@@ -247,6 +260,35 @@ namespace DT_Tools.Patches.System.MultiArmoryWeapon
             }
 
             Log.Info<MultiArmoryWeaponFeature>($"武器转移 {from.ID} → {to.ID}");
+        }
+
+        /// <summary>
+        /// 多刀取证：除 CurrentArmory 外，把所有已拔刀（WeaponTime&gt;0）的架一并 SendScanInfo。
+        /// 原版 SendForensics 只扫 CurrentArmory（0.1.17a Server.Game/GameRoom.cs:2161），
+        /// 多刀下其余架的拔刀时间不会自动进平板，扫到也会因权威指针被挪走而变成 00:00。
+        /// </summary>
+        public static void SendExtraWeaponForensics(Server.Game.DeviceManager dm, Server.Game.Player player)
+        {
+            if (dm == null || player == null)
+                return;
+
+            List<Server.Game.Armory> armories = GetArmories(dm);
+            if (armories == null || armories.Count == 0)
+                return;
+
+            Server.Game.Armory current = dm.CurrentArmory;
+            int sent = 0;
+            foreach (Server.Game.Armory armory in armories)
+            {
+                if (armory == null || armory == current)
+                    continue;
+                if (armory.WeaponTime <= 0)
+                    continue;
+                armory.SendScanInfo(player);
+                sent++;
+            }
+            if (sent > 0)
+                Log.Debug<MultiArmoryWeaponFeature>($"取证补发 {sent} 架已拔刀武器时间（跳过 CurrentArmory #{current?.ID ?? 0}）");
         }
     }
 }
