@@ -178,7 +178,7 @@ namespace DT_Tools.Patches.Fun.TwoRoundVote
             Server.Game.DeviceManager.Instance.InitDevices();
             Server.Game.DeviceManager.Instance.InitStorage();
 
-            ResetMissionProgress();
+            ResetMissionProgress(participantCount);
             TryRestoreFirstBlood(room, 0);
             AwardManager.Instance.StartRound();
 
@@ -191,6 +191,22 @@ namespace DT_Tools.Patches.Fun.TwoRoundVote
             IsRoundTwo = true;
             room.ChangeGameState(EGameState.Survive);
 
+            // 修复①：第二轮永久锁门 —— 黑幕在第一轮即将结束时锁门（Door.HandleEvent：
+            // StateList[2]=0 + LockDoor(State=2) + 预约 TickDoor 倒计时解锁），而
+            // TimeManager.ResetSurvival() 会清空生存任务队列（TickDoor 被取消）、
+            // Door 未 override InitDevice（空实现不复位）→ 门保持 State=2 且倒计时不再推进，
+            // 造成永久上锁。这里把「锁门计时中断残留」的门（State=2 且已过时间 < 锁定时长）
+            // 复位为关闭未锁状态；StartSurvive 正常锁的门（StateList[2]==StateList[1]）不受影响。
+            ForceResetLockedDoors();
+
+            // 修复②：第二轮任务提示 —— 客户端 ScannedDeviceSet（本局已扫描设备集合）
+            // 原版靠新一局 InitRound/场景重载清空，二轮不重载场景导致残留：
+            // 客户端 DeviceBase.SetBubble 会强制把已扫描设备的 Bubble 置 0，
+            // 使搬运任务手持物品时找不到目标设备（搬运地点不显示）、调查点不显示。
+            // 客户端补丁（PostfixStartState_Client）在二轮进入 Survive 时清空该集合，
+            // 这里在状态切换后再广播一次全部设备状态，让客户端重新应用 Bubble/MissionType。
+            RebroadcastDeviceStates();
+
             // 修复：第二轮不刷刀 —— InitDevices() 内的 RefreshArmory 执行时 State 仍为 Trial，
             // SpawnFirstWeapon() 的 State==Survive 校验失败导致武器不生成；
             // 状态切换为 Survive 后再触发一次武器刷新（内部含 WeaponSpawnDelay 的 30s 预约逻辑，
@@ -198,8 +214,14 @@ namespace DT_Tools.Patches.Fun.TwoRoundVote
             Server.Game.DeviceManager.Instance.RefreshArmory(isInit: true);
         }
 
-        /// <summary>MissionManager 在发行程序集中为 internal，经反射调用 StartMission 重置任务进度。</summary>
-        private static void ResetMissionProgress()
+        /// <summary>
+        /// 第二轮任务重置。MissionManager 在发行程序集中为 internal，经反射调用。
+        /// 修复③：原版 StartMission() 内部用 GameRoom.Instance.AliveCount 发布任务——
+        /// 二轮在处刑黑方前调用（AliveCount 仍含黑方）→ 任务数量比第二轮实际人数多 1、
+        /// GoalPoint=playerCount*15 偏大 → 任务进度百分比增长低于预期。
+        /// 这里直接反射调用 private MissionAllocator(int) 并传入第二轮实际参与人数。
+        /// </summary>
+        private static void ResetMissionProgress(int playerCount)
         {
             Type mmType = AccessTools.TypeByName("Server.Game.MissionManager");
             if (mmType == null)
@@ -208,14 +230,60 @@ namespace DT_Tools.Patches.Fun.TwoRoundVote
                 return;
             }
             object instance = AccessTools.PropertyGetter(mmType, "Instance")?.Invoke(null, null);
+            if (instance == null)
+            {
+                Log.Error<TwoRoundVoteFeature>("MissionManager.Instance 不可用");
+                return;
+            }
+            // 优先 MissionAllocator(int)：按第二轮实际人数发布任务；拿不到时兜底 StartMission()。
+            MethodInfo allocator = AccessTools.Method(mmType, "MissionAllocator", new[] { typeof(int) })
+                ?? AccessTools.Method(mmType, "MissionAllocator");
+            if (allocator != null && allocator.GetParameters().Length == 1)
+            {
+                allocator.Invoke(instance, new object[] { Math.Max(playerCount, 1) });
+                return;
+            }
             MethodInfo start = AccessTools.Method(mmType, "StartMission", Type.EmptyTypes)
                 ?? AccessTools.Method(mmType, "StartMission");
-            if (instance == null || start == null)
+            if (start == null)
             {
-                Log.Error<TwoRoundVoteFeature>("MissionManager.Instance / StartMission 不可用");
+                Log.Error<TwoRoundVoteFeature>("MissionManager.MissionAllocator / StartMission 不可用");
                 return;
             }
             start.Invoke(instance, start.GetParameters().Length == 0 ? null : new object[start.GetParameters().Length]);
+        }
+
+        /// <summary>
+        /// 修复①：复位「锁门计时中断残留」的门 —— 黑幕锁门（StateList[2]=0 + LockDoor 置 State=2
+        /// + TickDoor 预约）被 ResetSurvival 清队列打断后，门保持 State=2 且 StateList[2] 不再推进。
+        /// 特征：StateList[0]==2（锁）且 StateList[2] &lt; StateList[1]（倒计时未走满）。
+        /// StartSurvive 开局锁的门（StateList[2]==StateList[1]）保持原样，与首轮开局一致。
+        /// </summary>
+        private static void ForceResetLockedDoors()
+        {
+            foreach (Server.Game.Device device in Server.Game.DeviceManager.Instance.Objects)
+            {
+                if (device is Server.Game.Door door &&
+                    door.DeviceInfo.StateList.Count >= 3 &&
+                    door.DeviceInfo.StateList[0] == 2 &&
+                    door.DeviceInfo.StateList[2] < door.DeviceInfo.StateList[1])
+                {
+                    door.DeviceInfo.StateList[0] = 1;
+                    door.DeviceInfo.StateList[2] = door.DeviceInfo.StateList[1];
+                    door.BroadcastState();
+                    Log.Info<TwoRoundVoteFeature>($"二轮锁门复位 door={door.ID}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 修复②配套：第二轮进入 Survive 后重广播全部设备状态，
+        /// 客户端在清空 ScannedDeviceSet 后据此重新应用 Bubble/MissionType。
+        /// </summary>
+        private static void RebroadcastDeviceStates()
+        {
+            foreach (Server.Game.Device device in Server.Game.DeviceManager.Instance.Objects)
+                device.BroadcastState();
         }
 
         /// <summary>FirstBloodVictimId 为 private set，走原版 Restore 方法复位。</summary>
@@ -231,6 +299,48 @@ namespace DT_Tools.Patches.Fun.TwoRoundVote
         }
 
         // ---------- 第二轮：清掉第一轮遗留的审判状态 ----------
+
+        /// <summary>客户端进程内「本局进入 Survive 的次数」——原版一局只进一次，第二次即二轮。</summary>
+        private static int EnterSurviveCount;
+
+        /// <summary>
+        /// 修复②：客户端在二轮（本局第二次进入 Survive）开始时清空 ScannedDeviceSet。
+        /// 原版该集合由新一局 InitRound/场景重载清空；二轮不重载场景导致第一轮扫描过的设备残留，
+        /// 客户端 DeviceBase.SetBubble 会强制把已扫描设备 Bubble 置 0 → 搬运地点提示/调查点不显示。
+        /// 仅在 mod 开启时生效（房主开启后，房主客户端自动修复；同房其他装 mod 且开启的玩家同样修复）。
+        /// </summary>
+        [HarmonyPatch(typeof(GameManagerEX), "StartState")]
+        [HarmonyPostfix]
+        private static void PostfixStartState_Client(GameManagerEX __instance, EGameState state)
+        {
+            if (!Engine.EnabledOf(typeof(TwoRoundVoteFeature)))
+                return;
+            if (state != EGameState.Survive)
+                return;
+            EnterSurviveCount++;
+            if (EnterSurviveCount >= 2)
+                __instance.ScannedDeviceSet.Clear();
+        }
+
+        /// <summary>客户端对局清理（每局/场景卸载）：重置进入 Survive 计数（原版每局仅一次）。</summary>
+        [HarmonyPatch(typeof(GameManagerEX), "Clear")]
+        [HarmonyPostfix]
+        private static void PostfixClear(GameManagerEX __instance)
+        {
+            if (!Engine.EnabledOf(typeof(TwoRoundVoteFeature)))
+                return;
+            EnterSurviveCount = 0;
+        }
+
+        /// <summary>客户端游戏初始化（重连/重开）：重置进入 Survive 计数。</summary>
+        [HarmonyPatch(typeof(GameManagerEX), "InitGame")]
+        [HarmonyPostfix]
+        private static void PostfixInitGame(GameManagerEX __instance)
+        {
+            if (!Engine.EnabledOf(typeof(TwoRoundVoteFeature)))
+                return;
+            EnterSurviveCount = 0;
+        }
 
         /// <summary>
         /// 第二轮 Survive 开始时清空 TrialManager 残留（Corpse/Black/候选等），
