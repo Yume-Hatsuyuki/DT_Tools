@@ -3,11 +3,10 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Patches.Fun.GhostInteract
 {
     /// <summary>
-    /// 幽灵交互：死后保留原阵营 Color，并可按开关获得「黑+黑幕」向能力（任务/破坏/拖尸/销毁证据/杀人）。
-    /// 服务端 Color 在 ExitPlayer 后不变；IsAlive=false，需本功能补权限与发包放行。
+    /// 幽灵交互：死后保留原阵营 Color，并可按开关获得「黑+黑幕」向能力。
     /// </summary>
     [PatchFeature(
-        "幽灵交互：死后可做任务、对话、电闸、门杆、柜子、拖/报告尸体；可选销毁证据与杀人（对齐黑/黑幕能力，不限原阵营）。\n对话/拖尸/销毁证据/杀人需房主也开。",
+        "幽灵交互：死后可做任务、对话、电闸、门杆、柜子、拖/报告尸体；\n可选销毁证据与杀人；可选恢复操作 HUD。\n对话/拖尸/销毁证据/杀人需房主也开。",
         defaultEnabled: false,
         side: FeatureSide.Both,
         Author = "梦初雪")]
@@ -39,5 +38,11 @@ namespace DT_Tools.Patches.Fun.GhostInteract
 
         [Config("杀人（需房主；对齐黑方持刀击杀。死后需从军械库再取刀；幽灵不限原阵营）。")]
         public static bool AllowKill = true;
+
+        [Config("显示操作 HUD：物品/丢弃/技能/击杀/平板等 Survive 操作栏（仅客户端）。")]
+        public static bool AllowShowHud = true;
+
+        [Config("使用技能（G）。服务端不查 IsAlive，客户端补目标刷新与按键；需房主也开本功能以恢复 CanUseSkill。")]
+        public static bool AllowSkill = true;
     }
 }

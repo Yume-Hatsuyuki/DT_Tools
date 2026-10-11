@@ -50,6 +50,13 @@ namespace DT_Tools.Patches.Fun.GhostInteract
                     return GhostInteractFeature.AllowDoors;
                 case EDeviceType.Corpse:
                     return GhostInteractFeature.AllowDragCorpse;
+                case EDeviceType.ChatDevice:
+                    // 密聊走 UseSabotage；仅黑/暗（原版颜色限制，死后 Color 仍保留）
+                    if (!GhostInteractFeature.AllowChatDevice)
+                        return false;
+                    var my = Managers.Player?.MyPlayer;
+                    return my != null
+                        && (my.Color == EPlayerColor.Black || my.Color == EPlayerColor.Dark);
                 default:
                     // 销毁证据挂在各类设备的 IsDestroyEvidenceTarget 上
                     return GhostInteractFeature.AllowDestroyEvidence && device.IsDestroyEvidenceTarget;
@@ -69,9 +76,10 @@ namespace DT_Tools.Patches.Fun.GhostInteract
         [HarmonyPriority(Priority.First)]
         internal static class InteractMessageBasePatch
         {
-            private static void Prefix(DeviceBase __instance, ref bool __state)
+            // __state: bit0 = 改了 IsAlive；bit1 = 改了 State(Hide/Sit→Idle)
+            private static void Prefix(DeviceBase __instance, ref int __state)
             {
-                __state = false;
+                __state = 0;
                 if (!Engine.Enabled<GhostInteractFeature>())
                     return;
                 if (Managers.Game == null || Managers.Game.IsAlive)
@@ -82,13 +90,29 @@ namespace DT_Tools.Patches.Fun.GhostInteract
                     return;
 
                 Managers.Game.IsAlive = true;
-                __state = true;
+                __state |= 1;
+
+                // 地上物品 ItemHolder 等在 GetInteractMessage 里拒绝 Hide/Sit；
+                // 幽灵死后 State=Hide，必须临时改成 Idle 才能出拾取提示。
+                var my = Managers.Player?.MyPlayer;
+                if (my != null && my.PublicInfo != null
+                    && (my.PublicInfo.State == EPlayerState.Hide || my.PublicInfo.State == EPlayerState.Sit))
+                {
+                    my.PublicInfo.State = EPlayerState.Idle;
+                    __state |= 2;
+                }
             }
 
-            private static void Postfix(bool __state)
+            private static void Postfix(int __state)
             {
-                if (__state)
+                if ((__state & 1) != 0)
                     Managers.Game.IsAlive = false;
+                if ((__state & 2) != 0)
+                {
+                    var my = Managers.Player?.MyPlayer;
+                    if (my?.PublicInfo != null)
+                        my.PublicInfo.State = EPlayerState.Hide;
+                }
             }
         }
 
@@ -167,6 +191,146 @@ namespace DT_Tools.Patches.Fun.GhostInteract
             }
         }
 
+        // ===== 2b. 丢弃按钮 / CanDropHand =====
+
+        /// <summary>
+        /// MyPlayer.CanDropHand（0.1.17a MyPlayer.cs:1608）要求 IsAlive，且状态须 Idle/Run。
+        /// 幽灵死后多为 Hide，导致 UI 丢弃键与 TryDropHand 全失效。
+        /// </summary>
+        [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.CanDropHand))]
+        internal static class CanDropHandPatch
+        {
+            private static bool Prefix(MyPlayer __instance, ref bool __result)
+            {
+                if (!Engine.Enabled<GhostInteractFeature>())
+                    return true;
+                if (Managers.Game == null || Managers.Game.IsAlive)
+                    return true;
+                if (Managers.Game.State != EGameState.Survive && Managers.Game.State != EGameState.Detective)
+                {
+                    __result = false;
+                    return false;
+                }
+                var lockField = AccessTools.Field(typeof(MyPlayer), "_lockControlStack");
+                if (lockField != null && lockField.GetValue(__instance) is int lockStack && lockStack > 0)
+                {
+                    __result = false;
+                    return false;
+                }
+                if (__instance.State == EPlayerState.Carry)
+                {
+                    __result = GhostInteractFeature.AllowDragCorpse;
+                    return false;
+                }
+                if (__instance.Inventory != null && __instance.Inventory.Hand != null
+                    && __instance.Inventory.Hand.DataId != 0)
+                {
+                    __result = true;
+                    return false;
+                }
+                __result = false;
+                return false;
+            }
+        }
+
+
+        // ===== 2c. 挖矿条：小游戏结束后再清，不中途强杀 =====
+
+        /// <summary>
+        /// 仅在「已不该存在」的时机清理 UI_MineralSlider：
+        /// - 回大厅
+        /// - StopCasting 之后仍有残留
+        /// 绝不在 Update 里因 !IsAlive 直接 Destroy —— 幽灵要能把小游戏打完。
+        /// </summary>
+        internal static void CleanupMineralUi(MyPlayer my, bool onlyIfNotPlaying = true)
+        {
+            // 正在挖矿中则不动
+            if (onlyIfNotPlaying && my != null && my.State == EPlayerState.Mining)
+                return;
+            if (onlyIfNotPlaying && Managers.Game?.CastingSlider is UI_MineralSlider)
+                return;
+
+            try { Managers.Game?.StopCasting(); } catch { /* ignore */ }
+
+            if (Managers.Game?.CastingSlider != null)
+            {
+                try { Managers.Resource.Destroy(Managers.Game.CastingSlider.gameObject); } catch { /* ignore */ }
+                AccessTools.Property(typeof(GameManagerEX), nameof(GameManagerEX.CastingSlider))
+                    ?.SetValue(Managers.Game, null);
+            }
+
+            if (my?.UIGroup == null)
+                return;
+            try
+            {
+                foreach (var c in my.UIGroup.GetComponentsInChildren<UI_MineralSlider>(true))
+                {
+                    if (c == null || c.gameObject == null) continue;
+                    try { Managers.Resource.Destroy(c.gameObject); } catch { /* ignore */ }
+                }
+            }
+            catch { /* ignore */ }
+        }
+
+        /// <summary>
+        /// 原版 UI_MineralSlider.StopCasting 是空的；StopCasting 外层会 Destroy。
+        /// 这里在小游戏结束路径上再兜一次，避免引用丢失后条挂在 UIGroup。
+        /// </summary>
+        [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.StopCasting), new[] { typeof(UI_Casting) })]
+        internal static class StopCastingCleanupPatch
+        {
+            private static void Postfix(UI_Casting slider)
+            {
+                if (!Engine.Enabled<GhostInteractFeature>())
+                    return;
+                // 小游戏已结束，清掉 UIGroup 里可能残留的 MineralSlider
+                var my = Managers.Player?.MyPlayer;
+                if (my?.UIGroup == null)
+                    return;
+                try
+                {
+                    foreach (var c in my.UIGroup.GetComponentsInChildren<UI_MineralSlider>(true))
+                    {
+                        if (c == null || c.gameObject == null) continue;
+                        if (slider != null && c == slider) continue; // 外层已 Destroy
+                        try { Managers.Resource.Destroy(c.gameObject); } catch { /* ignore */ }
+                    }
+                }
+                catch { /* ignore */ }
+            }
+        }
+
+        /// <summary>
+        /// 死后 EndState 被 !IsAlive 短路，离开 Mining 时不会 StopCasting。
+        /// 仅在「结束 Mining 状态」时补一次，不挡进行中的小游戏。
+        /// </summary>
+        [HarmonyPatch(typeof(MyPlayer), "EndState")]
+        internal static class EndStateMiningPatch
+        {
+            private static void Prefix(MyPlayer __instance, EPlayerState state)
+            {
+                if (!Engine.Enabled<GhostInteractFeature>())
+                    return;
+                if (state != EPlayerState.Mining)
+                    return;
+                if (Managers.Game == null || Managers.Game.IsAlive)
+                    return; // 活人走原版 EndState 里的 StopCasting
+                try { Managers.Game.StopCasting(); } catch { /* ignore */ }
+            }
+        }
+
+        /// <summary>回大厅：强制清掉可能残留的挖矿条（此时不应再玩）。</summary>
+        [HarmonyPatch(typeof(GameManagerEX), "StartLobby")]
+        internal static class StartLobbyCleanupPatch
+        {
+            private static void Postfix()
+            {
+                if (!Engine.Enabled<GhostInteractFeature>())
+                    return;
+                CleanupMineralUi(Managers.Player?.MyPlayer, onlyIfNotPlaying: false);
+            }
+        }
+
         // ===== 3. 死后 Survive 输入 =====
 
         [HarmonyPatch(typeof(MyPlayer), "Update")]
@@ -187,15 +351,48 @@ namespace DT_Tools.Patches.Fun.GhostInteract
                 if (lockField != null && lockField.GetValue(__instance) is int lockStack && lockStack > 0)
                     return;
 
-                // 拖尸放下
-                if (GhostInteractFeature.AllowDragCorpse
-                    && __instance.State == EPlayerState.Carry
-                    && KeyBindings.Down(Define.EInputAction.DropItem))
+                // 丢弃：拖尸 或 手上道具（原版 CanDropHand 要求 IsAlive，且幽灵常为 Hide 态）
+                if (KeyBindings.Down(Define.EInputAction.DropItem))
                 {
-                    Managers.Network.GameServer.Send(new C_PUT_CORPSE
+                    if (GhostInteractFeature.AllowDragCorpse
+                        && __instance.State == EPlayerState.Carry)
                     {
-                        CorpseId = __instance.HandItemId
-                    });
+                        Managers.Network.GameServer.Send(new C_PUT_CORPSE
+                        {
+                            CorpseId = __instance.HandItemId
+                        });
+                        return;
+                    }
+                    // 手上道具：直接走 Inventory.DropHand → C_DROP_ITEM（服务端不查 IsAlive）
+                    if (__instance.Inventory != null
+                        && __instance.Inventory.Hand != null
+                        && __instance.Inventory.Hand.DataId != 0)
+                    {
+                        __instance.Inventory.DropHand();
+                        return;
+                    }
+                }
+
+                // 技能：刷新目标条件 + G 键
+                if (GhostInteractFeature.AllowSkill)
+                {
+                    try
+                    {
+                        AccessTools.Method(typeof(MyPlayer), "UpdateSkillTargetPlayer")
+                            ?.Invoke(__instance, null);
+                    }
+                    catch { /* ignore */ }
+                    if (KeyBindings.Down(Define.EInputAction.Skill))
+                    {
+                        __instance.UseSkill();
+                        return;
+                    }
+                }
+
+                // 使用物品 SPACE
+                if (KeyBindings.Down(Define.EInputAction.UseItem))
+                {
+                    __instance.UseItem();
                     return;
                 }
 
@@ -287,6 +484,8 @@ namespace DT_Tools.Patches.Fun.GhostInteract
                 {
                     __instance.CanUseItem = true;
                 }
+                // 技能栏可用（具体技能仍受服务端与自身条件限制）
+                __instance.CanUseSkill = true;
             }
         }
 
@@ -571,5 +770,159 @@ namespace DT_Tools.Patches.Fun.GhostInteract
                 return false;
             }
         }
+
+        // ===== 11. 死后恢复 Survive HUD（子开关 AllowShowHud）=====
+
+        /// <summary>
+        /// 原版多处 BroadcastSceneEvent(ShowUI) 不带 state，value1=-1，
+        /// ShowUI 落入 default 分支会 GetObject(80).SetActive(false) 关掉 ActionGroup。
+        /// 这里统一在死后强制拉回 Survive 操作栏。
+        /// </summary>
+        internal static void RestoreGhostHud(UI_GameScene ui)
+        {
+            if (ui == null || !GhostInteractFeature.AllowShowHud)
+                return;
+            if (Managers.Game == null || Managers.Game.IsAlive || Managers.Game.IsSpectator)
+                return;
+            var st = Managers.Game.State;
+            if (st != EGameState.Survive && st != EGameState.Detective)
+                return;
+
+            // Common + Survive + 时间条
+            ActivateChild(ui, 1);
+            ActivateChild(ui, 4);
+            ActivateChild(ui, 6);
+            ActivateChild(ui, 7);  // SmahoIcon TAB
+            ActivateChild(ui, 8);  // TabletArrow
+
+            // ActionGroup 及子项（default ShowUI 会关掉 80）
+            ActivateChild(ui, 80); // ActionGroup
+            ActivateChild(ui, 81); // UseItemButton SPACE
+            ActivateChild(ui, 83); // DropItemButton
+            ActivateChild(ui, 91); // SkillButton G
+            ActivateChild(ui, 92); // SkillKey
+
+            // 强制重新应用非拍照模式按钮（_photoActionApplied 短路会导致 Skill 不再显示）
+            var photoField = AccessTools.Field(typeof(UI_GameScene), "_photoActionApplied");
+            if (photoField != null)
+                photoField.SetValue(ui, true); // 与 false 不等，触发切换
+            AccessTools.Method(typeof(UI_GameScene), "ApplyPhotoActionButton")
+                ?.Invoke(ui, new object[] { false });
+
+            var getSlider = AccessTools.Method(typeof(UI_Base), "GetSlider", new[] { typeof(int) });
+            if (getSlider?.Invoke(ui, new object[] { 1 }) is UnityEngine.UI.Slider slider)
+                slider.gameObject.SetActive(true);
+
+            AccessTools.Method(typeof(UI_GameScene), nameof(UI_GameScene.RefreshDropItemButton))
+                ?.Invoke(ui, null);
+
+            var my = Managers.Player?.MyPlayer;
+            if (my != null)
+            {
+                AccessTools.Method(typeof(UI_GameScene), "SetHoldItem")
+                    ?.Invoke(ui, new object[] { my.HandItemId });
+                // 客户端技能条件：死后 CancelAllInteract 会置 false，这里拉回
+                try
+                {
+                    Traverse.Create(my).Property("CanUseSkillCondition").SetValue(true);
+                }
+                catch { /* ignore */ }
+                var canSkill = my.CanUseSkill;
+                AccessTools.Method(typeof(UI_GameScene), "CanUseSkill")
+                    ?.Invoke(ui, new object[] { canSkill });
+            }
+        }
+
+        private static void ActivateChild(UI_GameScene ui, int idx)
+        {
+            var getObject = AccessTools.Method(typeof(UI_Base), "GetObject", new[] { typeof(int) });
+            if (getObject == null)
+                return;
+            if (getObject.Invoke(ui, new object[] { idx }) is UnityEngine.GameObject go)
+                go.SetActive(true);
+        }
+
+        /// <summary>ShowUI 任意入口结束后，若是幽灵则补 ActionGroup。</summary>
+        [HarmonyPatch(typeof(UI_GameScene), "ShowUI")]
+        internal static class ShowUIPatch
+        {
+            private static void Postfix(UI_GameScene __instance, EGameState state)
+            {
+                if (!Engine.Enabled<GhostInteractFeature>())
+                    return;
+                RestoreGhostHud(__instance);
+            }
+        }
+
+        [HarmonyPatch(typeof(UI_GameScene), "HideAll")]
+        internal static class HideAllPatch
+        {
+            private static void Postfix(UI_GameScene __instance)
+            {
+                if (!Engine.Enabled<GhostInteractFeature>())
+                    return;
+                RestoreGhostHud(__instance);
+            }
+        }
+
+        [HarmonyPatch(typeof(UI_GameScene), "OnClickTablet")]
+        internal static class OnClickTabletPatch
+        {
+            private static bool Prefix()
+            {
+                if (!Engine.Enabled<GhostInteractFeature>() || !GhostInteractFeature.AllowShowHud)
+                    return true;
+                if (Managers.Game == null || Managers.Game.IsAlive)
+                    return true;
+                Managers.Player.MyPlayer?.Inventory?.HandSmaho(Managers.Tablet.Tablet.Section);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 死亡后恢复 HUD（挖矿条不在这里杀，等小游戏结束 / 回大厅再清）。
+        /// </summary>
+        [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
+        internal static class DeadShowUiPatch
+        {
+            private static void Postfix(GameManagerEX __instance)
+            {
+                if (!Engine.Enabled<GhostInteractFeature>() || __instance == null)
+                    return;
+                if (__instance.IsAlive || __instance.IsSpectator)
+                    return;
+
+                var my = Managers.Player?.MyPlayer;
+                // 不在死亡时强杀挖矿条：幽灵仍可开/打完小游戏；结束后由 StopCasting 清
+
+                if (my?.PublicInfo != null)
+                {
+                    var s = my.PublicInfo.State;
+                    if (s == EPlayerState.Mining || s == EPlayerState.Casting
+                        || s == EPlayerState.Scanning || s == EPlayerState.FishingState
+                        || s == EPlayerState.Run)
+                    {
+                        my.PublicInfo.State = EPlayerState.Hide;
+                    }
+                }
+                try
+                {
+                    if (my != null)
+                        Traverse.Create(my).Property("CanUseSkillCondition").SetValue(true);
+                }
+                catch { /* ignore */ }
+
+                if (!GhostInteractFeature.AllowShowHud)
+                    return;
+                var st = __instance.State;
+                if (st != EGameState.Survive && st != EGameState.Detective)
+                    return;
+                // 带正确 state 的 ShowUI，避免 default 关 ActionGroup
+                __instance.BroadcastSceneEvent(Define.ESceneEventType.ShowUI, (int)st);
+                RestoreGhostHud(Managers.UI?.GetSceneUI<UI_GameScene>());
+            }
+        }
+
+
     }
 }
