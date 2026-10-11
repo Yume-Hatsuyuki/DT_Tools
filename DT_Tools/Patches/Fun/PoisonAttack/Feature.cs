@@ -9,7 +9,7 @@ using GamePlayer = Server.Game.Player;
 using DT_Tools.Core;
 using DT_Tools.Core.Attributes;
 
-namespace DT_Tools.Patches.Experience.PoisonAttack
+namespace DT_Tools.Patches.Fun.PoisonAttack
 {
     /// <summary>
     /// 毒杀（服务端权威，房主开启后全员可用）：
