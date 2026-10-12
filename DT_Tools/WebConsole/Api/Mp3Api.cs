@@ -7,14 +7,12 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
     /// /api/mp3/* — 随身MP3 应用后端：驱动 Game/MicBroadcast 的会话（与 /mic_music、
     /// StageMusic 共用同一引擎，后触发者接管）加传输控制（暂停/跳转/响度/麦克风混入
-    /// 开关/本地静音），歌单持久化在 Mp3Playlist（BepInEx/config JSON）。
+    /// 开关/本地静音），歌单持久化在 Mp3Playlist（DtPaths.Mp3Playlist）。
     /// 播放即入歌单（去重）；自然播完经 MicBroadcast.TrackFinished 自动连播下一首（循环）。
     /// 全部端点经 WebConsole.RunOnMain 在 Unity 主线程执行（引擎与歌单都只碰主线程），
     /// 响应沿用命令信封 {ok, error, data}；错误码小写英文短词，中文详情在 data.message。
-    /// </summary>
     public static class Mp3Api
     {
         private const string Tag = "Mp3";
@@ -28,9 +26,7 @@ namespace DT_Tools.WebConsole.Api
         private static float _pausedPosition;
         private static float _pausedDuration;
 
-        // ── 查询 ──
-
-        /// <summary>GET /api/mp3/state — 引擎会话快照 + 暂停书签合并 + 歌单 + 当前曲目下标。</summary>
+        /// GET /api/mp3/state — 引擎会话快照 + 暂停书签合并 + 歌单 + 当前曲目下标。
         public static void HandleState(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -76,9 +72,7 @@ namespace DT_Tools.WebConsole.Api
                 return CommandResult.Success(data);
             });
 
-        // ── 播放控制 ──
-
-        /// <summary>POST /api/mp3/play {path} — 播放（本地路径或 http(s)），自动入歌单去重。</summary>
+        /// POST /api/mp3/play {path} — 播放（本地路径或 http(s)），自动入歌单去重。
         public static void HandlePlay(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -95,7 +89,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/index {index} — 播放歌单第 index 首。</summary>
+        /// POST /api/mp3/index {index} — 播放歌单第 index 首。
         public static void HandleIndex(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -109,7 +103,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/next {delta} — 跳转 ±1（默认 +1），歌单循环。</summary>
+        /// POST /api/mp3/next {delta} — 跳转 ±1（默认 +1），歌单循环。
         public static void HandleNext(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -128,10 +122,8 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
         /// POST /api/mp3/pause — 暂停：记住进度并销毁引擎会话（还原语音管线，
         /// 不留挂起状态）；恢复时从书签位置重建。幂等：已暂停返回成功。
-        /// </summary>
         public static void HandlePause(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -148,7 +140,7 @@ namespace DT_Tools.WebConsole.Api
                 return CommandResult.Success(new { message = "已暂停" });
             });
 
-        /// <summary>POST /api/mp3/resume — 恢复：从书签位置重建会话。幂等：已在播放返回成功。</summary>
+        /// POST /api/mp3/resume — 恢复：从书签位置重建会话。幂等：已在播放返回成功。
         public static void HandleResume(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -165,7 +157,7 @@ namespace DT_Tools.WebConsole.Api
                 return CommandResult.Fail("nothing to resume", new { message = "没有可恢复的暂停会话" });
             });
 
-        /// <summary>POST /api/mp3/seek {position} — 跳转（秒）：播放中走引擎；暂停中更新书签。</summary>
+        /// POST /api/mp3/seek {position} — 跳转（秒）：播放中走引擎；暂停中更新书签。
         public static void HandleSeek(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -183,7 +175,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/volume {volume} — 响度 0~1（实时生效并持久化）。</summary>
+        /// POST /api/mp3/volume {volume} — 响度 0~1（实时生效并持久化）。
         public static void HandleVolume(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -197,7 +189,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/mic {enabled} — 麦克风混入开关（会话中即时挂/卸；持久化）。</summary>
+        /// POST /api/mp3/mic {enabled} — 麦克风混入开关（会话中即时挂/卸；持久化）。
         public static void HandleMic(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -228,7 +220,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/local {enabled} — 本地喇叭出声开关（mute 实现，持久化）。</summary>
+        /// POST /api/mp3/local {enabled} — 本地喇叭出声开关（mute 实现，持久化）。
         public static void HandleLocal(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -251,7 +243,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/mode {mode} — 播放方式：list=列表循环 | single=单曲循环 | random=随机播放。</summary>
+        /// POST /api/mp3/mode {mode} — 播放方式：list=列表循环 | single=单曲循环 | random=随机播放。
         public static void HandleMode(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -269,7 +261,7 @@ namespace DT_Tools.WebConsole.Api
         private static string ModeText(string mode)
             => mode == "single" ? "单曲循环（重播当前）" : mode == "random" ? "随机播放" : "列表循环";
 
-        /// <summary>POST /api/mp3/stop — 停止会话并清除暂停书签。</summary>
+        /// POST /api/mp3/stop — 停止会话并清除暂停书签。
         public static void HandleStop(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -279,9 +271,7 @@ namespace DT_Tools.WebConsole.Api
                 return CommandResult.Success(new { message = "已停止" });
             });
 
-        // ── 歌单管理 ──
-
-        /// <summary>POST /api/mp3/playlist/add {path} — 添加（按路径去重）。</summary>
+        /// POST /api/mp3/playlist/add {path} — 添加（按路径去重）。
         public static void HandlePlaylistAdd(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -298,7 +288,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/playlist/remove {index} — 移除（当前播放中的曲目也可移除，播放不受影响）。</summary>
+        /// POST /api/mp3/playlist/remove {index} — 移除（当前播放中的曲目也可移除，播放不受影响）。
         public static void HandlePlaylistRemove(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -314,7 +304,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/playlist/move {from,to} — 调序。</summary>
+        /// POST /api/mp3/playlist/move {from,to} — 调序。
         public static void HandlePlaylistMove(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -333,7 +323,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/mp3/playlist/clear — 清空歌单（不停止当前播放）。</summary>
+        /// POST /api/mp3/playlist/clear — 清空歌单（不停止当前播放）。
         public static void HandlePlaylistClear(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -342,12 +332,8 @@ namespace DT_Tools.WebConsole.Api
                 return CommandResult.Success(new { message = "歌单已清空" });
             });
 
-        // ---- 内部 ----
-
-        /// <summary>
         /// 启动播放并挂连播回调；静音偏好立即生效（加载完成应用 mute，避免先响一下）。
         /// 任何新播放都使暂停书签作废；startSeconds&gt;0 时从该位置重建（恢复暂停）。
-        /// </summary>
         private static CommandResult PlayInternal(string path, int index, float startSeconds = 0f)
         {
             var store = Mp3Playlist.Get();
@@ -364,12 +350,10 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
         /// 自然播完自动连播。注意：引擎回调发生在 Stop() 之后（phase 已 idle），
         /// 当前曲目必须直接按路径查表——不能用 CurrentIndex()（其含 idle=-1 守卫，
         /// 会让连播永远落回第一首）。播放方式：list=顺序循环、single=单曲循环（重播当前）、
         /// random=随机不重复。
-        /// </summary>
         private static void OnTrackFinished()
         {
             var store = Mp3Playlist.Get();
@@ -394,7 +378,7 @@ namespace DT_Tools.WebConsole.Api
             PlayInternal(items[target].Path, target);
         }
 
-        /// <summary>按路径查歌单下标（无会话守卫——连播回调时引擎已 Stop，只认路径）。</summary>
+        /// 按路径查歌单下标（无会话守卫——连播回调时引擎已 Stop，只认路径）。
         private static int IndexOfPath(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -403,7 +387,7 @@ namespace DT_Tools.WebConsole.Api
                 string.Equals(i.Path, path, StringComparison.OrdinalIgnoreCase));
         }
 
-        /// <summary>随机挑一首（避免与当前重复；单曲目时只能原地）。</summary>
+        /// 随机挑一首（避免与当前重复；单曲目时只能原地）。
         private static int PickRandom(int count, int exclude)
         {
             if (count <= 1)
@@ -414,7 +398,7 @@ namespace DT_Tools.WebConsole.Api
             return t;
         }
 
-        /// <summary>当前曲目在歌单中的下标（会话空闲或路径不在歌单时 -1）。</summary>
+        /// 当前曲目在歌单中的下标（会话空闲或路径不在歌单时 -1）。
         private static int CurrentIndex()
         {
             if (MicBroadcast.Snapshot().Phase == "idle")
@@ -422,7 +406,7 @@ namespace DT_Tools.WebConsole.Api
             return IndexOfPath(_currentPath);
         }
 
-        /// <summary>统一执行壳：RunOnMain 包裹（结果信封原样回写）。</summary>
+        /// 统一执行壳：RunOnMain 包裹（结果信封原样回写）。
         private static void WriteMain(HttpListenerContext ctx, Func<CommandResult> work)
             => HttpServer.WriteJson(ctx.Response, WebConsole.RunOnMain(work));
 
@@ -442,7 +426,7 @@ namespace DT_Tools.WebConsole.Api
             catch { return 0f; }
         }
 
-        /// <summary>解析 JSON 请求体；缺失/非法直接回 "invalid body"（统一解析在 ApiUtil）。</summary>
+        /// 解析 JSON 请求体；缺失/非法直接回 "invalid body"（统一解析在 ApiUtil）。
         private static bool ParseBody(HttpListenerContext ctx, out JObject body)
         {
             body = ApiUtil.ParseBody(ctx);

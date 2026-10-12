@@ -3,7 +3,7 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Beacon
 {
-    /// <summary>/beacon 参数形状：坐标 / 出生点序号 / 玩家号 / lobby / error（纯解析，不查游戏数据）。</summary>
+    /// /beacon 参数形状：坐标 / 出生点序号 / 玩家号 / lobby / error（纯解析，不查游戏数据）。
     internal sealed class BeaconArgs
     {
         public enum Mode

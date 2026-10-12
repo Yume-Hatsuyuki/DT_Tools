@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Experience.DarkRadar
 {
-    /// <summary>巡检逻辑：按设备缓存实时状态同步两类 pin（新增出现的、移除消失的）。</summary>
+    /// 巡检逻辑：按设备缓存实时状态同步两类 pin（新增出现的、移除消失的）。
     internal static class DarkRadarLogic
     {
         public static void SyncAll()
@@ -51,7 +51,7 @@ namespace DT_Tools.Patches.Experience.DarkRadar
                  DarkRadarState.FuseboxPins);
         }
 
-        /// <summary>按设备缓存的实时状态同步一类 pin；AddCommonPin 内部按 (type, pos) 去重。</summary>
+        /// 按设备缓存的实时状态同步一类 pin；AddCommonPin 内部按 (type, pos) 去重。
         private static void Sync(Define.EMinimapPinType type,
                                  IEnumerable<Vector2> desiredPositions,
                                  HashSet<Vector2> mine)
@@ -75,7 +75,7 @@ namespace DT_Tools.Patches.Experience.DarkRadar
             }
         }
 
-        /// <summary>移除本功能添加的全部 pin（Enabled 关闭、离开对局、黑幕视角时调用）。</summary>
+        /// 移除本功能添加的全部 pin（Enabled 关闭、离开对局、黑幕视角时调用）。
         public static void ClearAll()
         {
             if (Managers.Map == null)

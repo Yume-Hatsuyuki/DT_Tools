@@ -3,13 +3,11 @@ using Newtonsoft.Json.Serialization;
 
 namespace DT_Tools.Core
 {
-    /// <summary>
     /// 全项目唯一 JSON 入口（Newtonsoft，游戏自带程序集）。
     /// 序列化对象用匿名对象或 DTO；禁止手拼 JSON 字符串与手写解析。
-    /// </summary>
     public static class Json
     {
-        /// <summary>API 输出统一设置：camelCase 键名、忽略 null 字段、紧凑格式。</summary>
+        /// API 输出统一设置：camelCase 键名、忽略 null 字段、紧凑格式。
         public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
@@ -22,7 +20,7 @@ namespace DT_Tools.Core
         public static T From<T>(string json)
             => JsonConvert.DeserializeObject<T>(json);
 
-        /// <summary>容错解析：失败返回 false（调用方应记日志，不要静默吞）。</summary>
+        /// 容错解析：失败返回 false（调用方应记日志，不要静默吞）。
         public static bool TryFrom<T>(string json, out T value)
         {
             value = default;

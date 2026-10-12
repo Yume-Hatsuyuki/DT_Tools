@@ -8,12 +8,10 @@ using Server.Game;
 
 namespace DT_Tools.Patches.System.LobbyMaxPlayers
 {
-    /// <summary>
     /// GameStart 整替（0.1.16b GameRoom.cs:662-684）：StartPosList 打乱后分配，
     /// 人数超出出生点时 i % Count 循环复用，避免越界。仅当 MaxMembers &gt; 8 时接管，否则走原版。
     /// 与原版（0.1.16b GameRoom.cs:681 直接赋 FirstBloodVictimId=0）的差异用
     /// public RestoreFirstBloodVictimId（0.1.16b GameRoom.cs:167）等价实现。
-    /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.GameStart))]
     internal static class LobbyMaxPlayersGameStartPatch
     {
@@ -74,10 +72,8 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
             return false;
         }
 
-        /// <summary>
         /// 开局任务分配：MissionManager 在发行程序集中为 internal（0.1.16b Server.Game/MissionManager.cs:10），
         /// 反射访问统一收敛到 Game/MissionAccess（无参 StartMission()：Server.Game/MissionManager.cs:355）。
-        /// </summary>
         private static void InvokeMissionStart()
         {
             if (!MissionAccess.StartParameterless())

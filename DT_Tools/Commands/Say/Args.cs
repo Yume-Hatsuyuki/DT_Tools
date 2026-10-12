@@ -2,9 +2,7 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Say
 {
-    /// <summary>
     /// /say 参数：目标（all 或 #id，纯数字不作目标以免与文字内容混淆）+ 剩余参数整段为文字。
-    /// </summary>
     internal sealed class SayArgs
     {
         public bool All { get; private set; }

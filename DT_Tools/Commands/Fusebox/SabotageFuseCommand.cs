@@ -5,7 +5,6 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Fusebox
 {
-    /// <summary>
     /// /sabotage_fuse [#id|all] — 客户端拉闸：无视拔螺栓谜题，直接发 C_INTERACT_FUSEBOX 给服务端
     /// 触发 DisconnetCable 拉断电闸（跟随控制台，非房主可用，仅生存阶段）。
     ///
@@ -27,10 +26,9 @@ namespace DT_Tools.Commands.Fusebox
     /// all 模式下用协程 WaitForSeconds(0.6f) 逐包间隔发送，避免被 InteractLock 吞掉。
     ///
     /// 示例:
-    ///   /sabotage_fuse            查看可拉电闸列表
-    ///   /sabotage_fuse all        拉断全部已武装电闸（第 2 个触发全场停电）
-    ///   /拆电 #12                 拉断指定电闸 #12
-    /// </summary>
+    /// /sabotage_fuse            查看可拉电闸列表
+    /// /sabotage_fuse all        拉断全部已武装电闸（第 2 个触发全场停电）
+    /// /拆电 #12                 拉断指定电闸 #12
     internal sealed class SabotageFuseCommand : ICommand
     {
         public string Name => "sabotage_fuse";
@@ -77,10 +75,8 @@ namespace DT_Tools.Commands.Fusebox
             return SabotageOne(fuseboxId, armed, ctx);
         }
 
-        /// <summary>
         /// 单个电闸拉断：校验目标确实已武装且完好后发包，
         /// 避免对已损坏电闸误发触发 ConnetCable 反而修好电闸。
-        /// </summary>
         private static CommandResult SabotageOne(int fuseboxId, List<DeviceBase> armed, CommandContext ctx)
         {
             DeviceBase target = armed.Find(f => f.ID == fuseboxId);
@@ -121,10 +117,8 @@ namespace DT_Tools.Commands.Fusebox
             return CommandResult.Success(new { fuseboxId });
         }
 
-        /// <summary>
         /// all 模式：用协程逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。
         /// 第 2 个电闸拉断时会触发全场停电 + ClearFuseboxSabotage，第 3 个包将被服务端拒绝。
-        /// </summary>
         private static CommandResult SabotageAll(List<DeviceBase> armed, CommandContext ctx)
         {
             if (armed.Count == 0)

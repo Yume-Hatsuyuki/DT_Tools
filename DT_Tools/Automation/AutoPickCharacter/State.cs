@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DT_Tools.Automation.AutoPickCharacter
 {
-    /// <summary>跟踪状态：当前阶段、选角发包尝试计数与日志去重、大厅换角尝试计数/上限与节流。</summary>
+    /// 跟踪状态：当前阶段、选角发包尝试计数与日志去重、大厅换角尝试计数/上限与节流。
     internal static class AutoPickCharacterState
     {
         public static EGameState LastState = EGameState.NoneState;
@@ -21,7 +21,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
         public static int LobbyAttempts;
         public static bool LobbyGaveUpLogged;
 
-        /// <summary>新进入选角阶段：开启一轮发包跟踪。</summary>
+        /// 新进入选角阶段：开启一轮发包跟踪。
         public static void BeginPickPhase()
         {
             PhaseEnterRealtime = Time.realtimeSinceStartup;
@@ -31,7 +31,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             GaveUpLogged = false;
         }
 
-        /// <summary>离开选角阶段：清阶段内跟踪（LastState 由 Trigger 统一回写）。</summary>
+        /// 离开选角阶段：清阶段内跟踪（LastState 由 Trigger 统一回写）。
         public static void ResetPhase()
         {
             PhaseEnterRealtime = -1f;
@@ -41,7 +41,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             GaveUpLogged = false;
         }
 
-        /// <summary>新进入大厅：重新跟踪换角同步。</summary>
+        /// 新进入大厅：重新跟踪换角同步。
         public static void EnterLobby()
         {
             LastLobbySyncedId = int.MinValue;
@@ -50,7 +50,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             LobbyGaveUpLogged = false;
         }
 
-        /// <summary>模块禁用 / 总开关关闭时清空全部跟踪。</summary>
+        /// 模块禁用 / 总开关关闭时清空全部跟踪。
         public static void Reset()
         {
             LastState = EGameState.NoneState;

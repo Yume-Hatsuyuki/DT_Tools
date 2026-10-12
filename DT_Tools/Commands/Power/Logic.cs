@@ -6,29 +6,25 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Power
 {
-    /// <summary>
     /// /blackout、/restore_power 共用业务（对应旧 PowerControlHelper；房主门禁由框架统一执行）。
     ///
     /// 原版机制：
-    ///   - Dark 在破坏任务电箱（Fusebox.DeviceInfo.MissionType == -1）剪完全部线后，
-    ///     C_INTERACT_FUSEBOX → DeviceManager.Interact → Fusebox.Interact（0.1.16b
-    ///     Server.Game/Fusebox.cs:16）→ DisconnetCable（:114）。
-    ///   - 断开第 2 个电箱时 AreaManager.RefreshLight 把所有 Area.IsLight 置 false，
-    ///     Area.IsLight setter 向区域内每名玩家单播 S_AREA_PUBLIC，
-    ///     客户端 Managers.Game.Darkness=true：关全局灯、中断读条、只剩玩家身边小聚光灯。
-    ///   - 修复走 Fusebox.ConnetCable（:97）；DeviceManager.RefuseAllFuse（0.1.16b
-    ///     Server.Game/DeviceManager.cs:308）会重连全部已断开电箱，
-    ///     计数归 0 时全区亮灯、播放 FuseOnSfx，并安排 60 秒后重新发放 3 个破坏任务。
-    /// </summary>
+    /// - Dark 在破坏任务电箱（Fusebox.DeviceInfo.MissionType == -1）剪完全部线后，
+    /// C_INTERACT_FUSEBOX → DeviceManager.Interact → Fusebox.Interact（0.1.16b
+    /// Server.Game/Fusebox.cs:16）→ DisconnetCable（:114）。
+    /// - 断开第 2 个电箱时 AreaManager.RefreshLight 把所有 Area.IsLight 置 false，
+    /// Area.IsLight setter 向区域内每名玩家单播 S_AREA_PUBLIC，
+    /// 客户端 Managers.Game.Darkness=true：关全局灯、中断读条、只剩玩家身边小聚光灯。
+    /// - 修复走 Fusebox.ConnetCable（:97）；DeviceManager.RefuseAllFuse（0.1.16b
+    /// Server.Game/DeviceManager.cs:308）会重连全部已断开电箱，
+    /// 计数归 0 时全区亮灯、播放 FuseOnSfx，并安排 60 秒后重新发放 3 个破坏任务。
     internal static class PowerLogic
     {
-        /// <summary>触发全场停电所需的断开电箱数量（与 AreaManager.RefreshLight 阈值一致）。</summary>
+        /// 触发全场停电所需的断开电箱数量（与 AreaManager.RefreshLight 阈值一致）。
         private const int RequiredDisconnectedFuses = 2;
 
-        /// <summary>
         /// 活动房间 / 屏障 / 生存阶段统一校验，失败返回 null 并已输出提示。
         /// 电力逻辑只存在于 Host 端，且仅在生存阶段有游戏意义。
-        /// </summary>
         private static GameRoom Validate(CommandContext ctx)
         {
             var room = GameRoom.Instance;
@@ -50,11 +46,9 @@ namespace DT_Tools.Commands.Power
             return room;
         }
 
-        /// <summary>
         /// 触发全场停电。复用 Dark 剪线的原版完整路径
         /// （Fusebox.Interact → DisconnetCable → AreaManager.RefreshLight），
         /// 断开第 2 个电箱时全体区域灭灯并广播 FuseOffSfx / 电箱指路箭头。
-        /// </summary>
         public static CommandResult Blackout(CommandContext ctx)
         {
             var room = Validate(ctx);
@@ -112,11 +106,9 @@ namespace DT_Tools.Commands.Power
             return CommandResult.Fail("blackout not triggered", new { disconnected = after });
         }
 
-        /// <summary>
         /// 恢复电力。直接复用原版 DeviceManager.RefuseAllFuse：
         /// 重连全部已断开电箱，计数归 0 时全区亮灯、播放 FuseOnSfx，
         /// 并安排 60 秒后重新随机发放 3 个破坏任务。
-        /// </summary>
         public static CommandResult RestorePower(CommandContext ctx)
         {
             var room = Validate(ctx);

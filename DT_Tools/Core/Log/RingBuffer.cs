@@ -2,10 +2,8 @@ using System;
 
 namespace DT_Tools.Core
 {
-    /// <summary>
     /// 线程安全的定长环形缓冲（全项目唯一实现）。
     /// 写满后覆盖最旧条目；Seq 每次写入/清空自增，供调用方做增量拉取。
-    /// </summary>
     public sealed class RingBuffer<T>
     {
         private readonly T[] _buf;

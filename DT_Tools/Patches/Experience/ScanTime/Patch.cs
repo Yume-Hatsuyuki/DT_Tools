@@ -6,14 +6,12 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Experience.ScanTime
 {
-    /// <summary>
     /// StartScanning 整替：复刻 0.1.16b GameManagerEX.cs:809，仅读条时长可配置。
     /// 公共方法（nameof 可定位，此处经 nameof）。原版 ScanUp 读 Manager 单例
     /// （Managers.Game.IsScanUp，0.1.16b GameManagerEX.cs:813），__instance 即该单例；
     /// ScanningSlider 属性为 private set（:256），经 Traverse 回写。
     /// UI_ScanningSlider.SetInfo：0.1.16b UI_ScanningSlider.cs:26；
     /// MakeWorldSpaceUI：0.1.16b UIManager.cs:760。
-    /// </summary>
     [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.StartScanning))]
     internal static class ScanTimePatch
     {

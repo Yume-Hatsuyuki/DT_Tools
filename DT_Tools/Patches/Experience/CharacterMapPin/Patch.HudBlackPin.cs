@@ -3,10 +3,8 @@ using HarmonyLib;
 
 namespace DT_Tools.Patches.Experience.CharacterMapPin
 {
-    /// <summary>
     /// HUD RefreshBlackPin(int) 后置：已识破黑幕的黑点也换黑色角色头像。
     /// 公共方法（nameof 定位）：0.1.16b UI_GameScene.cs:870。
-    /// </summary>
     [HarmonyPatch(typeof(UI_GameScene), nameof(UI_GameScene.RefreshBlackPin))]
     internal static class CharacterMapPinHudBlackPinPatch
     {

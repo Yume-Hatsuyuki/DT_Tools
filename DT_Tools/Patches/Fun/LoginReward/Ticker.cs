@@ -2,10 +2,8 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.LoginReward
 {
-    /// <summary>
     /// 主线程轮询组件：独立常驻 GameObject（DontDestroyOnLoad）。
     /// OnDisabled 必须走 DestroyInstance 整只销毁——只置 enabled=false 会泄漏 GameObject。
-    /// </summary>
     internal sealed class LoginRewardTicker : MonoBehaviour
     {
         public static LoginRewardTicker Instance { get; private set; }

@@ -8,10 +8,8 @@ using HarmonyLib;
 
 namespace DT_Tools.Core
 {
-    /// <summary>
     /// 装载门面：Engine.Load 完成发现 → 绑定 → 挂载 → 生命周期接线。
     /// 功能代码只用到三个成员：Enabled&lt;T&gt;()（门闩）、SectionOf&lt;T&gt;()（段名）、TickModules（自动化泵）。
-    /// </summary>
     public static class Engine
     {
         public sealed class LoadResult
@@ -32,7 +30,7 @@ namespace DT_Tools.Core
         private static readonly List<ModuleInfo> ModuleInfos =
             new List<ModuleInfo>();
 
-        /// <summary>自动化模块元数据（WebUI 卡片用；id 即段名；Tick 供 TickModules 泵调用）。</summary>
+        /// 自动化模块元数据（WebUI 卡片用；id 即段名；Tick 供 TickModules 泵调用）。
         public sealed class ModuleInfo
         {
             public Type Type;
@@ -44,7 +42,7 @@ namespace DT_Tools.Core
             internal Action<bool> Tick;
         }
 
-        /// <summary>Enabled 键名常量（引擎统一绑定，功能类不声明 Enabled 字段）。</summary>
+        /// Enabled 键名常量（引擎统一绑定，功能类不声明 Enabled 字段）。
         public const string EnabledKey = "Enabled";
 
         public static IReadOnlyList<ModuleInfo> AutomationModules => ModuleInfos;
@@ -140,33 +138,29 @@ namespace DT_Tools.Core
             return result;
         }
 
-        /// <summary>功能/模块门闩：Enabled 配置项由引擎统一绑定，功能类不声明 Enabled 字段。</summary>
+        /// 功能/模块门闩：Enabled 配置项由引擎统一绑定，功能类不声明 Enabled 字段。
         public static bool Enabled<T>() => EnabledOf(typeof(T));
 
         public static bool EnabledOf(Type type)
             => EnabledEntries.TryGetValue(type, out var entry) && entry.Value;
 
-        /// <summary>段名 = 类名去后缀的推导结果；未注册类型回退类名。</summary>
+        /// 段名 = 类名去后缀的推导结果；未注册类型回退类名。
         public static string SectionOf<T>() => SectionOf(typeof(T));
 
         public static string SectionOf(Type type)
             => Sections.TryGetValue(type, out var section) ? section : type.Name;
 
-        /// <summary>
         /// 装载期收集的段落分组元数据（[ConfigSection(Group=…)]）；
         /// 未标注的段返回 null（配置层再按功能/模块归属兜底）。
-        /// </summary>
         public static string GroupOfSection(string section)
             => section != null && SectionGroups.TryGetValue(section, out var group) ? group : null;
 
-        /// <summary>
         /// 装载期收集的功能分类元数据（Patches/&lt;分类&gt;/&lt;功能&gt; 目录名，FeatureLoader 推导）；
         /// 非补丁功能段（基础设施、自动化模块）返回 null，配置协议据此下发 category 字段。
-        /// </summary>
         public static string CategoryOfSection(string section)
             => section != null && SectionCategories.TryGetValue(section, out var category) ? category : null;
 
-        /// <summary>自动化模块泵：hostEnabled 为总开关值，由 AutomationHost 的主线程 Tick 调用。</summary>
+        /// 自动化模块泵：hostEnabled 为总开关值，由 AutomationHost 的主线程 Tick 调用。
         public static void TickModules(bool hostEnabled)
         {
             foreach (var module in ModuleInfos)

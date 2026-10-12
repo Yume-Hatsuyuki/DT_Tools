@@ -3,14 +3,12 @@ using HarmonyLib;
 
 namespace DT_Tools.Patches.Fun.PhotoSend
 {
-    /// <summary>
     /// 聊天触发补丁：`![文字](路径)` 直发照片（严格 markdown 括号对，半角）。
     /// 文字非空时先发一条同内容的普通聊天消息再发照片；文字可空（`![](路径)`），路径不允许为空。
     /// 大厅/观战/死亡（原版照片入口不可用的状态）与其余 `!` 开头消息一律放行不接管。
-    /// </summary>
     internal static class Patch
     {
-        /// <summary>补丁自己发送文字说明期间的再入闸：文字若以 ! 开头，防止被本补丁再次解析成指令。</summary>
+        /// 补丁自己发送文字说明期间的再入闸：文字若以 ! 开头，防止被本补丁再次解析成指令。
         internal static bool SendingCaption;
 
         [HarmonyPatch(typeof(VoiceManager), "SendChatMessage")]
@@ -59,7 +57,7 @@ namespace DT_Tools.Patches.Fun.PhotoSend
                 }
                 else
                 {
-                    Log.Warn<PhotoSendFeature>("[PhotoSend] " + error);
+                    Log.Warn<PhotoSendFeature>($"[PhotoSend] {error}");
                     PhotoSendLogic.ReportChatError(__instance, error);
                 }
                 return false; // 拦截原消息
@@ -85,7 +83,7 @@ namespace DT_Tools.Patches.Fun.PhotoSend
             Ok,
         }
 
-        /// <summary>解析 markdown 图片语法：`[` 文字 `](` 路径 `)`。文字可空（Trim 后），路径不允许为空。</summary>
+        /// 解析 markdown 图片语法：`[` 文字 `](` 路径 `)`。文字可空（Trim 后），路径不允许为空。
         private static ParseResult TryParseMarkdown(string body, out string alt, out string argument)
         {
             alt = null;

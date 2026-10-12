@@ -6,7 +6,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Kill
 {
-    /// <summary>
     /// /kill &lt;all|#playerId&gt; — 颈环炸弹处决（仅房主、Survive/Detective/Trial，6 秒延迟）。
     ///
     /// 机制：Player.OnDeadCollarBomb() 是原版 GameRoom.GameOver() 全员处决的同一路径，
@@ -17,7 +16,6 @@ namespace DT_Tools.Commands.Kill
     /// （0.1.16b Server.Game/Player.cs:857-878，倒地在前、死亡在后）。
     /// 风险：全员击杀会触发 4 秒后自动总结算；Trial 杀 Black 会让 EndTrial 无法正确处决黑方
     /// （OnDead 的 IsAlive 守卫兜底，已死直接 return）。
-    /// </summary>
     internal sealed class KillCommand : ICommand
     {
         public string Name => "kill";

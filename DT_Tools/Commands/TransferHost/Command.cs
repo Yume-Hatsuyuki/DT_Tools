@@ -8,24 +8,22 @@ using Steamworks;
 
 namespace DT_Tools.Commands.TransferHost
 {
-    /// <summary>
     /// /transferhost #&lt;playerId&gt; [owner] — 将房主身份转让给指定玩家（大厅与局内均可，需房主）。
     ///
     /// 原版房主身份只在房主退出房间时自动转移（GameRoom.HandleLeavePlayer 内
     /// Host = Players.FirstOrDefault()，且仅 Lobby 广播 S_SET_HOST）。
     /// 本命令允许房主主动交出房主身份：服务端 GameRoom.Host 切换为目标玩家，
     /// 并向全员广播 S_SET_HOST（所有阶段）。转让后：
-    ///   - 目标玩家获得房主权限（开局判定 / 踢人 / 后续再转让），经服务端
-    ///     Host 字段校验即刻生效；
-    ///   - 原房主留在房间继续游戏；客户端房主标记的局内同步由
-    ///     Patches/System/HostTransfer 补丁负责（需开启 [HostTransfer]）；
-    ///   - 原房主之后退出房间时按原版机制自动迁移给新 Host，房间不解散。
+    /// - 目标玩家获得房主权限（开局判定 / 踢人 / 后续再转让），经服务端
+    /// Host 字段校验即刻生效；
+    /// - 原房主留在房间继续游戏；客户端房主标记的局内同步由
+    /// Patches/System/HostTransfer 补丁负责（需开启 [HostTransfer]）；
+    /// - 原房主之后退出房间时按原版机制自动迁移给新 Host，房间不解散。
     /// 可选参数 owner（/ owner / steam / 大厅）：同时把 Steam 大厅 owner 转让给
     /// 目标玩家（受控转让，依赖 [HostTransfer] 的防迁移拦截，不会触发全员误迁移）。
     /// 转让后按阶段向全员广播自定义通知：
-    ///   #原房主 <HostTransfer.TransferText 配置> #新房主 （仅房主权限/大厅owner）
+    /// #原房主 <HostTransfer.TransferText 配置> #新房主 （仅房主权限/大厅owner）
     /// 通知文本可通过配置项 TransferText 自定义（默认"将房主转让给"）。
-    /// </summary>
     internal sealed class TransferHostCommand : ICommand
     {
         public string Name => "transferhost";
@@ -162,11 +160,9 @@ namespace DT_Tools.Commands.TransferHost
             return CommandResult.Success($"transferred to {targetId}");
         }
 
-        /// <summary>
         /// 向全员广播自定义转让通知：
-        ///   #原房主 <TransferText 配置> #新房主 （仅房主权限/大厅owner）
+        /// #原房主 <TransferText 配置> #新房主 （仅房主权限/大厅owner）
         /// PlayerId=0（系统发言，客户端不显示名字前缀，只显示文字）。
-        /// </summary>
         private static void SendTransferNotice(GameRoom room, Server.Game.Player oldHost, Server.Game.Player newHost, bool transferSteamOwner)
         {
             try
@@ -229,7 +225,7 @@ namespace DT_Tools.Commands.TransferHost
             catch (global::System.Exception ex)
             {
                 Log.Error<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
-                    "房主转让通知广播失败: " + ex.Message);
+                    $"房主转让通知广播失败: {ex.Message}");
             }
         }
     }

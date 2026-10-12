@@ -4,18 +4,15 @@ using Protocol;
 
 namespace DT_Tools.Commands.Agent
 {
-    /// <summary>
     /// 生成源：假人/采矿/取电/花/炼金药等（对应旧 AgentGenerateChain.cs，原 CollectGenerate）。
     /// 挖矿冷却字段 <see cref="AgentGenerateChain.MineralMineCooldown"/> 语义不变，
     /// 由 Planner 每 tick 调用一次本类，本类内部自减。
-    /// </summary>
     internal static class AgentGenerateChain
     {
         // ═══════════════════════════════════════════════════
         //  具名常量：挖矿冷却
         // ═══════════════════════════════════════════════════
 
-        /// <summary>
         /// 挖矿后冷却 tick 数：等待服务端 S_SPAWN_DEVICE 回包 + 客户端 Cache 刷新，
         /// 避免矿石还没落地就重复发送挖矿包。
         ///
@@ -24,10 +21,9 @@ namespace DT_Tools.Commands.Agent
         /// 此值不是在模拟服务器限制，纯粹是等待网络 RTT。0.25s tick 下取 2 tick = 0.5s，
         /// 对常见 Steam P2P 延迟（约 50-200ms）留有约 2 倍余量。
         /// 若实测联机延迟明显更高，可调大；若始终低延迟，可尝试调至 1。
-        /// </summary>
         private const int MineralCooldownTicks = 2; // 原 5（对应旧 0.6s tick，等效 3s，明显过量）
 
-        /// <summary>挖矿后冷却 tick 数，强制先捡再挖，避免空挖刷屏。</summary>
+        /// 挖矿后冷却 tick 数，强制先捡再挖，避免空挖刷屏。
         public static int MineralMineCooldown;
 
         public static void Collect(List<DeviceBase> devices, AgentFilter filter, AddDel Add)
@@ -36,7 +32,6 @@ namespace DT_Tools.Commands.Agent
                 !filter.MissionId.HasValue || filter.MissionId.Value == mission
                 || AgentItemHelper.RelatedTo(filter.MissionId.Value, mission);
 
-            // ── 矿物需求（工艺台 + 收集柜缺口，统一由 ItemHelper 计算；槽位锚点见其布局表）──
             var neededMineralIds = AgentItemHelper.BuildNeededMineralIds(devices);
 
             int handNow = Managers.Player?.MyPlayer?.PublicInfo?.HandItemId ?? 0;

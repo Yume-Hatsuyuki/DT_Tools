@@ -5,23 +5,17 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Dev.DeathResist
 {
-    /// <summary>
     /// 死亡抗拒补丁：仅客户端。会话内用 _active 标记本局是否已假活。
-    /// </summary>
     internal static class DeathResistPatches
     {
-        /// <summary>本局已执行过假活（到大厅/清局重置）。</summary>
+        /// 本局已执行过假活（到大厅/清局重置）。
         private static bool _active;
 
         internal static bool IsSessionActive =>
             _active && Engine.Enabled<DeathResistFeature>();
 
-        // ===== Dead：原版置 false 之后改回 true =====
-
-        /// <summary>
         /// 0.1.17a GameManagerEX.Dead：先 IsAlive=false / CanControl=false，
         /// 再 HidePlayer、CancelAllInteract、HideAll 等。Postfix 在整段之后改标志。
-        /// </summary>
         [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
         internal static class DeadPatch
         {
@@ -66,12 +60,8 @@ namespace DT_Tools.Patches.Dev.DeathResist
             }
         }
 
-        // ===== 幽灵外观 =====
-
-        /// <summary>
         /// 0.1.17a MyPlayer.IsGhostView：原版 return !Managers.Game.IsAlive。
         /// 假活后若不强制，会失去幽灵渲染。
-        /// </summary>
         [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.IsGhostView))]
         internal static class IsGhostViewPatch
         {
@@ -83,12 +73,8 @@ namespace DT_Tools.Patches.Dev.DeathResist
             }
         }
 
-        // ===== 幽灵移动 =====
-
-        /// <summary>
         /// 0.1.17a MyPlayer.FixedUpdate：!IsAlive 时走 FixedUpdateGhostMove。
         /// 假活后默认走活人移动；KeepGhostMove 时改为继续幽灵移动。
-        /// </summary>
         [HarmonyPatch(typeof(MyPlayer), "FixedUpdate")]
         internal static class FixedUpdatePatch
         {
@@ -123,8 +109,6 @@ namespace DT_Tools.Patches.Dev.DeathResist
                 return false;
             }
         }
-
-        // ===== 回大厅 / 清局重置会话标记 =====
 
         [HarmonyPatch(typeof(GameManagerEX), "StartLobby")]
         internal static class StartLobbyPatch

@@ -1,6 +1,6 @@
 namespace DT_Tools.Commands.MyName
 {
-    /// <summary>/myname 输出 DTO。</summary>
+    /// /myname 输出 DTO。
     internal static class MyNameFormat
     {
         public static object Result(string from, string to)

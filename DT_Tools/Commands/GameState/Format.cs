@@ -3,7 +3,7 @@ using Protocol;
 
 namespace DT_Tools.Commands.GameState
 {
-    /// <summary>/game_state 输出格式化：状态中文标签 + 列表文本 + JSON 结果 DTO。</summary>
+    /// /game_state 输出格式化：状态中文标签 + 列表文本 + JSON 结果 DTO。
     internal static class GameStateFormat
     {
         public static string StateLabel(EGameState state)

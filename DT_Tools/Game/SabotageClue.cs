@@ -4,7 +4,6 @@ using Server.Game;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
     /// 破坏留痕写入（Game 层共享）：以**真实玩家身份**在设备上写入一条线索
     /// （PropositionInfo），侦探扫描设备即可在平板上看到是谁在破坏。原版线索只记
     /// 固定假身份——拉电闸固定记黑幕 11037（0.1.16b Server.Game/Fusebox.cs:127），
@@ -16,7 +15,6 @@ namespace DT_Tools.Game
     /// 含 WhatType==WNone 过滤（:162）——Survive 阶段、30 秒粒度窗口内同设备同玩家
     /// 只刷新时间（S_REMOVE_CLUE + S_ADD_CLUE），新线索 S_ADD_CLUE 广播（非房主客户端
     /// 经 ClueMirror 自动同步，侦探扫描经 S_SCAN_DEVICE 带出），行为人收 S_LEFT_CLUE 回执。
-    /// </summary>
     internal static class SabotageClue
     {
         // Player 必须全限定：全局命名空间有客户端 Player 类，裸名与 using 导入歧义

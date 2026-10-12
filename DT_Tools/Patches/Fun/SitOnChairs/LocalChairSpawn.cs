@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.SitOnChairs
 {
-    /// <summary>
     /// 本地模拟椅子（非房主专用补丁）：椅子设备由房主服务端在开局时生成并下发
     /// （0.1.16b Server.Game/GameRoom.cs:679 InitDevices + DeviceManager.HandleAddDevice，
     /// 客户端本地注入的岛屿数据只是"模板"，真正的设备实例必须来自服务端）。
@@ -17,17 +16,16 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
     /// 装本 mod 的客户端各自按相同 DeviceId 本地 spawn（坐标一致），配合 SyncSitting
     /// 聊天广播即可互见坐姿；未装 mod 的客户端没有任何椅子（服务端不认这些设备）。
     /// 房主装了 mod 时服务端已下发椅子（Cache 有 Chair），本模块自动跳过，不重复。
-    /// </summary>
     internal static class LocalChairSpawn
     {
-        /// <summary>11 把椅子的数据 ID（与 DeviceData_Island.json 的 DataId 一致，也是 DeviceId）。</summary>
+        /// 11 把椅子的数据 ID（与 DeviceData_Island.json 的 DataId 一致，也是 DeviceId）。
         private static readonly int[] ChairIds =
         {
             19901, 19902, 19903,
             19911, 19912, 19913, 19914, 19915, 19916, 19917, 19918
         };
 
-        /// <summary>检查并补 spawn：对局内设备缓存没有椅子时，用本地注入数据把椅子加进 DeviceManager.Cache。</summary>
+        /// 检查并补 spawn：对局内设备缓存没有椅子时，用本地注入数据把椅子加进 DeviceManager.Cache。
         internal static void Check()
         {
             try
@@ -82,7 +80,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>("[可坐椅子] 本地补 spawn 椅子失败：" + ex.Message);
+                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 本地补 spawn 椅子失败");
             }
         }
     }

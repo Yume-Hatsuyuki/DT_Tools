@@ -5,7 +5,7 @@ using Protocol;
 
 namespace DT_Tools.Commands.ReportCorpse
 {
-    /// <summary>/report 输出格式化：尸体列表文本 + JSON 结果 DTO。</summary>
+    /// /report 输出格式化：尸体列表文本 + JSON 结果 DTO。
     internal static class ReportCorpseFormat
     {
         public static string ReplyList(List<DeviceBase> corpses, DeviceManager device)

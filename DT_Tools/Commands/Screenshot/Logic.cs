@@ -9,7 +9,6 @@ using Object = UnityEngine.Object;
 
 namespace DT_Tools.Commands.Screenshot
 {
-    /// <summary>
     /// 截图实现（回调式，一次调用完成）：游戏用 URP，Camera.Render() 系同步方案全灭（URP
     /// 不支持手动渲染，且会无视 clearFlags 清黑背缓冲）；Update 泵里直接 ReadPixels 背缓冲
     /// 又不在绘制帧内（Unity 报 not inside drawing frame，未定义行为）。唯一合法点 = 帧末
@@ -18,10 +17,9 @@ namespace DT_Tools.Commands.Screenshot
     /// 读到纯色帧不判失败只打 blank 标记——加载页等纯色画面是合法帧，是否可用由看图方决定。
     /// 窗口最小化时 Unity 停止渲染，WaitForEndOfFrame 不触发，由实时看门狗（5 秒）判失败。
     /// 落盘目录选 BepInEx/cache（Paths.CachePath）：可写、随缓存清理、不污染插件目录。
-    /// </summary>
     internal static class ScreenshotLogic
     {
-        /// <summary>实时看门狗超时：超时未等到帧末（窗口最小化/无新帧）按失败回填。</summary>
+        /// 实时看门狗超时：超时未等到帧末（窗口最小化/无新帧）按失败回填。
         private const float WatchdogTimeoutSeconds = 5f;
 
         private sealed class PendingCapture
@@ -34,10 +32,8 @@ namespace DT_Tools.Commands.Screenshot
         private static readonly Queue<PendingCapture> _queue = new Queue<PendingCapture>();
         private static bool _pumpRunning;
 
-        /// <summary>
         /// 发起帧捕获，完成后在主线程回调 onDone（error 非空 = 失败）。多次并发请求排队，
         /// 每帧帧末至多消化一个（单次捕获约几十毫秒，排队不堆积）。
-        /// </summary>
         public static void Capture(int longEdge, Action<string, int, int, bool, string> onDone)
         {
             _queue.Enqueue(new PendingCapture
@@ -48,7 +44,7 @@ namespace DT_Tools.Commands.Screenshot
             EnsurePump();
         }
 
-        /// <summary>常驻帧末泵：队列空时每帧只多一次 yield，零成本；有请求时在帧末消化。</summary>
+        /// 常驻帧末泵：队列空时每帧只多一次 yield，零成本；有请求时在帧末消化。
         private static void EnsurePump()
         {
             if (_pumpRunning)
@@ -115,7 +111,7 @@ namespace DT_Tools.Commands.Screenshot
                 Finish(p, null, 0, 0, true, $"{WatchdogTimeoutSeconds} 秒未等到帧末（窗口最小化时 Unity 停止渲染）。恢复窗口显示后重试。");
         }
 
-        /// <summary>幂等收尾：看门狗与捕获竞争时只认第一个到达的。</summary>
+        /// 幂等收尾：看门狗与捕获竞争时只认第一个到达的。
         private static void Finish(PendingCapture p, string path, int width, int height, bool blank, string error)
         {
             if (p.Finished)
@@ -128,7 +124,7 @@ namespace DT_Tools.Commands.Screenshot
             p.OnDone(path, width, height, blank, error);
         }
 
-        /// <summary>超长边缩到 longEdge（Blit 到临时 RT 再读回），写 PNG 落盘；毫秒级文件名防同秒覆盖。</summary>
+        /// 超长边缩到 longEdge（Blit 到临时 RT 再读回），写 PNG 落盘；毫秒级文件名防同秒覆盖。
         private static string Encode(int longEdge, Texture2D source, int srcW, int srcH, out string path, out int width, out int height)
         {
             path = null;
@@ -173,7 +169,7 @@ namespace DT_Tools.Commands.Screenshot
             }
         }
 
-        /// <summary>抽样判纯色帧：通道极差极小视为无内容（全黑/纯色，多半窗口最小化）。</summary>
+        /// 抽样判纯色帧：通道极差极小视为无内容（全黑/纯色，多半窗口最小化）。
         private static bool IsUniform(Texture2D tex)
         {
             try

@@ -7,7 +7,6 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
     /// GET /api/fs/list?path=目录 — 只读列举本机目录，供 WebUI 内置文件选择器
     /// （apps/common/FileBrowser.vue）浏览。path 为空 → 列出全部盘符（根视图，
     /// parent=null）；path 指向文件 → 列出其所在目录（地址栏粘贴文件路径时能直接
@@ -16,14 +15,13 @@ namespace DT_Tools.WebConsole.Api
     /// （曾用的原生对话框反射方案已因此整体移除），浏览器安全模型又拿不到本地绝对
     /// 路径。威胁面与 /api/run（可执行任意命令）一致：只读列举、不读文件内容，
     /// 鉴权与跨站防护由 Router 统一处理。
-    /// </summary>
     public static class FsApi
     {
-        /// <summary>音频扩展名，前端据此高亮可点播的文件。</summary>
+        /// 音频扩展名，前端据此高亮可点播的文件。
         private static readonly HashSet<string> AudioExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { ".mp3", ".wav", ".ogg", ".flac", ".m4a", ".aac" };
 
-        /// <summary>单次列举上限：系统目录（如 C:\Windows）条目数以万计，截断防止响应过大。</summary>
+        /// 单次列举上限：系统目录（如 C:\Windows）条目数以万计，截断防止响应过大。
         private const int MaxListEntries = 1000;
 
         public static void HandleList(HttpListenerContext ctx)
@@ -92,7 +90,7 @@ namespace DT_Tools.WebConsole.Api
             return new { ok = true, path = full, parent = Directory.GetParent(full)?.FullName, entries, truncated = items.Length > entries.Length };
         }
 
-        /// <summary>Attributes 属性会按需访问文件系统（断链 reparse point 会抛异常）——读失败按可见处理。</summary>
+        /// Attributes 属性会按需访问文件系统（断链 reparse point 会抛异常）——读失败按可见处理。
         private static FileAttributes SafeAttributes(FileSystemInfo entry)
         {
             try { return entry.Attributes; }

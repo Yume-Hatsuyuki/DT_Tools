@@ -5,10 +5,8 @@ using Server.Game;
 
 namespace DT_Tools.Patches.System.SilentWeaponMove
 {
-    /// <summary>
     /// GameRoom.AlertMessage 前缀（public 非虚，GameRoom.cs:1908）：
     /// WeaponMoved 系统通知直接跳过发送，其余系统消息不受影响。
-    /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.AlertMessage))]
     internal static class SilentWeaponMoveAlertPatch
     {

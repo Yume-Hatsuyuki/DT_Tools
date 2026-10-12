@@ -4,13 +4,11 @@ using Protocol;
 
 namespace DT_Tools.Commands.Beacon
 {
-    /// <summary>/beacon 业务：目标落点解析（查游戏数据）+ 越界预警。</summary>
+    /// /beacon 业务：目标落点解析（查游戏数据）+ 越界预警。
     internal static class BeaconLogic
     {
-        /// <summary>
         /// 把解析好的参数解析为具体落点（拷贝 PosInfo，避免与他人 PosInfo 别名共享）。
         /// targetPlayerId &gt; 0 表示目标来自 player #id（仅用于结果 JSON 回带）。
-        /// </summary>
         public static bool ResolveTarget(BeaconArgs args, MapData mapData, MyPlayer my,
             out PosInfo pos, out string label, out int targetPlayerId, out string error)
         {
@@ -93,14 +91,12 @@ namespace DT_Tools.Commands.Beacon
             return true;
         }
 
-        /// <summary>
         /// 越界预警（不阻断）：服务端 HandleMove 对存活玩家按 AreaManager.ValidPosition
         /// （224 网格 + MapArray，0.1.16b Server.Game/AreaManager.cs:82）判定，越界时
         /// <b>仅 Survive / Detective 阶段</b> fallback 到 ErrorPos（0.1.16b
         /// Server.Game/GameRoom.cs:2349-2354）；其余阶段（Lobby/Vote/Trial 等）整包
         /// 静默丢弃——本机已本地落位，但服务端不广播 S_MOVE，他人视角仍在原地。
         /// 这里只做粗略边界提示，不做精确可行走判定（避免依赖服务端 MapArray）。
-        /// </summary>
         public static string OutOfBoundsWarning(PosInfo pos, MapData mapData)
         {
             if (pos == null || mapData?.MapSize == null || mapData.MapOffset == null)

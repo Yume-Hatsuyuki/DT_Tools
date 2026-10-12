@@ -12,24 +12,21 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Patches.Fun.EmoteActions
 {
-    /// <summary>
     /// 未实装动作补丁集合（原 DT_EmoteActions v1.0.0 移植）：
     /// 1. 本地播放（Managers.Update Postfix）：本地玩家存活、可控制、非聊天/非表情界面、
-    ///    待机站立（Idle/Run）且未在播动作时，检测 HiKey / ProposalKey / SwimKey 按下，
-    ///    经 Player.PlayDeadlyTrickAnim（0.1.16b Player.cs:1346）播放对应骨骼动画
-    ///    （13_Hi / 9_Proposal / 15_Swimming）；动画播完 / 玩家移动 / 状态变化时
-    ///    自动 EndDeadlyTrickAnim（0.1.16b Player.cs:1352）还原。
+    /// 待机站立（Idle/Run）且未在播动作时，检测 HiKey / ProposalKey / SwimKey 按下，
+    /// 经 Player.PlayDeadlyTrickAnim（0.1.16b Player.cs:1346）播放对应骨骼动画
+    /// （13_Hi / 9_Proposal / 15_Swimming）；动画播完 / 玩家移动 / 状态变化时
+    /// 自动 EndDeadlyTrickAnim（0.1.16b Player.cs:1352）还原。
     /// 2. 动作同步（SyncActions）：触发成功后经聊天通道广播一条零宽前缀指令
-    ///    （如 "\u200B（挥手）"）；接收端 patch VoiceManager.EnqueueNormalChat
-    ///    （0.1.16b VoiceManager.cs:1338，聊天接收入口）识别指令 → 拦截显示 +
-    ///    对对应玩家（Managers.Player.Players[playerId]）播放同样动画并在到时/移动时还原。
-    ///    没装本 mod 的玩家只会看到（挥手）等友好文本（零宽前缀不可见），房主无需开启。
+    /// （如 "\u200B（挥手）"）；接收端 patch VoiceManager.EnqueueNormalChat
+    /// （0.1.16b VoiceManager.cs:1338，聊天接收入口）识别指令 → 拦截显示 +
+    /// 对对应玩家（Managers.Player.Players[playerId]）播放同样动画并在到时/移动时还原。
+    /// 没装本 mod 的玩家只会看到（挥手）等友好文本（零宽前缀不可见），房主无需开启。
     /// 键位全部走配置（KeyCode 枚举，None=关闭）；聊天输入框聚焦时跳过（防误触），
     /// 与游戏自身按键互不冲突（默认 H / Y / 无）。
-    /// </summary>
     internal static class Patches
     {
-        // ===== 本地播放状态 =====
 
         private static Player _actor;
         private static float _endTime;
@@ -38,20 +35,16 @@ namespace DT_Tools.Patches.Fun.EmoteActions
         private static bool _warnedProposal;
         private static bool _warnedSwim;
 
-        // ===== 动作同步：指令格式与远端状态 =====
-
-        /// <summary>指令前缀：零宽字符 + 全角左括号，对没装 mod 的玩家不可见。</summary>
+        /// 指令前缀：零宽字符 + 全角左括号，对没装 mod 的玩家不可见。
         private const string CmdPrefix = "\u200B（";
 
         private const string CmdSuffix = "）";
 
-        /// <summary>远端玩家正在播放的动作：playerId → 结束时间（unscaledTime）。</summary>
+        /// 远端玩家正在播放的动作：playerId → 结束时间（unscaledTime）。
         private static readonly Dictionary<int, float> RemoteEndTimes = new Dictionary<int, float>();
 
-        /// <summary>远端玩家播放时的警告去重。</summary>
+        /// 远端玩家播放时的警告去重。
         private static readonly Dictionary<int, bool> RemoteWarned = new Dictionary<int, bool>();
-
-        // ===== 1. 本地播放 =====
 
         [HarmonyPatch(typeof(Managers), "Update")]
         internal static class EmoteActionsUpdatePatch
@@ -110,12 +103,12 @@ namespace DT_Tools.Patches.Fun.EmoteActions
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<EmoteActionsFeature>("[未实装动作] 按键检测异常：" + ex.Message);
+                    Log.Error<EmoteActionsFeature>(ex, "[未实装动作] 按键检测异常");
                 }
             }
         }
 
-        /// <summary>本地播放：骨骼里没有该动画时只警告一次并跳过；成功后按 SyncActions 广播。</summary>
+        /// 本地播放：骨骼里没有该动画时只警告一次并跳过；成功后按 SyncActions 广播。
         private static void TryPlay(Player p, string animName, string friendlyName, ref bool warned)
         {
             SkeletonAnimation skeletonAnim = p.SkeletonAnim;
@@ -147,7 +140,7 @@ namespace DT_Tools.Patches.Fun.EmoteActions
             }
         }
 
-        /// <summary>本地动作收尾：对象失效 / 到时 / 玩家离开待机态（移动、切状态）即结束并还原。</summary>
+        /// 本地动作收尾：对象失效 / 到时 / 玩家离开待机态（移动、切状态）即结束并还原。
         private static void TickEnd()
         {
             bool finish = false;
@@ -176,9 +169,7 @@ namespace DT_Tools.Patches.Fun.EmoteActions
             }
         }
 
-        // ===== 2. 动作同步 =====
-
-        /// <summary>广播动作指令：零宽前缀 + 友好文本，房主原生转发全房。</summary>
+        /// 广播动作指令：零宽前缀 + 友好文本，房主原生转发全房。
         private static void BroadcastAction(string friendlyName)
         {
             try
@@ -187,11 +178,11 @@ namespace DT_Tools.Patches.Fun.EmoteActions
             }
             catch (Exception ex)
             {
-                Log.Warn<EmoteActionsFeature>("[未实装动作] 同步广播失败：" + ex.Message);
+                Log.Warn<EmoteActionsFeature>(ex, "[未实装动作] 同步广播失败");
             }
         }
 
-        /// <summary>接收端：聊天接收入口识别动作指令 → 拦截显示 + 播放对应玩家动画。</summary>
+        /// 接收端：聊天接收入口识别动作指令 → 拦截显示 + 播放对应玩家动画。
         [HarmonyPatch(typeof(VoiceManager), "EnqueueNormalChat")]
         internal static class EmoteActionsReceivePatch
         {
@@ -228,13 +219,13 @@ namespace DT_Tools.Patches.Fun.EmoteActions
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<EmoteActionsFeature>("[未实装动作] 同步接收异常：" + ex.Message);
+                    Log.Warn<EmoteActionsFeature>(ex, "[未实装动作] 同步接收异常");
                     return true;
                 }
             }
         }
 
-        /// <summary>友好文本 → 动画名。</summary>
+        /// 友好文本 → 动画名。
         private static string MapFriendlyToAnim(string friendlyName)
         {
             switch (friendlyName)
@@ -246,7 +237,7 @@ namespace DT_Tools.Patches.Fun.EmoteActions
             }
         }
 
-        /// <summary>对远端玩家播放动作（不显示在聊天区）。</summary>
+        /// 对远端玩家播放动作（不显示在聊天区）。
         private static void PlayRemote(int playerId, string animName)
         {
             Player p = null;
@@ -278,10 +269,10 @@ namespace DT_Tools.Patches.Fun.EmoteActions
 
             p.PlayDeadlyTrickAnim(animName, false);
             RemoteEndTimes[playerId] = Time.unscaledTime + anim.Duration + 0.15f;
-            Log.Info<EmoteActionsFeature>("[未实装动作] 同步播放 " + playerId + " 的 " + animName);
+            Log.Info<EmoteActionsFeature>("[未实装动作] 同步播放 " + playerId + $" 的 {animName}");
         }
 
-        /// <summary>远端动作收尾：到时 / 玩家移动 / 切状态 / 对象失效即还原并清理。</summary>
+        /// 远端动作收尾：到时 / 玩家移动 / 切状态 / 对象失效即还原并清理。
         private static void TickRemoteEnd()
         {
             if (RemoteEndTimes.Count == 0)
@@ -326,7 +317,7 @@ namespace DT_Tools.Patches.Fun.EmoteActions
             }
         }
 
-        /// <summary>聊天输入框等 UI 输入聚焦时不触发（防误触）。</summary>
+        /// 聊天输入框等 UI 输入聚焦时不触发（防误触）。
         private static bool BlockedByInputField()
         {
             EventSystem current = EventSystem.current;

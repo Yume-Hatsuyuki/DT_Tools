@@ -7,12 +7,10 @@ using Server.Game;
 
 namespace DT_Tools.Patches.System.DuplicateCharacter
 {
-    /// <summary>
     /// 取消确认只回操作者本人（CancelPickCharacter，0.1.16b GameRoom.cs:1777）。
     /// 原版取消会全员广播 S_CANCEL_PICK_CHARACTER，对端收到后对被取消角色执行
     /// RefreshUI——两人同选 X 时，一人取消会把另一人自己格子的置灰错误地恢复。
     /// 改为只回本人后，锁定前其他客户端对选角动作完全无感知。
-    /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.CancelPickCharacter))]
     internal static class DuplicateCharacterCancelPickPatch
     {
@@ -86,25 +84,23 @@ namespace DT_Tools.Patches.System.DuplicateCharacter
         }
     }
 
-    /// <summary>
     /// 开局占位 + 全员锁定后统一揭晓（PickCharacterTick，0.1.16b GameRoom.cs:1619）。
     /// 要点：
     /// - Prefix 捕获【进入时】的 StopWatch：原方法在【末尾】才 TimeManager.Tick() 自增，
-    ///   Postfix 读到的必是自增后值（进入 0 读到 1、进入 40 读到 41）。
+    /// Postfix 读到的必是自增后值（进入 0 读到 1、进入 40 读到 41）。
     /// - 进入值 == 0：StartPick（:1592）ResetStopWatch 后直接调用，每轮恰一次；此刻选角
-    ///   弹窗已随状态切换同步建好，占位包紧随 S_FADE_IN 按序到达，不会被丢弃。
+    /// 弹窗已随状态切换同步建好，占位包紧随 S_FADE_IN 按序到达，不会被丢弃。
     /// - 「中途进房/重连错过占位」经 0.1.16b 实证不可能发生，无需补发快照：
-    ///   ① 新进房被 HandleEnterPlayer 状态闸门拒绝（:1037，闸门 :1083）；② 选角阶段断线由
-    ///   HandlePeerDisconnect（:1341/:1367）整除玩家并强制回落 Lobby（:1360-1362/:1396-1398），
-    ///   选角轮整体终止（:1621 非 PickCharacter 直接 return）；③ 重连 HandlePeerRejoin
-    ///   （:1457-1475）只复活 dummy 化玩家（RevertDummy :1472，仅发生在非选角阶段），实际走
-    ///   进房路径且此时已是 Lobby，下一轮占位自然覆盖；④ 迁移期 SetMigrationPhase（:507-511）
-    ///   同被 :1083 拒绝，客户端经迁移握手镜像保持状态。
+    /// ① 新进房被 HandleEnterPlayer 状态闸门拒绝（:1037，闸门 :1083）；② 选角阶段断线由
+    /// HandlePeerDisconnect（:1341/:1367）整除玩家并强制回落 Lobby（:1360-1362/:1396-1398），
+    /// 选角轮整体终止（:1621 非 PickCharacter 直接 return）；③ 重连 HandlePeerRejoin
+    /// （:1457-1475）只复活 dummy 化玩家（RevertDummy :1472，仅发生在非选角阶段），实际走
+    /// 进房路径且此时已是 Lobby，下一轮占位自然覆盖；④ 迁移期 SetMigrationPhase（:507-511）
+    /// 同被 :1083 拒绝，客户端经迁移握手镜像保持状态。
     /// - 进入值 &gt;= 40：CheckPickAllDone 提前 SetStopWatch(40) 或自然数到 40 强制补选，
-    ///   两种路径的下一次调用进入值都是 40，且原版补选体已在本 Postfix 前执行完，
-    ///   _pickPlayers 即全部最终分位；41~44 共 5 秒准备期（45 切 Survive），
-    ///   用 _revealed 保证只揭晓一次。
-    /// </summary>
+    /// 两种路径的下一次调用进入值都是 40，且原版补选体已在本 Postfix 前执行完，
+    /// _pickPlayers 即全部最终分位；41~44 共 5 秒准备期（45 切 Survive），
+    /// 用 _revealed 保证只揭晓一次。
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.PickCharacterTick))]
     internal static class DuplicateCharacterRevealPatch
     {

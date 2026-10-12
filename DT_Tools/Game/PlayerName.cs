@@ -6,22 +6,18 @@ using UnityEngine;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
     /// 玩家昵称行为助手（/nick、/myname 共用）：清洗、服务端改名、本机显示同步。
     /// 服务端无改名广播包（S_MODIFY_PLAYER 事件不含名字）——Server.Game.Player.Name
     /// 为 private set 自动属性（0.1.16b Server.Game/Player.cs:68，仅构造时赋值），
     /// 经属性 setter 反射写入；新名字对后续加入者（进房握手逐个下发 S_ADD_PLAYER，
     /// 0.1.16b GameRoom.cs:1183-1190）生效，已在线客户端不做变更。
-    /// </summary>
     public static class PlayerName
     {
-        /// <summary>服务端记录/命令链路统一上限（对齐 CustomRoomName 的 64 截断）。</summary>
+        /// 服务端记录/命令链路统一上限（对齐 CustomRoomName 的 64 截断）。
         public const int MaxLength = 64;
 
-        /// <summary>
         /// 昵称清洗的唯一实现：trim → 去富文本 → trim → 截断
         /// （0.1.16b Util.cs:172 NeutralizeRichText，与服务端进房清洗同一道）。
-        /// </summary>
         public static bool TrySanitize(string raw, out string name, out string error)
         {
             name = null;
@@ -42,17 +38,15 @@ namespace DT_Tools.Game
             return true;
         }
 
-        /// <summary>服务端改名（反射写 private set；调用方负责已在线客户端不做变更的文案）。</summary>
+        /// 服务端改名（反射写 private set；调用方负责已在线客户端不做变更的文案）。
         public static void ApplyServerName(Server.Game.Player target, string newName)
         {
             AccessTools.Property(typeof(Server.Game.Player), nameof(Server.Game.Player.Name))
                 ?.SetValue(target, newName);
         }
 
-        /// <summary>
         /// 房主本机客户端缓存同步（尽力而为）：客户端 Player.Name 为 protected set
         /// （0.1.16b Player.cs:276），经 Traverse 写入后调 RefreshNameTag（public，:462）。
-        /// </summary>
         public static bool TryRefreshLocalCache(int playerId, string newName)
         {
             try
@@ -73,11 +67,9 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>
         /// 本地昵称（主页输入值）：写 PlayerManager.MyPlayerName（public set，:46）+
         /// PlayerPrefs（键 = "LobbyNickname_"+LocalAccountKey，0.1.16b UI_LobbyScene.cs:530，
         /// NetworkManager.cs:144）+ 大厅输入框同步（尽力而为，赋值触发原版校验链）。
-        /// </summary>
         public static void SetLocalName(string name)
         {
             Managers.Player.MyPlayerName = name;

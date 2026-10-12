@@ -5,20 +5,20 @@ using Protocol;
 
 namespace DT_Tools.Patches.Fun.HasungBoost
 {
-    /// <summary>Hasung 冲刺能量累积与移速加成（服务端进程内共享状态）。</summary>
+    /// Hasung 冲刺能量累积与移速加成（服务端进程内共享状态）。
     internal static class HasungBoostLogic
     {
-        /// <summary>各 Hasung 玩家（PlayerId）的当前冲刺能量。</summary>
+        /// 各 Hasung 玩家（PlayerId）的当前冲刺能量。
         private static readonly Dictionary<int, int> _energy = new Dictionary<int, int>();
 
-        /// <summary>已启动循环 tick 的玩家集合（防重复注册）。</summary>
+        /// 已启动循环 tick 的玩家集合（防重复注册）。
         private static readonly HashSet<int> _ticked = new HashSet<int>();
 
-        /// <summary>获取玩家当前能量（无记录视为 0）。</summary>
+        /// 获取玩家当前能量（无记录视为 0）。
         public static int GetEnergy(int playerId)
             => _energy.TryGetValue(playerId, out int e) ? e : 0;
 
-        /// <summary>每秒 tick：奔跑（消耗体力）累积能量，停跑衰减；结束后自动注册下一次。</summary>
+        /// 每秒 tick：奔跑（消耗体力）累积能量，停跑衰减；结束后自动注册下一次。
         public static void Tick(Server.Game.Player owner)
         {
             // 循环：注册下一次 tick（玩家死亡/离开后自然停止）
@@ -53,11 +53,11 @@ namespace DT_Tools.Patches.Fun.HasungBoost
             }
             catch (global::System.Exception ex)
             {
-                Log.Warn<HasungBoostFeature>("Hasung 冲刺能量 tick 失败（可忽略）：" + ex.Message);
+                Log.Warn<HasungBoostFeature>(ex, "Hasung 冲刺能量 tick 失败（可忽略）");
             }
         }
 
-        /// <summary>确保该玩家已启动循环 tick（首次遇到时）。</summary>
+        /// 确保该玩家已启动循环 tick（首次遇到时）。
         public static void EnsureTick(Server.Game.Player owner)
         {
             if (owner == null || owner.Data == null) return;
@@ -67,10 +67,8 @@ namespace DT_Tools.Patches.Fun.HasungBoost
         }
     }
 
-    /// <summary>
     /// 移速计算点（0.1.16b BuffComponent.RefreshSpeed，public）：Hasung 且持有点数时，
     /// 在计算结果上追加冲刺加成并广播最新移速。同时惰性启动每秒 tick。
-    /// </summary>
     [HarmonyPatch(typeof(Server.Game.BuffComponent), "RefreshSpeed")]
     internal static class HasungBoostSpeedPatch
     {
@@ -100,7 +98,7 @@ namespace DT_Tools.Patches.Fun.HasungBoost
             }
             catch (global::System.Exception ex)
             {
-                Log.Warn<HasungBoostFeature>("Hasung 移速加成失败（可忽略）：" + ex.Message);
+                Log.Warn<HasungBoostFeature>(ex, "Hasung 移速加成失败（可忽略）");
             }
         }
     }

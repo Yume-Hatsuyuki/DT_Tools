@@ -4,7 +4,6 @@ using DT_Tools.Game;
 using Protocol;
 namespace DT_Tools.Commands.AcquireWeapon
 {
-    /// <summary>
     /// /acquire_weapon 业务：刀架列表 / 无视距离拔刀。
     /// 刀架查询走 Game/Devices（OpenArmories / AllOf），房名走 Game/RoomLabel.FromDevice。
     /// 机制依据：原版客户端 Armory.InteractArmory / UseSabotageArmory 要求本地物理接触
@@ -15,7 +14,6 @@ namespace DT_Tools.Commands.AcquireWeapon
     /// Black 两分支都不接受，直接拒绝。服务端 SendWeapon 硬断言目标架 == CurrentArmory
     /// （Armory.cs:132-134；CurrentArmory 定义 DeviceManager.cs:42）——非当前开放架
     /// 会被静默拒（房主「武器架多刀」补丁接管三件套后全部开放架可拔）。
-    /// </summary>
     internal static class AcquireWeaponLogic
     {
         // ═══════════════════════════════════════════════════
@@ -23,10 +21,8 @@ namespace DT_Tools.Commands.AcquireWeapon
         // ═══════════════════════════════════════════════════
         internal const int WeaponDataId = Define.ITEM_ID_KNIFE;   // 2001（0.1.16b Define.cs:712）
 
-        /// <summary>
         /// 武器架空场后自动换点的剩余秒数（StateList[2]=总时长, [3]=已计时）。
         /// 仅 OpenArmory 有意义；无法取用时返回 null。
-        /// </summary>
         public static int? TryGetMoveRemainSeconds(DeviceBase armory)
         {
             var states = armory?.Info?.StateList;
@@ -35,7 +31,7 @@ namespace DT_Tools.Commands.AcquireWeapon
             return remain < 0 ? 0 : remain;
         }
 
-        /// <summary>无参数：列出全部武器架信息（只读，不发包），开放架带真伪可拔判定。</summary>
+        /// 无参数：列出全部武器架信息（只读，不发包），开放架带真伪可拔判定。
         public static CommandResult ListArmories(CommandContext ctx)
         {
             var armories = Devices.AllOf(EDeviceType.Armory);
@@ -50,12 +46,10 @@ namespace DT_Tools.Commands.AcquireWeapon
             return CommandResult.Success(AcquireWeaponFormat.ListResult(armories, open));
         }
 
-        /// <summary>
         /// 真伪可拔判定（房主权威）：SendWeapon 硬断言目标架 == CurrentArmory
         /// （0.1.16b Server.Game/Armory.cs:134）——当前架必真；其它开放架取决于房主
         /// 「武器架多刀」：启用=拾取自动接管 CurrentArmory，可拔；未启用=静默拒绝。
         /// 非房主执行时无服务端数据，返回未知。
-        /// </summary>
         public static string JudgeArmory(DeviceBase armory)
         {
             if (!HostGuard.IsHost)
@@ -68,7 +62,7 @@ namespace DT_Tools.Commands.AcquireWeapon
             return "取决于房主「武器架多刀」：启用=拾取自动接管可拔；未启用=会被静默拒绝";
         }
 
-        /// <summary>机器可读判定（JSON 用）：real / conditional / unknown。</summary>
+        /// 机器可读判定（JSON 用）：real / conditional / unknown。
         public static string PickableKind(DeviceBase armory)
         {
             if (!HostGuard.IsHost)
@@ -81,12 +75,12 @@ namespace DT_Tools.Commands.AcquireWeapon
             return "conditional";
         }
 
-        /// <summary>该架是否为服务端当前凶器架（仅房主可判，用于 ◄ 标记）。</summary>
+        /// 该架是否为服务端当前凶器架（仅房主可判，用于 ◄ 标记）。
         public static bool IsServerCurrentArmory(DeviceBase armory)
             => HostGuard.IsHost
                && Server.Game.DeviceManager.Instance?.CurrentArmory?.ID == armory.ID;
 
-        /// <summary>带参数：从指定武器架拔刀（无视距离）。</summary>
+        /// 带参数：从指定武器架拔刀（无视距离）。
         public static CommandResult Acquire(CommandContext ctx, string rawId)
         {
             if (!LocalPlayer.TryGetPlayer(out var my, out string localError))
@@ -100,7 +94,6 @@ namespace DT_Tools.Commands.AcquireWeapon
                 return CommandResult.Fail("invalid state");
             }
 
-            // ── 按本机颜色决定交互类型（与服务端 Armory.Interact 分支对应）──
             EArmoryInteractType interactType;
             switch (my.Color)
             {
@@ -127,7 +120,6 @@ namespace DT_Tools.Commands.AcquireWeapon
                     return CommandResult.Fail("already black");
             }
 
-            // ── 解析参数 ──
             if (!TargetSpec.TryParseId(rawId, out int armoryId))
             {
                 ctx.Reply($"无效的 ID: {rawId}（应为 #<数字> 或纯数字）");

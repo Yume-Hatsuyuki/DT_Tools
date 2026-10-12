@@ -52,11 +52,17 @@ Deadly Trick/BepInEx/plugins/DT_Tools/
     └── js/
 ```
 
-首次启动后生成配置：
+首次启动后生成用户数据：
 
 ```text
-Deadly Trick/BepInEx/config/DT_Tools.cfg
+Deadly Trick/BepInEx/config/DT_Tools/
+├── DT_Tools.cfg          # 插件配置
+├── mp3/playlist.json     # 随身 MP3 歌单
+└── photos/               # 默认照片目录（可在功能配置里改）
 ```
+
+> [!NOTE]
+> 2.0.0.0 起不兼容旧版配置。旧的 `BepInEx/config/DT_Tools.cfg` 与 `DT_Tools_Mp3Playlist.json` 不再读取，可以删除。
 
 按需开启功能即可。
 
@@ -117,7 +123,7 @@ https://github.com/Yume-Hatsuyuki/DT_Tools/blob/main/README.md
 
 ## 更新
 
-删除 `/plugins/DT_Tools` 文件夹，并进行全量替换即可。
+删除 `/plugins/DT_Tools` 文件夹，并进行全量替换即可。用户数据在 `config/DT_Tools/` 下，替换插件目录不会影响它。
 
 ---
 

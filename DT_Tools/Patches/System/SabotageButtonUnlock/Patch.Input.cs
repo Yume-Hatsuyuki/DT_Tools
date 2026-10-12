@@ -5,7 +5,6 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.System.SabotageButtonUnlock
 {
-    /// <summary>
     /// 输入分发层放行（"有按钮但按了没反应"的修复）：原版把 Special 键/杀按钮送进
     /// UseSabotageBase 的入口有三处，且都硬编码只认 Dark（或限 ChatDevice/Corpse/
     /// 销毁证据的 Black 分支）——0.1.16b MyPlayer.cs:1660-1699（InputInteract）、
@@ -14,7 +13,6 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
     /// 由任何放行颜色触发 UseSabotageBase（门发包 / 电闸开弹窗 / 销毁证据读条）；
     /// 其余情况原样放行，黑方的武器/暗招/销毁证据优先级在非放行设备上不受影响。
     /// 放行设备上破坏优先于武器/暗招——与屏幕上已亮出的"锁门/破坏 [Q]"提示一致。
-    /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "InputInteract")]
     internal static class SabotageInputPatch
     {
@@ -30,7 +28,7 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
         }
     }
 
-    /// <summary>搬运状态下的 Special 键（私有，字符串定位：MyPlayer.cs:1256）。</summary>
+    /// 搬运状态下的 Special 键（私有，字符串定位：MyPlayer.cs:1256）。
     [HarmonyPatch(typeof(MyPlayer), "UpdateCarry")]
     internal static class SabotageCarryInputPatch
     {
@@ -46,7 +44,7 @@ namespace DT_Tools.Patches.System.SabotageButtonUnlock
         }
     }
 
-    /// <summary>杀按钮点击（私有，字符串定位：UI_GameScene.cs:2044）。</summary>
+    /// 杀按钮点击（私有，字符串定位：UI_GameScene.cs:2044）。
     [HarmonyPatch(typeof(UI_GameScene), "OnClickKillButton")]
     internal static class SabotageKillButtonPatch
     {

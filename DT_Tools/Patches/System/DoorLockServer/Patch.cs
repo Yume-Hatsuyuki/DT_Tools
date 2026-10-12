@@ -11,7 +11,6 @@ using Server.Game;
 
 namespace DT_Tools.Patches.System.DoorLockServer
 {
-    /// <summary>
     /// Door.HandleEvent 补丁点（public override，0.1.16b Server.Game/Door.cs:63-82）：
     /// 前缀按 LockDoorMode 放行并逐句复刻原版锁门序列（锁门不留痕，与原版一致）；
     /// Transpiler 把原方法三处冷却常量 40（:69/:70/:76）替换为 Interval——放行身份走
@@ -19,7 +18,6 @@ namespace DT_Tools.Patches.System.DoorLockServer
     /// 注意：Dark 被放行条件无条件纳入（:28），因此 Dark 恒走本补丁的复刻序列而非原方法
     /// （复刻序列与原版逐句一致，无行为差异）；模式未放行的颜色才交回原版（被原版
     /// 条件静默拒绝，与未启用一致）。
-    /// </summary>
     [HarmonyPatch(typeof(Server.Game.Door), nameof(Server.Game.Door.HandleEvent))]
     internal static class DoorLockServerHandleEventPatch
     {

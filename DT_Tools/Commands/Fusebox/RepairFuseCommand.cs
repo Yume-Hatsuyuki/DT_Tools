@@ -5,7 +5,6 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Fusebox
 {
-    /// <summary>
     /// /repair_fuse [#id|all] — 客户端秒修损坏电闸：无视 10 秒读条，直接发 C_INTERACT_FUSEBOX
     /// 给服务端触发 ConnetCable 恢复供电（跟随控制台，非房主可用，仅生存阶段）。
     ///
@@ -19,10 +18,9 @@ namespace DT_Tools.Commands.Fusebox
     /// all 模式下用协程 WaitForSeconds(0.6f) 逐包间隔发送，避免被 InteractLock 吞掉。
     ///
     /// 示例:
-    ///   /repair_fuse              查看损坏电闸列表
-    ///   /repair_fuse all          秒修全部损坏电闸
-    ///   /修电 #12                 秒修指定电闸 #12
-    /// </summary>
+    /// /repair_fuse              查看损坏电闸列表
+    /// /repair_fuse all          秒修全部损坏电闸
+    /// /修电 #12                 秒修指定电闸 #12
     internal sealed class RepairFuseCommand : ICommand
     {
         public string Name => "repair_fuse";
@@ -69,7 +67,7 @@ namespace DT_Tools.Commands.Fusebox
             return RepairOne(fuseboxId, broken, ctx);
         }
 
-        /// <summary>单个电闸修复：校验目标确实损坏后发包，避免对完好电闸误发触发 DisconnetCable。</summary>
+        /// 单个电闸修复：校验目标确实损坏后发包，避免对完好电闸误发触发 DisconnetCable。
         private static CommandResult RepairOne(int fuseboxId, List<DeviceBase> broken, CommandContext ctx)
         {
             DeviceBase target = broken.Find(f => f.ID == fuseboxId);
@@ -101,7 +99,7 @@ namespace DT_Tools.Commands.Fusebox
             return CommandResult.Success(new { fuseboxId });
         }
 
-        /// <summary>all 模式：用协程逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。</summary>
+        /// all 模式：用协程逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。
         private static CommandResult RepairAll(List<DeviceBase> broken, CommandContext ctx)
         {
             if (broken.Count == 0)

@@ -6,13 +6,13 @@ using Protocol;
 
 namespace DT_Tools.Patches.Fun.SoiDoubleSteal
 {
-    /// <summary>SOI 偷技能计数与恢复（服务端进程内共享状态）。</summary>
+    /// SOI 偷技能计数与恢复（服务端进程内共享状态）。
     internal static class SoiDoubleStealLogic
     {
-        /// <summary>各 SOI 玩家（PlayerId）本局已偷次数。</summary>
+        /// 各 SOI 玩家（PlayerId）本局已偷次数。
         private static readonly Dictionary<int, int> _stealCount = new Dictionary<int, int>();
 
-        /// <summary>UseRuleBreaker 前缀：记录本次偷技能次数。</summary>
+        /// UseRuleBreaker 前缀：记录本次偷技能次数。
         public static void OnSteal(Server.Game.Player owner)
         {
             if (owner == null) return;
@@ -21,7 +21,7 @@ namespace DT_Tools.Patches.Fun.SoiDoubleSteal
             _stealCount[id] = count + 1;
         }
 
-        /// <summary>判断该玩家是否正在使用偷来的技能（SOI 且已偷过、当前技能不是 RuleBreaker）。</summary>
+        /// 判断该玩家是否正在使用偷来的技能（SOI 且已偷过、当前技能不是 RuleBreaker）。
         public static bool IsUsingStolenSkill(Server.Game.Player owner)
         {
             if (owner?.SkillComponent?.Data == null) return false;
@@ -30,7 +30,7 @@ namespace DT_Tools.Patches.Fun.SoiDoubleSteal
                 && owner.SkillComponent.Data.Type != ESkillType.RuleBreaker;
         }
 
-        /// <summary>偷来的技能使用后恢复 RuleBreaker（未偷满才恢复；偷满后不再恢复，整局即止）。</summary>
+        /// 偷来的技能使用后恢复 RuleBreaker（未偷满才恢复；偷满后不再恢复，整局即止）。
         public static void RestoreRuleBreaker(Server.Game.Player owner)
         {
             if (owner == null || owner.SkillComponent == null) return;
@@ -53,7 +53,7 @@ namespace DT_Tools.Patches.Fun.SoiDoubleSteal
         }
     }
 
-    /// <summary>偷技能计数（0.1.16b SkillComponent.UseRuleBreaker(int)，private）。</summary>
+    /// 偷技能计数（0.1.16b SkillComponent.UseRuleBreaker(int)，private）。
     [HarmonyPatch(typeof(Server.Game.SkillComponent), "UseRuleBreaker")]
     internal static class SoiDoubleStealCountPatch
     {
@@ -67,15 +67,13 @@ namespace DT_Tools.Patches.Fun.SoiDoubleSteal
             }
             catch (global::System.Exception ex)
             {
-                Log.Warn<SoiDoubleStealFeature>("SOI 偷技能计数失败（可忽略）：" + ex.Message);
+                Log.Warn<SoiDoubleStealFeature>(ex, "SOI 偷技能计数失败（可忽略）");
             }
         }
     }
 
-    /// <summary>
     /// 技能使用入口（0.1.16b SkillComponent.UseSkill(C_USE_SKILL)，public）：正在使用
     /// 偷来的技能（Data.Type != RuleBreaker）时，用完后恢复 RuleBreaker，使其可偷下一个。
-    /// </summary>
     [HarmonyPatch(typeof(Server.Game.SkillComponent), "UseSkill")]
     internal static class SoiDoubleStealUsePatch
     {
@@ -93,7 +91,7 @@ namespace DT_Tools.Patches.Fun.SoiDoubleSteal
             }
             catch (global::System.Exception ex)
             {
-                Log.Warn<SoiDoubleStealFeature>("SOI 技能恢复失败（可忽略）：" + ex.Message);
+                Log.Warn<SoiDoubleStealFeature>(ex, "SOI 技能恢复失败（可忽略）");
             }
         }
     }

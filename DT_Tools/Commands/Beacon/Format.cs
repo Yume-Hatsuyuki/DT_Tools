@@ -7,7 +7,7 @@ using Protocol;
 
 namespace DT_Tools.Commands.Beacon
 {
-    /// <summary>/beacon 输出格式化：人类回复文本 + JSON 结果 DTO（匿名对象，键名沿用旧 JSON）。</summary>
+    /// /beacon 输出格式化：人类回复文本 + JSON 结果 DTO（匿名对象，键名沿用旧 JSON）。
     internal static class BeaconFormat
     {
         public static string HelpAndSpawns(MapData mapData, MyPlayer my)
@@ -81,7 +81,7 @@ namespace DT_Tools.Commands.Beacon
             return sb.ToString();
         }
 
-        /// <summary>无参列表的 JSON（键名沿用旧实现）：spawns=数量，list=出生点，players=在线玩家。</summary>
+        /// 无参列表的 JSON（键名沿用旧实现）：spawns=数量，list=出生点，players=在线玩家。
         public static object ListResult(MapData mapData, MyPlayer my)
         {
             var spawns = new List<object>();
@@ -109,7 +109,7 @@ namespace DT_Tools.Commands.Beacon
             return new { spawns = spawns.Count, list = spawns, players };
         }
 
-        /// <summary>瞬移成功的 JSON（键名沿用旧实现；targetId 仅 player 目标时回带）。</summary>
+        /// 瞬移成功的 JSON（键名沿用旧实现；targetId 仅 player 目标时回带）。
         public static object TeleportResult(Protocol.PosInfo pos, string roomRaw, int targetPlayerId)
         {
             if (targetPlayerId > 0)

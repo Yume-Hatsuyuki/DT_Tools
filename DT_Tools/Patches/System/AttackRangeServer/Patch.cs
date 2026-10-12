@@ -4,7 +4,6 @@ using Protocol;
 
 namespace DT_Tools.Patches.System.AttackRangeServer
 {
-    /// <summary>
     /// Util.UnifiedAttackRect 取值后置（静态属性 getter，0.1.16b Util.cs:57）：
     /// 把攻击盒前向延伸 ExtraForwardReach。前向 = 盒 Pos.X 的负方向
     /// （未翻转时朝左，CalcRectInfo 对翻转侧取 -Pos.X，两个朝向天然对称：
@@ -13,7 +12,6 @@ namespace DT_Tools.Patches.System.AttackRangeServer
     /// 客户端挥击盒、以及白方假武器试人判定 GetFakeWeaponPlayer（MyPlayer.cs:2222）——
     /// ExtraForwardReach>0 时三者同步放大，其中假武器判定无法分离（同一静态属性），
     /// 即房主机上白方持假武器可命中/可试出的范围同步变宽，属已知取舍。
-    /// </summary>
     [HarmonyPatch(typeof(Util), nameof(Util.UnifiedAttackRect), MethodType.Getter)]
     internal static class AttackRangeServerRectPatch
     {

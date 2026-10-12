@@ -2,9 +2,7 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Patches.Fun.GhostInteract
 {
-    /// <summary>
     /// 幽灵交互：死后保留原阵营 Color，并可按开关获得「黑+黑幕」向能力。
-    /// </summary>
     [PatchFeature(
         "幽灵交互：死后可做任务、对话、电闸、门杆、柜子、拖/报告尸体；\n可选销毁证据与杀人；可选恢复操作 HUD。\n对话/拖尸/销毁证据/杀人需房主也开。",
         defaultEnabled: false,

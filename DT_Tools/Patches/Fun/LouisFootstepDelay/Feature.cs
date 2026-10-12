@@ -2,7 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Patches.Fun.LouisFootstepDelay
 {
-    /// <summary>
     /// 路易斯警报脚印延长：路易斯技能（Telekinesis 警报标记，DeadDetective buff）标记的
     /// 玩家被杀死后，全图警报（警报音 + 尸体箭头，0.1.16b Player.OnDead 内）的同时，
     /// 凶手会获得脚印追踪（每 300ms 记录凶手脚印，全图重放 Footstep）。
@@ -13,7 +12,6 @@ namespace DT_Tools.Patches.Fun.LouisFootstepDelay
     /// AddBuff(Footprint, FootprintMs)，原逻辑随后 AddBuff(Footprint, 3000) 因已有该 buff
     /// 自动跳过（BuffComponent.AddBuff 有 Contains 判重），总时长即 FootprintMs。
     /// 未标记的普通杀人保持原版 3 秒，不受影响。
-    /// </summary>
     [PatchFeature(
         "路易斯警报脚印延长：被路易斯警报标记的玩家死后，凶手脚印追踪从 3 秒延长为 5 秒（仅路易斯标记场景生效，普通杀人保持原版）。",
         defaultEnabled: false,

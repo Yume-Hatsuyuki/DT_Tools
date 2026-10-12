@@ -4,10 +4,10 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Kick
 {
-    /// <summary>/kick 业务：大厅门禁、目标校验（房主门禁由框架按 RequireHost 统一执行）。</summary>
+    /// /kick 业务：大厅门禁、目标校验（房主门禁由框架按 RequireHost 统一执行）。
     internal static class KickLogic
     {
-        /// <summary>房间门禁：踢人仅在大厅可用（服务端 KickPlayer 只处理 Lobby）。</summary>
+        /// 房间门禁：踢人仅在大厅可用（服务端 KickPlayer 只处理 Lobby）。
         public static bool TryGuard(GameRoom room, out string code, out string text)
         {
             if (room.State != EGameState.Lobby)
@@ -21,7 +21,7 @@ namespace DT_Tools.Commands.Kick
             return true;
         }
 
-        /// <summary>目标校验：房主对象存在、不能踢自己、目标在房间内。</summary>
+        /// 目标校验：房主对象存在、不能踢自己、目标在房间内。
         public static bool TryResolveTarget(GameRoom room, int targetId, out Server.Game.Player target, out string code, out string text)
         {
             var host = room.Host;   // 0.1.16b Server.Game/GameRoom.cs:145

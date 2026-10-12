@@ -9,7 +9,6 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Patches.Experience.CharacterMapPin
 {
-    /// <summary>
     /// 界面附加：pin/箭头的角色 Map 头像解析与替换、常驻箭头对象的构建与销毁、
     /// Enabled 热关闭时把已替换 pin 还原为原版贴图。
     ///
@@ -17,16 +16,15 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
     /// UI_MinimapSubItem.cs:69-73），导致 Kaho 的 RefreshComplyRulesPin 跳过
     /// SetComplyRulesArrow，监视箭头直接消失。只换贴图，不碰 AlreadyComplyRules。
     /// 官方 Black/White 主要差边框色（粉/绿）；Kaho 路径固定用 Black。
-    /// </summary>
     internal static class CharacterMapPinUi
     {
         // ── UI 元素魔法索引（UI_Base 的 protected GetObject/GetImage，0.1.16b UI_Base.cs:93/:113，
         //    本类不在继承链上，经下方缓存的开放实例委托调用）──
-        /// <summary>UI_MinimapSubItem 的 GameObjects 枚举 ComplyRules=0（0.1.16b UI_MinimapSubItem.cs:7-10）。</summary>
+        /// UI_MinimapSubItem 的 GameObjects 枚举 ComplyRules=0（0.1.16b UI_MinimapSubItem.cs:7-10）。
         private const int PinComplyRulesObject = 0;
-        /// <summary>UI_MinimapSubItem 的 Images 枚举 Target=0（0.1.16b UI_MinimapSubItem.cs:12-15）。</summary>
+        /// UI_MinimapSubItem 的 Images 枚举 Target=0（0.1.16b UI_MinimapSubItem.cs:12-15）。
         private const int PinMarkImage = 0;
-        /// <summary>UI_Arrow 的 Images 枚举 Arrow=0 / Mark=1（0.1.16b UI_Arrow.cs:6-9）。</summary>
+        /// UI_Arrow 的 Images 枚举 Arrow=0 / Mark=1（0.1.16b UI_Arrow.cs:6-9）。
         private const int ArrowMarkImage = 1;
 
         private const string WhiteKey = "_Map_White.sprite";
@@ -34,31 +32,26 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
 
         private static bool _diagnosticsLogged;
 
-        // ── 反射缓存（pin 贴图替换/还原逐帧调用；缓存策略见 Core/Reflect.cs 头注释）──
-        /// <summary>UI_Base.GetObject(int) protected：0.1.16b UI_Base.cs:93。</summary>
+        /// UI_Base.GetObject(int) protected：0.1.16b UI_Base.cs:93。
         private static readonly Func<UI_Base, int, GameObject> PinGetObject =
             Reflect.Bind<Func<UI_Base, int, GameObject>>(typeof(UI_Base), "GetObject", new[] { typeof(int) });
 
-        /// <summary>UI_Base.GetImage(int) protected：0.1.16b UI_Base.cs:113。</summary>
+        /// UI_Base.GetImage(int) protected：0.1.16b UI_Base.cs:113。
         private static readonly Func<UI_Base, int, Image> PinGetImage =
             Reflect.Bind<Func<UI_Base, int, Image>>(typeof(UI_Base), "GetImage", new[] { typeof(int) });
 
-        /// <summary>UI_Arrow.TargetPos { get; private set; }：0.1.16b UI_Arrow.cs:20，每帧反射写入。</summary>
+        /// UI_Arrow.TargetPos { get; private set; }：0.1.16b UI_Arrow.cs:20，每帧反射写入。
         private static readonly PropertyInfo ArrowTargetPos = AccessTools.Property(typeof(UI_Arrow), "TargetPos");
-
-        // ── 贴图键与解析 ──────────────────────────────────────────────
 
         public static bool IsKnownBlack(int playerId)
             => Managers.Player.KnownBlackIds.Contains(playerId);
 
-        /// <summary>角色 + 已识破黑幕用黑版头像，其余用白版（与 Kaho 箭头同源键）。</summary>
+        /// 角色 + 已识破黑幕用黑版头像，其余用白版（与 Kaho 箭头同源键）。
         public static string BuildKey(Player player)
             => player.CharData.Type + (IsKnownBlack(player.PublicInfo.PlayerId) ? BlackKey : WhiteKey);
 
-        /// <summary>
         /// 只查预加载缓存。顺序：key → 同色 Black（若原是 White）→ Someone 对应色。
         /// 绝不发起 Addressables 加载（Managers.Resource.Load 直查缓存，0.1.16b ResourceManager.cs:69）。
-        /// </summary>
         public static Sprite GetSprite(string key)
         {
             Sprite sprite = Managers.Resource.Load<Sprite>(key);
@@ -73,8 +66,6 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
             }
             return sprite;
         }
-
-        // ── pin 贴图替换 ──────────────────────────────────────────────
 
         public static void ApplyPin(UI_MinimapSubItem pin, Player player, bool replaceBlack)
         {
@@ -109,7 +100,6 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
             }
         }
 
-        // ── 常驻角色箭头（不开平板也可见）──────────────────────────────
         // 用 WeaponArrow 类型 + 每帧更新 TargetPos（private set 经缓存的 PropertyInfo 写入）。
         // Mark 头像（GetImage(1)）替换为角色 *_Map_Black/White，与 Kaho 箭头一致。
 
@@ -200,17 +190,14 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
             CharacterMapPinState.Arrows.Clear();
         }
 
-    // ── pin 贴图还原（Enabled 热关闭）──────────────────────────────
     // 原版 RefreshPlayerPin 对已存在的 pin 只调 SetLocalPosition、不重设 sprite
     //（0.1.16b UI_GameScene.cs:852-868 / UI_GameTablet.cs:1211-1226 的 else 分支已核实），
     // 所以热关闭后本功能换上的角色头像不会自行还原，必须在 OnDisabled 主动恢复。
 
-    /// <summary>
     /// 热关闭时删除「死亡保留 Pin」保下的 pin（KeepDeadPin 拦截记录在
     /// CharacterMapPinState.KeptPinIds）：其玩家已 Despawn，原版不会再碰这些 pin，
     /// 关闭功能后按原版"死亡即删"的观感主动清掉。HUD DeletePin(int) 私有走反射
-    ///（Logic.DeleteHudPin），平板 DeletePin(int) 为公开方法（0.1.16b UI_GameTablet.cs:1264）。
-    /// </summary>
+    /// （Logic.DeleteHudPin），平板 DeletePin(int) 为公开方法（0.1.16b UI_GameTablet.cs:1264）。
     public static void ClearKeptPins()
     {
         if (CharacterMapPinState.KeptPinIds.Count == 0 || Managers.Resource == null)
@@ -228,11 +215,9 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
         CharacterMapPinState.KeptPinIds.Clear();
     }
 
-        /// <summary>
         /// 遍历 HUD（UI_GameScene._playerPinList）与平板（UI_GameTablet._subItems）两份 pin 列表，
         /// 把本功能替换过的 Type==Player pin 还原为原版贴图。
         /// 本功能只动过 Type==Player 的 pin（ApplyPin 的入口过滤），其余类型原样。
-        /// </summary>
         public static void RestoreAllPins()
         {
             if (Managers.Resource == null)
@@ -259,16 +244,14 @@ namespace DT_Tools.Patches.Experience.CharacterMapPin
                 RestorePin(pin);
         }
 
-        /// <summary>
         /// 单个 pin 还原：根底图按原版 RefreshType 的取图逻辑走 UI_MinimapSubItem.PinSpriteKey
-        ///（public static，0.1.16b UI_MinimapSubItem.cs:83；Player → "minimap_player.sprite"）。
+        /// （public static，0.1.16b UI_MinimapSubItem.cs:83；Player → "minimap_player.sprite"）。
         /// 黑幕 pin 语义特殊：已识破黑方的原版表现是 TurnBlack 的 minimap_black.sprite（:62-67），
         /// 不在 PinSpriteKey 表内——按 PinSpriteKey 的原版逻辑统一还原为通用玩家底图即可，
         /// 下一次识破事件触发时由原版 RefreshBlackPin 重新置黑；不调 sizeDelta（ApplyPin 替换时也没改尺寸）。
         /// ComplyRules 子物体：ApplyPin 曾强制 SetVisible(true)，还原时——
         /// 未识破态（AlreadyComplyRules=false，:39）按原版 SetInfo 默认隐藏（:57）；
         /// 已识破态原版本就保持可见（TurnComplyRules :71-81），贴图恢复为原版所用的 &lt;角色&gt;_Map_Black。
-        /// </summary>
         private static void RestorePin(UI_MinimapSubItem pin)
         {
             if (pin == null || pin.Type != Define.EMinimapPinType.Player)

@@ -2,7 +2,6 @@ using DT_Tools.Commands;
 
 namespace DT_Tools.Commands.WorldExecute
 {
-    /// <summary>
     /// /world.execute me — 黑方自刀（Murder 路径），致敬 Mili《world.execute(me);》。
     ///
     /// 机制：服务端 <c>Player.UseWeapon</c>（0.1.16b Server.Game/Player.cs:1118-1166）
@@ -16,7 +15,6 @@ namespace DT_Tools.Commands.WorldExecute
     /// 无参数 / 参数非 me → 打印帮助（EXECUTE 字符画 + 伪 Java 会话）；正确用法：<c>/world.execute me</c>。
     /// 别名不含 execute：已被 /kill 占用（KillCommand.Aliases），注册表冲突会抛异常。
     /// 跟随控制台 / 客户端，非房主可用。
-    /// </summary>
     internal sealed class WorldExecuteCommand : ICommand
     {
         public string Name => "world.execute";

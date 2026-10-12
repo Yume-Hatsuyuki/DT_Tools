@@ -7,7 +7,6 @@ using Protocol;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
     /// Server.Game.MissionManager 反射访问器（全项目唯一，消费方：FishingPond /
     /// LobbyMaxPlayers / GiveMission / Agent）。该类在发行程序集中是 internal
     /// （0.1.16b Server.Game/MissionManager.cs:10），无法编译期引用，但其成员签名固定，
@@ -16,19 +15,18 @@ namespace DT_Tools.Game
     /// private——外层类不可见不妨碍反射调用）。Data.MissionData 是 public 类型，直接引用。
     ///
     /// 反射目标（0.1.16b，升级时全文搜索核对）：
-    ///   Type 全名 "Server.Game.MissionManager"            → MissionManager.cs:10（internal class）
-    ///   Instance（static property getter）                → :14
-    ///   ProgressMissionList（public List&lt;MissionData&gt;）    → :26
-    ///   WaitMissionQueue（public Queue&lt;MissionData&gt;）      → :28
-    ///   BroadcastMissionState()（private void）            → :124
-    ///   StartMission()（public void 重载）                 → :355
-    ///   ClearMission(ESchoolMission, Player, bool)（public）→ :437
-    ///   RemoveFromWaitQueue(int)（private bool）           → :592
-    ///   StartMission(Data.MissionData)（private void）     → :701
+    /// Type 全名 "Server.Game.MissionManager"            → MissionManager.cs:10（internal class）
+    /// Instance（static property getter）                → :14
+    /// ProgressMissionList（public List&lt;MissionData&gt;）    → :26
+    /// WaitMissionQueue（public Queue&lt;MissionData&gt;）      → :28
+    /// BroadcastMissionState()（private void）            → :124
+    /// StartMission()（public void 重载）                 → :355
+    /// ClearMission(ESchoolMission, Player, bool)（public）→ :437
+    /// RemoveFromWaitQueue(int)（private bool）           → :592
+    /// StartMission(Data.MissionData)（private void）     → :701
     /// 定位方式：typeof(Managers).Assembly.GetType(全名)，不硬编码程序集名。
     /// Type/PropertyInfo 进程内不变，static readonly 语义缓存一次；失败短路不重试。
     /// 调用失败一律返回 false/null，由调用方按自己的上下文记日志。
-    /// </summary>
     public static class MissionAccess
     {
         private static bool _init;
@@ -76,22 +74,20 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>反射链路是否完整（类型定位与全部成员绑定成功）。</summary>
+        /// 反射链路是否完整（类型定位与全部成员绑定成功）。
         public static bool Available
         {
             get { EnsureInit(); return _ok; }
         }
 
-        /// <summary>Host 本地权威实例；不可用或未在局内时为 null。</summary>
+        /// Host 本地权威实例；不可用或未在局内时为 null。
         public static object Instance
         {
             get { EnsureInit(); return _ok ? _instance.GetValue(null) : null; }
         }
 
-        /// <summary>
         /// 进行中任务列表（List&lt;MissionData&gt;，以 IList 暴露供遍历/移除）；
         /// 不可用或无实例 → null。
-        /// </summary>
         public static IList ProgressList
         {
             get
@@ -101,7 +97,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>排队任务队列（Queue&lt;MissionData&gt;，以 IEnumerable 暴露）；不可用或无实例 → null。</summary>
+        /// 排队任务队列（Queue&lt;MissionData&gt;，以 IEnumerable 暴露）；不可用或无实例 → null。
         public static IEnumerable WaitQueue
         {
             get
@@ -111,7 +107,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>StartMission()：开局启动任务分配（0.1.16b MissionManager.cs:355）。</summary>
+        /// StartMission()：开局启动任务分配（0.1.16b MissionManager.cs:355）。
         public static bool StartParameterless()
         {
             object inst = Instance;
@@ -127,7 +123,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>StartMission(MissionData)：加入进行中列表、递归启动硬前置并激活设备（:701）。</summary>
+        /// StartMission(MissionData)：加入进行中列表、递归启动硬前置并激活设备（:701）。
         public static bool StartMission(MissionData data)
         {
             object inst = Instance;
@@ -143,7 +139,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>ClearMission(ESchoolMission, Player, bool)：任务完成收口（:437）。</summary>
+        /// ClearMission(ESchoolMission, Player, bool)：任务完成收口（:437）。
         public static bool ClearMission(ESchoolMission mission, Server.Game.Player completer, bool isInfected)
         {
             object inst = Instance;
@@ -159,7 +155,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>RemoveFromWaitQueue(int)：清理排队残留（:592）。</summary>
+        /// RemoveFromWaitQueue(int)：清理排队残留（:592）。
         public static bool RemoveFromWaitQueue(int missionType)
         {
             object inst = Instance;
@@ -174,7 +170,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>BroadcastMissionState()：把任务状态重新广播为 S_MISSION_STATE（:124）。</summary>
+        /// BroadcastMissionState()：把任务状态重新广播为 S_MISSION_STATE（:124）。
         public static bool BroadcastMissionState()
         {
             object inst = Instance;
@@ -190,7 +186,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>遍历队列/列表元素并按 MissionData.Type 收集（元素非 MissionData 时跳过）。</summary>
+        /// 遍历队列/列表元素并按 MissionData.Type 收集（元素非 MissionData 时跳过）。
         public static HashSet<int> CollectTypes(IEnumerable items)
         {
             var types = new HashSet<int>();

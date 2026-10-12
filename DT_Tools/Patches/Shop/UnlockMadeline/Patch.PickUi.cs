@@ -8,11 +8,9 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Patches.Shop.UnlockMadeline
 {
-    /// <summary>
     /// UI_PickPopup.RebuildPickList 整替（私有方法，字符串定位）：
     /// 0.1.16b UI_PickPopup.cs:132。原版 where Type != ECharacterType.Madeline 过滤掉
     /// 梅德琳；改为全角色列表（排序算法见 Logic.OrderedPickList，所有权经补丁恒真）。
-    /// </summary>
     [HarmonyPatch(typeof(UI_PickPopup), "RebuildPickList")]
     internal static class UnlockMadelinePickRebuildPatch
     {
@@ -57,14 +55,12 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
         }
     }
 
-    /// <summary>
     /// UI_PickPopup.SetMainInfo 前缀整替（私有方法，字符串定位）：
     /// 0.1.16b UI_PickPopup.cs:492。原版 default 分支对每个角色取 "&lt;Name&gt;Explain"
     /// 文本键（UI_PickPopup.cs:517），Madeline 无该文本数据，Managers.GetText 缺键必
     /// Debug.LogError（0.1.16b Managers.cs:223-229）→ 非 Madeline 放行原版；
     /// Madeline 时按原方法体（UI_PickPopup.cs:492-541）等价重写 UI 写入，
     /// 介绍行改用内置六语言文案（Logic.GetExplain），从源头消除缺键报错。
-    /// </summary>
     [HarmonyPatch(typeof(UI_PickPopup), "SetMainInfo")]
     internal static class UnlockMadelinePickMainInfoPatch
     {
@@ -76,7 +72,6 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
             if (characterId != UnlockMadelineLogic.MadelineDataId)
                 return true;    // 非 Madeline 文本键齐全，放行原版
 
-            // ── Madeline：按 0.1.16b UI_PickPopup.cs:492-541 等价整替 ──
             // _selectCharacterId 为私有字段（UI_PickPopup.cs:92，赋值在 SetStanding :423）
             if (Traverse.Create(__instance).Field<int>("_selectCharacterId").Value == characterId)
                 return false;
@@ -112,7 +107,7 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
             return false;
         }
 
-        /// <summary>按绑定器索引写文本；缺槽静默跳过（原版必写，此处更稳）。</summary>
+        /// 按绑定器索引写文本；缺槽静默跳过（原版必写，此处更稳）。
         private static void WriteText(UI_PickPopup __instance, int idx, string text)
         {
             var label = UnlockMadelineUi.GetText(__instance, idx);
@@ -121,11 +116,9 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
         }
     }
 
-    /// <summary>
     /// UI_PickPopup.SetStanding 后缀（私有方法，字符串定位）：
     /// 0.1.16b UI_PickPopup.cs:421。原版立绘 switch 不含 Madeline 类型，图区恒空；
     /// 容器为 GetObject(6)（UI_PickPopup.cs:428），注入常驻 Image 并挂立绘。
-    /// </summary>
     [HarmonyPatch(typeof(UI_PickPopup), "SetStanding")]
     internal static class UnlockMadelinePickStandingPatch
     {

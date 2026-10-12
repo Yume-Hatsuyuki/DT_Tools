@@ -4,11 +4,9 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.System.NicknameLimit
 {
-    /// <summary>
     /// OnValidateNickname 整替：保留「写 MyPlayerName + Prefs」与非法字符拦截，
     /// 只移除权重 &gt;12 一档。私有方法，字符串定位：0.1.16b UI_LobbyScene.cs:1772；
     /// 私有字段 _nicknameKey：0.1.16b UI_LobbyScene.cs:409。
-    /// </summary>
     [HarmonyPatch(typeof(UI_LobbyScene), "OnValidateNickname")]
     internal static class NicknameLimitValidatePatch
     {

@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Experience.StrokeTools
 {
-    /// <summary>
     /// 路线解读补丁：钩住 DrawingManager.EndLocalStroke（本地玩家松笔画完时调用，0.1.16b DrawingManager.cs:390），
     /// 与画线测速（Patch.Timer.cs）同钩，各自 Prefix 互不干扰。Prefix 在 _active 置空（DrawingManager.cs:397）前
     /// 读取笔画；EndLocalStroke 只由本地画布（UI_DrawSurface）调用，远端笔画不经此方法。
@@ -22,11 +21,10 @@ namespace DT_Tools.Patches.Experience.StrokeTools
     /// 0 为 DefaultRoom（空地）。房间名 = Managers.GetText(枚举名)（0.1.16b UI_ChatDevicePopup.cs:471）。
     /// 沿线按 SampleStep 步长细分采样，连续同房间合并，走廊可按配置过滤。
     /// 结果走聊天广播（Managers.Voice.SendChatMessage），全房可见。
-    /// </summary>
     [HarmonyPatch(typeof(DrawingManager), nameof(DrawingManager.EndLocalStroke))]
     internal static class StrokeRoutePatch
     {
-        /// <summary>官方世界→小地图比例兜底（0.1.16b Util.cs:887 / UI_GameTablet.cs:1189）。</summary>
+        /// 官方世界→小地图比例兜底（0.1.16b Util.cs:887 / UI_GameTablet.cs:1189）。
         private const float FallbackRatio = 0.094f;
 
         private static void Prefix(DrawingManager __instance)

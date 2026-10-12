@@ -98,7 +98,7 @@ export const API = {
   dummyReady: (name, ready) => post('/api/dummy/ready', { name, ready }),
   dummyPick: (name, characterId) => post('/api/dummy/pick', { name, characterId }),
 
-  // 随身MP3（服务端播放器：本地出声 + 可选混入麦克风；歌单在 BepInEx/config 持久化）
+  // 随身MP3（服务端播放器：本地出声 + 可选混入麦克风；歌单在 BepInEx/config/DT_Tools/mp3/ 持久化）
   mp3State: () => request('/api/mp3/state'),
   mp3Play: (path) => post('/api/mp3/play', { path }),
   mp3Index: (index) => post('/api/mp3/index', { index }),

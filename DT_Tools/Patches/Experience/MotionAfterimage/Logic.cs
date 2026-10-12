@@ -9,11 +9,9 @@ using Protocol;
 
 namespace DT_Tools.Patches.Experience.MotionAfterimage
 {
-    /// <summary>
     /// 活体残影：对齐 FlashVfx（ColorPlayerShadow + Idle 定格 + alpha 淡出）。
     /// 死亡定格：ShadowPlayerShadow 黑色最后一帧。
     /// Survive / Detective 地图内生效（可分别开关）。
-    /// </summary>
     internal static class MotionAfterimageLogic
     {
         private static readonly string[] PrefabCandidates = { "ShadowPartnerVfx", "FlashVfx" };
@@ -133,11 +131,9 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                 TickLiveFade(kv.Value, now);
         }
 
-        /// <summary>
         /// 自己死亡（S_DEAD → Game.Dead）：
         /// 1) 必清自己的活体蓝影（避免幽灵拖着生前形象残影）；
         /// 2) 按配置定格黑色最后一帧。
-        /// </summary>
         public static void OnLocalPlayerDead()
         {
             if (!Engine.Enabled<MotionAfterimageFeature>())
@@ -176,11 +172,9 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             PlaceDeathResidual(track);
         }
 
-        /// <summary>
         /// 只保留「最后一次 Despawn」的黑色定格：先删旧再新建。
         /// 无采样历史时从 PlayerCache 补全角色/坐标（幽灵视角下他人死亡也能定格）。
         /// 自己通常不走 Despawn（客户端忽略 S_DESPAWN self），见 OnLocalPlayerDead。
-        /// </summary>
         public static void OnPlayerDespawned(int playerId)
         {
             if (!Engine.Enabled<MotionAfterimageFeature>())
@@ -211,7 +205,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             PlaceDeathResidual(track);
         }
 
-        /// <summary>Despawn 后 Players 已移除，从 Cache 取最后坐标与角色。</summary>
+        /// Despawn 后 Players 已移除，从 Cache 取最后坐标与角色。
         private static void TryFillTrackFromCache(int playerId, AfterimageTrack track)
         {
             if (Managers.Player == null)
@@ -243,7 +237,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
                 track.LastCharacterIdLive = cached.PublicInfo.CharacterId;
         }
 
-        /// <summary>同一 track 只留一个黑色定格（先删再建）。</summary>
+        /// 同一 track 只留一个黑色定格（先删再建）。
         private static void PlaceDeathResidual(AfterimageTrack track)
         {
             if (track.DeathGhost != null)
@@ -482,7 +476,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             }
             catch (global::System.Exception ex)
             {
-                LogOnceFail("创建异常: " + ex.Message);
+                LogOnceFail($"创建异常: {ex.Message}");
                 if (mat != null)
                 {
                     Object.Destroy(mat);
@@ -626,7 +620,7 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
             if (MotionAfterimageState.LoggedCreateFail)
                 return;
             MotionAfterimageState.LoggedCreateFail = true;
-            Log.Warn<MotionAfterimageFeature>("残影创建失败（仅报一次）: " + reason);
+            Log.Warn<MotionAfterimageFeature>($"残影创建失败（仅报一次）: {reason}");
         }
     }
 }

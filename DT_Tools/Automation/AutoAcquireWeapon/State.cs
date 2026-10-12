@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DT_Tools.Automation.AutoAcquireWeapon
 {
-    /// <summary>跟踪状态：当前阶段、本局是否完成、进入 Survive 的时刻、下次尝试时刻与尝试计数。</summary>
+    /// 跟踪状态：当前阶段、本局是否完成、进入 Survive 的时刻、下次尝试时刻与尝试计数。
     internal static class AutoAcquireWeaponState
     {
         public static EGameState LastState = EGameState.NoneState;
@@ -12,7 +12,7 @@ namespace DT_Tools.Automation.AutoAcquireWeapon
         public static float NextTryRealtime;
         public static int Attempts;
 
-        /// <summary>新进入 Survive：开启新一轮跟踪。</summary>
+        /// 新进入 Survive：开启新一轮跟踪。
         public static void BeginRound()
         {
             DoneThisRound = false;
@@ -21,10 +21,10 @@ namespace DT_Tools.Automation.AutoAcquireWeapon
             Attempts = 0;
         }
 
-        /// <summary>离开 Survive 或本局动作已完成：不再触发。</summary>
+        /// 离开 Survive 或本局动作已完成：不再触发。
         public static void MarkLeft() => DoneThisRound = true;
 
-        /// <summary>模块禁用 / 总开关关闭时清空跟踪。</summary>
+        /// 模块禁用 / 总开关关闭时清空跟踪。
         public static void Reset()
         {
             LastState = EGameState.NoneState;

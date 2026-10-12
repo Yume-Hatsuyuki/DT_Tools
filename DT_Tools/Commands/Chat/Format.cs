@@ -6,7 +6,7 @@ using Protocol;
 
 namespace DT_Tools.Commands.Chat
 {
-    /// <summary>/chat 输出格式化：帮助列表 + 发送结果 DTO。</summary>
+    /// /chat 输出格式化：帮助列表 + 发送结果 DTO。
     internal static class ChatFormat
     {
         public static string HelpAndList(List<DeviceBase> devices)
@@ -76,7 +76,7 @@ namespace DT_Tools.Commands.Chat
             };
         }
 
-        /// <summary>DeviceState：0=空闲，非 0=占用者 PlayerId。</summary>
+        /// DeviceState：0=空闲，非 0=占用者 PlayerId。
         private static string OccupancyLabel(int state)
         {
             if (state == 0) return "空闲";

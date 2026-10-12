@@ -4,11 +4,9 @@ using Protocol;
 
 namespace DT_Tools.Patches.Experience.DestroyEvidence
 {
-    /// <summary>
     /// UseSabotage 整替：改读条时长，收尾动作与原版一致
     /// （PlaySystem("SabotageSfx") + C_DESTROY_EVIDENCE，0.1.16b DeviceBase.cs:456-469）。
     /// protected virtual，字符串定位。
-    /// </summary>
     [HarmonyPatch(typeof(DeviceBase), "UseSabotage")]
     internal static class DestroyEvidencePatch
     {

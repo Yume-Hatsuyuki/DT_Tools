@@ -4,7 +4,6 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.EmoteReader
 {
-    /// <summary>
     /// UseEmotion 后置：与 EmoteTaunt 共用同一方法但方向相反——这里只解读"别人"的表情
     /// （Managers.Player.MyPlayer == __instance 时跳过，不自我解说）。
     /// 表情 id→解读台词映射与 EmoteTaunt 的 18 个表情一一对应（0.1.16b Emotions.cs），
@@ -12,7 +11,6 @@ namespace DT_Tools.Patches.Fun.EmoteReader
     /// 广播描述的是"对方的行为"（XX 的解读），不是冒充对方发言，无冒名风险。
     /// 庭审阶段：表情走 UI_TrialEvent.UseEmotion 而非 Player.UseEmotion（0.1.16b PacketHandler.cs:442），
     /// 由下方 EmoteReaderTrialPatch 单独钩住，与平时共用台词与冷却。
-    /// </summary>
     [HarmonyPatch(typeof(Player), nameof(Player.UseEmotion))]
     internal static class EmoteReaderPatch
     {
@@ -39,7 +37,7 @@ namespace DT_Tools.Patches.Fun.EmoteReader
             Managers.Voice?.SendChatMessage($"{name} {reading}");
         }
 
-        /// <summary>emotionId → 解读台词（读配置）；未知名表情返回 null。</summary>
+        /// emotionId → 解读台词（读配置）；未知名表情返回 null。
         internal static string ReadLine(int emotionId)
         {
             switch (emotionId)
@@ -67,10 +65,8 @@ namespace DT_Tools.Patches.Fun.EmoteReader
         }
     }
 
-    /// <summary>
     /// 庭审阶段钩子：庭审中表情经 UI_TrialEvent.UseEmotion(playerId, emotionId)（0.1.16b UI_TrialEvent.cs:1687），
     /// 只解读他人（playerId != MyPlayerID），玩家名从 PlayerCache 取；台词与冷却与平时共享。
-    /// </summary>
     [HarmonyPatch(typeof(UI_TrialEvent), nameof(UI_TrialEvent.UseEmotion))]
     internal static class EmoteReaderTrialPatch
     {

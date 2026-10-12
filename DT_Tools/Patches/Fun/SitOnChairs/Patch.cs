@@ -9,20 +9,17 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.SitOnChairs
 {
-    /// <summary>
     /// 可坐椅子补丁集合（原 IslandMap v1.5.2 移植）：
     /// 1. LoadMapSet：功能开启时把原版主图（School）加载重定向为岛屿数据（注入 7 份内嵌数据）；
     /// 2. Spawn/SetInfo/GetText：保证运行时 Chair 预制体存在、坐姿人物层级/偏移正确、交互文案可用；
     /// 3. GetInteractMessage/Interact：等待室咖啡椅默认不可坐（CafeSit=false 时提示为空、按 E 无效），
-    ///    CafeSit=true 时在大厅本地坐下（不发网络包）；
+    /// CafeSit=true 时在大厅本地坐下（不发网络包）；
     /// 4. UpdateAnimation/FixedUpdateMove：坐着时暂停玩家动画与移动逻辑（本地坐姿用）；
     /// 5. SearchInteractDevice（×3）：坐着时 [ / ] 实时微调坐姿高低、可选调试日志、椅子美术置顶；
     /// 6. Managers.Update：确保非坐着状态时把抬高的椅子美术还原。
     /// 所有补丁均以 Engine.Enabled&lt;SitOnChairsFeature&gt; 为总开关，关闭即完全原版行为。
-    /// </summary>
     internal static class Patches
     {
-        // ===== 1. 地图数据注入 + 加载重定向 =====
 
         [HarmonyPatch(typeof(DataManager), "LoadMapSet")]
         internal static class LoadMapSetPatch
@@ -52,14 +49,12 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<SitOnChairsFeature>("[可坐椅子] 地图重定向异常，沿用原版：" + ex.Message);
+                    Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 地图重定向异常，沿用原版");
                 }
             }
         }
 
-        // ===== 2. 椅子预制体与坐姿 =====
-
-        /// <summary>DeviceManager.Spawn(string, DeviceInfo)（0.1.16b DeviceManager.cs:155）：spawn 椅子时确保运行时预制体存在。</summary>
+        /// DeviceManager.Spawn(string, DeviceInfo)（0.1.16b DeviceManager.cs:155）：spawn 椅子时确保运行时预制体存在。
         [HarmonyPatch(typeof(DeviceManager), "Spawn", new[] { typeof(string), typeof(DeviceInfo) })]
         internal static class ChairSpawnPatch
         {
@@ -72,7 +67,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>Chair.SetInfo（0.1.16b Chair.cs，Chair 继承 DeviceBase.SetInfo DeviceBase.cs:132）：初始化骨架、固定层级、应用坐姿偏移。</summary>
+        /// Chair.SetInfo（0.1.16b Chair.cs，Chair 继承 DeviceBase.SetInfo DeviceBase.cs:132）：初始化骨架、固定层级、应用坐姿偏移。
         [HarmonyPatch(typeof(Chair), "SetInfo")]
         internal static class ChairSetInfoPatch
         {
@@ -94,7 +89,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>Managers.GetText（0.1.16b Managers.cs:223）：补 "ChairInteract" 交互文案（原版文案表无此键）。</summary>
+        /// Managers.GetText（0.1.16b Managers.cs:223）：补 "ChairInteract" 交互文案（原版文案表无此键）。
         [HarmonyPatch(typeof(Managers), "GetText")]
         internal static class ChairTextPatch
         {
@@ -109,9 +104,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        // ===== 3. 咖啡椅不可坐 / 本地坐 =====
-
-        /// <summary>Chair.GetInteractMessage（0.1.16b Chair.cs）：CafeSit=false 时咖啡椅交互提示置空（按 E 无效、不显示提示）。</summary>
+        /// Chair.GetInteractMessage（0.1.16b Chair.cs）：CafeSit=false 时咖啡椅交互提示置空（按 E 无效、不显示提示）。
         [HarmonyPatch(typeof(Chair), "GetInteractMessage")]
         internal static class ChairCafeNoSitPatch
         {
@@ -124,7 +117,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>Chair.GetInteractMessage Postfix：本地坐着时提示改为"起身"。</summary>
+        /// Chair.GetInteractMessage Postfix：本地坐着时提示改为"起身"。
         [HarmonyPatch(typeof(Chair), "GetInteractMessage")]
         internal static class ChairLocalPromptPatch
         {
@@ -141,9 +134,9 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>Chair.Interact（0.1.16b Chair.cs）：Lobby 阶段且 CafeSit=true 时改走本地坐
+        /// Chair.Interact（0.1.16b Chair.cs）：Lobby 阶段且 CafeSit=true 时改走本地坐
         /// （不发送 C_INTERACT_CHAIR）；对局内（非 Lobby）本地立即坐（GameSit），
-        /// 同时照发原版 C_INTERACT_CHAIR（房主装了则全房同步，没装也不影响本地坐）。</summary>
+        /// 同时照发原版 C_INTERACT_CHAIR（房主装了则全房同步，没装也不影响本地坐）。
         [HarmonyPatch(typeof(Chair), "Interact")]
         internal static class ChairLocalSitPatch
         {
@@ -175,9 +168,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        // ===== 4. 本地坐姿时暂停玩家动画/移动 =====
-
-        /// <summary>Player.UpdateAnimation（0.1.16b Player.cs）：本地坐着（等待室/对局内）时跳过玩家动画更新。</summary>
+        /// Player.UpdateAnimation（0.1.16b Player.cs）：本地坐着（等待室/对局内）时跳过玩家动画更新。
         [HarmonyPatch(typeof(Player), "UpdateAnimation")]
         internal static class LocalSitAnimPatch
         {
@@ -187,7 +178,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>MyPlayer.FixedUpdateMove（0.1.16b MyPlayer.cs:1869）：本地坐着时钉住位置、跳过移动。</summary>
+        /// MyPlayer.FixedUpdateMove（0.1.16b MyPlayer.cs:1869）：本地坐着时钉住位置、跳过移动。
         [HarmonyPatch(typeof(MyPlayer), "FixedUpdateMove")]
         internal static class LocalSitMovePatch
         {
@@ -207,9 +198,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        // ===== 5. 微调 / 调试 / 椅子美术置顶 =====
-
-        /// <summary>DeviceManager.SearchInteractDevice（0.1.16b DeviceManager.cs:686）Postfix：[ / ] 实时微调坐姿高低（每按一次 5 世界单位）。</summary>
+        /// DeviceManager.SearchInteractDevice（0.1.16b DeviceManager.cs:686）Postfix：[ / ] 实时微调坐姿高低（每按一次 5 世界单位）。
         [HarmonyPatch(typeof(DeviceManager), "SearchInteractDevice")]
         internal static class ChairTunePatch
         {
@@ -272,7 +261,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>DeviceManager.SearchInteractDevice Postfix：Debug=true 时每 2.5 秒输出椅子调试日志。</summary>
+        /// DeviceManager.SearchInteractDevice Postfix：Debug=true 时每 2.5 秒输出椅子调试日志。
         [HarmonyPatch(typeof(DeviceManager), "SearchInteractDevice")]
         internal static class ChairDebugPatch
         {
@@ -343,12 +332,12 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<SitOnChairsFeature>("[可坐椅子调试] 失败：" + ex.Message);
+                    Log.Error<SitOnChairsFeature>(ex, "[可坐椅子调试] 失败");
                 }
             }
         }
 
-        /// <summary>DeviceManager.SearchInteractDevice Postfix：ChairOnTop=true 且坐着时，把椅子正前方的家具美术抬到 255 层级。</summary>
+        /// DeviceManager.SearchInteractDevice Postfix：ChairOnTop=true 且坐着时，把椅子正前方的家具美术抬到 255 层级。
         [HarmonyPatch(typeof(DeviceManager), "SearchInteractDevice")]
         internal static class ChairFurnitureOnTopPatch
         {
@@ -434,7 +423,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<SitOnChairsFeature>("[可坐椅子] 椅子置顶失败：" + ex.Message);
+                    Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 椅子置顶失败");
                 }
             }
 
@@ -463,7 +452,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        /// <summary>Managers.Update（0.1.16b Managers.cs:325）Postfix：非坐着状态时还原被抬高的家具美术（安全兜底）。</summary>
+        /// Managers.Update（0.1.16b Managers.cs:325）Postfix：非坐着状态时还原被抬高的家具美术（安全兜底）。
         [HarmonyPatch(typeof(Managers), "Update")]
         internal static class ChairFurnitureOnTopSafetyPatch
         {
@@ -473,9 +462,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        // ===== 6.5 本地模拟椅子（非房主补丁）=====
-
-        /// <summary>Managers.Update Postfix：节流检查本地是否缺椅子设备（房主未装 mod 时非房主本地没有椅子），缺则补 spawn。</summary>
+        /// Managers.Update Postfix：节流检查本地是否缺椅子设备（房主未装 mod 时非房主本地没有椅子），缺则补 spawn。
         [HarmonyPatch(typeof(Managers), "Update")]
         internal static class LocalChairSpawnPatch
         {
@@ -492,10 +479,8 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
         }
 
-        // ===== 7. 坐姿同步接收（SyncSitting）=====
-
-        /// <summary>接收端：聊天接收入口识别坐姿指令（零宽前缀）→ 拦截聊天显示 +
-        /// 远端椅子换角色坐姿形象 + 隐藏该玩家模型；起身时还原。无需房主，装本 mod 即可互见。</summary>
+        /// 接收端：聊天接收入口识别坐姿指令（零宽前缀）→ 拦截聊天显示 +
+        /// 远端椅子换角色坐姿形象 + 隐藏该玩家模型；起身时还原。无需房主，装本 mod 即可互见。
         [HarmonyPatch(typeof(VoiceManager), "EnqueueNormalChat")]
         internal static class SitSyncReceivePatch
         {
@@ -539,12 +524,12 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<SitOnChairsFeature>("[可坐椅子] 坐姿同步接收异常：" + ex.Message);
+                    Log.Warn<SitOnChairsFeature>(ex, "[可坐椅子] 坐姿同步接收异常");
                     return false;
                 }
             }
 
-            /// <summary>远端玩家坐下：隐藏其模型 + 把椅子 Spine 换成该角色坐姿形象。</summary>
+            /// 远端玩家坐下：隐藏其模型 + 把椅子 Spine 换成该角色坐姿形象。
             private static void ApplyRemoteSit(int playerId, int chairId, int charId)
             {
                 Chair chair = FindChair(chairId);
@@ -559,7 +544,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 }
             }
 
-            /// <summary>远端玩家起身：显示其模型 + 椅子形象还原（Spine 转透明）。</summary>
+            /// 远端玩家起身：显示其模型 + 椅子形象还原（Spine 转透明）。
             private static void ApplyRemoteRise(int playerId, int chairId)
             {
                 Chair chair = FindChair(chairId);
@@ -574,7 +559,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 }
             }
 
-            /// <summary>按设备 ID 找对局内的椅子（装本 mod 的客户端注入同一份椅子数据，DeviceId 一致）。</summary>
+            /// 按设备 ID 找对局内的椅子（装本 mod 的客户端注入同一份椅子数据，DeviceId 一致）。
             private static Chair FindChair(int chairId)
             {
                 if (Managers.Device?.Cache == null)
@@ -600,7 +585,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 return Managers.Player.Players.TryGetValue(playerId, out Player p) ? p : null;
             }
 
-            /// <summary>远端玩家模型隐藏/显示：PlayerStealth 把模型 Spine/Sprite 全部变透明（原版 Sit 状态的同款表现）。</summary>
+            /// 远端玩家模型隐藏/显示：PlayerStealth 把模型 Spine/Sprite 全部变透明（原版 Sit 状态的同款表现）。
             private static void SetPlayerStealth(Player p, bool stealth)
             {
                 try
@@ -610,7 +595,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<SitOnChairsFeature>("[可坐椅子] 远端玩家模型" + (stealth ? "隐藏" : "显示") + "失败：" + ex.Message);
+                    Log.Warn<SitOnChairsFeature>("[可坐椅子] 远端玩家模型" + (stealth ? "隐藏" : "显示") + $"失败：{ex.Message}");
                 }
             }
         }

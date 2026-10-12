@@ -4,7 +4,7 @@ using System.Text;
 
 namespace DT_Tools.Commands.ListPlayers
 {
-    /// <summary>/list_players 输出格式化：玩家列表文本 + JSON 结果 DTO。</summary>
+    /// /list_players 输出格式化：玩家列表文本 + JSON 结果 DTO。
     internal static class ListPlayersFormat
     {
         public static string Reply(List<ListPlayersLogic.Entry> players, int hostId)

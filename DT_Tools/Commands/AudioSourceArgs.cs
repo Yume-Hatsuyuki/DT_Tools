@@ -4,7 +4,6 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands
 {
-    /// <summary>
     /// 音频来源参数解析核心（/mic_music 与 /play_audio 共用）：
     /// &lt;url|路径&gt; + 任意顺序的参数（volume/秒 关键字、local/online 来源标记）。
     /// 引号分词在更上游的 CommandTokenizer 完成（带空格路径可整体加引号），本层把
@@ -13,18 +12,17 @@ namespace DT_Tools.Commands
     /// 参数不约束顺序（像常规软件的命名参数）：local|online 标记与 volume/seconds
     /// 关键字出现在任何位置都生效；旧式位置写法（尾部最多两个纯数字，先 seconds
     /// 后 volume）仍兼容。关键字优先于位置参数，已被关键字占用的槽位不再从尾部吃数字。
-    /// </summary>
     internal sealed class AudioSourceArgs
     {
         public AudioPlaybackSource SourceKind { get; private set; } = AudioPlaybackSource.Auto;
 
-        /// <summary>时长上限（秒）。-1 = 不限（完整播放）。</summary>
+        /// 时长上限（秒）。-1 = 不限（完整播放）。
         public float MaxSeconds { get; private set; } = -1f;
 
-        /// <summary>响度（0~1，默认由命令自定：/mic_music 0.85、/play_audio 1）。</summary>
+        /// 响度（0~1，默认由命令自定：/mic_music 0.85、/play_audio 1）。
         public float Volume { get; private set; }
 
-        /// <summary>url 或本地路径（路径 token 已用空格拼回、首尾引号已由分词器剥除）。</summary>
+        /// url 或本地路径（路径 token 已用空格拼回、首尾引号已由分词器剥除）。
         public string Source { get; private set; }
 
         public static bool TryParse(string[] tokens, float defaultVolume, out AudioSourceArgs args, out string error)

@@ -3,7 +3,7 @@ using Protocol;
 
 namespace DT_Tools.Automation.AutoPickCharacter
 {
-    /// <summary>触发器：监测进入 / 离开选角阶段与大厅的时刻，维护阶段跟踪并驱动动作。</summary>
+    /// 触发器：监测进入 / 离开选角阶段与大厅的时刻，维护阶段跟踪并驱动动作。
     internal static class AutoPickCharacterTrigger
     {
         public static void Tick()

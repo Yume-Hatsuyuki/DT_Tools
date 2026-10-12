@@ -2,7 +2,7 @@ using System.Text;
 
 namespace DT_Tools.Commands.RoomCode
 {
-    /// <summary>/room_code 输出格式化：房间信息文本 + JSON 结果 DTO。</summary>
+    /// /room_code 输出格式化：房间信息文本 + JSON 结果 DTO。
     internal static class RoomCodeFormat
     {
         public static string Reply(string code, int current, int max, int steamLimit)

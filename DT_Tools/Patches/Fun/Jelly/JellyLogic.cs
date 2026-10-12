@@ -5,10 +5,8 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Patches.Fun.Jelly
 {
-    /// <summary>
     /// 单个果冻对象的状态：采集的视觉基准、是否动过 localPosition。
     /// Target=果冻作用节点；Collider 系列仅根视觉设备（矿山/窗帘）的反缩放补偿使用。
-    /// </summary>
     internal sealed class JellyState
     {
         public bool Captured;
@@ -22,7 +20,6 @@ namespace DT_Tools.Patches.Fun.Jelly
         public Vector2 BaseColliderOffset;
     }
 
-    /// <summary>
     /// 果冻周期数学：全员/全体同相位（Time.unscaledTime % 周期），
     /// 下压段 smoothstep + 回弹段阻尼余弦，每帧绝对赋值 scale。
     ///
@@ -47,36 +44,35 @@ namespace DT_Tools.Patches.Fun.Jelly
     /// 的节点（视线遮挡 collider 是 prefab 序列化、与移动合体分离的独立碰撞，MyPlayer.cs:1533
     /// 等 mask=12288——无法从代码判断 sprite 与 collider 是否同节点，凡带 collider 一律不碰）。
     /// ShadowCaster2D 形状在局部空间随 transform 变形，与 sprite 视觉自洽无坑。
-    /// </summary>
     internal static class JellyLogic
     {
-        /// <summary>横向幅度为纵向的 0.8 倍（体积守恒近似）。</summary>
+        /// 横向幅度为纵向的 0.8 倍（体积守恒近似）。
         private const float XRatio = 0.8f;
 
-        /// <summary>回弹包络衰减率：终点幅值 e^-4.6 ≈ 1%，肉眼不可见。</summary>
+        /// 回弹包络衰减率：终点幅值 e^-4.6 ≈ 1%，肉眼不可见。
         private const float DecayRate = 4.6f;
 
-        /// <summary>碰撞体反缩放时的分母下限（幅度 1.0 会把 sy 压到 0，除法防炸）。</summary>
+        /// 碰撞体反缩放时的分母下限（幅度 1.0 会把 sy 压到 0，除法防炸）。
         private const float ColliderClamp = 0.05f;
 
-        /// <summary>设备面板物品图标叶子节点名（Charger/Bio 电池、Miner/Storage/Drink 槽位）。</summary>
+        /// 设备面板物品图标叶子节点名（Charger/Bio 电池、Miner/Storage/Drink 槽位）。
         private static readonly string[] IconNodeNames = { "Battery", "Slot", "Slots", "Required" };
 
         private static readonly Dictionary<int, List<JellyState>> States = new Dictionary<int, List<JellyState>>();
         private static readonly Dictionary<int, List<JellyState>> DeviceStates = new Dictionary<int, List<JellyState>>();
         private static readonly Dictionary<Transform, JellyState> DecorStates = new Dictionary<Transform, JellyState>();
 
-        /// <summary>UI 按钮果冻状态（Transform 键：按钮无 id，按实例跟踪）。</summary>
+        /// UI 按钮果冻状态（Transform 键：按钮无 id，按实例跟踪）。
         private static readonly Dictionary<Transform, JellyState> UiStates = new Dictionary<Transform, JellyState>();
 
-        /// <summary>UI 按钮扫描节流：弹窗/切场景动态增减，每秒增量补扫。</summary>
+        /// UI 按钮扫描节流：弹窗/切场景动态增减，每秒增量补扫。
         private static float _nextUiScan;
 
-        /// <summary>自己的状态走对象键：大厅里 MyPlayer 可能尚无 PublicInfo（无 id），也能果冻。</summary>
+        /// 自己的状态走对象键：大厅里 MyPlayer 可能尚无 PublicInfo（无 id），也能果冻。
         private static Player _myStateOwner;
         private static JellyState _myState;
 
-        /// <summary>装饰枚举脏标志：换房后重扫当前房间。</summary>
+        /// 装饰枚举脏标志：换房后重扫当前房间。
         private static bool _decorDirty = true;
 
         public static void Reset()
@@ -150,7 +146,7 @@ namespace DT_Tools.Patches.Fun.Jelly
                 RestoreAll();
         }
 
-        /// <summary>关闭/清理：把所有被跟踪对象（玩家+设备+装饰）的视觉基准写回。返回写回成功的数量。</summary>
+        /// 关闭/清理：把所有被跟踪对象（玩家+设备+装饰）的视觉基准写回。返回写回成功的数量。
         public static int RestoreAll()
         {
             int restored = 0;
@@ -168,7 +164,7 @@ namespace DT_Tools.Patches.Fun.Jelly
             return restored;
         }
 
-        /// <summary>玩家退场（Despawn 后调用，Players 字典已移除）：写回后清缓存。</summary>
+        /// 玩家退场（Despawn 后调用，Players 字典已移除）：写回后清缓存。
         public static void Forget(int id)
         {
             if (States.Count == 0 || !States.TryGetValue(id, out var list))
@@ -183,10 +179,8 @@ namespace DT_Tools.Patches.Fun.Jelly
             States.Remove(id);
         }
 
-        /// <summary>
         /// 设备退场（Despawn/DespawnTemporary 的 Prefix 调用：原方法会把 Cache 条目移除，
         /// 移除后就找不到了，必须赶在前面写回）。
-        /// </summary>
         public static void ForgetDevice(int id)
         {
             if (DeviceStates.Count == 0 || !DeviceStates.TryGetValue(id, out var list))
@@ -198,14 +192,14 @@ namespace DT_Tools.Patches.Fun.Jelly
             DeviceStates.Remove(id);
         }
 
-        /// <summary>换图 Clear()：所有设备对象随即被 Destroy，写回无意义，直接清缓存。</summary>
+        /// 换图 Clear()：所有设备对象随即被 Destroy，写回无意义，直接清缓存。
         public static void OnDevicesCleared()
         {
             DeviceStates.Clear();
             _decorDirty = true;
         }
 
-        /// <summary>房间切换/重建（MapManager.ChangeRoom）：装饰集合失效，下一帧重扫。</summary>
+        /// 房间切换/重建（MapManager.ChangeRoom）：装饰集合失效，下一帧重扫。
         public static void OnRoomChanged() => _decorDirty = true;
 
         private static int ApplySelf(MyPlayer my)
@@ -287,10 +281,8 @@ namespace DT_Tools.Patches.Fun.Jelly
             return touched > 0 ? 1 : 0;
         }
 
-        /// <summary>
         /// 设备视觉节点启发式（见类注释）：SkeletonAnimation 优先 → 掉落物/根视觉设备缩根 →
         /// "Body" 主视觉 + 物品图标叶子；都没有返回空（跳过）。
-        /// </summary>
         private static List<Transform> FindDeviceVisuals(DeviceBase device)
         {
             var result = new List<Transform>();
@@ -337,7 +329,7 @@ namespace DT_Tools.Patches.Fun.Jelly
             return result;
         }
 
-        /// <summary>装饰集合脏时重扫当前房间，按安全过滤建档（规则见类注释）。</summary>
+        /// 装饰集合脏时重扫当前房间，按安全过滤建档（规则见类注释）。
         private static void EnsureDecorScan()
         {
             if (!_decorDirty)
@@ -368,10 +360,8 @@ namespace DT_Tools.Patches.Fun.Jelly
             }
         }
 
-        /// <summary>
         /// UI 按钮增量补扫（节流 1 秒）：只新增不删除；已销毁按钮的伪 null 条目顺手清掉。
         /// 不做全量重建——先还原再变形会造成周期性抖动。
-        /// </summary>
         private static void EnsureUiScan()
         {
             if (Time.unscaledTime < _nextUiScan)
@@ -410,7 +400,7 @@ namespace DT_Tools.Patches.Fun.Jelly
             return restored;
         }
 
-        /// <summary>核心：对目标节点施加当前相位的果冻系数。返回 1=已施加。</summary>
+        /// 核心：对目标节点施加当前相位的果冻系数。返回 1=已施加。
         private static int ApplyScale(Transform t, JellyState st, bool allowPosComp = true, bool compensateCollider = false)
         {
             if (t == null)
@@ -463,7 +453,7 @@ namespace DT_Tools.Patches.Fun.Jelly
             return 1;
         }
 
-        /// <summary>周期函数：下压段 smoothstep 压扁；回弹段阻尼余弦（τ=0 精确接续压扁谷，按次数往复衰减）。</summary>
+        /// 周期函数：下压段 smoothstep 压扁；回弹段阻尼余弦（τ=0 精确接续压扁谷，按次数往复衰减）。
         private static void Evaluate(float p, float squash, float press, int bounces, float decay,
             out float sx, out float sy)
         {

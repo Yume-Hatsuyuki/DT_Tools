@@ -2,11 +2,9 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Patches.Experience.MotionAfterimage
 {
-    /// <summary>
     /// 运动残影：对齐莉莉安娜 SuperRazer（FlashVfx）的 ColorPlayerShadow 材质，
     /// 按间隔持续刷出短命淡出剪影（站立也会刷，类似英雄联盟疾跑残影）。
     /// Survive / Detective 地图内均生效；Despawn 后保留黑色最后一帧，离开地图阶段清除。
-    /// </summary>
     [PatchFeature(
         "运动残影：地图内（生存/调查）按间隔刷彩色淡出剪影；死亡后保留黑色最后一帧。",
         defaultEnabled: false,
@@ -14,7 +12,6 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
         Author = "梦初雪")]
     public sealed class MotionAfterimageFeature
     {
-        // ---- 阶段开关 ----
 
         [Config("生存阶段启用运动残影。")]
         public static bool EnableInSurvive = true;
@@ -31,8 +28,6 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
         [Config("显示自己的死亡定格残影（独立开关；挂钩 S_DEAD / Game.Dead）。")]
         public static bool IncludeSelfDeathResidual = true;
 
-        // ---- 刷取与淡出 ----
-
         [Config("刷残影间隔（秒）。越小越密。", Min = 0.05f, Max = 1f)]
         public static float SpawnInterval = 0.1f;
 
@@ -47,8 +42,6 @@ namespace DT_Tools.Patches.Experience.MotionAfterimage
 
         [Config("使用偏蓝染色（关则接近原版 ColorPlayerShadow 白剪影）。")]
         public static bool UseBlueTint = true;
-
-        // ---- 排序 ----
 
         [Config("活体残影 SortingOrder（原版 FlashVfx=250）。", Min = -100, Max = 500)]
         public static int SortingOrder = 250;

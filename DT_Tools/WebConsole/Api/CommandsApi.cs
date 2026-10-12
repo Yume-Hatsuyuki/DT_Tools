@@ -6,7 +6,7 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>GET /api/commands — 命令表（主名去重、按名称排序），供前端预览与补全。</summary>
+    /// GET /api/commands — 命令表（主名去重、按名称排序），供前端预览与补全。
     public static class CommandsApi
     {
         // 命令表在 CommandRegistry.Load 后只增不改、进程内恒定，故缓存一次即可；

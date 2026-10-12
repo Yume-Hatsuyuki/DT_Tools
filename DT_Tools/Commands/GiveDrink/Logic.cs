@@ -3,15 +3,14 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveDrink
 {
-    /// <summary>/givedrink 业务：手持道具发放（走原生 ItemManager 链路）。</summary>
+    /// /givedrink 业务：手持道具发放（走原生 ItemManager 链路）。
     internal static class GiveDrinkLogic
     {
-        /// <summary>
         /// itemId &lt;= 0 → 清空手持物；武器发放前先移除已有武器，避免 InsertWeapon
         /// 内 Assert 失败；其余走原生发放链路：创建真实 Item → 写入 Hand/Weapon →
         /// 发 S_ADD_ITEM → 同步
         /// （0.1.16b Server.Game/Player.cs:1626 RemoveHand / :1643 RemoveWeapon / :150 Weapon，
-        ///  Server.Game/ItemManager.cs:17 CreateAndInsertInven）。
+        /// Server.Game/ItemManager.cs:17 CreateAndInsertInven）。
         /// 调用前提：命令入口已校验 DataId 存在于 Managers.Data.ItemDic（否则 Item 构造
         /// 得到 Data=null 的脏 Item，见 ItemManager.cs:17-22 先 Add 后解引用的顺序）。
         ///
@@ -22,7 +21,6 @@ namespace DT_Tools.Commands.GiveDrink
         /// 看不到假人手持道具、攻击判定（AttackPlayer 读 PublicInfo.HandItemId，
         /// GameRoom.cs:2396）也取不到道具数据。清空路径无需补：RemoveHand/RemoveWeapon
         /// 内部走 HandItemObjectId=-1（Player.cs:1631/:1649），setter 同样广播。
-        /// </summary>
         public static void SendHandItem(Server.Game.Player player, int itemId)
         {
             if (itemId <= 0)

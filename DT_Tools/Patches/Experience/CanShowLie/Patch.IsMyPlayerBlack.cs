@@ -3,10 +3,8 @@ using HarmonyLib;
 
 namespace DT_Tools.Patches.Experience.CanShowLie
 {
-    /// <summary>
     /// IsMyPlayerBlack 整替：凡有本地玩家一律按黑幕处理，解锁伪证 UI（原版见 0.1.16b UI_GameTablet.cs:1005）。
     /// 私有方法，字符串定位。
-    /// </summary>
     [HarmonyPatch(typeof(UI_GameTablet), "IsMyPlayerBlack")]
     internal static class CanShowLieBlackCheckPatch
     {

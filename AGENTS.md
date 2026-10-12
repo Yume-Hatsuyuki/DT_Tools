@@ -46,6 +46,10 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 11. 禁止在仓库文件里写本机绝对路径（§3）。
 12. `Patches/System/` 下的文件，禁止裸写 `System.X`（§9 约束 3）。
 13. MCP 工具实现触 Unity API，必须经 `WebConsole.RunOnMain`（§13）。
+14. 用户数据路径只从 `DtPaths` 取，禁止自行拼接 `BepInEx/config` 路径（§2）。
+15. 失败日志用 `Log.Warn(tag, ex, context)` / `Log.Error(tag, ex, context)`，禁止 `"…" + ex.Message`（§11）。
+16. 字符串优先插值 `$"…"`，禁止 `+` 拼接字面量与变量（§11）。
+17. 注释只写代码读不出来的信息：依据、约束、游戏源码位置。禁止复述代码（§14）。
 
 ### 术语
 
@@ -95,6 +99,21 @@ if (!Engine.Enabled<本功能Feature>()) return;
 | `libs/` | 只读 | 游戏程序集。编译时引用 |
 | `0.1.16b/` | 只读。在仓库外的工作区根部 | 游戏源码 |
 
+### 用户数据目录
+
+版本 2.0.0.0 起，所有用户数据统一在 `BepInEx/config/DT_Tools/`，由 `Core/DtPaths.cs` 统一给出路径：
+
+```text
+BepInEx/config/DT_Tools/
+├── DT_Tools.cfg        插件配置（DtPaths.Cfg）
+├── mp3/playlist.json   随身 MP3 歌单（DtPaths.Mp3Playlist）
+└── photos/             默认照片目录（DtPaths.DefaultPhotoFolder）
+```
+
+- `BepInEx/plugins/DT_Tools/` 只放 DLL 与 WebUI。整体替换插件目录不会丢用户数据。
+- 2.0.0.0 不兼容旧版配置。旧的 `BepInEx/config/DT_Tools.cfg` 与 `DT_Tools_Mp3Playlist.json` 不再读取。
+- 新增用户数据路径时，只能在 `DtPaths` 里加属性。禁止在功能代码里拼接。
+
 ## 3. 构建与验证
 
 ### 构建命令
@@ -130,7 +149,7 @@ cd webui-src && npm run build
 
 - 游戏内运行验证，只能由用户执行。
 - 用户把 DLL 和 WebUI 复制到游戏的 `BepInEx/plugins/DT_Tools/`。
-- 首次启动时，游戏自动生成 `.cfg`。
+- 首次启动时，游戏自动生成 `BepInEx/config/DT_Tools/DT_Tools.cfg`（路径见 §2「用户数据目录」）。
 
 ### CI
 
@@ -446,6 +465,7 @@ public sealed class XxxModule { }
 - 唯一入口是 `Log` 门面。用泛型重载。
 - 信息和错误的写法：`Log.Info<TFeature>(msg)`、`Log.Error<TFeature>(msg)`。
 - 异常的写法：`Log.Exception<TFeature>(ex[, context])`。
+- 失败但可继续的写法：`Log.Warn<TFeature>(ex, "上下文")` 或 `Log.Warn(tag, ex, "上下文")`。消息为「上下文：ex.Message」，不记堆栈。
 - 异常在 BepInEx 里记完整堆栈。WebUI 只留单行摘要。
 - 日志 tag 是段名，自动生成。
 - 命令输出走 `ctx.Reply`、`ctx.Warn`。
@@ -465,6 +485,12 @@ public sealed class XxxModule { }
 - WebUI 控制台按会话隔离显示。
 - 前端每个控制台窗口实例持有一个会话 id。
 - 会话 id 放在 `/api/run` 的请求头 `X-DT-Session` 里上送。
+
+### 字符串
+
+- 字面量与变量拼接一律用插值：`$"用法: {Usage}"`，不用 `"用法: " + Usage`。
+- 重复出现的格式（用户数据路径、失败日志、协议包）抽成方法，不在调用处各写一份。
+- 插值字符串不是编译期常量。`const`、`case` 标签、特性参数里只能用普通拼接或字面量。
 
 ### JSON
 
@@ -752,3 +778,35 @@ MCP 服务器寄生于 WebConsole（同端口、同鉴权）。AI 客户端经 `
 - 工具名、描述全中文或 snake_case 英文名 + 中文描述。`Author` 逐工具实名。
 - 禁止在 MCP 工具里实现本可以做成命令的行动能力。命令是通用入口（聊天/WebUI/MCP 三通道），MCP 工具只是桥。
 - 协议包相关的一切以 `.github/skills/MCP/MCP.md` 为知识源；它与运行期不一致时，以 `packets` 命令的运行期真值为准并回写该文件。
+
+---
+
+## 14. 注释规范（面向 AI）
+
+读者首先是 AI。AI 能直接读懂代码，所以注释只承载代码里读不出来的信息。
+
+### 保留
+
+- 游戏源码引用：`0.1.16b File.cs:行号`，保持原文。
+- 约束与不变量：“必须”“禁止”“否则”“只在…时”。
+- 依据：为什么这么写，原版怎么做，踩过什么坑。
+- 跨文件的依赖与调用时机：谁会调用、在哪个线程、什么阶段。
+- 外部格式：协议包字段、JSON 形态、配置键的语义。
+
+### 删除
+
+- 只复述名字或签名的 `<summary>`，例如字段 `Range` 上写“攻击距离”。
+- 复述紧邻代码动作的行内注释，例如 `// 设置 Enabled` 后面跟着 `Enabled = true`。
+- 装饰分隔线：`// ==== 区块 ====`。
+- `<summary>` 包装标签。文字直接写在 `///` 后面。
+
+### 形态
+
+- 能一行说清就一行。
+- 多段说明只写“为什么”，“怎么做”留给代码。
+- 不写作者、日期、变更历史。变更历史走 git。
+- 超过 8 行的文档块必须压缩。检验方法：删掉这段后，读者是否失去了判断依据。删不掉的保留。
+
+### 检验
+
+每条注释提问：删掉后，AI 会不会做出错误的修改？会，就保留。不会，就删。

@@ -7,18 +7,16 @@ using DT_Tools.Core;
 
 namespace DT_Tools.Automation.AutoPickCharacter
 {
-    /// <summary>
     /// 业务逻辑：运行时从 Managers.Data.CharacterDic 读取角色目录（含梅德琳），
     /// 供发包前的校验与 WebUI 下拉；展示名为中文（英文），中文从 TextDic 查。
     ///
     /// 梅德琳（DataId=101）的防御处理：
-    ///   不同版本的角色表里 101 的 Name 可能是 "Madeline" 或 "Medelin"（拼写不一致），
-    ///   而文本表只有 "Madeline" 这个 key。因此 101 一律以 ID 识别，英文名固定为 Madeline，
-    ///   中文名按 [表内 Name, Madeline, Medelin] 依次尝试。其余角色照常按 Name 读取。
+    /// 不同版本的角色表里 101 的 Name 可能是 "Madeline" 或 "Medelin"（拼写不一致），
+    /// 而文本表只有 "Madeline" 这个 key。因此 101 一律以 ID 识别，英文名固定为 Madeline，
+    /// 中文名按 [表内 Name, Madeline, Medelin] 依次尝试。其余角色照常按 Name 读取。
     ///
     /// 文本一律直接查 TextDic 而不调用 Managers.GetText：
-    ///   GetText 缺 key 时会 Debug.LogError，而下拉数据会被 WebUI 轮询，会刷屏。
-    /// </summary>
+    /// GetText 缺 key 时会 Debug.LogError，而下拉数据会被 WebUI 轮询，会刷屏。
     internal static class AutoPickCharacterLogic
     {
         public const int RandomId = -2;
@@ -65,7 +63,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             return zh + " (" + eng + ")";
         }
 
-        /// <summary>含全部角色表条目 + 随机；按 DataId 排序。</summary>
+        /// 含全部角色表条目 + 随机；按 DataId 排序。
         public static List<Entry> ListAll(bool includeRandom = true)
         {
             var list = new List<Entry>();
@@ -101,10 +99,8 @@ namespace DT_Tools.Automation.AutoPickCharacter
             return list;
         }
 
-        /// <summary>
         /// OptionProviders 用：value 为 DataId（含随机 -2），label 为「中文 (English)」。
         /// 角色表未就绪时只会有"随机"一项，不影响 UI。
-        /// </summary>
         public static IReadOnlyList<ConfigOption> Options()
         {
             var all = ListAll(includeRandom: true);
@@ -130,7 +126,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             }
         }
 
-        /// <summary>角色表里该 DataId 的原始 Name（未做任何修正）。</summary>
+        /// 角色表里该 DataId 的原始 Name（未做任何修正）。
         private static bool TryGetRawName(int dataId, out string name)
         {
             name = null;
@@ -148,7 +144,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             return false;
         }
 
-        /// <summary>查文本表用的候选 key，按优先级：表内 Name → （仅 101）Madeline / Medelin。</summary>
+        /// 查文本表用的候选 key，按优先级：表内 Name → （仅 101）Madeline / Medelin。
         private static IEnumerable<string> TextKeys(int dataId, string rawName)
         {
             if (!string.IsNullOrEmpty(rawName))
@@ -164,7 +160,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             }
         }
 
-        /// <summary>直接查 TextDic，缺 key 不报错（区别于 Managers.GetText）。</summary>
+        /// 直接查 TextDic，缺 key 不报错（区别于 Managers.GetText）。
         private static bool TryLookupText(string key, out string text)
         {
             text = null;

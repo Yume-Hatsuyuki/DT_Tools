@@ -4,7 +4,7 @@ using Protocol;
 
 namespace DT_Tools.Commands.GiveMission
 {
-    /// <summary>/givemission 输出格式化：可派发任务列表 + 人类回复 + JSON 结果 DTO。</summary>
+    /// /givemission 输出格式化：可派发任务列表 + 人类回复 + JSON 结果 DTO。
     internal static class GiveMissionFormat
     {
         public static string MissionList()

@@ -8,11 +8,9 @@ using HarmonyLib;
 
 namespace DT_Tools.Core
 {
-    /// <summary>
     /// 装载机制：发现（[PatchFeature] / [AutomationModule] / [ConfigSection]）→ 段名推导与查重 →
     /// Harmony 挂载（Feature 同命名空间下所有 [HarmonyPatch] 类，逐个挂载、任一失败即整功能跳过）→
     /// 生命周期接线（OnPatched / OnEnabled / OnDisabled / OnLoaded，静态方法按名约定，全部可选）。
-    /// </summary>
     internal static class FeatureLoader
     {
         internal sealed class FeatureDesc
@@ -20,7 +18,7 @@ namespace DT_Tools.Core
             public Type Type;
             public string Section;
 
-            /// <summary>分类 = 命名空间中 Patches 段的下一级（目录 Patches/&lt;分类&gt;/&lt;功能&gt;），随配置协议下发。</summary>
+            /// 分类 = 命名空间中 Patches 段的下一级（目录 Patches/&lt;分类&gt;/&lt;功能&gt;），随配置协议下发。
             public string Category;
             public string Description;
             public bool DefaultEnabled;
@@ -44,11 +42,11 @@ namespace DT_Tools.Core
             public Type Type;
             public string Section;
 
-            /// <summary>WebUI 分组（[ConfigSection(Group=…)]，如 "automation"）。</summary>
+            /// WebUI 分组（[ConfigSection(Group=…)]，如 "automation"）。
             public string Group;
         }
 
-        /// <summary>段名推导时去除的类名后缀。</summary>
+        /// 段名推导时去除的类名后缀。
         private static readonly string[] SectionSuffixes =
             { "Feature", "Module", "Host", "Options", "Settings" };
 
@@ -126,10 +124,8 @@ namespace DT_Tools.Core
             }
         }
 
-        /// <summary>
         /// GetTypes 的容错版：程序集部分类型加载失败（如可选依赖缺失）时退回已成功的类型，
         /// 避免整机发现阶段崩溃。
-        /// </summary>
         internal static List<Type> SafeGetTypes(Assembly assembly)
         {
             try
@@ -143,7 +139,7 @@ namespace DT_Tools.Core
             }
         }
 
-        /// <summary>段名 = 类名去后缀（Feature/Module/Host/Options/Settings）。</summary>
+        /// 段名 = 类名去后缀（Feature/Module/Host/Options/Settings）。
         public static string DeriveSection(Type type)
         {
             string name = type.Name;
@@ -155,10 +151,8 @@ namespace DT_Tools.Core
             return name;
         }
 
-        /// <summary>
         /// 分类 = 命名空间里 Patches 段的下一级（目录 Patches/&lt;分类&gt;/&lt;功能&gt;，段名属功能级）。
         /// 非两段结构（如功能直接挂在 Patches 下）返回 null——前端把它归入「其他」文件夹兜底。
-        /// </summary>
         public static string DeriveCategory(Type type)
         {
             string[] parts = (type.Namespace ?? "").Split('.');
@@ -166,11 +160,9 @@ namespace DT_Tools.Core
             return i >= 0 && i + 2 < parts.Length ? parts[i + 1] : null;
         }
 
-        /// <summary>
         /// 挂载一个补丁功能：对 Feature 同命名空间下所有带 [HarmonyPatch] 的类执行 PatchAll。
         /// 自管 Harmony（Feature 声明 static Harmony 字段，如 Transpiler 动态卸载）时跳过自动挂载。
         /// 任一补丁失败即抛出，由 Engine 计入 FailedCount（失败隔离到功能级）。
-        /// </summary>
         public static void Mount(Harmony harmony, FeatureDesc feature)
         {
             if (!HasSelfManagedHarmony(feature.Type))
@@ -198,13 +190,11 @@ namespace DT_Tools.Core
             // 不能被上层计成"挂载失败（已跳过）"；由 Engine.Load 挂载循环单独隔离调用。
         }
 
-        /// <summary>
         /// Enabled 热切换接线：记录变更日志并回调 OnEnabled/OnDisabled（如实现）。
         /// SettingChanged 在写入值的线程同步触发（WebUI 的 HTTP 线程 / BepInEx 的
         /// .cfg 文件监听线程），而钩子普遍触碰 Unity API（UnlockMadeline 纹理注入、
         /// ChatLimit 场景扫描、NicknameLimit UI 还原等）——统一经 CoroutineHost.Post
         /// 投递到主线程执行，另捕获 on 值防快速连切两次时读到过期状态。
-        /// </summary>
         public static void WireLifecycle(Type featureType, string section, ConfigEntry<bool> enabled)
         {
             enabled.SettingChanged += (_, __) =>
@@ -225,7 +215,7 @@ namespace DT_Tools.Core
             };
         }
 
-        /// <summary>调用类型的无参静态方法（Public/NonPublic），不存在则静默跳过。</summary>
+        /// 调用类型的无参静态方法（Public/NonPublic），不存在则静默跳过。
         public static void InvokeStaticIfPresent(Type type, string methodName)
         {
             var method = type.GetMethod(
@@ -267,10 +257,8 @@ namespace DT_Tools.Core
                     $"重复的配置段 [{section}]（{owner.FullName}）——段名由类名自动推导，请检查类命名是否冲突。");
         }
 
-        /// <summary>
         /// 作者兜底：逐项声明优先，未声明按「佚名」署名。
         /// 禁止引入全局作者常量（历史教训：全局署名会吞掉不同贡献者的归属）。
-        /// </summary>
         private static string NormalizeAuthor(string author)
             => string.IsNullOrWhiteSpace(author) ? "佚名" : author.Trim();
     }

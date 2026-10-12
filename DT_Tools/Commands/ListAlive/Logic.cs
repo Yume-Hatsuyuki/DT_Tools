@@ -6,10 +6,10 @@ using Server.Game;
 
 namespace DT_Tools.Commands.ListAlive
 {
-    /// <summary>/list_alive 业务：存活筛选（PlayerQuery）+ 阵营/SteamId 附加。</summary>
+    /// /list_alive 业务：存活筛选（PlayerQuery）+ 阵营/SteamId 附加。
     internal static class ListAliveLogic
     {
-        /// <summary>存活玩家条目（Host 端权威数据）。</summary>
+        /// 存活玩家条目（Host 端权威数据）。
         public sealed class Entry
         {
             public int Pid;
@@ -18,10 +18,10 @@ namespace DT_Tools.Commands.ListAlive
             public EPlayerColor Color;
         }
 
-        /// <summary>仅游戏中可用（选角结束之后；判定上浮 Game/GameState.IsInGame）。</summary>
+        /// 仅游戏中可用（选角结束之后；判定上浮 Game/GameState.IsInGame）。
         public static bool IsInGame(EGameState state) => global::DT_Tools.Game.GameState.IsInGame(state);
 
-        /// <summary>收集存活玩家（存活、非观战、非 Dummy），按 PlayerId 升序，附 Roster SteamId。</summary>
+        /// 收集存活玩家（存活、非观战、非 Dummy），按 PlayerId 升序，附 Roster SteamId。
         public static List<Entry> Collect(GameRoom room)
         {
             return PlayerQuery.AliveTargets(room)

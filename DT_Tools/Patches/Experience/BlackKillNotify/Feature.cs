@@ -2,7 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Patches.Experience.BlackKillNotify
 {
-    /// <summary>
     /// 黑方击杀通报（两端一体单功能，side: Both，范本 SpectatorJoin）：黑方击杀后，
     /// 以原版秘密通话浮文（打字机逐字上屏）向黑幕发送战报——「游戏内时间」换行
     /// 「黑方在【地名】处击杀了【角色】，剩余【次数】攻击次数。」。两个子功能按
@@ -14,7 +13,6 @@ namespace DT_Tools.Patches.Experience.BlackKillNotify
     /// ServerSide——房主半：房主检测到黑方击杀（OnDeadMurder，持刀与处决技共用）
     /// 后直发黑方频道，黑方无需安装插件；不占用打字机与冷却，凶手本人也会收到浮文。
     /// 两路同开且两端都装插件时，同一次击杀黑幕会收到两条——建议按部署二选一。
-    /// </summary>
     [PatchFeature(
         "黑方击杀通报：黑方击杀后以秘密通话浮文向黑幕发送战报（游戏内时间/击杀地点/角色/剩余攻击次数）。\n" +
         "ClientSide（客户端）：本机黑方模拟触碰空闲打字机发送，需凶手端安装；与手动打字共用 7 秒冷却。\n" +

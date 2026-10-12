@@ -5,15 +5,13 @@ using Protocol;
 
 namespace DT_Tools.Commands.GiveBuff
 {
-    /// <summary>
     /// /givebuff 参数：&lt;all|#id&gt; &lt;buff|clear&gt; [seconds|clear|0]
     /// 别名表对照 Protocol.EBuffType 全量收录（0.1.16b Protocol/EBuffType.cs，
     /// enum 声明在第 5 行、收尾括号在第 39 行，Slow..Footprint 全 16 项）。
-    /// </summary>
     internal sealed class GiveBuffArgs
     {
-        /// <summary>单次添加 BUFF 的最大时长（秒）。与原版 Raasrush/DetailCheck/MindControl
-        /// 等被动技能挂载时长一致（3600000 ms）。</summary>
+        /// 单次添加 BUFF 的最大时长（秒）。与原版 Raasrush/DetailCheck/MindControl
+        /// 等被动技能挂载时长一致（3600000 ms）。
         public const int MaxDurationSeconds = 3600;
 
         public bool All { get; private set; }
@@ -21,7 +19,7 @@ namespace DT_Tools.Commands.GiveBuff
         public GiveBuffAction Action { get; private set; }
         public EBuffType BuffType { get; private set; }
         public int Seconds { get; private set; }
-        /// <summary>显式秒数超过上限被钳制时为 true（用于提示）。</summary>
+        /// 显式秒数超过上限被钳制时为 true（用于提示）。
         public bool Clamped { get; private set; }
 
         private static readonly Dictionary<string, EBuffType> BuffAliases =
@@ -56,7 +54,7 @@ namespace DT_Tools.Commands.GiveBuff
             { "footprint",      EBuffType.Footprint },
         };
 
-        /// <summary>清除令牌（第二参=清全部；第三参=清该 BUFF）。</summary>
+        /// 清除令牌（第二参=清全部；第三参=清该 BUFF）。
         public static bool IsClearToken(string s)
             => s.Equals("clear", StringComparison.OrdinalIgnoreCase)
                || s.Equals("remove", StringComparison.OrdinalIgnoreCase)
@@ -69,7 +67,7 @@ namespace DT_Tools.Commands.GiveBuff
                    && Enum.IsDefined(typeof(EBuffType), buffType);
         }
 
-        /// <summary>args 非空（目标 + buff 两参必备，第三参可选）。</summary>
+        /// args 非空（目标 + buff 两参必备，第三参可选）。
         public static bool TryParse(string[] args, out GiveBuffArgs parsed, out string error)
         {
             parsed = new GiveBuffArgs();

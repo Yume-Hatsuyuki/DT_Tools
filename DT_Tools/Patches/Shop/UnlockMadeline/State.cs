@@ -4,13 +4,10 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Patches.Shop.UnlockMadeline
 {
-    /// <summary>
     /// 运行期状态：裁切产物缓存、注入键记录、一次性标记。
     /// 只存字段与容器；游戏调用在 Logic / Ui。
-    /// </summary>
     internal static class UnlockMadelineState
     {
-        // ── 裁切产物（Ui.cs 创建；Destroy 由 Feature.OnDisabled → Ui.Cleanup 负责）──
         public static Sprite Insight;
         public static Sprite Cutscene;
         public static Sprite VoteInfo;
@@ -28,29 +25,25 @@ namespace DT_Tools.Patches.Shop.UnlockMadeline
         public static Texture2D MapBlackTex;
         public static Texture2D SkillTex;
 
-        /// <summary>选人面板注入的 Madeline 立绘 Image（场景对象，随场景销毁）。</summary>
+        /// 选人面板注入的 Madeline 立绘 Image（场景对象，随场景销毁）。
         public static Image MadelineStandingImage;
 
-        /// <summary>本功能创建的 Object（Sprite/Texture2D），OnDisabled 时逐个 Destroy。</summary>
+        /// 本功能创建的 Object（Sprite/Texture2D），OnDisabled 时逐个 Destroy。
         public static readonly List<Object> Created = new List<Object>();
 
-        /// <summary>
         /// 已注入标记：一个开启周期只 InjectAll 一次（Cleanup 复位），防 IsInit setter
         /// 与 OnEnabled 热开启重复触发注入、反复创建裁切纹理滞留显存。
-        /// </summary>
         public static bool Injected;
 
-        /// <summary>
         /// 已注入 ResourceManager._resources 的键值引用（OnDisabled 时值比对一致才移除，
         /// 防误删游戏后写的同名条目）。
-        /// </summary>
         public static readonly Dictionary<string, Object> InjectedEntries =
             new Dictionary<string, Object>();
 
-        /// <summary>表情图集是否已尝试经 Addressables 预载（只试一次，失败不重试）。</summary>
+        /// 表情图集是否已尝试经 Addressables 预载（只试一次，失败不重试）。
         public static bool ExpsTried;
 
-        /// <summary>登记本功能创建的对象（便于统一销毁），并原样返回。</summary>
+        /// 登记本功能创建的对象（便于统一销毁），并原样返回。
         public static T Track<T>(T obj) where T : Object
         {
             if (obj != null)

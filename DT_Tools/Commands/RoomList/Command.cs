@@ -2,13 +2,11 @@ using DT_Tools.Commands;
 
 namespace DT_Tools.Commands.RoomList
 {
-    /// <summary>
     /// /room_list — 列出当前所有公开房间（Steam Lobby 异步查询）。
     ///
     /// 注意：查询是异步回调，命令立即返回；人类文本经 ctx.Reply 在回调中输出。
     /// 旧 /api/run 的 SetResult 回写机制对异步命令需要由集成者在 WebConsole 阶段
     /// 单独处理（见集成注意事项）。
-    /// </summary>
     internal sealed class RoomListCommand : ICommand
     {
         public string Name => "room_list";

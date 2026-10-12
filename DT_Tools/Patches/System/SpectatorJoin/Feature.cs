@@ -15,13 +15,11 @@ using DT_Tools.Patches.System.LobbyMaxPlayers;
 
 namespace DT_Tools.Patches.System.SpectatorJoin
 {
-    /// <summary>
     /// 满房观战：等待中（大厅）与进行中（Survive/Detective/允许观战的审判）的满房房间均可加入观战。
     /// 等待中加入者在房间（Lobby）内保持存活、可见并可自由移动，不占房间人数；
     /// 游戏开始（PickCharacter → Survive）后由服务端切换为幽灵观战模式；
     /// 进行中加入则直接进入幽灵观战模式。均不影响局内其他人的对局体验
     /// （不占人数、不参与角色/黑方分配、不参与开局判定）。
-    /// </summary>
     [HarmonyPatch]
     [PatchFeature(
         "满房观战：等待中（大厅）与进行中（Survive/Detective/允许观战的审判）的满房房间均可加入观战，观战者不占人数、不影响他人对局。",
@@ -45,13 +43,11 @@ namespace DT_Tools.Patches.System.SpectatorJoin
         internal static int SpectatorCount(GameRoom room) =>
             room.Players.Count(p => p.IsSpectator);
 
-        /// <summary>最后准备顺序（PlayerId 按准备时间升序；转观战时取倒序 = 最后准备者优先）。</summary>
+        /// 最后准备顺序（PlayerId 按准备时间升序；转观战时取倒序 = 最后准备者优先）。
         private static readonly List<int> _readyOrder = new List<int>();
 
-        /// <summary>
         /// 记录准备顺序：每次有人点准备（isReady=true）即移到列表末尾（=最后准备），
         /// 取消准备（isReady=false）则移除。开局前由转观战逻辑按倒序选取"最后准备者"。
-        /// </summary>
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.HandleReady))]
         [HarmonyPostfix]
         private static void PostfixHandleReady(GameRoom __instance, GamePlayer player, bool isReady)
@@ -77,11 +73,9 @@ namespace DT_Tools.Patches.System.SpectatorJoin
                 p.PublicInfo.PlayerId == pid2 && !p.IsSpectator));
         }
 
-        /// <summary>
         /// 超员转观战：真实玩家数超过开局参与上限时，按"最后准备倒序"（房主除外）
         /// 将多余玩家转为观战者，并置脏 roster 同步全员。此逻辑在房主点开始
         /// （全员已准备）时执行，使"谁当观战者"由准备顺序而非进房顺序决定。
-        /// </summary>
         private static void ConvertExcessToSpectators(GameRoom room)
         {
             int cap = PlayMaxPlayersValue;
@@ -115,7 +109,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             return m != null && (bool)m.Invoke(null, new object[] { a, b });
         }
 
-        // ── 房间成员数：观战者不计入（房间列表显示与满员判断只反映真实玩家） ──
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.RoomMemberCountForMetadata))]
         [HarmonyPrefix]
         private static bool PrefixRoomMemberCountForMetadata(GameRoom __instance, ref int __result)
@@ -130,7 +123,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             return false;
         }
 
-        // ── 开局判定：观战者无需准备、不计入人数 ────────────────────────────
         [HarmonyPatch(typeof(GameRoom), "CheckAllPlayerReady")]
         [HarmonyPrefix]
         private static bool PrefixCheckAllPlayerReady(GameRoom __instance, ref bool __result)
@@ -172,7 +164,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             return false;
         }
 
-        // ── 选角阶段：观战者不参与选角、不占用角色 ──────────────────────────
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.PickCharacter))]
         [HarmonyPrefix]
@@ -224,7 +215,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             return true;
         }
 
-        // ── 服务端：迁移恢复后给观战者补发区域包 ────────────────────────────
         // 迁移（例如房主转让后原房主掉线、新房主接管）完成时，观战者
         // （IsAlive=false）不会因 Move 触发 ChangeArea，原版不会向其补发
         // S_AREA_PUBLIC；若观战者此前地图未加载（CurrentArea 为空）或区域
@@ -254,7 +244,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             }
         }
 
-        // ── 客户端：满房大厅观战 —— 保持存活、可见、可自由移动 ──────────────
         // 原版对 IsSpectator=true 的加入一律执行 Dead()（隐藏、锁定），
         // 那只适合"局中加入"。等待阶段的观战者应像普通大厅成员一样活动，
         // 到游戏开始时由服务端 S_DEAD 切换为幽灵观战。
@@ -301,7 +290,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             }
         }
 
-        // ── 客户端：观战者死后保持自由移动（幽灵飞行） ─────────────────────
         // 游戏开始时服务端下发 S_DEAD，Dead() 会把 CanControl 置 false；
         // 观战者需要像幽灵一样继续自由移动。
         [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
@@ -315,7 +303,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
                 __instance.CanControl = true;
         }
 
-        // ── 客户端：观战者不显示选角弹窗（也不发送选角包） ─────────────────
         [HarmonyPatch(typeof(GameManagerEX), "StartPick")]
         [HarmonyPrefix]
         private static bool PrefixStartPickClient(GameManagerEX __instance)
@@ -328,7 +315,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             return true;
         }
 
-        // ── 客户端：观战者切换区域时强制加载地图 ────────────────────────────
         // 根因（MapManager.ChangeArea）：
         //   flag = !Managers.Game.IsAlive；仅当 (!flag || CurrentArea == null) 时
         //   才执行 ChangeRoom 加载地图。观战者（IsAlive=false）若 CurrentArea
@@ -366,7 +352,6 @@ namespace DT_Tools.Patches.System.SpectatorJoin
             }
         }
 
-        // ── 客户端：已在房间的玩家被转观战（开局前最后准备者）→ 同步观战标记 ──
         // 进房观战通过 S_ENTER_GAME.IsSpectator 通知（EnterGameAckPatch）；
         // 开局前转观战者已在房间内，唯一的变化是服务端 roster 中自己的
         // IsSpectator=true（GameRoom.MarkRosterDirty → S_PLAYER_ROSTER）。

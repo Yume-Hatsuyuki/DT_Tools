@@ -2,10 +2,8 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Patches.Fun.SupplyShelfRefill
 {
-    /// <summary>
     /// 货架补货（房主权威）：拿取后按间隔补同一格；可选开局必出指定道具 ID。
     /// 开局道具池见 SupplyShelf；兜底道具集中在 SupplyShelfRefillLogic.FallbackItems。
-    /// </summary>
     [PatchFeature(
         "货架补货：拿取后按间隔补同一格；可选开局必出指定道具 ID。",
         defaultEnabled: false,

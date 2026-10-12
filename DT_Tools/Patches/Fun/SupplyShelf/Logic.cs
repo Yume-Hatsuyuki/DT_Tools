@@ -5,7 +5,7 @@ using Protocol;
 
 namespace DT_Tools.Patches.Fun.SupplyShelf
 {
-    /// <summary>货架投放：清空 → 按池构造道具袋 → 逐 StorageNormal 架切片投放。</summary>
+    /// 货架投放：清空 → 按池构造道具袋 → 逐 StorageNormal 架切片投放。
     internal static class SupplyShelfLogic
     {
         public static void RefillAll(List<Server.Game.Storage> storages)
@@ -44,7 +44,7 @@ namespace DT_Tools.Patches.Fun.SupplyShelf
                 $"mode={SupplyShelfFeature.Mode} alwaysFilled={SupplyShelfFeature.AlwaysFilled}");
         }
 
-        /// <summary>构造道具袋：池整体入袋；不足补 0（或按池补齐），超出随机截断。</summary>
+        /// 构造道具袋：池整体入袋；不足补 0（或按池补齐），超出随机截断。
         public static List<int> BuildBag(int slotCount, int[] pool, bool alwaysFilled)
         {
             var bag = new List<int>();

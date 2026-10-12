@@ -3,10 +3,8 @@ using HarmonyLib;
 
 namespace DT_Tools.Patches.System.NicknameLimit
 {
-    /// <summary>
     /// EnsureNicknameOrShowError 整替：按放宽后的规则直接给出结果
     /// （原版 0.1.16b UI_LobbyScene.cs:1759）。私有方法，字符串定位。
-    /// </summary>
     [HarmonyPatch(typeof(UI_LobbyScene), "EnsureNicknameOrShowError")]
     internal static class NicknameLimitEnsurePatch
     {

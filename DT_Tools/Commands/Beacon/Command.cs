@@ -3,7 +3,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.Beacon
 {
-    /// <summary>
     /// /beacon [x y | spawn &lt;#i&gt; | player &lt;#id&gt; | lobby | error] — 战略信标：瞬移到指定坐标。
     /// 掉皮掉肉不掉队！（跟随控制台 / 客户端，非房主可用，仅作用于本机）
     ///
@@ -16,7 +15,6 @@ namespace DT_Tools.Commands.Beacon
     /// 客户端 PlayerManager.HandleMove 显式忽略本机 MyPlayer（仅同步他人，S_MOVE 不会回拉本机坐标，
     /// 见 0.1.16b PlayerManager.cs:467 HandleMove、469 的 MyPlayer 判断），故需本地主动落位——
     /// 统一走 Game/Teleport.TryTeleport（本地落位 + C_MOVE + 相机跟随，与官方 HandleRespawn 同款）。
-    /// </summary>
     internal sealed class BeaconCommand : ICommand
     {
         public string Name => "beacon";

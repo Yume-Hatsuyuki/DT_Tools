@@ -5,15 +5,13 @@ using Protocol;
 
 namespace DT_Tools.Patches.Experience.RepairFuse
 {
-    /// <summary>
     /// Fusebox.Interact 整替：总时长改配置，读条起点仍取服务端已修 tick
     /// （原版 Interact 为 Fusebox.cs:39-63，GetRepairTick 为 :65-72，读 StateList[2] 在 :71）。
     /// protected override，字符串定位。
-    /// </summary>
     [HarmonyPatch(typeof(Fusebox), "Interact")]
     internal static class RepairFusePatch
     {
-        /// <summary>原版总时长（0.1.16b Fusebox.cs:46 的 StartCasting(10f, ...)）。</summary>
+        /// 原版总时长（0.1.16b Fusebox.cs:46 的 StartCasting(10f, ...)）。
         private const float VanillaTotal = 10f;
         private const float MinCasting = 0.1f;
 

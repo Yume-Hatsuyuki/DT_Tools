@@ -10,13 +10,12 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
     /// GET /api/log/ws — WebSocket 日志流。
     ///
     /// 协议（单向推送，客户端消息一律忽略）：
-    ///   握手后先重放环形缓冲中 seq &gt; since 的条目（?since=N，缺省 0），
-    ///   之后实时增量。每帧 = JSON 数组 [{seq,time,level,tag,msg,session}]；
-    ///   15 秒无增量发心跳 {"t":"ping"}。
+    /// 握手后先重放环形缓冲中 seq &gt; since 的条目（?since=N，缺省 0），
+    /// 之后实时增量。每帧 = JSON 数组 [{seq,time,level,tag,msg,session}]；
+    /// 15 秒无增量发心跳 {"t":"ping"}。
     ///
     /// 无缝隙衔接：先注册进广播表、再取快照重放，发送时按 lastSentSeq 去重——
     /// 注册与重放之间落盘的条目不会漏、重放与实时的交界不会重（旧 SSE 无 since
@@ -26,7 +25,6 @@ namespace DT_Tools.WebConsole.Api
     /// 一个请求线程）；发送由每连接独立的发送线程驱动（队列泵 + AutoResetEvent），
     /// 广播方（Log.EntryAppended，主线程/HTTP 线程）只入队绝不阻塞——慢消费超过
     /// 上限直接断开该客户端。鉴权由 Router 在分发前统一完成（未授权握手收 401）。
-    /// </summary>
     public static class LogStreamApi
     {
         private const int HeartbeatMs = 15000;
@@ -35,22 +33,20 @@ namespace DT_Tools.WebConsole.Api
         private static readonly ConcurrentDictionary<WsClient, bool> Clients =
             new ConcurrentDictionary<WsClient, bool>();
 
-        /// <summary>
         /// 运行时 WS 能力探测：0=未知 1=可用 2=不支持。Unity 的 Mono 对
         /// HttpListener.AcceptWebSocketAsync 抛 NotImplementedException（实机确认）——
         /// 探测一次后：不支持时后续握手静默回 501（前端自动降级轮询 /api/log），
         /// 避免前端每次重连都打一条警告刷屏 BepInEx。
-        /// </summary>
         private static int _wsCapability;
 
-        /// <summary>WebConsole.Init 订阅到 Log.EntryAppended：只入队，绝不阻塞发出线程。</summary>
+        /// WebConsole.Init 订阅到 Log.EntryAppended：只入队，绝不阻塞发出线程。
         public static void Broadcast(LogEntry entry)
         {
             foreach (var client in Clients.Keys)
                 client.Enqueue(entry);
         }
 
-        /// <summary>WebConsole.OnDestroy：关闭全部客户端连接。</summary>
+        /// WebConsole.OnDestroy：关闭全部客户端连接。
         public static void ShutdownAll()
         {
             foreach (var client in Clients.Keys)
@@ -91,11 +87,9 @@ namespace DT_Tools.WebConsole.Api
             RunClient(ws, since);
         }
 
-        /// <summary>
         /// WsServer（独立端口自管 TCP 通道）完成 RFC6455 握手后的共用入口：
         /// 与 HTTP 升级路径共享同一份客户端注册/重放/心跳逻辑。
         /// 阻塞调用线程直到连接结束（每连接占用一个线程池线程，与 HTTP 路径同构）。
-        /// </summary>
         internal static void HandleSocket(WebSocket ws, long since)
             => RunClient(ws, since);
 
@@ -151,8 +145,8 @@ namespace DT_Tools.WebConsole.Api
                 _signal.Set();
             }
 
-            /// <summary>连接主体：注册后重放快照，随后在当前线程跑接收循环（探测断开），
-            /// 发送交给独立线程。返回即连接结束。</summary>
+            /// 连接主体：注册后重放快照，随后在当前线程跑接收循环（探测断开），
+            /// 发送交给独立线程。返回即连接结束。
             internal void Serve()
             {
                 var sender = new Thread(SenderLoop) { IsBackground = true, Name = "DT_WS_Send" };
@@ -232,14 +226,14 @@ namespace DT_Tools.WebConsole.Api
                         if (!SendFrame(batch))
                             return;
                     }
-                    else if (!SendPayload("{\"t\":\"ping\"}"))
+                    else if (!SendPayload(Json.To(new { t = "ping" })))
                     {
                         return;   // 心跳即探活：写失败立刻结束
                     }
                 }
             }
 
-            /// <summary>按 seq 去重并发送一批条目；成功返回 true。</summary>
+            /// 按 seq 去重并发送一批条目；成功返回 true。
             private bool SendFrame(List<LogEntry> entries)
             {
                 var batch = entries

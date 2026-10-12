@@ -3,9 +3,7 @@ using Protocol;
 
 namespace DT_Tools.Commands.Agent
 {
-    /// <summary>
     /// 顺手牵羊：手空时获取仓储/地面任务道具（对应旧 AgentVacuumChain.cs，原 CollectVacuum）。
-    /// </summary>
     internal static class AgentVacuumChain
     {
         public static void Collect(List<DeviceBase> devices, AgentFilter filter, AddDel Add)

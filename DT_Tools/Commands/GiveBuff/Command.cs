@@ -3,7 +3,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveBuff
 {
-    /// <summary>
     /// /givebuff &lt;all|#id&gt; &lt;buff|clear&gt; [seconds|clear|0] — 给所有/指定玩家添加或清除 BUFF。
     /// 不带参数时打印可用 BUFF 列表，不执行添加。
     ///
@@ -12,7 +11,6 @@ namespace DT_Tools.Commands.GiveBuff
     /// 原版 Flush 只遍历 AlivePlayers，大厅列表为空不会自动到期 → 添加后额外 PushAfter
     /// 兜底移除。清除走 RemoveBuffForce / Clear（isBroadcast: true），不依赖 AlivePlayers，
     /// 大厅也可用。
-    /// </summary>
     internal sealed class GiveBuffCommand : ICommand
     {
         public string Name => "givebuff";

@@ -6,7 +6,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Patches.System.HostTransfer
 {
-    /// <summary>
     /// 房主局内转让：客户端侧配合 transferhost 命令的房主标记同步。
     ///
     /// 原版客户端 PacketHandler.Handle_S_SET_HOST 只在 Lobby 阶段更新房主标记
@@ -18,7 +17,6 @@ namespace DT_Tools.Patches.System.HostTransfer
     /// 服务端转让逻辑在 Commands/TransferHost（transferhost 命令），与本补丁解耦：
     /// 关闭本功能时服务端权限转让仍生效，只是局内房主标记不更新。
     /// PacketHandler 为 internal 类，采用字符串类型名反射打点（同 SpectatorJoin）。
-    /// </summary>
     [HarmonyPatch]
     [PatchFeature(
         "房主局内转让：房主可通过 /transferhost #<playerId> 将房主身份转给其他玩家（大厅/局内均可），本功能让局内客户端同步更新房主标记。",
@@ -27,13 +25,11 @@ namespace DT_Tools.Patches.System.HostTransfer
         Author = "合理")]
     public sealed class HostTransferFeature
     {
-        /// <summary>
         /// 转让通知的自定义文本。完整显示格式：
-        ///   #原房主 <此文本> #新房主 （仅房主权限/大厅owner）
+        /// #原房主 <此文本> #新房主 （仅房主权限/大厅owner）
         /// 例如默认值 → "#Aki 将房主转让给 #Yumi （仅房主权限）"。
         /// 服务端在 /transferhost 执行时广播给全员（大厅/裁判阶段聊天面板，
         /// 生存阶段密聊浮层）。
-        /// </summary>
         [Config("房主转让通知文本（显示为：#原房主 <此文本> #新房主 （仅房主权限/大厅owner））。留空则用默认“将房主转让给”。")]
         public static string TransferText = "将房主转让给";
 
@@ -63,12 +59,11 @@ namespace DT_Tools.Patches.System.HostTransfer
                 }
                 catch (global::System.Exception ex)
                 {
-                    Log.Error(Engine.SectionOf(typeof(HostTransferFeature)), "局内房主标记同步失败: " + ex.Message);
+                    Log.Error(Engine.SectionOf(typeof(HostTransferFeature)), ex, "局内房主标记同步失败");
                 }
             }
         }
 
-        // ── 受控 Steam 大厅 owner 转让：防"房主离开"误迁移 ──────────────────
         // /transferhost #<id> owner 会调用 SteamMatchmaking.SetLobbyOwner(新房主)，
         // 但游戏内置机制（NetworkManager.OnHostChanged）把"大厅 owner 变化"当作
         // "房主离开"处理：普通客户端会走 ComputeSuccessor/RerouteToNewHost/
@@ -108,7 +103,6 @@ namespace DT_Tools.Patches.System.HostTransfer
             }
         }
 
-        // ── 新房主代写大厅状态 ──────────────────────────────────────────────
         // Steam 限制：仅大厅 owner 可 SetLobbyData。受控转让大厅 owner 后，
         // 原游戏房主（服务器）的 SetLobbyState（state=ingame/lobby）会因非 owner
         // 而失败。本补丁让新房主（新 owner）在 owner 变化后重发一次当前大厅状态

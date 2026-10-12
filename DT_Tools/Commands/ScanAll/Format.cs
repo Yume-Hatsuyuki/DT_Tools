@@ -5,10 +5,10 @@ using Protocol;
 
 namespace DT_Tools.Commands.ScanAll
 {
-    /// <summary>/scan_all 输出格式化：扫描清单文本 + JSON 结果 DTO。</summary>
+    /// /scan_all 输出格式化：扫描清单文本 + JSON 结果 DTO。
     internal static class ScanAllFormat
     {
-        /// <summary>设备分类中文标签（尸体 / 武器架 / 其他设备）。</summary>
+        /// 设备分类中文标签（尸体 / 武器架 / 其他设备）。
         public static string Category(EDeviceType type)
             => type switch
             {

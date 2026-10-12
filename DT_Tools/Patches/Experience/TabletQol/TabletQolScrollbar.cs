@@ -4,7 +4,6 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Patches.Experience.TabletQol
 {
-    /// <summary>
     /// ① 滚动条：运行时给一个 `ScrollRect` 补上可拖拽的滚动条。
     ///
     /// 游戏**从不用** `UnityEngine.UI.Scrollbar`（0.1.17a 反编译转储全文 0 处），没有现成 prefab 可复用，
@@ -17,7 +16,6 @@ namespace DT_Tools.Patches.Experience.TabletQol
     /// 平板列表都是竖排（`verticalNormalizedPosition` / `UI_SmoothScroll.ScrollToVertical`，
     /// 转储 :52730 / :53667 / :54830），而"都没开"通常只是内容还短/还没刷新 ⇒ 跳过就永远挂不上
     /// （实机踩过：同一块 `ClueSrollRect` 会议阶段有条、调查阶段没条）。
-    /// </summary>
     internal static class TabletQolScrollbar
     {
         private const string BarName = "DT_TabletScrollbar";

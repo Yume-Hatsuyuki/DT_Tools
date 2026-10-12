@@ -2,15 +2,13 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.MicMusic
 {
-    /// <summary>
     /// /mic_music 参数：off 停止广播；否则复用音频来源解析核心
     /// <see cref="AudioSourceArgs"/>（[local|online] &lt;url|路径&gt; [seconds] [volume]，
     /// 支持带空格路径加引号与 volume/seconds 命名关键字）。
     /// 混入响度默认 0.85 留出人声叠加余量（1.0 时低频常态进软限幅区产生谐波失真）。
-    /// </summary>
     internal sealed class MicMusicArgs
     {
-        /// <summary>混入响度默认值：留出人声叠加余量。</summary>
+        /// 混入响度默认值：留出人声叠加余量。
         internal const float DefaultVolume = 0.85f;
 
         public bool Off { get; private set; }

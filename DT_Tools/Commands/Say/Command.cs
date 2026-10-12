@@ -4,7 +4,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Say
 {
-    /// <summary>
     /// /say &lt;all|#id&gt; &lt;text&gt; — 给指定玩家或所有玩家发送文字（需房主）。
     ///
     /// 绕过原版聊天校验与冷却，直接向目标客户端下发 S_CHAT_MESSAGE，复用游戏自带的
@@ -12,7 +11,6 @@ namespace DT_Tools.Commands.Say
     /// Survive → secret（密聊屏幕浮层）、其余阶段无显示链路直接拒绝。
     /// all 在生存阶段发所有存活真人（对齐 AlivePlayers）、大厅/裁判发房间全员；
     /// #id 为真·私密单发（其他黑/暗、白方、房主均收不到，不进 SecretChatLog）。
-    /// </summary>
     internal sealed class SayCommand : ICommand
     {
         public string Name => "say";
@@ -46,7 +44,7 @@ namespace DT_Tools.Commands.Say
 
             if (ctx.Args.Length < 2)
             {
-                ctx.Reply("缺少文字内容。用法: " + Usage);
+                ctx.Reply($"缺少文字内容。用法: {Usage}");
                 return CommandResult.Fail("missing text");
             }
 

@@ -11,7 +11,6 @@ using Steamworks;
 
 namespace DT_Tools.Patches.System.LobbyMaxPlayers
 {
-    /// <summary>
     /// HandleEnterPlayer 整替（0.1.16b GameRoom.cs:1037-1210）：
     /// 唯一差异为进房上限 RoomMemberCountForMetadata() &gt;= 8 改为 &gt;= MaxMembers
     /// （原版判断在 0.1.16b GameRoom.cs:1078），其余逐行对应原版。
@@ -19,11 +18,9 @@ namespace DT_Tools.Patches.System.LobbyMaxPlayers
     /// _bannedSteamIds:79 / _score_board_pkt:87 / _pendingBootstrapPlayers:89 /
     /// HasSameAccountRemnant:981 / CheckDuplicationName:1025 / EnterSpectator:1212 /
     /// SanitizeOwnedCharacters:1321 / AssignLobbyCharacter:1687 / EnterPlayer:2771。
-    /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.HandleEnterPlayer))]
     internal static class LobbyMaxPlayersEnterPlayerPatch
     {
-        // ── 反射目标缓存 ─────────────────────────────────────────────────
         // 进房是高频路径，成员/方法进程内不变：static readonly 只查一次（typeinit 时完成），
         // 兼具"失败标记"效果——AccessTools 未命中返回 null 且不再重查（原实现每次进房都现查）。
         // 定位依据（0.1.16b GameRoom.cs）：字段 :73/:79/:87/:89；方法 :981/:1025/:1212/:1321/:1687/:2771。

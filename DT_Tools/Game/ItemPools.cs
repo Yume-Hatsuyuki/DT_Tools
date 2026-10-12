@@ -3,21 +3,17 @@ using System.Linq;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
     /// 随机道具模式（鱼池 / 货架等互斥选项统一用此枚举）。
     /// Normal = 含武器；Safe = 不含武器。
-    /// </summary>
     public enum RandomItemMode
     {
         Normal = 0,
         Safe = 1,
     }
 
-    /// <summary>
     /// 鱼池 / 货架共用道具池（Game 层游戏数据表；原 Patches/System/RandomItems 纯共享
     /// 目录上浮——武器区间判定与 60 项物品表属游戏行为数据，且消费方 ≥2 处）。
     /// 武器区间 [2000, 3000)。启用判定由调用方用 Engine.Enabled&lt;本功能&gt;() 自查。
-    /// </summary>
     public static class ItemPools
     {
         public static readonly int[] Full =
@@ -91,11 +87,9 @@ namespace DT_Tools.Game
         public static int[] ForMode(RandomItemMode mode) =>
             mode == RandomItemMode.Safe ? Safe : Full;
 
-        /// <summary>
         /// 货架扩展池提供者：由货架随机道具功能（SupplyShelf）装载时发布，取值含
         /// 功能开启判定（未开启返回 null）。下游（SupplyShelfRefill 补货池）只读本层，
         /// 消除 Patches 功能间的横向依赖（AGENTS.md §4）。
-        /// </summary>
         public static Func<int[]> ShelfPoolProvider;
     }
 }

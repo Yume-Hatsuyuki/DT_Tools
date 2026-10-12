@@ -2,7 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Patches.Fun.StageMusic
 {
-    /// <summary>
     /// 阶段音乐（客户端，实验性）：按游戏阶段播放自定义音乐（http 链接或本地文件，
     /// 由 TrackSource 统一指定来源，仅本地收听）。
     /// 触发点审计（0.1.16b，含 2026-09 补充审计）——
@@ -25,7 +24,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
     /// Game/MicBroadcast 虚拟麦克风混流发往全房（无需说话），本地仍由本功能播放器负责；
     /// 广播随播放槽启停（切阶段未配置的阶段即停止），手动 /mic_music 与其互斥（后触发者接管）。
     /// 未来扩展：新增阶段=加 MusicStage 成员 + 对应 [Config] 字段 + 触发补丁。
-    /// </summary>
     [PatchFeature(
         "[实验性] 阶段音乐：按游戏阶段播放自定义音乐（TrackSource 统一选择在线链接或本地文件，" +
         "17 个阶段独立配置曲目/音量/时长上限——原 8 阶段 + 选角/审判四子阶段/发现尸体/" +
@@ -112,8 +110,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
 
         [Config("胜利结算音乐时长上限（秒）。-1 或 0=不限，到点自动停止。", Min = -1, Max = 600)]
         public static int VictoryMaxSeconds = -1;
-
-        // ── 以下 9 项为 2026-09 审计新增阶段，默认全部留空（不影响原有八阶段） ──
 
         [Config("选角阶段音乐（进入角色选择弹窗时播放）。留空=该阶段不播放。")]
         public static string PickCharacterTrack = "";
@@ -202,7 +198,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
         [Config("阶段音乐麦克风广播：开启后阶段音乐同时经虚拟麦克风混入你的语音发往全房（无需说话，游戏内麦克风不能静音；与 /mic_music 共用引擎，手动点歌会被阶段切换顶替）。默认关。")]
         public static bool MicBroadcast = false;
 
-        /// <summary>运行时关闭：停播并销毁 AudioSource 与音频缓存、复位混音状态（有持续音频/对象副作用必须清理）。</summary>
+        /// 运行时关闭：停播并销毁 AudioSource 与音频缓存、复位混音状态（有持续音频/对象副作用必须清理）。
         private static void OnDisabled()
         {
             StageMusicPlayer.Shutdown();

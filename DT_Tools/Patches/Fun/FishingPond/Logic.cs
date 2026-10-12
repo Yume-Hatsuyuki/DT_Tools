@@ -4,11 +4,9 @@ using Protocol;
 
 namespace DT_Tools.Patches.Fun.FishingPond
 {
-    /// <summary>
     /// 完成水下捕捉任务的收口调用。MissionManager 在发行程序集中为 internal
     /// （0.1.16b Server.Game/MissionManager.cs:10），反射访问统一收敛到 Game/MissionAccess
     /// （ClearMission(ESchoolMission, Player, bool)：0.1.16b Server.Game/MissionManager.cs:437）。
-    /// </summary>
     internal static class FishingPondLogic
     {
         public static void ClearMission(Server.Game.Player player, bool isInfected)

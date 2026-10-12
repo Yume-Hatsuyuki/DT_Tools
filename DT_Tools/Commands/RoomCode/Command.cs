@@ -2,7 +2,7 @@ using DT_Tools.Commands;
 
 namespace DT_Tools.Commands.RoomCode
 {
-    /// <summary>/room_code — 显示当前房间的房间号（邀请码）及玩家数。</summary>
+    /// /room_code — 显示当前房间的房间号（邀请码）及玩家数。
     internal sealed class RoomCodeCommand : ICommand
     {
         public string Name => "room_code";

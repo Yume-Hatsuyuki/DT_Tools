@@ -12,29 +12,25 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.LiveDraw
 {
-    /// <summary>
     /// 庭审画布"动态照片"补丁集合（原 DT_LiveDraw v1.0.0 移植）：
     /// 1. Managers.Update Postfix：仅庭审讨论阶段处理按键（F9 画下一张 / F10 沸腾开关 /
-    ///    F11 手动波浪；聊天框打开时不抢按键）；阶段切换自动停止动画与作废进行中的绘制；
+    /// F11 手动波浪；聊天框打开时不抢按键）；阶段切换自动停止动画与作废进行中的绘制；
     /// 2. 绘制协程（CoroutineHost.Start）：ClearMine 清空自己层 → 按笔画逐点落笔
-    ///    （对齐原版 64 点/包、0.09s 间隔 < 房主 12 包/秒限速）→ FlushOutbox 收尾；
+    /// （对齐原版 64 点/包、0.09s 间隔 < 房主 12 包/秒限速）→ FlushOutbox 收尾；
     /// 3. 动画（TickBoil/SendBoilFrame）：按配置帧率发 C_DRAW_REPLACE 变形帧（基准点正弦
-    ///    偏移 + 周期波浪），复用原笔画 StrokeId；DrawingMirror.Replace（0.1.16b
-    ///    Server.Game/DrawingMirror.cs:47 静态）同步服务端镜像（房主迁移后能恢复到当前
-    ///    动画帧，非房主进程为空镜像写入无害），UpsertFromProto（DrawingManager 私有方法，
-    ///    反射调用）同步本地模型+触发重绘。
+    /// 偏移 + 周期波浪），复用原笔画 StrokeId；DrawingMirror.Replace（0.1.16b
+    /// Server.Game/DrawingMirror.cs:47 静态）同步服务端镜像（房主迁移后能恢复到当前
+    /// 动画帧，非房主进程为空镜像写入无害），UpsertFromProto（DrawingManager 私有方法，
+    /// 反射调用）同步本地模型+触发重绘。
     /// 照片→笔画管线见 Draw.cs；配置与开关见 Feature.cs（defaultEnabled:false，需手动开启）。
-    /// </summary>
     internal static class Patch
     {
-        // ---- 画布几何（与房主 DrawingBook 校验一致） ----
         private const float CanvasHalfW = 439.5f;
         private const float CanvasHalfH = 348f;
         private const float ClampX = 437f;   // 动画偏移后强制夹回，防止越界整包被房主丢弃
         private const float ClampY = 346f;
         private const float Margin = 32f;
 
-        // ---- 动画手感（与桌面预览页同一套公式） ----
         private const float WaveDur = 1.8f;
 
         private static MethodInfo _upsert; // DrawingManager.UpsertFromProto(DrawStroke)，私有：动画帧同步本地模型用
@@ -52,7 +48,6 @@ namespace DT_Tools.Patches.Fun.LiveDraw
         private static float _autoWaveTimer;
         private static bool _warnedDead;
 
-        // ---- 5 种额外动画特效（全部基于 REPLACE 点集变换/笔画子集，全房可见） ----
         private enum LiveFx { None, Bounce, Replay, Heartbeat, Float, Dissolve }
         private const float BounceDur = 0.9f;     // 弹跳闪光时长
         private const float HeartbeatDur = 1.1f;  // 心跳呼吸时长
@@ -60,8 +55,6 @@ namespace DT_Tools.Patches.Fun.LiveDraw
         private static LiveFx _fx = LiveFx.None;
         private static float _fxT;                // 特效计时（秒）
         private static int[] _fxDissolveOrder;    // 溶解的随机笔画顺序（Plan 索引）
-
-        // ===== 1. 按键与动画主循环 =====
 
         [HarmonyPatch(typeof(Managers), "Update")]
         internal static class LiveDrawUpdatePatch
@@ -98,7 +91,6 @@ namespace DT_Tools.Patches.Fun.LiveDraw
                     }
                     if (Input.GetKeyDown(LiveDrawFeature.WaveKey) && LiveDrawFeature.WaveKey != KeyCode.None && _boiling) _waveT = 0f;
 
-                    // ---- 5 种特效（需已画完；触发时自动打开沸腾帧） ----
                     if (_boiling && !_drawing)
                     {
                         // 漂浮是可切换的持续效果（开/关），其余是一次性效果
@@ -120,12 +112,10 @@ namespace DT_Tools.Patches.Fun.LiveDraw
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<LiveDrawFeature>("[庭审画布动态照片] 主循环异常：" + ex.Message);
+                    Log.Error<LiveDrawFeature>(ex, "[庭审画布动态照片] 主循环异常");
                 }
             }
         }
-
-        // ===== 2. 入口：画下一张照片 =====
 
         private static void TryStartNextPhoto()
         {
@@ -171,7 +161,7 @@ namespace DT_Tools.Patches.Fun.LiveDraw
             }
             catch (Exception ex)
             {
-                Log.Error<LiveDrawFeature>("[庭审画布动态照片] 启动绘制失败：" + ex.Message);
+                Log.Error<LiveDrawFeature>(ex, "[庭审画布动态照片] 启动绘制失败");
             }
         }
 
@@ -196,19 +186,8 @@ namespace DT_Tools.Patches.Fun.LiveDraw
             catch (Exception e) { Log.Error<LiveDrawFeature>($"扫描照片目录失败: {e.Message}"); }
         }
 
-        /// <summary>照片目录：配置了 PhotoFolder 用配置路径，否则用默认目录（BepInEx/plugins/DT_Tools/Photos/，与照片发送器共用）。</summary>
-        private static string PhotoDirectory
-        {
-            get
-            {
-                string folder = LiveDrawFeature.PhotoFolder?.Trim();
-                return string.IsNullOrEmpty(folder)
-                    ? Path.Combine(BepInEx.Paths.PluginPath, "DT_Tools", "Photos")
-                    : folder;
-            }
-        }
-
-        // ===== 3. 静态绘制协程 =====
+        /// 照片目录：配置了 PhotoFolder 用配置路径，否则用默认目录（BepInEx/config/DT_Tools/photos/，与照片发送器共用）。
+        private static string PhotoDirectory => DtPaths.ResolvePhotoFolder(LiveDrawFeature.PhotoFolder);
 
         private static IEnumerator DrawRoutine(List<LiveStroke> plan)
         {
@@ -272,8 +251,6 @@ namespace DT_Tools.Patches.Fun.LiveDraw
             }
         }
 
-        // ===== 4. 动画 =====
-
         private static void StartFx(LiveFx fx)
         {
             _fx = fx;
@@ -302,7 +279,7 @@ namespace DT_Tools.Patches.Fun.LiveDraw
             _fxDissolveOrder = null;
         }
 
-        /// <summary>当前特效的单次时长；Float 为持续效果返回 -1（不自动结束）。</summary>
+        /// 当前特效的单次时长；Float 为持续效果返回 -1（不自动结束）。
         private static float FxDuration()
         {
             switch (_fx)
@@ -365,7 +342,6 @@ namespace DT_Tools.Patches.Fun.LiveDraw
                 bool isDead = Managers.Game != null && !Managers.Game.IsAlive;
                 float wv = _waveT >= 0f ? Mathf.Sin(Mathf.PI * Mathf.Min(1f, _waveT / WaveDur)) : 0f;
 
-                // ---- 特效参数：缩放/旋转/位移/笔画可见性 ----
                 float fxS = 1f, fxDy = 0f, fxRot = 0f;
                 int fxVisible = int.MaxValue;  // Replay：只显示前 fxVisible 笔
                 int fxKeep = int.MaxValue;     // Dissolve：随机序前 fxKeep 笔存活
@@ -454,7 +430,7 @@ namespace DT_Tools.Patches.Fun.LiveDraw
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<LiveDrawFeature>("DrawingMirror 镜像同步失败（非房主进程可忽略）：" + ex.Message);
+                    Log.Warn<LiveDrawFeature>(ex, "DrawingMirror 镜像同步失败（非房主进程可忽略）");
                 }
 
                 for (int i = 0; i < newStrokes.Count; i++)
@@ -462,15 +438,13 @@ namespace DT_Tools.Patches.Fun.LiveDraw
             }
             catch (Exception ex)
             {
-                Log.Error<LiveDrawFeature>("[庭审画布动态照片] 动画帧发送失败：" + ex.Message);
+                Log.Error<LiveDrawFeature>(ex, "[庭审画布动态照片] 动画帧发送失败");
             }
         }
 
-        // ===== 5. 阶段门 =====
-
-        /// <summary>客户端阶段判断：庭审且处于讨论（作画）阶段。用客户端 Managers.Game.State +
+        /// 客户端阶段判断：庭审且处于讨论（作画）阶段。用客户端 Managers.Game.State +
         /// 静态单例 TrialManager.Instance.State（0.1.16b trial.cs:41 s_instance，State 为独立
-        /// 字段不依赖 GameRoom），任何玩家（含非房主）都能画；房主进程同样有效。</summary>
+        /// 字段不依赖 GameRoom），任何玩家（含非房主）都能画；房主进程同样有效。
         private static bool InDrawPhase()
         {
             var game = Managers.Game;

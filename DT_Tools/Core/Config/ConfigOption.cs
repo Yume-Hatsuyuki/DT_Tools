@@ -1,6 +1,6 @@
 namespace DT_Tools.Core
 {
-    /// <summary>下拉选项：value 是写回配置的原始值，label 是给人看的文字。</summary>
+    /// 下拉选项：value 是写回配置的原始值，label 是给人看的文字。
     public readonly struct ConfigOption
     {
         public readonly string Value;

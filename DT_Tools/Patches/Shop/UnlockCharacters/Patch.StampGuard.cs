@@ -3,7 +3,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Patches.Shop.UnlockCharacters
 {
-    /// <summary>
     /// SteamInventorySource.StampNewlyAcquired 打戳守卫（私有方法，字符串定位）：
     /// 定义 0.1.16b SteamInventorySource.cs:719，唯一调用点 OnResultReady
     /// （SteamInventorySource.cs:377，每次库存解析成功即执行）。
@@ -19,7 +18,6 @@ namespace DT_Tools.Patches.Shop.UnlockCharacters
     /// 两个功能同时开启时任一生效即可。
     /// 已知取舍：原方法一次给角色与表情两个列表打戳，整体跳过会连表情侧的真实
     /// 打戳一起推迟（两个 Feature 描述均已声明，见各自 Feature.cs）。
-    /// </summary>
     [HarmonyPatch(typeof(SteamInventorySource), "StampNewlyAcquired")]
     internal static class UnlockCharactersStampGuardPatch
     {

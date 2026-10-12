@@ -5,7 +5,6 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.SitOnChairs
 {
-    /// <summary>
     /// 对局内（非 Lobby）椅子坐姿状态机，完全复刻游戏原生坐姿机制：
     /// 原版坐下的表现 = 玩家模型隐藏（MyPlayer.HidePlayer(true)）+
     /// 椅子 Spine 换成"角色坐在椅子上的形象"（Chair.ChangeCharacter(角色ID)
@@ -15,10 +14,9 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
     /// mod / 服务端没有这把椅子时永久无响应，导致"按 E 没反应"；本状态机在按 E 时
     /// 本地立即执行同样的坐姿表现，同时照发原版网络包（房主装了则全房同步，
     /// 没装也不影响本地坐姿）。起身同理本地还原。
-    /// </summary>
     internal static class GameSit
     {
-        /// <summary>坐姿同步广播前缀（零宽字符 + 左方括号，与表情动作同步的前缀区分开）。</summary>
+        /// 坐姿同步广播前缀（零宽字符 + 左方括号，与表情动作同步的前缀区分开）。
         internal const string SyncPrefix = "\u200B[";
         internal const string SyncSuffix = "]";
 
@@ -63,7 +61,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>("[可坐椅子] 对局内坐下失败：" + ex.Message);
+                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 对局内坐下失败");
                 TryRestore(my, chair);
                 _chair = null;
             }
@@ -92,11 +90,11 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>("[可坐椅子] 对局内起身失败：" + ex.Message);
+                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 对局内起身失败");
             }
         }
 
-        /// <summary>坐着期间每帧调用：离开调查/生存阶段或死亡时立即起身还原。</summary>
+        /// 坐着期间每帧调用：离开调查/生存阶段或死亡时立即起身还原。
         internal static void Hold()
         {
             if (_chair == null)
@@ -124,7 +122,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             return Managers.Player != null ? Managers.Player.MyPlayer : null;
         }
 
-        /// <summary>自己角色的 ID（PublicInfo.CharacterId，椅子的 ChangeCharacter 需要这个 ID）。</summary>
+        /// 自己角色的 ID（PublicInfo.CharacterId，椅子的 ChangeCharacter 需要这个 ID）。
         private static int FindMyCharacterId(MyPlayer my)
         {
             try
@@ -136,12 +134,12 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>("[可坐椅子] 查找角色ID失败：" + ex.Message);
+                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 查找角色ID失败");
             }
             return 0;
         }
 
-        /// <summary>广播坐下：零宽前缀指令，房主当作普通聊天原样转发全房，装本 mod 的客户端解析。</summary>
+        /// 广播坐下：零宽前缀指令，房主当作普通聊天原样转发全房，装本 mod 的客户端解析。
         private static void BroadcastSit(Chair chair, int charId)
         {
             if (!SitOnChairsFeature.SyncSitting)
@@ -154,11 +152,11 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Warn<SitOnChairsFeature>("[可坐椅子] 坐姿同步广播(坐下)失败：" + ex.Message);
+                Log.Warn<SitOnChairsFeature>(ex, "[可坐椅子] 坐姿同步广播(坐下)失败");
             }
         }
 
-        /// <summary>广播起身：装本 mod 的客户端据此还原椅子形象并显示该玩家模型。</summary>
+        /// 广播起身：装本 mod 的客户端据此还原椅子形象并显示该玩家模型。
         private static void BroadcastRise(Chair chair)
         {
             if (!SitOnChairsFeature.SyncSitting)
@@ -171,7 +169,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Warn<SitOnChairsFeature>("[可坐椅子] 坐姿同步广播(起身)失败：" + ex.Message);
+                Log.Warn<SitOnChairsFeature>(ex, "[可坐椅子] 坐姿同步广播(起身)失败");
             }
         }
 

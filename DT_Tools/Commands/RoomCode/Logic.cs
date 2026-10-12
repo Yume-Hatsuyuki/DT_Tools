@@ -7,15 +7,13 @@ using Steamworks;
 
 namespace DT_Tools.Commands.RoomCode
 {
-    /// <summary>/room_code 业务：房间号、人数与上限读取（房主/客户端数据源不同）。</summary>
+    /// /room_code 业务：房间号、人数与上限读取（房主/客户端数据源不同）。
     internal static class RoomCodeLogic
     {
-        /// <summary>
         /// 读取房间号 / 人数 / 上限。失败返回 false（提示与错误码已给出）。
         /// max：LobbyMaxPlayers 开启时用其生效进房上限（命令域引用功能公开状态，
         /// AGENTS.md §4 例外一），否则原版常量 SteamLobbyManager.MaxMembers（0.1.16b
         /// DummyClient/SteamLobbyManager.cs:10，值为 8）。
-        /// </summary>
         public static bool TryRead(
             out string code,
             out bool isHost,
@@ -59,7 +57,7 @@ namespace DT_Tools.Commands.RoomCode
             return true;
         }
 
-        /// <summary>人数读取：房主走 GameRoom.Players（服务器权威），客户端走 Steam Lobby 成员数。</summary>
+        /// 人数读取：房主走 GameRoom.Players（服务器权威），客户端走 Steam Lobby 成员数。
         public static int CurrentCount(bool isHost, SteamLobbyManager lobby)
         {
             if (isHost)
@@ -67,10 +65,8 @@ namespace DT_Tools.Commands.RoomCode
             return lobby != null && lobby.InLobby ? lobby.GetMembers().Count : 0;
         }
 
-        /// <summary>
         /// Steam 容器上限（进房人数仍按 max 校验）；不在 Lobby 时返回 0
         /// （Steamworks SteamMatchmaking.GetLobbyMemberLimit）。
-        /// </summary>
         public static int TryGetSteamLimit(SteamLobbyManager lobby)
         {
             if (lobby == null || !lobby.InLobby)

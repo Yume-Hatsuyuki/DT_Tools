@@ -5,7 +5,7 @@ using Protocol;
 
 namespace DT_Tools.Commands.Faction
 {
-    /// <summary>/list_* 阵营列表输出格式化：人类回复文本 + JSON 结果 DTO（键名沿用旧 JSON）。</summary>
+    /// /list_* 阵营列表输出格式化：人类回复文本 + JSON 结果 DTO（键名沿用旧 JSON）。
     internal static class FactionFormat
     {
         public static string Reply(string title, List<Server.Game.Player> matched, int myId)
@@ -34,10 +34,8 @@ namespace DT_Tools.Commands.Faction
             return sb.ToString();
         }
 
-        /// <summary>
         /// JSON 结果（键名沿用旧实现）：顶层键与 color 对应 dark / white / black，
         /// 元素 {pid, name, steam_id}（steam_id 保持字符串形状）。
-        /// </summary>
         public static object Result(EPlayerColor color, List<Server.Game.Player> matched)
         {
             string key = color switch

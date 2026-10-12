@@ -9,19 +9,17 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
     /// /api/dummy/* — 假人管理应用的后端（Game/FakePlayers 的 HTTP 面）。
     /// GameRoom 及其玩家只能在 Unity 主线程读写：所有端点经 WebConsole.RunOnMain
     /// 同步执行（复用 /api/run 的队列与 5 秒超时保护）。
     /// 响应沿用命令信封 {ok, error, data}；错误码小写英文短词，中文详情在 data.message。
-    /// </summary>
     public static class DummyApi
     {
-        /// <summary>GET /api/dummy/state — 房间快照：阶段/房主/容量/玩家与假人标记。</summary>
+        /// GET /api/dummy/state — 房间快照：阶段/房主/容量/玩家与假人标记。
         public static void HandleState(HttpListenerContext ctx)
             => WriteMain(ctx, () => CommandResult.Success(FakePlayers.Snapshot(ResolveRoomCapacity())));
 
-        /// <summary>GET /api/dummy/characters — 角色目录（含随机项），下拉数据源。</summary>
+        /// GET /api/dummy/characters — 角色目录（含随机项），下拉数据源。
         public static void HandleCharacters(HttpListenerContext ctx)
             => WriteMain(ctx, () => CommandResult.Success(new
             {
@@ -30,7 +28,7 @@ namespace DT_Tools.WebConsole.Api
                     .ToArray(),
             }));
 
-        /// <summary>POST /api/dummy/create {name, characterId} — 创建假人并进场。</summary>
+        /// POST /api/dummy/create {name, characterId} — 创建假人并进场。
         public static void HandleCreate(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -43,7 +41,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/dummy/remove {name} — 移除假人（昵称或 #座位ID）。</summary>
+        /// POST /api/dummy/remove {name} — 移除假人（昵称或 #座位ID）。
         public static void HandleRemove(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -55,7 +53,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/dummy/ready {name, ready} — 假人就绪/取消就绪。</summary>
+        /// POST /api/dummy/ready {name, ready} — 假人就绪/取消就绪。
         public static void HandleReady(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -73,7 +71,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/dummy/pick {name, characterId} — 为假人选角（选角阶段/大厅换角通吃）。</summary>
+        /// POST /api/dummy/pick {name, characterId} — 为假人选角（选角阶段/大厅换角通吃）。
         public static void HandlePick(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -86,7 +84,7 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/dummy/remove-all — 移除全部假人（不动 WebUI 行配置）。</summary>
+        /// POST /api/dummy/remove-all — 移除全部假人（不动 WebUI 行配置）。
         public static void HandleRemoveAll(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -95,14 +93,10 @@ namespace DT_Tools.WebConsole.Api
                 return Op(true, null, text, new { removed });
             });
 
-        // ---- 内部 ----
-
-        /// <summary>
         /// 有效房间人数上限：「房间人数上限」功能（LobbyMaxPlayers）开启时用其 MaxMembers
         /// （1–16，其 GameStart 补丁已做出生点循环复用，>8 不越界）；关闭时回原生 8
         /// （0.1.16b Define.cs:752）。Game 层禁止反向引用 Patches（AGENTS.md §4），
         /// 故在 API 顶层解析后作为参数传给 FakePlayers；座位表 16 为硬顶。
-        /// </summary>
         private static int ResolveRoomCapacity()
         {
             try
@@ -117,11 +111,11 @@ namespace DT_Tools.WebConsole.Api
             return Define.MAX_PLAYER_COUNT;
         }
 
-        /// <summary>统一执行壳：RunOnMain 包裹（结果信封原样回写）。</summary>
+        /// 统一执行壳：RunOnMain 包裹（结果信封原样回写）。
         private static void WriteMain(HttpListenerContext ctx, Func<CommandResult> work)
             => HttpServer.WriteJson(ctx.Response, WebConsole.RunOnMain(work));
 
-        /// <summary>成功/失败 → 命令信封；中文详情进 data.message 并写一条全局日志（日志应用可见）。</summary>
+        /// 成功/失败 → 命令信封；中文详情进 data.message 并写一条全局日志（日志应用可见）。
         private static CommandResult Op(bool ok, string error, string text, object data)
         {
             if (!string.IsNullOrEmpty(text))
@@ -139,7 +133,7 @@ namespace DT_Tools.WebConsole.Api
             catch { return 0; }
         }
 
-        /// <summary>解析 JSON 请求体；缺失/非法直接回 "invalid body"（统一解析在 ApiUtil）。</summary>
+        /// 解析 JSON 请求体；缺失/非法直接回 "invalid body"（统一解析在 ApiUtil）。
         private static bool ParseBody(HttpListenerContext ctx, out JObject body)
         {
             body = ApiUtil.ParseBody(ctx);

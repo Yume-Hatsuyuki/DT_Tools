@@ -1,13 +1,13 @@
 namespace DT_Tools.Commands.GiveBuff
 {
-    /// <summary>/givebuff 本次要执行的动作。</summary>
+    /// /givebuff 本次要执行的动作。
     internal enum GiveBuffAction
     {
-        /// <summary>添加 BUFF（可带时长，省略用最大时长）。</summary>
+        /// 添加 BUFF（可带时长，省略用最大时长）。
         Add,
-        /// <summary>清除目标的全部 BUFF（第二参为 clear）。</summary>
+        /// 清除目标的全部 BUFF（第二参为 clear）。
         ClearAll,
-        /// <summary>清除目标指定类型 BUFF（第三参为 clear / 0）。</summary>
+        /// 清除目标指定类型 BUFF（第三参为 clear / 0）。
         ClearOne,
     }
 }

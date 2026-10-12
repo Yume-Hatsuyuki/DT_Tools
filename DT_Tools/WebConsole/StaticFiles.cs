@@ -5,10 +5,8 @@ using System.Reflection;
 
 namespace DT_Tools.WebConsole
 {
-    /// <summary>
     /// WebUI 静态资源服务：白名单（index/login/css/js）+ Mime 表 + 防目录穿越。
     /// WebUI 缺失时页面返回 503，API 不受影响。
-    /// </summary>
     public static class StaticFiles
     {
         private static string _webRoot;
@@ -81,7 +79,7 @@ namespace DT_Tools.WebConsole
             return true;
         }
 
-        /// <summary>未认证时返回登录页（401）；文件缺失返回 false 由调用方兜底。</summary>
+        /// 未认证时返回登录页（401）；文件缺失返回 false 由调用方兜底。
         public static bool TryServeLogin(HttpListenerResponse resp)
         {
             string full = Path.Combine(WebRoot, "login.html");

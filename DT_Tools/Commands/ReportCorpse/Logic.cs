@@ -5,7 +5,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.ReportCorpse
 {
-    /// <summary>
     /// /report 业务：本机身份守卫 + 尸体筛选与可报警判定 + C_INTERACT_CORPSE 报警。
     ///
     /// 原版 Corpse.Interact（0.1.16b Server.Game/Corpse.cs:262-270）仅校验
@@ -15,15 +14,14 @@ namespace DT_Tools.Commands.ReportCorpse
     /// base.ID = playerInfo.PlayerId）。
     ///
     /// 客户端可见的尸体状态字段（与 Server.Game/Corpse.cs 对齐）：
-    ///   StateList[3] != 0 → IsBombCorpse（炸弹尸体，客户端 UI 同样禁报）
-    ///   StateList[4] != 0 → HideDeviceId != 0，IsHidden（藏在池塘/通风管等容器）
-    ///   IsCorpseTrickLocked → 被致命诡计锁定
+    /// StateList[3] != 0 → IsBombCorpse（炸弹尸体，客户端 UI 同样禁报）
+    /// StateList[4] != 0 → HideDeviceId != 0，IsHidden（藏在池塘/通风管等容器）
+    /// IsCorpseTrickLocked → 被致命诡计锁定
     /// _isReport / DiscoverdDone 是服务端私有字段不可见；二者任一为 true 时
     /// EndSurvival 已执行、GameRoom.State != Survive，报警前会被 RequireSurvive 拦截。
-    /// </summary>
     internal static class ReportCorpseLogic
     {
-        /// <summary>本机已进入对局（MyPlayer 已生成、到 Host 的网络链路存在）。身份校验统一走 Game.LocalPlayer。</summary>
+        /// 本机已进入对局（MyPlayer 已生成、到 Host 的网络链路存在）。身份校验统一走 Game.LocalPlayer。
         public static bool TryGetLocalContext(out DeviceManager device, out string code, out string text)
         {
             device = null;
@@ -39,7 +37,7 @@ namespace DT_Tools.Commands.ReportCorpse
             return true;
         }
 
-        /// <summary>报警只在生存阶段有意义（已开会/未开局都拒）。</summary>
+        /// 报警只在生存阶段有意义（已开会/未开局都拒）。
         public static bool RequireSurvive(out string code, out string text)
         {
             if (!LocalPlayer.IsSurvive)
@@ -53,7 +51,7 @@ namespace DT_Tools.Commands.ReportCorpse
             return true;
         }
 
-        /// <summary>从本机设备缓存取尸体（DeviceType==Corpse）。</summary>
+        /// 从本机设备缓存取尸体（DeviceType==Corpse）。
         public static DeviceBase FindCorpse(DeviceManager device, int corpseId)
         {
             if (device == null) return null;
@@ -64,10 +62,8 @@ namespace DT_Tools.Commands.ReportCorpse
                 : null;
         }
 
-        /// <summary>
         /// 返回 null 表示可报警；否则返回不可报警的中文原因
         /// （与服务端 Corpse.Interact 的 4 项门禁对齐，仅客户端可见的 3 项）。
-        /// </summary>
         public static string GetBlockReason(DeviceManager device, DeviceBase corpse)
         {
             var states = corpse?.Info?.StateList;
@@ -78,7 +74,7 @@ namespace DT_Tools.Commands.ReportCorpse
             return null;
         }
 
-        /// <summary>列出场上所有尸体（StateList 完整的），按 ID 升序。</summary>
+        /// 列出场上所有尸体（StateList 完整的），按 ID 升序。
         public static List<DeviceBase> ListCorpses(DeviceManager device)
         {
             if (device == null) return new List<DeviceBase>();
@@ -88,7 +84,7 @@ namespace DT_Tools.Commands.ReportCorpse
                 .ToList();
         }
 
-        /// <summary>从本机客户端玩家表查尸体对应死者名。</summary>
+        /// 从本机客户端玩家表查尸体对应死者名。
         public static string FindPlayerName(int playerId)
         {
             var dict = Managers.Player?.Players;

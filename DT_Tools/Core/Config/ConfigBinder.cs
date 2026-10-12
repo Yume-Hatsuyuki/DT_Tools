@@ -6,10 +6,8 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Core
 {
-    /// <summary>
     /// 绑定 [Config] 静态字段：键 = 字段名，默认值 = 字段初始化器当前值；
     /// 绑定后回写字段，配置热改（SettingChanged）时实时同步——功能代码读裸字段即可。
-    /// </summary>
     public static class ConfigBinder
     {
         public static void BindFields(ConfigFile config, Type owner, string section)

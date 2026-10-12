@@ -1,6 +1,5 @@
 namespace DT_Tools.Commands.PlayAudio
 {
-    /// <summary>
     /// /play_audio &lt;url|路径&gt; [volume 0.8] [seconds 120] [local|online] — 控制台点播（仅本地播放，
     /// 参数顺序任意，路径放最前即可）：来源可显式指定（local=本地文件 / online=在线链接），
     /// 缺省按前缀自动识别。
@@ -9,7 +8,6 @@ namespace DT_Tools.Commands.PlayAudio
     /// 解耦：默认完整播放、响度 1，显式传参可覆盖；引擎在 Game/AudioPlayback，
     /// 点播与阶段音乐互不抢占，结束时也不恢复阶段音乐；/stop_music 停止点播。
     /// 对全房间广播（虚拟麦克风）见 /mic_music。
-    /// </summary>
     internal sealed class PlayAudioCommand : ICommand
     {
         public string Name => "play_audio";

@@ -2,9 +2,7 @@ using DT_Tools.Commands;
 
 namespace DT_Tools.Commands.Phase
 {
-    /// <summary>
     /// /skip_vote — 跳过投票阶段立即开票。仅房主、VotePhase。
-    /// </summary>
     internal sealed class SkipVoteCommand : ICommand
     {
         public string Name => "skip_vote";

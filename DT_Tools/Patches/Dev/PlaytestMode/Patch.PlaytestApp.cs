@@ -3,10 +3,8 @@ using HarmonyLib;
 
 namespace DT_Tools.Patches.Dev.PlaytestMode
 {
-    /// <summary>
     /// IsPlaytestApp 整替为恒 true。公共静态属性（nameof 定位），
     /// 0.1.17a Define.cs:2003（原版按 Steam AppId 判定）。
-    /// </summary>
     [HarmonyPatch(typeof(Define), nameof(Define.IsPlaytestApp), MethodType.Getter)]
     internal static class PlaytestModePlaytestAppPatch
     {

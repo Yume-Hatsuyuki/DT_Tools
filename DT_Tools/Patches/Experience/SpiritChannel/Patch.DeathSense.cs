@@ -5,7 +5,6 @@ using Protocol;
 
 namespace DT_Tools.Patches.Experience.SpiritChannel
 {
-    /// <summary>
     /// 死亡感知：挂钩 S_SPAWN_DEVICE。
     /// 尸体（EDeviceType.Corpse）首次落地时，对存活且非 SoulSense（非 Lian）的本机玩家
     /// 播放 UI_SoulSence 蜡烛动画——与原版 S_NOTIFY_DEAD → Handle_S_NOTIFY_DEAD
@@ -16,17 +15,14 @@ namespace DT_Tools.Patches.Experience.SpiritChannel
     /// 本机是 Lian 时跳过：原版已单播 S_NOTIFY_DEAD（Server.Game/Player.cs:935-944），
     /// 再播一次会叠动画。
     /// PacketHandler 为 internal，TargetMethod 运行时解析（同 StageMusic 范本）。
-    /// </summary>
     [HarmonyPatch]
     internal static class SpiritChannelDeathSensePatch
     {
         private static MethodBase TargetMethod()
             => AccessTools.Method(AccessTools.TypeByName("PacketHandler"), "Handle_S_SPAWN_DEVICE");
 
-        /// <summary>
         /// Prefix 记录是否为「新尸体」：缓存里尚无该 DeviceId 且类型为 Corpse。
         /// 修改已有设备走 Modify 分支，不触发感知。
-        /// </summary>
         private static void Prefix(Packet packet, ref bool __state)
         {
             __state = false;

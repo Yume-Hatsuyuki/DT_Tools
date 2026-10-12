@@ -2,7 +2,6 @@ using DT_Tools.Commands;
 
 namespace DT_Tools.Commands.Power
 {
-    /// <summary>
     /// /blackout — 强制触发全场停电（仅房主、仅生存阶段）。
     ///
     /// 复用 Dark 剪断电箱线的原版完整路径：Fusebox.Interact → DisconnetCable，
@@ -13,7 +12,6 @@ namespace DT_Tools.Commands.Power
     ///
     /// 已被断开的电箱计入阈值；停电后电箱保持损坏状态，玩家可正常修线，
     /// 也可用 /restore_power 一键恢复。
-    /// </summary>
     internal sealed class BlackoutCommand : ICommand
     {
         public string Name => "blackout";

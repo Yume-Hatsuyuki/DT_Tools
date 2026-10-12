@@ -4,16 +4,14 @@ using DT_Tools.Patches.System.BanList;
 
 namespace DT_Tools.Commands.BanList
 {
-    /// <summary>/banlist /unban 业务：目标解析（#序号 / SteamId / 名字）。</summary>
+    /// /banlist /unban 业务：目标解析（#序号 / SteamId / 名字）。
     internal static class BanListLogic
     {
-        /// <summary>/unban all：全部解封。</summary>
+        /// /unban all：全部解封。
         public const string AllKeyword = "all";
 
-        /// <summary>
         /// 把参数解析成封禁条目。#序号 = /banlist 列表里的序号；
         /// 纯数字 = SteamId（SteamID64 是 17 位长数字，不会与序号语义混淆）；其余按名字匹配。
-        /// </summary>
         public static bool TryResolve(string arg, List<BanListFeature.BanEntry> bans,
             out BanListFeature.BanEntry target, out string error)
         {

@@ -6,10 +6,8 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
     /// /api/config/* — 配置列表/更新/保存/重置/导入/导出 + 功能段日志。
     /// 数据源统一走 ConfigService（与 WebUI 同一协议）；API 层不认识任何具体功能。
-    /// </summary>
     public static class ConfigApi
     {
         public static void HandleList(HttpListenerContext ctx)
@@ -120,7 +118,7 @@ namespace DT_Tools.WebConsole.Api
             resp.OutputStream.Close();
         }
 
-        /// <summary>/api/config/section/{段名}/log — 功能段日志（GET 读取；POST /log/clear 或 DELETE 清空）。</summary>
+        /// /api/config/section/{段名}/log — 功能段日志（GET 读取；POST /log/clear 或 DELETE 清空）。
         public static void HandleSectionLog(HttpListenerContext ctx)
         {
             const string prefix = "/api/config/section/";
@@ -153,8 +151,6 @@ namespace DT_Tools.WebConsole.Api
 
             HttpServer.WriteJson(ctx.Response, new { ok = false, error = "unknown section endpoint" });
         }
-
-        // ---- 内部 ----
 
         // 请求体解析与值归一化统一走 WebConsole/ApiUtil（原本类内两份实现已收编）
     }

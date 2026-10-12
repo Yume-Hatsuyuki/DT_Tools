@@ -7,20 +7,20 @@ using Protocol;
 
 namespace DT_Tools.Patches.Fun.ForceRinPick
 {
-    /// <summary>强制选角标记与目标/角色解析（服务端进程内共享状态）。</summary>
+    /// 强制选角标记与目标/角色解析（服务端进程内共享状态）。
     internal static class ForceRinPickLogic
     {
-        /// <summary>被强制玩家 PlayerId → 目标角色 DataId 映射（一次强制：命中后即移除）。</summary>
+        /// 被强制玩家 PlayerId → 目标角色 DataId 映射（一次强制：命中后即移除）。
         private static readonly Dictionary<int, int> _forced = new Dictionary<int, int>();
 
-        /// <summary>标记目标玩家：下次选角强制为指定角色（角色不存在则忽略）。</summary>
+        /// 标记目标玩家：下次选角强制为指定角色（角色不存在则忽略）。
         public static void Mark(int playerId, int characterDataId)
         {
             if (characterDataId <= 0) return;
             _forced[playerId] = characterDataId;
         }
 
-        /// <summary>选角时消费标记：返回被强制选的角色 DataId（0 表示无标记）。</summary>
+        /// 选角时消费标记：返回被强制选的角色 DataId（0 表示无标记）。
         public static int Consume(int playerId)
         {
             if (_forced.TryGetValue(playerId, out int dataId))
@@ -31,7 +31,7 @@ namespace DT_Tools.Patches.Fun.ForceRinPick
             return 0;
         }
 
-        /// <summary>按指令参数（玩家名或 PlayerId）在房间内解析目标玩家。</summary>
+        /// 按指令参数（玩家名或 PlayerId）在房间内解析目标玩家。
         public static Server.Game.Player ResolveTarget(string arg)
         {
             if (string.IsNullOrWhiteSpace(arg)) return null;
@@ -57,7 +57,7 @@ namespace DT_Tools.Patches.Fun.ForceRinPick
             return null;
         }
 
-        /// <summary>按角色参数（枚举名/角色名/DataId）解析角色 DataId。</summary>
+        /// 按角色参数（枚举名/角色名/DataId）解析角色 DataId。
         public static int ResolveCharacter(string arg)
         {
             if (string.IsNullOrWhiteSpace(arg)) return 0;
@@ -90,11 +90,9 @@ namespace DT_Tools.Patches.Fun.ForceRinPick
         }
     }
 
-    /// <summary>
     /// 服务端聊天入口（0.1.16b HostPacketHandler.Handle_C_CHAT_MESSAGE，static）：解析
     /// `!force 目标 [角色]` 指令——命中则标记目标玩家并拦截本次聊天（指令文本不广播全房）。
     /// 仅在房主进程执行（客户端上 HostPacketHandler 链路不运行），无需 IsHost 判定。
-    /// </summary>
     [HarmonyPatch(typeof(Server.Game.HostPacketHandler), "Handle_C_CHAT_MESSAGE")]
     internal static class ForceRinPickChatPatch
     {
@@ -142,7 +140,7 @@ namespace DT_Tools.Patches.Fun.ForceRinPick
             }
             catch (global::System.Exception ex)
             {
-                Log.Warn<ForceRinPickFeature>("强制选角指令解析失败（放行原逻辑）：" + ex.Message);
+                Log.Warn<ForceRinPickFeature>(ex, "强制选角指令解析失败（放行原逻辑）");
                 return true;
             }
         }

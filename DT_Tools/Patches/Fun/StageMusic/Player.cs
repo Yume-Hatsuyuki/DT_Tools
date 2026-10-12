@@ -10,14 +10,12 @@ using UnityEngine.Networking;
 
 namespace DT_Tools.Patches.Fun.StageMusic
 {
-    /// <summary>
     /// 阶段音乐播放器（单播放槽）：同 URI 播放中不重播（连杀防重复）、新触发停旧播新
     /// （切阶段只保留一首）、限长到点停止（-1/0 不限）。音频按 URI 缓存，
     /// 配置指纹变化时全部销毁重建（资源释放）。本地播放；MicBroadcast 配置开启时
     /// 同时经 Game/MicBroadcast 虚拟麦克风混流发往全房（仅混流不本地重播，
     /// 广播随本播放槽启停；与 /mic_music 手动点歌互斥、后触发者接管）。
     /// 控制台点播已迁至 Game/AudioPlayback（独立引擎，互不共享状态）。
-    /// </summary>
     internal static class StageMusicPlayer
     {
         private static AudioSource _source;
@@ -34,7 +32,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
         private static float _pendingVolume = 1f;      // 异步加载期间暂存本次播放的音量/时长（加载完成后交给 StartPlayback）
         private static float _pendingMaxSeconds = -1f;
 
-        /// <summary>阶段曲目配置（空 = 该阶段不播放）。</summary>
+        /// 阶段曲目配置（空 = 该阶段不播放）。
         private static string TrackOf(MusicStage stage)
         {
             switch (stage)
@@ -60,7 +58,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             }
         }
 
-        /// <summary>阶段独立音量（0~1）。</summary>
+        /// 阶段独立音量（0~1）。
         private static float VolumeOf(MusicStage stage)
         {
             switch (stage)
@@ -86,7 +84,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             }
         }
 
-        /// <summary>阶段独立时长上限（秒）。-1/0 = 不限。</summary>
+        /// 阶段独立时长上限（秒）。-1/0 = 不限。
         private static float MaxSecondsOf(MusicStage stage)
         {
             switch (stage)
@@ -112,7 +110,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             }
         }
 
-        /// <summary>按阶段播放：曲目/音量/时长上限均取该阶段独立配置，来源按 TrackSource 解析。</summary>
+        /// 按阶段播放：曲目/音量/时长上限均取该阶段独立配置，来源按 TrackSource 解析。
         public static void Play(MusicStage stage)
         {
             string raw = TrackOf(stage)?.Trim() ?? "";
@@ -127,9 +125,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             PlayInternal(uri, Mathf.Clamp01(VolumeOf(stage)), MaxSecondsOf(stage));
         }
 
-        /// <summary>
         /// 播放核心（uri 已解析）：同 URI 播放中不重播，新触发停旧播新。
-        /// </summary>
         private static void PlayInternal(string uri, float volume, float maxSeconds)
         {
             if (_playingUri == uri && _source != null && _source.isPlaying)
@@ -148,7 +144,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 CoroutineHost.Start(CoLoadAndPlay(uri));
         }
 
-        /// <summary>停止当前阶段音乐（阶段切换触发与未配置阶段共用）。麦克风广播随播放槽一起停止。</summary>
+        /// 停止当前阶段音乐（阶段切换触发与未配置阶段共用）。麦克风广播随播放槽一起停止。
         public static void StopCurrent()
         {
             _playingUri = null;
@@ -164,7 +160,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 MicBroadcast.Stop();
         }
 
-        /// <summary>热关闭清理（Feature.OnDisabled 调用）：停播并销毁 AudioSource 与全部缓存片段。</summary>
+        /// 热关闭清理（Feature.OnDisabled 调用）：停播并销毁 AudioSource 与全部缓存片段。
         public static void Shutdown()
         {
             StopCurrent();
@@ -200,7 +196,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             var clip = DownloadHandlerAudioClip.GetContent(request);
             if (clip == null)
             {
-                Log.Warn<StageMusicFeature>("音频解码失败（引擎不支持该格式）: " + uri);
+                Log.Warn<StageMusicFeature>($"音频解码失败（引擎不支持该格式）: {uri}");
                 yield break;
             }
             if (!_clips.ContainsKey(uri))
@@ -213,7 +209,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             StartPlayback(uri, clip, _pendingVolume, _pendingMaxSeconds);
         }
 
-        /// <summary>缓存上限淘汰：超过 CacheCap 时按插入序销毁最旧片段，正在播放的挪到队尾豁免。</summary>
+        /// 缓存上限淘汰：超过 CacheCap 时按插入序销毁最旧片段，正在播放的挪到队尾豁免。
         private static void EvictCacheOverflow()
         {
             while (_clipOrder.Count > CacheCap)
@@ -269,8 +265,6 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 _source.Stop();
         }
 
-        // ── 配置缓存指纹 ──
-
         private static string ConfigFingerprint()
         {
             // 全部阶段曲目参与指纹（Enum 驱动，新增阶段自动纳入）——指纹漏项会让
@@ -281,7 +275,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
             return sb.ToString();
         }
 
-        /// <summary>配置变化时销毁全部缓存片段（资源释放），重建指纹。</summary>
+        /// 配置变化时销毁全部缓存片段（资源释放），重建指纹。
         private static void EnsureConfigCache()
         {
             string fp = ConfigFingerprint();
@@ -297,11 +291,9 @@ namespace DT_Tools.Patches.Fun.StageMusic
             _configFingerprint = fp;
         }
 
-        /// <summary>
         /// URI 解析（阶段音乐用）：来源由 TrackSource 统一指定（不再按 http 前缀猜测，
         /// 避免本地文件命名含 http 字样时被误判）。Http 要求 http(s):// 前缀；
         /// Local 转为 file:/// URI。
-        /// </summary>
         private static string ResolveUri(string raw)
         {
             if (StageMusicFeature.Source == TrackSource.Http)
@@ -309,7 +301,7 @@ namespace DT_Tools.Patches.Fun.StageMusic
                 if (!raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
                     && !raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
-                    Log.Warn<StageMusicFeature>("Http 模式需要 http(s):// 链接: " + raw);
+                    Log.Warn<StageMusicFeature>($"Http 模式需要 http(s):// 链接: {raw}");
                     return null;
                 }
                 return raw;

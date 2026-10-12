@@ -6,13 +6,11 @@ using UnityEngine;
 
 namespace DT_Tools.Patches.Fun.SitOnChairs
 {
-    /// <summary>
     /// 等待室（大厅）本地坐姿状态机（原 IslandMap LocalSit）：服务端在 Lobby 阶段
     /// 不创建任何设备对象（0.1.16b Server.Game/GameRoom.cs:678 InitDevices() 只在
     /// GameStart 时调用），所以等待室咖啡椅只能本地假装坐下：钉住玩家位置、播放
     /// 14_Sitting 坐姿动画、把玩家渲染层级抬到 260，起身还原位置与动画；不发送
     /// 任何网络包，别人看不到（引擎限制）。仅当 CafeSit=true 且处于 Lobby 状态时启用。
-    /// </summary>
     internal static class LocalSit
     {
         private static Chair _chair;
@@ -65,7 +63,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>("[可坐椅子] 本地坐下失败：" + ex.Message);
+                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 本地坐下失败");
                 _chair = null;
             }
         }
@@ -87,11 +85,11 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>("[可坐椅子] 起身失败：" + ex.Message);
+                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 起身失败");
             }
         }
 
-        /// <summary>坐着期间每帧调用：钉住玩家在椅子上；离开 Lobby 立即起身。</summary>
+        /// 坐着期间每帧调用：钉住玩家在椅子上；离开 Lobby 立即起身。
         internal static void Hold()
         {
             if (_chair == null)
@@ -150,7 +148,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>("[可坐椅子] 本地坐姿层级失败：" + ex.Message);
+                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 本地坐姿层级失败");
             }
         }
 
@@ -176,7 +174,7 @@ namespace DT_Tools.Patches.Fun.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>("[可坐椅子] 播放坐姿失败：" + ex.Message);
+                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 播放坐姿失败");
             }
         }
     }
