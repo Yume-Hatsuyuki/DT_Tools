@@ -155,19 +155,21 @@ cd webui-src && npm run build
 
 | 工作流 | 触发 | 行为 |
 | --- | --- | --- |
-| `build.yml` | push、PR | 必定构建 WebUI。仓库里有 `libs/` 时，才编译后端 |
+| `build.yml` | push、PR，分支为 `main` 与 `dev-*` | 必定构建 WebUI。仓库里有 `libs/` 时，才编译后端 |
 | `release.yml` | 打 tag：`vMAJOR.MINOR.PATCH[.BUILD]` | 发布 Release |
 
 打包目录名的大小写必须是 `WebUI`。Linux CI 区分大小写。
 
 ### 分支
 
-- `main` 是发布线。打 tag 发版。
-- `dev` 是开发线。PR 先合入 `dev`。验证后，再合回 `main`。
+- `main` 是发布线。打 tag 发版，tag 必须在 `main` 历史中。
+- `dev-N.x` 是开发线，按主版本分支：`dev-1.x` 维护 1.x，`dev-2.x` 开发 2.x。
+- PR 先合入对应的 `dev-N.x`。验证后，再合回 `main`。
+- 新的主版本另开 `dev-N.x` 分支，不要直接在 `main` 上开发。
 
 ### 本机工作区
 
-- 本机主工作区直接检出 `dev` 分支，`libs/` 齐全，直接按上方命令构建。
+- 本机主工作区直接检出对应的 `dev-N.x` 分支（当前为 `dev-2.x`），`libs/` 齐全，直接按上方命令构建。
 - csproj 的游戏程序集目录默认值是 `DT_Tools/` 上一级的 `libs`。
 - 缺少 `libs/` 的检出可显式指定游戏程序集目录：
 
