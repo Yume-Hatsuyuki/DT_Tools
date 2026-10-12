@@ -10,20 +10,10 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.TrophyHit
 {
     /// 奖杯砸人增强（服务端权威，房主开启后全员可用）：
-    /// - 移除奖杯砸人冷却：原版 Lobby 奖杯砸人（金/银/铜奖杯 1062/1063/1064）客户端有 1.5 秒
-    /// 冷却（_lobbyTrophyCooltime），本功能置零后无冷却。
-    /// - 砸人范围/距离可自定义：原版固定 224 像素（距离平方 50176），本功能以配置 TrophyRange
-    /// （默认 224）替代；范围内除 Dummy/柜中/坐下外的其他玩家都会被击退。
-    /// - 局内生存阶段砸人：原版奖杯砸人仅限 Lobby 阶段（客户端 UpdateLobby + 服务端
-    /// HandleLobbyTrophyKnockback 均检查 EGameState.Lobby），本功能允许 Survive 阶段砸人，
-    /// 默认 E 键（与平板键相同，手持奖杯时按下=砸人、不打开平板；可自定义）。
-    ///
-    /// 实现（复用原版通道）：
-    /// - 客户端：生存阶段按砸人键且手持奖杯 → 播放 Attack 动画 + 发送 C_USE_ITEM{Item=new ItemInfo()}
-    /// （与原版 Lobby 动画事件发包同款格式）；同时拦截 Inventory.HandSmaho（手持奖杯时按砸人键
-    /// 不打开平板，避免 E 键冲突）。
-    /// - 服务端：Handle_C_USE_ITEM 在 Survive 阶段识别手持奖杯 → 走奖杯击退分支
-    /// （GameRoom.HandleLobbyTrophyKnockback，被本功能 Patch：允许 Lobby/Survive、距离可配置）。
+    /// - 移除冷却：原版 Lobby 奖杯（金/银/铜 1062/1063/1064）客户端有 1.5 秒冷却（_lobbyTrophyCooltime），本功能置零。
+    /// - 范围/距离可配：原版固定 224 像素（距离平方 50176），本功能以配置 TrophyRange（默认 224）替代；范围内除 Dummy、柜中、坐下外的玩家都会被击退。
+    /// - 生存阶段可砸：原版仅限 Lobby 阶段（客户端 UpdateLobby 与服务端 HandleLobbyTrophyKnockback 都检查 EGameState.Lobby），本功能允许 Survive 阶段；默认 E 键（与平板键相同，手持奖杯时按下为砸人、不开平板，可自定义）。
+    /// 实现（复用原版通道）：客户端生存阶段按砸人键且手持奖杯 → 播放 Attack 动画并发 C_USE_ITEM{Item=new ItemInfo()}（与原版 Lobby 动画事件同款格式），同时拦截 Inventory.HandSmaho 避免 E 键冲突；服务端 Handle_C_USE_ITEM 在 Survive 阶段识别手持奖杯 → 走 GameRoom.HandleLobbyTrophyKnockback（被本功能 Patch：允许 Lobby/Survive，距离可配）。
     [HarmonyPatch]
     [PatchFeature(
         "奖杯砸人增强：移除奖杯砸人冷却；砸人范围/距离可自定义（默认 224 像素）；可在局内生存阶段手持奖杯砸人（默认 E 键，可自定义）。服务端实现，房主开启后全员可用。",

@@ -4,23 +4,13 @@ using Protocol;
 
 namespace DT_Tools.Features.CharacterMapPin
 {
-    /// 保留 pin 的位置跟随（KeepDeadPin 配套）：后置 PlayerManager.HandleRespawn，
-    /// 把保留 pin 平滑推到服务器广播的强制位移目标点。
-    ///
-    /// 语义复刻原版 Kaho（ComplyRules）对被追踪者的位置推送：服务器对被追踪者每次接受的
-    /// 移动都向追踪者发 S_PIN_MOVE（普通与强制移动都推，0.1.17a Server.Game/Player.cs:30-36），
-    /// 客户端 Handle_S_PIN_MOVE（0.1.17a PacketHandler.cs:231-237）对 HUD 与平板调
-    /// RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.17a UI_GameScene.cs:901-904）。
-    /// 隐藏者没有普通移动，两条链在「隐藏者的强制移动」（进/出柜、MindControl 传送、Trick 搬运）上
-    /// 完全重合——原版被追踪者躲进柜子同样被继续推送（0.1.16b Server.Game/Cabinet.cs:161（待核对））。
-    ///
-    /// 保留 pin 的玩家已 Despawn，逐帧刷新不再覆盖它（0.1.16b UI_GameScene.cs:825（待核对）-830（待核对）
-    /// 只遍历 Managers.Player.Players），S_RESPAWN 是唯一继续可达的公开位置源；
-    /// 其坐标换算与逐帧刷新同源（SetTargetPosition 内联式 = Util.GetMinimapPosition，
-    /// 0.1.16b Util.cs:887（待核对）-892（待核对）)，不会把 pin 写进另一套坐标系。
-    /// 平滑补间由 DOTween 自行驱动，pin 同帧被 Despawn、平板处于关闭态都照常走完
-    /// ——原版对关闭中的平板 pin 照样 DOLocalMove（Handle_S_PIN_MOVE 不检查 IsOpen，
-    /// 0.1.16b PacketHandler.cs:236（待核对）)。
+    /// 保留 pin 的位置跟随（KeepDeadPin 配套）：后置 PlayerManager.HandleRespawn，把保留 pin 平滑推到服务器广播的强制位移目标点。
+    /// 语义复刻原版 Kaho（ComplyRules）对被追踪者的推送：服务器对被追踪者每次接受的移动都向追踪者发 S_PIN_MOVE（普通与强制都推，0.1.17a Server.Game/Player.cs:30-36）；
+    /// 客户端 Handle_S_PIN_MOVE（0.1.17a PacketHandler.cs:231-237）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.17a UI_GameScene.cs:901-904）。
+    /// 隐藏者的强制移动（进出柜、MindControl 传送、Trick 搬运）两条链重合；被追踪者躲柜同样被推送（0.1.16b Server.Game/Cabinet.cs:161（待核对））。
+    /// 保留 pin 的玩家已 Despawn，逐帧刷新不再覆盖它（0.1.16b UI_GameScene.cs:825（待核对）-830（待核对），只遍历 Players），所以 S_RESPAWN 是唯一可达的位置源。
+    /// 坐标换算与逐帧刷新同源（Util.GetMinimapPosition，0.1.16b Util.cs:887（待核对）-892（待核对））。
+    /// 平滑补间由 DOTween 驱动：pin 同帧被 Despawn、平板关闭时都照常走完（原版对关闭中的平板 pin 照样 DOLocalMove，0.1.16b PacketHandler.cs:236（待核对））。
     [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.HandleRespawn))]
     internal static class CharacterMapPinKeepDeadPinFollowPatch
     {

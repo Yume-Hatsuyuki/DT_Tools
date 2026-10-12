@@ -10,21 +10,9 @@ using UnityEngine.UI;
 namespace DT_Tools.Features.TabletQol
 {
     /// ② 「提交线索」二次确认栏。
-    ///
-    /// **提交动作走原版**：确认后调用 `UI_ClueSubItem.OnClickPropositionButton`（私有，转储 :86488）本身，
-    /// 不自己拼一份发包逻辑 —— 判据、发包、置标记、关平板都由原版负责。
-    ///
-    /// **确认栏长相全部来自原版**：
-    /// · 面板底借卡片自己的框 `tablet_clue_popup_frame.sprite`，不透明度可配（`PanelAlpha`）；
-    /// · 主体是一张**原版线索卡片**（`Managers.UI.MakeSubItem&lt;UI_ClueSubItem&gt;` → `SetInfo` →
-    /// `InitPopupClue`，照抄游戏用法，转储 :52838-52840），只作展示 ⇒ 关掉它自己的提交按钮；
-    /// · 两个按钮是**克隆的原版按钮**（`GetObject(3)` = `PropositionButton`），并显式设回正常态
-    /// （`clue_submit_normal.sprite` + 白色 —— 游戏在 `RefreshPropositionButton` 里就是这么设的，
-    /// 转储 :86285-86293；不设的话克隆会带上鼠标悬停时的 `clue_submit_hover` 米黄）。
-    ///
-    /// **尺寸跟着内容走**：先量卡片实际尺寸再算面板宽高（卡片过宽时等比缩放到平板宽 80% 内）。
-    ///
-    /// 挂在平板自己的 transform 下 ⇒ 平板一关，确认栏跟着消失。
+    /// 提交动作走原版：确认后调用 UI_ClueSubItem.OnClickPropositionButton（私有，转储 :86488），判据、发包、置标记、关平板都由原版负责，不自己拼发包逻辑。
+    /// 确认栏外观全部来自原版：底板借卡片自己的框 tablet_clue_popup_frame.sprite（不透明度 PanelAlpha 可配）；主体是一张原版线索卡片（Managers.UI.MakeSubItem<UI_ClueSubItem> → SetInfo → InitPopupClue，照抄游戏用法，转储 :52838-52840），只作展示，关掉它自己的提交按钮；两个按钮克隆原版 PropositionButton（GetObject(3)），并显式设回正常态（clue_submit_normal.sprite + 白色，否则克隆会带上悬停时的 clue_submit_hover 米黄，转储 :86285-86293）。
+    /// 尺寸跟随内容：先量卡片实际尺寸再算面板，过宽时等比缩放到平板宽 80% 内。挂在平板 transform 下，平板关闭时确认栏一并消失。
     internal static class TabletQolConfirm
     {
         private const string RootName = "DT_ClueSubmitConfirm";

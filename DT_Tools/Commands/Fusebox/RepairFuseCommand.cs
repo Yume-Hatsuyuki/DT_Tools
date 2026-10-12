@@ -6,22 +6,10 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Fusebox
 {
-    /// /repair_fuse [#id|all] — 客户端秒修损坏电闸：无视 10 秒读条，直接发 C_INTERACT_FUSEBOX
-    /// 给服务端触发 ConnetCable 恢复供电（跟随控制台，非房主可用，仅生存阶段）。
-    ///
-    /// 实现原理：原版客户端 Fusebox.Interact 先 StartCasting(10f) 本地读条 10 秒，完成后才发
-    /// C_INTERACT_FUSEBOX；而服务端 Server.Game.Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16（待核对））
-    /// 看到 StateList[0]==9999 直接调 ConnetCable()（:97）恢复供电，没有读条、距离、颜色、
-    /// 存活状态校验。故直接发包即可秒修，绕过 10 秒读条。
-    ///
-    /// 注意：服务端 DeviceManager.Interact 有 500ms InteractLock 冷却
-    /// （Player.InteractLock setter 内 PushAfter(500) 延迟清除）。
-    /// all 模式下用协程 WaitForSeconds(0.6f) 逐包间隔发送，避免被 InteractLock 吞掉。
-    ///
-    /// 示例:
-    /// /repair_fuse              查看损坏电闸列表
-    /// /repair_fuse all          秒修全部损坏电闸
-    /// /修电 #12                 秒修指定电闸 #12
+    /// /repair_fuse [#id|all]：客户端秒修损坏电闸，无视 10 秒读条，直接发 C_INTERACT_FUSEBOX（跟随控制台，非房主可用，仅生存阶段）。
+    /// 原版客户端 Fusebox.Interact 先本地读条 10 秒才发包；服务端 Server.Game.Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16（待核对））见 StateList[0]==9999 直接 ConnetCable()（:97），没有读条、距离、颜色、存活校验，所以直接发包即可。
+    /// 服务端 DeviceManager.Interact 有 500ms InteractLock，all 模式用协程每 0.6 秒发一包。
+    /// 示例：/repair_fuse 查看损坏列表；/repair_fuse all 秒修全部；/修电 #12 秒修指定电闸。
     internal sealed class RepairFuseCommand : ICommand
     {
         public string Name => "repair_fuse";
