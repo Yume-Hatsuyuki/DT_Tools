@@ -5,7 +5,7 @@ using Protocol;
 
 namespace DT_Tools.Features.FishingPond
 {
-    /// Fishing.HandleEvent 整替「起竿成功且有活跃任务」分支（HandleEvent：0.1.16b Server.Game/Fishing.cs:133；
+    /// Fishing.HandleEvent 整替「起竿成功且有活跃任务」分支（HandleEvent：0.1.17a Server.Game/Fishing.cs:133；
     /// 原版该分支在 Server.Game/Fishing.cs:161-183：固定掉落 1059/1060/1061 三种鱼）。
     /// 扩展池随机出道具，其余守卫（水下尸体优先、无任务忽略）与状态清理与原版一致。
     [HarmonyPatch(typeof(Server.Game.Fishing), nameof(Server.Game.Fishing.HandleEvent))]
@@ -46,7 +46,7 @@ namespace DT_Tools.Features.FishingPond
             __instance.DeviceInfo.Bubble = 0;
             __instance.DeviceInfo.StateList[1] = 0;
             __instance.BroadcastStateInArea();
-            // FishingPlayer 为 private set 属性（0.1.16b Server.Game/Fishing.cs:14），经其 setter 摘除事件挂钩
+            // FishingPlayer 为 private set 属性（0.1.17a Server.Game/Fishing.cs:14），经其 setter 摘除事件挂钩
             Traverse.Create(__instance).Property("FishingPlayer").SetValue(null);
 
             return false;

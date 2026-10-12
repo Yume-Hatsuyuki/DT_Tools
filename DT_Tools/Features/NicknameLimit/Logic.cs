@@ -135,7 +135,7 @@ namespace DT_Tools.Features.NicknameLimit
             }
         }
 
-        /// 原版三档校验（0.1.16b UI_LobbyScene.cs:1772-1814（待核对）)，仅供 OnDisabled 还原使用。
+        /// 原版三档校验（0.1.16b UI_LobbyScene.cs:1772（待核对）-1814（待核对）)，仅供 OnDisabled 还原使用。
         private static bool VanillaIsAcceptable(string name, out string failTip)
         {
             failTip = null;
@@ -203,7 +203,7 @@ namespace DT_Tools.Features.NicknameLimit
                 Managers.Player.MyPlayerName = name;
 
             Log.Info<NicknameLimitFeature>(
-                $"[{reason}] ok={ok} len={name?.Length ?? 0} limit={field?.characterLimit ?? -1}");
+                $"{reason}：ok={ok} len={name?.Length ?? 0} limit={field?.characterLimit ?? -1}");
         }
 
         public static void RefreshAllLobbyScenes(string reason)
@@ -213,7 +213,7 @@ namespace DT_Tools.Features.NicknameLimit
                 var scenes = Object.FindObjectsByType<UI_LobbyScene>(FindObjectsSortMode.None);
                 if (scenes == null || scenes.Length == 0)
                 {
-                    Log.Info<NicknameLimitFeature>($"[{reason}] 当前无 UI_LobbyScene");
+                    Log.Info<NicknameLimitFeature>($"{reason}：当前无 UI_LobbyScene");
                     return;
                 }
                 foreach (var scene in scenes)

@@ -9,7 +9,7 @@ namespace DT_Tools.Commands.BanList
     /// /unban — 解除封禁，让被踢的玩家能重新加入。
     ///
     /// 直接从 GameRoom._bannedSteamIds 移除（BanList.TryUnban）。解封后对方的下一条
-    /// C_ENTER_GAME 即可正常通过封禁校验（0.1.16b Server.Game/GameRoom.cs:1068），
+    /// C_ENTER_GAME 即可正常通过封禁校验（0.1.17a Server.Game/GameRoom.cs:1037），
     /// 需要对方自行经房间码 / 邀请重新加入；其余进房条件（人数上限、房间状态）照原版走。
     internal sealed class UnbanCommand : ICommand
     {

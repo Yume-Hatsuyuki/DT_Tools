@@ -63,13 +63,13 @@ namespace DT_Tools.Features.SitOnChairs
                     if (_template != null)
                     {
                         dictionary[PrefabKey] = _template;
-                        Log.Info<SitOnChairsFeature>("[可坐椅子] 已注入运行时 Chair 预制体");
+                        Log.Info<SitOnChairsFeature>("已注入运行时 Chair 预制体");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 注入预制体失败");
+                Log.Error<SitOnChairsFeature>(ex, "注入预制体失败");
             }
         }
 
@@ -111,7 +111,7 @@ namespace DT_Tools.Features.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 设置渲染层级失败");
+                Log.Error<SitOnChairsFeature>(ex, "设置渲染层级失败");
             }
         }
 
@@ -135,7 +135,7 @@ namespace DT_Tools.Features.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 应用坐姿偏移失败");
+                Log.Error<SitOnChairsFeature>(ex, "应用坐姿偏移失败");
             }
         }
 
@@ -164,7 +164,7 @@ namespace DT_Tools.Features.SitOnChairs
                     if (!_loggedNoSkeleton)
                     {
                         _loggedNoSkeleton = true;
-                        Log.Warn<SitOnChairsFeature>("[可坐椅子] 找不到已加载的人物骨骼资源，椅子可能无法显示坐姿。");
+                        Log.Warn<SitOnChairsFeature>("找不到已加载的人物骨骼资源，椅子可能无法显示坐姿。");
                     }
                     return;
                 }
@@ -178,7 +178,7 @@ namespace DT_Tools.Features.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 初始化骨架失败");
+                Log.Error<SitOnChairsFeature>(ex, "初始化骨架失败");
             }
         }
 

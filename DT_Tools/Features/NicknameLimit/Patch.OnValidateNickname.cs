@@ -17,7 +17,7 @@ namespace DT_Tools.Features.NicknameLimit
 
             NicknameLimitLogic.LiftInputHardLimit(__instance, NicknameLimitLogic.GetNicknameField(__instance));
 
-            // 与原版一致（0.1.16b UI_LobbyScene.cs:1774-1778（待核对）)：先写入；我们仅放宽长度，
+            // 与原版一致（0.1.16b UI_LobbyScene.cs:1774（待核对）-1778（待核对）)：先写入；我们仅放宽长度，
             // 非法名仍可被写进 Prefs，但门禁 _isNickNameValid 会挡住进房。
             Managers.Player.MyPlayerName = name;
             string key = Traverse.Create(__instance).Field("_nicknameKey").GetValue<string>();

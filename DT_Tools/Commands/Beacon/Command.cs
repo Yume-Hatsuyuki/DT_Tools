@@ -11,7 +11,7 @@ namespace DT_Tools.Commands.Beacon
     /// GameRoom.HandleMove → Player.Move(pos) 全程无距离校验，仅拒绝 Hide/Sit/MoveLock，
     /// 位置非法时仅在 Survive/Detective 阶段 fallback 到 MapData.ErrorPos（force respawn），
     /// 其余阶段整包静默丢弃
-    /// （见 0.1.16b Server.Game/GameRoom.cs:2321 HandleMove、:2349-2354 越界分流、
+    /// （见 0.1.17a Server.Game/GameRoom.cs:2321 HandleMove、:2349-2354 越界分流、
     /// Server.Game/Player.cs:733 Move）。
     /// 客户端 PlayerManager.HandleMove 显式忽略本机 MyPlayer（仅同步他人，S_MOVE 不会回拉本机坐标，
     /// 见 0.1.17a PlayerManager.cs:467 HandleMove、469 的 MyPlayer 判断），故需本地主动落位——

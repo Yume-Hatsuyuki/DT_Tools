@@ -7,7 +7,7 @@ using UnityEngine;
 namespace DT_Tools.Features.SitOnChairs
 {
     /// 本地模拟椅子（非房主专用补丁）：椅子设备由房主服务端在开局时生成并下发
-    /// （0.1.16b Server.Game/GameRoom.cs:679 InitDevices + DeviceManager.HandleAddDevice，
+    /// （0.1.17a Server.Game/GameRoom.cs:679 InitDevices + DeviceManager.HandleAddDevice，
     /// 客户端本地注入的岛屿数据只是"模板"，真正的设备实例必须来自服务端）。
     /// 因此房主未装本 mod 时，非房主客户端本地没有任何椅子设备——看不到交互提示、无法坐下。
     /// 本模块在检测到"对局内设备缓存中没有椅子"时，把 11 把椅子（长椅×2、沙发×1、咖啡椅×8）
@@ -75,12 +75,12 @@ namespace DT_Tools.Features.SitOnChairs
                 }
                 if (spawned > 0)
                 {
-                    Log.Info<SitOnChairsFeature>($"[可坐椅子] 房主未装 mod，本地模拟补 spawn {spawned} 把椅子（本地可见可坐，装本 mod 的玩家经 SyncSitting 互见坐姿）。");
+                    Log.Info<SitOnChairsFeature>($"房主未装 mod，本地模拟补 spawn {spawned} 把椅子（本地可见可坐，装本 mod 的玩家经 SyncSitting 互见坐姿）。");
                 }
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 本地补 spawn 椅子失败");
+                Log.Error<SitOnChairsFeature>(ex, "本地补 spawn 椅子失败");
             }
         }
     }

@@ -91,7 +91,7 @@ namespace DT_Tools.Commands.Agent
         //  矿石 / 花 / 鱼映射（旧 AgentItemHelper）
         // ═══════════════════════════════════════════════════
 
-        /// 矿点 SubType → 掉落 DataId（与 Server Mineral.HandleEvent 一致，0.1.16b Server.Game/Mineral.cs:26/43）。
+        /// 矿点 SubType → 掉落 DataId（与 Server Mineral.HandleEvent 一致，0.1.17a Server.Game/Mineral.cs:26/43）。
         public static int MineralDataId(int subType)
         {
             switch ((EMineralType)subType)
@@ -163,14 +163,8 @@ namespace DT_Tools.Commands.Agent
         //  道具 ↔ 任务映射
         // ═══════════════════════════════════════════════════
 
-        /// 道具 DataId → 该道具可能满足的任务ID集合。
-        ///
-        /// 一个道具可能同时被多种任务消耗（如电池 1015 可以交给矿工/传送/Bio 任一处），
-        /// 这是游戏本身的设计——玩家捡到一块电池时，游戏并不预先告知它要去哪，而是
-        /// 由玩家（或这里的 Planner）根据场上哪个设备的 Bubble/StateList 匹配来决定。
-        /// 因此用数组而非单值表示，避免旧 MissionOfItem 单值设计强行"选一个"导致的偏差。
-        ///
-        /// 逐项依据（对应 Server.Game 源码的真实 Interact/HandleEvent 消耗条件）：
+        /// 道具 DataId → 可满足的任务集合（数组：同一道具可被多种任务消耗，如电池 1015 可交给矿工/传送/Bio 任一处；由场上设备状态匹配决定，不预设去向）。
+        /// 依据：Server.Game 源码中各设备 Interact / HandleEvent 的消耗条件。格式：道具 → 任务号(设备)。
         /// 1008 U 盘     → ScFixPc(17)             Computer.Interact
         /// 1009 人体模型 → ScManikinStart(18)      Mission.Interact(Surgery, State==0)
         /// 1011 空电池   → ScChargeBattery(23)     Charger.TakeInBattery

@@ -53,11 +53,11 @@ namespace DT_Tools.Features.PhotoSend
                 string error = PhotoSendLogic.Execute(__instance, alt, argument);
                 if (error == null)
                 {
-                    Log.Info<PhotoSendFeature>($"[PhotoSend] 已拦截聊天指令并发送照片：{argument}");
+                    Log.Info<PhotoSendFeature>($"已拦截聊天指令并发送照片：{argument}");
                 }
                 else
                 {
-                    Log.Warn<PhotoSendFeature>($"[PhotoSend] {error}");
+                    Log.Warn<PhotoSendFeature>($"{error}");
                     PhotoSendLogic.ReportChatError(__instance, error);
                 }
                 return false; // 拦截原消息
@@ -69,7 +69,7 @@ namespace DT_Tools.Features.PhotoSend
                 {
                     case ParseResult.MissingParen: return "缺少 ]( 。" + PhotoSendLogic.Usage;
                     case ParseResult.MissingClose: return "缺少 ) 。" + PhotoSendLogic.Usage;
-                    default: return "路径不能为空。" + PhotoSendLogic.Usage;
+                    default: return $"路径不能为空。{PhotoSendLogic.Usage}";
                 }
             }
         }

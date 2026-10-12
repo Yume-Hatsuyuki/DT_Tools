@@ -22,7 +22,7 @@ namespace DT_Tools.Features.CharacterMapPin
         //    本类不在继承链上，经下方缓存的开放实例委托调用）──
         /// UI_MinimapSubItem 的 GameObjects 枚举 ComplyRules=0（0.1.17a UI_MinimapSubItem.cs:7-10）。
         private const int PinComplyRulesObject = 0;
-        /// UI_MinimapSubItem 的 Images 枚举 Target=0（0.1.17a UI_MinimapSubItem.cs:5-8）。
+        /// UI_MinimapSubItem 的 Images 枚举 Target=0（0.1.16b UI_MinimapSubItem.cs:12（待核对）-15（待核对））。
         private const int PinMarkImage = 0;
         /// UI_Arrow 的 Images 枚举 Arrow=0 / Mark=1（0.1.17a UI_Arrow.cs:6-9）。
         private const int ArrowMarkImage = 1;
@@ -60,9 +60,9 @@ namespace DT_Tools.Features.CharacterMapPin
             if (sprite == null)
             {
                 if (key.EndsWith(WhiteKey))
-                    sprite = Managers.Resource.Load<Sprite>("Someone" + WhiteKey);
+                    sprite = Managers.Resource.Load<Sprite>($"Someone{WhiteKey}");
                 if (sprite == null)
-                    sprite = Managers.Resource.Load<Sprite>("Someone" + BlackKey);
+                    sprite = Managers.Resource.Load<Sprite>($"Someone{BlackKey}");
             }
             return sprite;
         }
@@ -191,7 +191,7 @@ namespace DT_Tools.Features.CharacterMapPin
         }
 
     // 原版 RefreshPlayerPin 对已存在的 pin 只调 SetLocalPosition、不重设 sprite
-    //（0.1.16b UI_GameScene.cs:852-868（待核对） / UI_GameTablet.cs:1211-1226 的 else 分支已核实），
+    //（0.1.16b UI_GameScene.cs:852（待核对）-868（待核对） / UI_GameTablet.cs:1211-1226 的 else 分支已核实），
     // 所以热关闭后本功能换上的角色头像不会自行还原，必须在 OnDisabled 主动恢复。
 
     /// 热关闭时删除「死亡保留 Pin」保下的 pin（KeepDeadPin 拦截记录在
@@ -224,7 +224,7 @@ namespace DT_Tools.Features.CharacterMapPin
                 return;
 
             // 实例获取：场景 UI 经 UIManager.GetSceneUI<T>（0.1.17a UIManager.cs:317，
-            // 返回 _sceneUI as T）；平板经 TabletManager.Tablet（0.1.17a TabletManager.cs:7，
+            // 返回 _sceneUI as T）；平板经 TabletManager.Tablet（0.1.16b TabletManager.cs:17（待核对），
             // Managers.Tablet 静态入口 0.1.17a Managers.cs:144）——平板不是 SceneUI，不能走 GetSceneUI
             UI_GameScene scene = Managers.UI != null ? Managers.UI.GetSceneUI<UI_GameScene>() : null;
             if (scene != null)

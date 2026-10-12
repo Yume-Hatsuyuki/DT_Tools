@@ -4,7 +4,7 @@ namespace DT_Tools.Features.AttackRangeServer
 {
     /// 服务端攻击距离判定：GameRoom.AttackPlayer 用 Util.UnifiedAttackRect（攻击盒，
     /// 0.1.17a Util.cs:71，前向 80 / 后向 40）对 PlayerHitRect 做 AABB 碰撞
-    /// （0.1.16b Server.Game/GameRoom.cs:2382-2402）——客户端 AttackRange 只放宽了
+    /// （0.1.16b Server.Game/GameRoom.cs:2382-2402（待核对））——客户端 AttackRange 只放宽了
     /// 选人距离（MyPlayer.cs:2178 的 224），超原版范围的攻击会在服务端判定落空
     /// （表现为空挥不掉血）。本功能把攻击盒前向延伸 ExtraForwardReach 个单位，
     /// 客户端/服务端两端数值需配合调节。

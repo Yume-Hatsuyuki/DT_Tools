@@ -41,7 +41,7 @@ namespace DT_Tools.Commands
 
         public static CommandResult Execute(ICommand command, string[] args)
         {
-            var ctx = new CommandContext("cmd:" + command.Name, args);
+            var ctx = new CommandContext($"cmd:{command.Name}", args);
             try
             {
                 if (command.RequireHost && !HostGuard.IsHost)

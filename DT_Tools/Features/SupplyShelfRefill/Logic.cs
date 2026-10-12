@@ -8,7 +8,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
 {
     /// 必出与补货逻辑。
     /// 兜底道具集中于此（FallbackItems）：BELL(3009) / AIRHORN(3008)，与原版 InitStorage
-    /// 的内建投放池一致（0.1.16b Server.Game/DeviceManager.cs:353）；Define 常量：Define.cs:738 / :744。
+    /// 的内建投放池一致（0.1.16b Server.Game/DeviceManager.cs:353（待核对））；Define 常量：Define.cs:738 / :744。
     /// 补货池经 Game/ItemPools.ShelfPoolProvider 只读（由 SupplyShelf 装载时发布，含其
     /// Enabled/Mode 判定）；货架读取走 Game.Devices——无 Features 间横向依赖（AGENTS.md §4）。
     internal static class SupplyShelfRefillLogic
@@ -32,7 +32,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
             if (HasItemOnShelves(storages, guaranteed))
                 return;
 
-            // 1) 优先空槽（Storage.InsertItem：0.1.16b Server.Game/Storage.cs:94）
+            // 1) 优先空槽（Storage.InsertItem：0.1.17a Server.Game/Storage.cs:94）
             foreach (Server.Game.Storage s in storages)
             {
                 if (s.StorageType != EStorageType.StorageNormal)
@@ -100,7 +100,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
 
             storage.DeviceInfo.StateList[index] = itemId;
             storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // :43
-            storage.BroadcastStateInArea();                                          // 0.1.16b Server.Game/Device.cs:114
+            storage.BroadcastStateInArea();                                          // 0.1.17a Server.Game/Device.cs:114
         }
 
         public static void ScheduleRefill(Server.Game.Storage storage, C_INTERACT_STORAGE interact, int interval)
@@ -173,7 +173,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
 
         // 已知取舍：任务道具被取走后这里补回的是普通道具。原版 Storage.Interact 摘走任务道具时
         // 只复位格子并在无剩余任务道具时清 DeviceInfo.MissionType/IsInfected
-        // （0.1.16b Server.Game/Storage.cs:39/:48-51），任务语义挂在 Item.IsMissionItem /
+        // （0.1.17a Server.Game/Storage.cs:39/:48-51），任务语义挂在 Item.IsMissionItem /
         // InsertItem(missionType,…,true) 链路上（Server.Game/Storage.cs:94-106）；本补货直接
         // CreateAndStorage 普通道具，不恢复任务状态。RefillIntervalSeconds 默认 -1
         // 关闭补货，触发面收敛为「显式开启补货 + 任务道具恰好被取走」的组合，风险可控。

@@ -41,7 +41,7 @@ namespace DT_Tools.Features.SitOnChairs
                 _resourcesField = typeof(ResourceManager).GetField("_resources", BindingFlags.Instance | BindingFlags.NonPublic);
                 if (_resourcesField == null)
                 {
-                    Log.Error<SitOnChairsFeature>("[可坐椅子] 找不到 ResourceManager._resources 字段。");
+                    Log.Error<SitOnChairsFeature>("找不到 ResourceManager._resources 字段。");
                     return false;
                 }
             }
@@ -56,12 +56,12 @@ namespace DT_Tools.Features.SitOnChairs
                 return false;
             }
 
-            string suffix = "_" + EMapType.Island; // "_Island"
+            string suffix = $"_{EMapType.Island}"; // "_Island"
 
             bool result = true;
             foreach (var file in Files)
             {
-                string resourceName = typeof(IslandData).Namespace + ".data." + file.Value;
+                string resourceName = typeof(IslandData).Namespace + $".data.{file.Value}";
                 if (!Cache.TryGetValue(file.Key, out var value) || value == null)
                 {
                     try
@@ -70,7 +70,7 @@ namespace DT_Tools.Features.SitOnChairs
                         {
                             if (stream == null)
                             {
-                                Log.Error<SitOnChairsFeature>($"[可坐椅子] 缺少内嵌数据资源：{resourceName}");
+                                Log.Error<SitOnChairsFeature>($"缺少内嵌数据资源：{resourceName}");
                                 result = false;
                                 continue;
                             }
@@ -83,7 +83,7 @@ namespace DT_Tools.Features.SitOnChairs
                     }
                     catch (Exception ex)
                     {
-                        Log.Error<SitOnChairsFeature>("[可坐椅子] 读取内嵌数据 " + file.Value + $" 失败：{ex.Message}");
+                        Log.Error<SitOnChairsFeature>("读取内嵌数据 " + file.Value + $" 失败：{ex.Message}");
                         result = false;
                         continue;
                     }

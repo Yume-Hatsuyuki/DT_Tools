@@ -40,16 +40,16 @@ namespace DT_Tools.Features.SitOnChairs
                     if (IslandData.Inject())
                     {
                         type = EMapType.Island;
-                        Log.Info<SitOnChairsFeature>("[可坐椅子] 已将 LoadMapSet(School) 重定向为 Island（原版数据+椅子条目）。");
+                        Log.Info<SitOnChairsFeature>("已将 LoadMapSet(School) 重定向为 Island（原版数据+椅子条目）。");
                     }
                     else
                     {
-                        Log.Error<SitOnChairsFeature>("[可坐椅子] 岛屿数据注入失败，本次沿用原版学校地图。");
+                        Log.Error<SitOnChairsFeature>("岛屿数据注入失败，本次沿用原版学校地图。");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 地图重定向异常，沿用原版");
+                    Log.Error<SitOnChairsFeature>(ex, "地图重定向异常，沿用原版");
                 }
             }
         }
@@ -254,7 +254,7 @@ namespace DT_Tools.Features.SitOnChairs
                             : ChairFactory.IsCafe(chair) ? "CafeYOffset"
                             : "SeatYOffset";
                         Log.Info<SitOnChairsFeature>(
-                            $"[可坐椅子微调] 临时偏移 {_delta:+0;-0;0}（[ 往下 / ] 往上）→ 建议 {key} = " +
+                            $"微调：临时偏移 {_delta:+0;-0;0}（[ 往下 / ] 往上）→ 建议 {key} = " +
                             $"{ChairFactory.OffsetYFor(chair) + _delta:F0}；写进配置后重启生效");
                     }
                 }
@@ -325,14 +325,14 @@ namespace DT_Tools.Features.SitOnChairs
                                   $"椅子状态={chair.DeviceState} 渲染={render}");
                     }
                     Log.Info<SitOnChairsFeature>(
-                        $"[可坐椅子调试] 玩家@({pos.x:F0},{pos.y:F0}) 我的状态={my.State} " +
+                        $"调试：玩家@({pos.x:F0},{pos.y:F0}) 我的状态={my.State} " +
                         $"偏移=长椅{SitOnChairsFeature.SeatYOffset:F0}/沙发{SitOnChairsFeature.SofaYOffset:F0}/" +
                         $"咖啡椅{SitOnChairsFeature.CafeYOffset:F0} 咖啡椅可坐={SitOnChairsFeature.CafeSit} " +
                         $"设备总数={total} 椅子数={chairCount}{sb}");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<SitOnChairsFeature>(ex, "[可坐椅子调试] 失败");
+                    Log.Error<SitOnChairsFeature>(ex, "失败");
                 }
             }
         }
@@ -412,18 +412,18 @@ namespace DT_Tools.Features.SitOnChairs
                     if (_furniture == null)
                     {
                         Log.Warn<SitOnChairsFeature>(
-                            $"[可坐椅子] 椅子置顶：没在 ({pos.x:F0},{pos.y:F0}) 附近找到家具美术");
+                            $"椅子置顶：没在 ({pos.x:F0},{pos.y:F0}) 附近找到家具美术");
                         return;
                     }
                     _savedOrder = _furniture.sortingOrder;
                     _furniture.sortingOrder = 255;
                     Log.Info<SitOnChairsFeature>(
-                        $"[可坐椅子] 椅子置顶：{_furniture.name} 抬到 {_furniture.sortingOrder}" +
+                        $"椅子置顶：{_furniture.name} 抬到 {_furniture.sortingOrder}" +
                         $"（坐在 ({chair.transform.position.x:F0},{chair.transform.position.y:F0})）");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 椅子置顶失败");
+                    Log.Error<SitOnChairsFeature>(ex, "椅子置顶失败");
                 }
             }
 
@@ -493,7 +493,7 @@ namespace DT_Tools.Features.SitOnChairs
                     {
                         return true;
                     }
-                    if (string.IsNullOrEmpty(message) || !message.StartsWith(GameSit.SyncPrefix) || !message.EndsWith(GameSit.SyncSuffix))
+                    if (!SitSyncWire.IsWire(message))
                     {
                         return true;
                     }
@@ -504,27 +504,22 @@ namespace DT_Tools.Features.SitOnChairs
                         return false;
                     }
 
-                    string body = message.Substring(GameSit.SyncPrefix.Length, message.Length - GameSit.SyncPrefix.Length - GameSit.SyncSuffix.Length);
-                    if (body.StartsWith("SIT|"))
+                    if (SitSyncWire.TryParse(message, out SitSyncMessage sync))
                     {
-                        string[] parts = body.Substring(4).Split('|');
-                        if (parts.Length >= 2 && int.TryParse(parts[0], out int chairId) && int.TryParse(parts[1], out int charId))
+                        if (sync.Sit)
                         {
-                            ApplyRemoteSit(playerId, chairId, charId);
+                            ApplyRemoteSit(playerId, sync.ChairId, sync.CharId);
                         }
-                    }
-                    else if (body.StartsWith("RISE|"))
-                    {
-                        if (int.TryParse(body.Substring(5), out int chairId))
+                        else
                         {
-                            ApplyRemoteRise(playerId, chairId);
+                            ApplyRemoteRise(playerId, sync.ChairId);
                         }
                     }
                     return false;
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<SitOnChairsFeature>(ex, "[可坐椅子] 坐姿同步接收异常");
+                    Log.Warn<SitOnChairsFeature>(ex, "坐姿同步接收异常");
                     return false;
                 }
             }
@@ -595,7 +590,7 @@ namespace DT_Tools.Features.SitOnChairs
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<SitOnChairsFeature>("[可坐椅子] 远端玩家模型" + (stealth ? "隐藏" : "显示") + $"失败：{ex.Message}");
+                    Log.Warn<SitOnChairsFeature>("远端玩家模型" + (stealth ? "隐藏" : "显示") + $"失败：{ex.Message}");
                 }
             }
         }

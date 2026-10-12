@@ -194,7 +194,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             }
             // 原版英文文案："[Tracking][Lifecycle] Host enter"
             Log.Info<LobbyMaxPlayersFeature>(
-                $"[生命周期] 房主机进房 pid={player.PublicInfo.PlayerId} name={player.Name} " +
+                $"生命周期：房主机进房 pid={player.PublicInfo.PlayerId} name={player.Name} " +
                 $"state={__instance.State} playersCount={__instance.Players.Count}");
             if (spectating)
             {

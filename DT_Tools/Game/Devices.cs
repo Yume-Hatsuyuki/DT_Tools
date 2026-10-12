@@ -17,7 +17,7 @@ namespace DT_Tools.Game
         /// 电闸完好：StateList[0]==0（0.1.17a Define.cs:556 NORMAL_STATE）。
         public const int FuseboxStateIntact = 0;
 
-        /// 破坏任务武装：MissionType==-1（开局 StartFuseboxSabotage → StartMission 写入，0.1.16b Server.Game/Fusebox.cs:141）。
+        /// 破坏任务武装：MissionType==-1（开局 StartFuseboxSabotage → StartMission 写入，0.1.17a Server.Game/Fusebox.cs:141）。
         public const int FuseboxMissionArmed = -1;
 
         /// 当前处于 OpenArmory（可拔刀）的武器架。
@@ -42,7 +42,7 @@ namespace DT_Tools.Game
                             && f.Info.StateList[0] == FuseboxStateIntact)
                 .ToList();
 
-        /// 服务端设备管理器的全部货架（私有字段 _storages，0.1.16b Server.Game/DeviceManager.cs:32）。房主侧功能用。
+        /// 服务端设备管理器的全部货架（私有字段 _storages，0.1.17a Server.Game/DeviceManager.cs:32）。房主侧功能用。
         public static List<Server.Game.Storage> GetStorages(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_storages").GetValue<List<Server.Game.Storage>>();
     }

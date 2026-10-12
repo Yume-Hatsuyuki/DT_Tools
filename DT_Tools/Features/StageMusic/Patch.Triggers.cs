@@ -6,7 +6,7 @@ using Protocol;
 namespace DT_Tools.Features.StageMusic
 {
     /// 击杀触发：Handle_S_KILL_PLAYER 是"本机击杀了人"的权威信号（服务端只发凶手，
-    /// 0.1.16b Server.Game/DeviceManager.cs:588-609）。PacketHandler 为 internal（PacketHandler.cs:9），
+    /// 0.1.16b Server.Game/DeviceManager.cs:588-609（待核对））。PacketHandler 为 internal（PacketHandler.cs:9），
     /// TargetMethod 运行时解析。
     [HarmonyPatch]
     internal static class StageMusicKillTrigger
@@ -143,7 +143,7 @@ namespace DT_Tools.Features.StageMusic
         }
     }
 
-    /// 自己死亡触发：S_DEAD 只发死者本人（0.1.16b Server.Game/Player.cs:827），
+    /// 自己死亡触发：S_DEAD 只发死者本人（0.1.17a Server.Game/Player.cs:827），
     /// 客户端 Handle_S_DEAD 调 Managers.Game.Dead()（PacketHandler.cs:392）。
     /// 不能挂 Handle_S_NOTIFY_DEAD——那是发给存活灵媒（SoulSense）的知晓通知，
     /// 不是受害者本人（Server.Game/Player.cs:935-946）。

@@ -14,7 +14,7 @@ namespace DT_Tools.Features.AutoFishMine
     /// UI_FishingSlider.cs:77-142）：Phase.Bite(1) 自动 EnterCatchIntro 提竿，
     /// Phase.Reeling(3) 每帧 AddGauge（+0.05）模拟连按，gauge 满自动 EnterSuccess→收获。
     /// 其余阶段（Waiting/CatchIntro/Success）由游戏自动推进。
-    /// 3) AutoMiningPatch：UI_MineralSlider.Update Postfix——滑块小游戏（0.1.17a UI_MineralSlider.cs:5）：
+    /// 3) AutoMiningPatch：UI_MineralSlider.Update Postfix——滑块小游戏（0.1.16b UI_MineralSlider.cs:74（待核对））：
     /// _isCatch 且 CheckCatch() 为 true（滑块进入目标区）时自动执行按键成功分支，
     /// _successCount 累计 3 次后发 C_HANDLE_MINERAL(IsSuccess=true) 并 StopCasting 自动收获。
     /// 所有协议均为游戏原生请求，失败只记录日志，不中断。
@@ -116,7 +116,7 @@ namespace DT_Tools.Features.AutoFishMine
                 if (!__instance.CheckCatch())
                     return; // 滑块未到位，等它摆回来
 
-                // 滑块到位：执行与"按键成功"等价的分支（0.1.16b UI_MineralSlider.cs:81-100（待核对）)
+                // 滑块到位：执行与"按键成功"等价的分支（0.1.16b UI_MineralSlider.cs:81（待核对）-100（待核对）)
                 Managers.Sound.PlaySystem("AxeSfx");
                 Traverse.Create(__instance).Field("_mineral").GetValue<Mineral>()?.PlayAxeEffect(); // _mineral: 0.1.17a UI_MineralSlider.cs:22
 

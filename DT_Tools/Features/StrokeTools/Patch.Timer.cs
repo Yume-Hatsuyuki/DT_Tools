@@ -15,7 +15,7 @@ namespace DT_Tools.Features.StrokeTools
     /// 官方世界→平板比例 = MapData.MinimapScale（每图配置，0.1.17a UI_TutorialTablet.cs:2157 _mapScale），
     /// 兜底 0.094（0.1.17a Util.cs:887 GetMinimapPosition / UI_GameTablet.cs:1189 InitConstMap 世界×0.094）。
     /// 因此世界线长 = Σ|相邻点局部差| ÷ scale，平移（pivot/原点）不影响长度。
-    /// 速度基准：活人走路 560、奔跑 560×1.3=728（0.1.16b BuffComponent.cs:171-180（待核对）)，840 是幽灵速度。
+    /// 速度基准：活人走路 560、奔跑 560×1.3=728（0.1.16b BuffComponent.cs:171（待核对）-180（待核对）)，840 是幽灵速度。
     /// 结果走聊天广播（Managers.Voice.SendChatMessage），全房可见。
     [HarmonyPatch(typeof(DrawingManager), nameof(DrawingManager.EndLocalStroke))]
     internal static class StrokeTimerPatch
@@ -80,7 +80,7 @@ namespace DT_Tools.Features.StrokeTools
         /// 实测反馈线长 3843 单位跑约 6 秒 → 实际平均速度 ≈ 640 ≈ (奔跑 728 + 走路 560) / 2 = 644。
         /// 玩家日常不会全程紧贴耐力极限（不会真的"满耐纯跑 5 秒"再卡恢复），实际节奏接近跑走各半，
         /// 故全程按均速估算；短距离冲刺会略偏保守，整体贴合日常实测。
-        /// 耐力参数佐证：奔跑消耗 0.2/秒（0.1.17a UI_Stamina.cs:4）、未耗尽走路恢复 1/7（UI_Stamina.cs:98），
+        /// 耐力参数佐证：奔跑消耗 0.2/秒（0.1.16b UI_Stamina.cs:122（待核对））、未耗尽走路恢复 1/7（UI_Stamina.cs:98），
         /// 理论卡恢复极限均速 630 也贴近实测，均速模型在此区间内。
         private static float EstimateWithStamina(float length, float runSpeed, float walkSpeed)
         {

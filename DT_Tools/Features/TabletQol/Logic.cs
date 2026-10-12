@@ -237,7 +237,7 @@ namespace DT_Tools.Features.TabletQol
         {
             GameObject src = Traverse.Create(source).Method("GetObject", new object[] { 3 }).GetValue<GameObject>();
             GameObject clone = src != null ? UnityEngine.Object.Instantiate(src, parent)
-                                           : new GameObject("Button_" + label, typeof(RectTransform), typeof(Image));
+                                           : new GameObject($"Button_{label}", typeof(RectTransform), typeof(Image));
 
             RectTransform rt = (RectTransform)clone.transform;
             rt.SetParent(parent, false);

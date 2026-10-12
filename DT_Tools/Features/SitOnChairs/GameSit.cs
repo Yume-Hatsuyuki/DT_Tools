@@ -16,10 +16,6 @@ namespace DT_Tools.Features.SitOnChairs
     /// 没装也不影响本地坐姿）。起身同理本地还原。
     internal static class GameSit
     {
-        /// 坐姿同步广播前缀（零宽字符 + 左方括号，与表情动作同步的前缀区分开）。
-        internal const string SyncPrefix = "\u200B[";
-        internal const string SyncSuffix = "]";
-
         private static Chair _chair;
 
         private static Vector3 _savedPos;
@@ -55,13 +51,13 @@ namespace DT_Tools.Features.SitOnChairs
                 // 2) 椅子 Spine 换成"角色坐姿形象"并播 14_Sitting 入座动画
                 int charId = FindMyCharacterId(my);
                 chair.ChangeCharacter(charId, isInit: false);
-                Log.Info<SitOnChairsFeature>($"[可坐椅子] 对局内坐下 @({chair.transform.position.x:F0},{chair.transform.position.y:F0}) charId={charId}");
+                Log.Info<SitOnChairsFeature>($"对局内坐下 @({chair.transform.position.x:F0},{chair.transform.position.y:F0}) charId={charId}");
                 // 3) 按配置广播坐姿（装本 mod 的玩家互见，无需房主）
                 BroadcastSit(chair, charId);
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 对局内坐下失败");
+                Log.Error<SitOnChairsFeature>(ex, "对局内坐下失败");
                 TryRestore(my, chair);
                 _chair = null;
             }
@@ -90,7 +86,7 @@ namespace DT_Tools.Features.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 对局内起身失败");
+                Log.Error<SitOnChairsFeature>(ex, "对局内起身失败");
             }
         }
 
@@ -134,7 +130,7 @@ namespace DT_Tools.Features.SitOnChairs
             }
             catch (Exception ex)
             {
-                Log.Error<SitOnChairsFeature>(ex, "[可坐椅子] 查找角色ID失败");
+                Log.Error<SitOnChairsFeature>(ex, "查找角色ID失败");
             }
             return 0;
         }
@@ -148,11 +144,11 @@ namespace DT_Tools.Features.SitOnChairs
             }
             try
             {
-                Managers.Voice?.SendChatMessage(SyncPrefix + "SIT|" + chair.Info.DeviceId + "|" + charId + SyncSuffix);
+                Managers.Voice?.SendChatMessage(SitSyncWire.Sit(chair.Info.DeviceId, charId));
             }
             catch (Exception ex)
             {
-                Log.Warn<SitOnChairsFeature>(ex, "[可坐椅子] 坐姿同步广播(坐下)失败");
+                Log.Warn<SitOnChairsFeature>(ex, "坐姿同步广播(坐下)失败");
             }
         }
 
@@ -165,11 +161,11 @@ namespace DT_Tools.Features.SitOnChairs
             }
             try
             {
-                Managers.Voice?.SendChatMessage(SyncPrefix + "RISE|" + chair.Info.DeviceId + SyncSuffix);
+                Managers.Voice?.SendChatMessage(SitSyncWire.Rise(chair.Info.DeviceId));
             }
             catch (Exception ex)
             {
-                Log.Warn<SitOnChairsFeature>(ex, "[可坐椅子] 坐姿同步广播(起身)失败");
+                Log.Warn<SitOnChairsFeature>(ex, "坐姿同步广播(起身)失败");
             }
         }
 

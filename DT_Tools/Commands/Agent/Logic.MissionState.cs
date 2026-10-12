@@ -4,28 +4,10 @@ using DT_Tools.Game;
 namespace DT_Tools.Commands.Agent
 {
     /// 任务激活状态的权威数据源（对应旧 AgentMissionState.cs）。
-    ///
-    /// 背景：这个游戏采用"某玩家客户端兼任服务器逻辑"的架构（P2P Host 模式）。
-    /// 服务端 Server.Game.MissionManager 维护着完整、权威的任务进度：
-    /// - ProgressMissionList：当前正在进行的任务（含 Type/PrevType/NextType/Point）
-    /// - WaitMissionQueue：排队等待、尚未真正开始的任务
-    /// 这两份数据由 MissionManager.ClearMission/StartMission 等方法维护，每次任务
-    /// 状态变化都会调用 BroadcastMissionState() 重新广播为 S_MISSION_STATE 包，
-    /// 因此是实时、无过期风险的权威数据。
-    ///
-    /// 可访问性说明（重要，直接引用会编译失败 CS0122）：
-    /// Server.Game.MissionManager 类本身是 `internal class`（0.1.17a MissionManager.cs:10），
-    /// DT_Tools 是独立编译、引用 Assembly-CSharp.dll 的外部程序集，无法在编译期直接写
-    /// `Server.Game.MissionManager.Instance`。Server.Game.MissionMirror 则是
-    /// `public static class`（0.1.16b Server.Game/MissionMirror.cs:5，HasState:11/ProgressTypes:7/WaitTypes:9），
-    /// 可以直接编译期引用，但它只在"当前客户端不是 Host"时才会被 PacketHandler 写入
-    /// （Host 自己不需要镜像，见 PacketHandler.Handle_S_MISSION_STATE 的判断），
-    /// Host 模式下永远为空。
-    ///
-    /// 因此：非 Host 路径直接编译期引用 MissionMirror；Host 路径经
-    /// <see cref="MissionAccess"/> 反射访问 internal 的 MissionManager——
-    /// 反射目标定位与行号注释统一收口在 Game/MissionAccess.cs 头注释，
-    /// 本文件不再持有任何反射代码。
+    /// 服务端 Server.Game.MissionManager 维护 ProgressMissionList（进行中）与 WaitMissionQueue（排队），每次变化经 BroadcastMissionState 广播为 S_MISSION_STATE，数据实时、无过期风险。
+    /// 可访问性（直接引用会编译失败 CS0122）：MissionManager 是 internal class（0.1.17a MissionManager.cs:10），DT_Tools 为外部编译。
+    /// Server.Game.MissionMirror 是 public static class（0.1.17a Server.Game/MissionMirror.cs:5），可编译期引用，但只在非 Host 客户端由 PacketHandler 写入（见 Handle_S_MISSION_STATE），Host 模式下为空。
+    /// 因此：非 Host 直接引用 MissionMirror；Host 经 <see cref="MissionAccess"/> 反射访问 MissionManager（反射目标与行号收口在 Game/MissionAccess.cs）。
     internal static class AgentMissionState
     {
         private static bool IsHost => HostGuard.IsHost;
@@ -40,7 +22,7 @@ namespace DT_Tools.Commands.Agent
             {
                 if (IsHost)
                     return MissionAccess.Available && MissionAccess.Instance != null;
-                return Server.Game.MissionMirror.HasState;   // 0.1.16b Server.Game/MissionMirror.cs:11
+                return Server.Game.MissionMirror.HasState;   // 0.1.17a Server.Game/MissionMirror.cs:11
             }
         }
 

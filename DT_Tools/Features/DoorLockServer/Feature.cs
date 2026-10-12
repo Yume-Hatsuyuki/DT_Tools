@@ -4,7 +4,7 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.DoorLockServer
 {
-    /// 锁门服务端：Door.HandleEvent 原版仅黑幕可锁门（0.1.16b Server.Game/Door.cs:66），
+    /// 锁门服务端：Door.HandleEvent 原版仅黑幕可锁门（0.1.17a Server.Game/Door.cs:66），
     /// 本功能按 LockDoorMode 额外放行黑方/白方/所有身份，并调整锁门冷却间隔。
     /// 锁门行为与原版一致不留任何线索（白方锁门留痕试验已移除：门的 RoomID 为 0，
     /// 写入的线索会让平板重建时报 "0 is not exist room"，且原版锁门本就不留证据）。

@@ -31,7 +31,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
                 $"本局人数 {__instance.RoundStartPlayerCount} → 黑幕击杀上限 {__instance.BlackKillLimit} 次（出生点循环复用）");
 
             foreach (Server.Game.Player player in __instance.Players)
-                player.Clear();                                 // 0.1.16b Server.Game/Player.cs:706
+                player.Clear();                                 // 0.1.16b Server.Game/Player.cs:706（待核对）
 
             List<PosInfo> list = Managers.Data.MapData.StartPosList != null
                 ? Managers.Data.MapData.StartPosList.ToList()
@@ -44,7 +44,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
                     fallback = new PosInfo { X = 0f, Y = 0f };
                 Log.Warn<LobbyMaxPlayersFeature>("StartPosList 为空，回退 ErrorPos/LobbyPos 出生点");
                 foreach (Server.Game.Player player in __instance.Players)
-                    player.GameStart(fallback);                 // 0.1.16b Server.Game/Player.cs:623
+                    player.GameStart(fallback);                 // 0.1.17a Server.Game/Player.cs:623
             }
             else
             {
@@ -59,8 +59,8 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             }
 
             // 客户端全局命名空间另有 DeviceManager，必须用 Server.Game 全名
-            Server.Game.DeviceManager.Instance.InitDevices();   // 0.1.16b Server.Game/DeviceManager.cs:798
-            Server.Game.DeviceManager.Instance.InitStorage();   // 0.1.16b Server.Game/DeviceManager.cs:347
+            Server.Game.DeviceManager.Instance.InitDevices();   // 0.1.17a Server.Game/DeviceManager.cs:798
+            Server.Game.DeviceManager.Instance.InitStorage();   // 0.1.17a Server.Game/DeviceManager.cs:347
 
             InvokeMissionStart();
 
@@ -72,7 +72,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             return false;
         }
 
-        /// 开局任务分配：MissionManager 在发行程序集中为 internal（0.1.16b Server.Game/MissionManager.cs:10），
+        /// 开局任务分配：MissionManager 在发行程序集中为 internal（0.1.17a Server.Game/MissionManager.cs:10），
         /// 反射访问统一收敛到 Game/MissionAccess（无参 StartMission()：Server.Game/MissionManager.cs:355）。
         private static void InvokeMissionStart()
         {

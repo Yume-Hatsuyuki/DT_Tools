@@ -42,7 +42,7 @@ namespace DT_Tools.Features.PhotoTools
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<PhotoToolsFeature>(ex, "[拍照工具] 照片处理异常");
+                    Log.Warn<PhotoToolsFeature>(ex, "照片处理异常");
                 }
             }
         }
@@ -85,7 +85,7 @@ namespace DT_Tools.Features.PhotoTools
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<PhotoToolsFeature>(ex, "[拍照工具] 拍照判定异常");
+                    Log.Warn<PhotoToolsFeature>(ex, "拍照判定异常");
                 }
             }
         }
@@ -121,7 +121,7 @@ namespace DT_Tools.Features.PhotoTools
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<PhotoToolsFeature>(ex, "[拍照工具] 幽灵拍照判定异常");
+                    Log.Warn<PhotoToolsFeature>(ex, "幽灵拍照判定异常");
                 }
             }
         }
@@ -390,11 +390,11 @@ namespace DT_Tools.Features.PhotoTools
                     room = RoomLabel.FromPos(Managers.Player.MyPlayer.PublicInfo.Pos).localized;
                 }
 
-                return name + " · " + time + " · " + room;
+                return name + " · " + time + $" · {room}";
             }
             catch (Exception ex)
             {
-                Log.Warn<PhotoToolsFeature>(ex, "[拍照工具] 水印文本生成异常");
+                Log.Warn<PhotoToolsFeature>(ex, "水印文本生成异常");
                 return string.Empty;
             }
         }

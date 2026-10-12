@@ -5,7 +5,7 @@ namespace DT_Tools.Commands.WorldExecute
 {
     /// /world.execute me — 黑方自刀（Murder 路径），致敬 Mili《world.execute(me);》。
     ///
-    /// 机制：服务端 <c>Player.UseWeapon</c>（0.1.16b Server.Game/Player.cs:1118-1166）
+    /// 机制：服务端 <c>Player.UseWeapon</c>（0.1.17a Server.Game/Player.cs:1118-1166）
     /// 校验 CanAttack / Weapon / Survive / 目标存活 / 非 Hide / 距离，但<strong>不拒绝
     /// targetId == 自己</strong>。自瞄时距离为 0，通过后走 <c>OnDamaged → PushAfter(400)
     /// → OnDead(..., Murder)</c>（同文件 :799-811），与正常刀杀同路径出尸体。

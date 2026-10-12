@@ -18,7 +18,7 @@ namespace DT_Tools.Game
         /// Engine.Config 查回）。变更且功能开启时以「字段名.Changed」原因回调 apply。幂等。
         public static void WireChanged<TFeature>(string fieldName, Action<string> apply)
         {
-            string key = Engine.SectionOf<TFeature>() + "/" + fieldName;
+            string key = Engine.SectionOf<TFeature>() + $"/{fieldName}";
             if (Wired.Contains(key))
                 return;
             if (!Engine.Config.TryGetEntry<string>(

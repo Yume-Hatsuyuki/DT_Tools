@@ -37,7 +37,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             if (dataId == RandomId) return "Random";
             if (dataId == MadelineId) return MadelineEnglishName;
             if (TryGetRawName(dataId, out string raw)) return raw;
-            return "#" + dataId;
+            return $"#{dataId}";
         }
 
         public static string GetDisplayName(int dataId)

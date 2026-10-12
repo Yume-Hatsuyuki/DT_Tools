@@ -13,7 +13,7 @@ namespace DT_Tools.Commands.ScanAll
     /// 原版客户端 DeviceBase.Scan 要求本地物理接触并启动 2 秒扫描条，完成后才发
     /// C_SCAN_DEVICE{DeviceId}；服务端 DeviceManager.Scan → device.Scan(player)
     /// 全程无距离 / 阶段 / 颜色 / 存活检查，仅校验 !player.IsSpectator
-    /// （0.1.16b Server.Game/DeviceManager.cs:142-144 / Server.Game/Device.cs:89）。
+    /// （0.1.16b Server.Game/DeviceManager.cs:142-144（待核对） / Server.Game/Device.cs:89）。
     /// 故直接对每个可扫描 ID 发包即可一次性拿回全部线索（S_SCAN_DEVICE /
     /// S_SCAN_CORPSE / S_SCAN_ARMORY）。
     ///

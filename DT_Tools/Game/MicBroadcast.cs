@@ -16,27 +16,13 @@ using UnityEngine.Networking;
 
 namespace DT_Tools.Game
 {
-    /// 虚拟麦克风广播引擎（/mic_music、/stop_music 与随身MP3 应用共用，Game 层公共能力）：
-    /// 运行期把 Dissonance 捕获管线上的采集器（CapturePipelineManager._microphone）临时替换为
-    /// 包装器 MusicMicCapture——真实麦克风帧先到包装器、混入音乐 PCM、再转发 WebRTC 预处理管线，
-    /// 之后照常 Opus 编码发送，全房间可闻。混流点在预处理与 VAD 上游，音乐自己触发语音激活，
-    /// 无需说话（这是与旧 Harmony 注入方案的本质区别）。真实麦克风全程不被接替（仅叠加）；
-    /// 播放结束或 /stop_music 时还原原采集器与订阅拓扑（「临时虚拟麦克风」语义）。
-    /// 随身MP3 复用同一会话并叠加传输控制（跳转/响度/麦克风开关/本地静音/自然播完回调；
-    /// 暂停在 API 层=销毁会话+书签，恢复=重建+起始偏移），
-    /// micMix=false 时为纯本地播放（完全不碰语音管线）；三个入口后触发者接管（取代语义）。
-    ///
-    /// 挂载前提：游戏内麦克风未静音且非 PTT 抑制状态——Comms.IsMuted=true 时
-    /// CapturePipelineManager.Update 强制退订编码器（DissonanceVoip-Decompile/
-    /// CapturePipelineManager.cs:174），整条发送关闭，虚拟麦克风同样被门控；此处不绕过游戏自身语义。
-    /// 音质（2026-10-03 实测修复）：混流帧会经过 WebRTC 预处理，其 RNNoise/WebRTC 降噪/AEC
-    /// 均为语音专用、对音乐是灾难性破坏（谱门控压碎/NLP 镶边断续）——广播期间经 VoiceSettings
-    /// （Dissonance public API，PropertyChanged 实时重配 native）临时全部关停、捕获增益归一，
-    /// 结束自动还原；混入重采样用线性插值（44.1k→48k 整数截断会周期性走调）。残余的「变声器感」
-    /// 是 Opus 32kbps VOIP 编码天花板，语音网络内无解。
-    /// 时序健壮性：管线重启（帧跳/换设备/Pause→Resume/切麦克风）会重新 Subscribe 新 preprocessor
-    /// （RestartTransmissionPipeline，cs:243），包装器幂等重绑覆盖；重进房间时 DissonanceComms
-    /// 重建、旧包装器随旧管线消亡，卸载路径检测到字段已非自身包装器即跳过还原。
+    /// 虚拟麦克风广播引擎（/mic_music、/stop_music 与随身MP3 共用，Game 层公共能力）。
+    /// 运行期把 Dissonance 采集管线的采集器（CapturePipelineManager._microphone）临时替换为包装器 MusicMicCapture：真实麦克风帧先混入音乐 PCM，再转发 WebRTC 预处理与 Opus 编码，全房间可闻。
+    /// 混流点在预处理与 VAD 上游，音乐自己触发语音激活，无需说话。真实麦克风不被接替，播放结束或 /stop_music 时还原原采集器与订阅拓扑。
+    /// 随身MP3 在同一会话上叠加传输控制（跳转/响度/麦克风开关/本地静音/播完回调）；micMix=false 时为纯本地播放，完全不碰语音管线。三个入口后触发者接管。
+    /// 挂载前提：游戏内麦克风未静音。Comms.IsMuted=true 时 CapturePipelineManager.Update 会退订编码器（DissonanceVoip-Decompile/CapturePipelineManager.cs:174），虚拟麦克风同样被门控，此处不绕过游戏语义。
+    /// 音质（2026-10-03 实测）：WebRTC 降噪与 AEC 对音乐破坏严重，广播期间经 VoiceSettings 临时全部关停并归一增益，结束自动还原；混入重采样用线性插值（44.1k→48k 整数截断会走调）。残余的变声器感是 Opus 32kbps 编码天花板。
+    /// 时序：管线重启（帧跳/换设备/Pause→Resume）会重新订阅 preprocessor（RestartTransmissionPipeline，cs:243），包装器幂等重绑；重进房间时 DissonanceComms 重建，旧包装器随旧管线消亡，卸载时检测到字段已非自身包装器即跳过还原。
     public static class MicBroadcast
     {
         private const string Tag = "MicBroadcast";
@@ -466,7 +452,7 @@ namespace DT_Tools.Game
             UnityEngine.Object.DontDestroyOnLoad(go);
             _source = go.AddComponent<AudioSource>();
             _source.playOnAwake = false;
-            VoiceMixerHub.Route(_source, false);   // 0.1.17a VoiceMixerHub.cs:4，归入 Game 混音组
+            VoiceMixerHub.Route(_source, false);   // 0.1.16b VoiceMixerHub.cs:75（待核对），归入 Game 混音组
             return _source;
         }
 

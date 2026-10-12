@@ -5,7 +5,7 @@ using Protocol;
 
 namespace DT_Tools.Features.MultiArmoryWeapon
 {
-    /// StartTrialResult 前缀（私有方法，字符串定位：0.1.16b Server.Game/TrialManager.cs:746）：
+    /// StartTrialResult 前缀（私有方法，字符串定位：0.1.17a Server.Game/TrialManager.cs:746）：
     /// 「投票任意黑方胜利」开启且最高票是任意活着的黑方时接管结算演出。差异点：
     /// 1. 广播包口径改为「凶手=被票出的黑方」（CatchId 与 BlackId 同填该玩家）——
     /// 客户端过场按 catchId == blackId 走「抓获处决」分支（0.1.17a UI_TrialEvent.cs:1214-1240），
@@ -30,14 +30,14 @@ namespace DT_Tools.Features.MultiArmoryWeapon
 
             Server.Game.GameRoom room = __instance.Room;
             List<Server.Game.TrialManager.Candidate> candidates = Traverse.Create(__instance)
-                .Field("_candidates")                                   // 0.1.16b Server.Game/TrialManager.cs:47
+                .Field("_candidates")                                   // 0.1.17a Server.Game/TrialManager.cs:47
                 .GetValue<List<Server.Game.TrialManager.Candidate>>();
             if (candidates != null)
             {
                 foreach (Server.Game.TrialManager.Candidate candidate in candidates)
                 {
                     if (candidate.VotedTargetId == catchId)
-                        Server.Game.AwardManager.Instance.OnVotedBlack(candidate.Info.PlayerId);   // 0.1.16b Server.Game/AwardManager.cs:61
+                        Server.Game.AwardManager.Instance.OnVotedBlack(candidate.Info.PlayerId);   // 0.1.17a Server.Game/AwardManager.cs:61
                 }
             }
 
@@ -55,7 +55,7 @@ namespace DT_Tools.Features.MultiArmoryWeapon
 
             room.BroadcastPacketAndWaitResponse(packet, delegate
             {
-                Traverse.Create(__instance).Method("FinalizeTrialResult").GetValue();   // 0.1.16b Server.Game/TrialManager.cs:780
+                Traverse.Create(__instance).Method("FinalizeTrialResult").GetValue();   // 0.1.17a Server.Game/TrialManager.cs:780
             });
             return false;
         }

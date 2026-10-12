@@ -18,7 +18,7 @@ namespace DT_Tools.Features.ChatLimit
 
         /// 抬限只认原版聊天框的精确值 100：不误伤 Prefab 内嵌的其他小上限
         /// （如昵称输入框，归 NicknameLimit 管），也不覆盖更大的内嵌上限
-        /// （如 UI_BugReport 的 2000，0.1.17a UI_BugReport.cs:5）——否则全局
+        /// （如 UI_BugReport 的 2000，0.1.16b UI_BugReport.cs:72（待核对））——否则全局
         /// TmpOnEnable/TmpActivate 兜底会波及所有输入框并与 NicknameLimit 互相拉扯。
         public static void RaiseLimit(TMP_InputField field)
         {

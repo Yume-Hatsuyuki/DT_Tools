@@ -6,7 +6,7 @@ namespace DT_Tools.Features.LouisFootstepDelay
     /// 玩家被杀死后，全图警报（警报音 + 尸体箭头，0.1.16b Player.OnDead 内）的同时，
     /// 凶手会获得脚印追踪（每 300ms 记录凶手脚印，全图重放 Footstep）。
     /// 原版脚印追踪 3000ms（3 秒），本功能在路易斯标记场景下延长为 FootprintMs（默认 5000ms/5 秒）。
-    /// 实现：Hook 0.1.16b Server.Game/Player.cs:883 OnDeadMurder（持刀与处决技死亡的唯一入口，
+    /// 实现：Hook 0.1.17a Server.Game/Player.cs:883 OnDeadMurder（持刀与处决技死亡的唯一入口，
     /// CollarBomb 走 OnDeadCollarBomb 不经此），Postfix 检测死者带 DeadDetective
     /// （该 buff 仅路易斯技能可施加，天然满足"只在路易斯角色时生效"）→ 给凶手提前
     /// AddBuff(Footprint, FootprintMs)，原逻辑随后 AddBuff(Footprint, 3000) 因已有该 buff

@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.BlackKillNotify
 {
-    /// Server.Game.Player.OnDeadMurder 后缀（private，0.1.16b Server.Game/Player.cs:883）
+    /// Server.Game.Player.OnDeadMurder 后缀（private，0.1.17a Server.Game/Player.cs:883）
     /// ——房主半触发点：Murder 死亡的唯一入口（CollarBomb 走 OnDeadCollarBomb 不经此），
     /// 持刀 C_KILL_PLAYER 与处决技 C_DEADLY_TRICK 一并覆盖；补丁点在尸体创建之后，
     /// ConsumeKillAndRearm 已扣减次数（UseWeapon 与 OnDamaged 同步执行，早于 400ms

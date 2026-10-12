@@ -2,28 +2,17 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.StageMusic
 {
-    /// 阶段音乐（客户端，实验性）：按游戏阶段播放自定义音乐（http 链接或本地文件，
-    /// 由 TrackSource 统一指定来源，仅本地收听）。
-    /// 触发点审计（0.1.16b，含 2026-09 补充审计）——
-    /// 击杀：Handle_S_KILL_PLAYER 只发凶手（PacketHandler.cs:953）；
-    /// 递刀：UseHandWeapon 发包成功（MyPlayer.cs:779）；
-    /// 阶段切换：GameManagerEX.StartState（GameManagerEX.cs:386，覆盖大厅/选角/生存/侦探/开庭/结算六阶段）；
-    /// 处刑：UI_TrialEvent.TrialResult（UI_TrialEvent.cs:1214）；
-    /// 主菜单/房内大厅：UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2209）+ StartLobby（GameManagerEX.cs:447）；
-    /// 审判子阶段：UI_TrialEvent.StartState（UI_TrialEvent.cs:1652，覆盖讨论/投票/唱票/回放四子阶段，
-    /// TrialResult 子阶段沿用上面更精确的处刑触发，不重复挂载）；
-    /// 发现尸体：Handle_S_DISCOVER_CORPSE（PacketHandler.cs:821，仅发现者本人，Server.Game/Corpse.cs:349）；
-    /// 自己死亡：Handle_S_DEAD（PacketHandler.cs:392，仅死者本人——S_DEAD 只发死者
-    /// Server.Game/Player.cs:827；S_NOTIFY_DEAD 实为灵媒知晓通知，不能用作本机死亡信号）；
-    /// 结局动画：Handle_S_ENDING_CAMERA（PacketHandler.cs:592，仅 IsEnd=true 时触发）；
-    /// 黑幕继承：Handle_S_NOTIFY_BLACK（PacketHandler.cs:482，ByHand=false 非递刀时按客户端 Dark 分支
-    /// 判定——收包瞬间本机颜色仍为 Dark 且存活；递刀 ByHand=true 已由 GiveKnife 覆盖）。
-    /// 单播放槽治理：同曲目播放中不重播（连杀防重复）、切阶段只保留一首、限长到点停止。
-    /// 原版 BGM 可选静音（各阶段原版会播 DetectiveBGM/TrialMainBGM/Beta_Result_BGM 等，
-    /// 含主菜单 MainTitleBGM）。麦克风广播（MicBroadcast 配置，默认关）：阶段音乐同时经
-    /// Game/MicBroadcast 虚拟麦克风混流发往全房（无需说话），本地仍由本功能播放器负责；
-    /// 广播随播放槽启停（切阶段未配置的阶段即停止），手动 /mic_music 与其互斥（后触发者接管）。
-    /// 未来扩展：新增阶段=加 MusicStage 成员 + 对应 [Config] 字段 + 触发补丁。
+    /// 阶段音乐（客户端，实验性）：按游戏阶段播放自定义音乐（来源由 TrackSource 指定：http 链接或本地文件，仅本地收听）。
+    /// 触发点（0.1.16b 源码，2026-09 补充审计）：
+    /// 击杀 Handle_S_KILL_PLAYER（只发凶手，PacketHandler.cs:953）；递刀 UseHandWeapon（MyPlayer.cs:779）；阶段切换 GameManagerEX.StartState（GameManagerEX.cs:386，六阶段）；
+    /// 处刑 UI_TrialEvent.TrialResult（UI_TrialEvent.cs:1214）；大厅 UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2209）与 StartLobby（GameManagerEX.cs:447）；
+    /// 审判子阶段 UI_TrialEvent.StartState（UI_TrialEvent.cs:1652，TrialResult 沿用处刑触发）；发现尸体 Handle_S_DISCOVER_CORPSE（PacketHandler.cs:821，仅发现者）；
+    /// 自己死亡 Handle_S_DEAD（PacketHandler.cs:392，仅死者；S_NOTIFY_DEAD 是灵媒通知，不能作为本机死亡信号）；结局 Handle_S_ENDING_CAMERA（PacketHandler.cs:592，IsEnd=true）；
+    /// 黑幕继承 Handle_S_NOTIFY_BLACK（PacketHandler.cs:482，非递刀时按收包瞬间的本机 Dark 与存活判定）。
+    /// 播放槽：同曲目播放中不重播（防连杀重复），切阶段只保留一首，限长到点停止。
+    /// 原版 BGM 可选静音（各阶段原版会播 DetectiveBGM、TrialMainBGM、Beta_Result_BGM 等，含 MainTitleBGM）。
+    /// 麦克风广播（MicBroadcast 配置，默认关）：经 Game/MicBroadcast 混入全房；随播放槽启停，与 /mic_music 互斥（后触发者接管）。
+    /// 未来扩展：新增阶段 = 加 MusicStage 成员 + 对应 [Config] 字段 + 触发补丁。
     [PatchFeature(
         "[实验性] 阶段音乐：按游戏阶段播放自定义音乐（TrackSource 统一选择在线链接或本地文件，" +
         "17 个阶段独立配置曲目/音量/时长上限——原 8 阶段 + 选角/审判四子阶段/发现尸体/" +

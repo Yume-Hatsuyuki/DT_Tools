@@ -7,7 +7,7 @@ using Steamworks;
 namespace DT_Tools.Features.LobbyMaxPlayers
 {
     /// CreateLobby 整替：pending 字段按原版顺序填充后，Lobby 容器上限改用
-    /// EffectiveSteamMemberLimit（原版恒 16：0.1.16b DummyClient/SteamLobbyManager.cs:128-137）。
+    /// EffectiveSteamMemberLimit（原版恒 16：0.1.16b DummyClient/SteamLobbyManager.cs:128-137（待核对））。
     /// pending 字段为私有：_pendingCreateCallback:60 / _pendingRoomCode:70 / _pendingRoomName:72 /
     /// _pendingMic:74 / _pendingLang:76 / _pendingIsPrivate:78 / _createEnterPending:82。
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]

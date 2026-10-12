@@ -33,7 +33,7 @@ namespace DT_Tools.Commands.LunaProtect
         {
             foreach (var player in targets)
             {
-                room.Broadcast(new S_NOTIFY_LUNA_ABILITY   // 0.1.16b Protocol/S_NOTIFY_LUNA_ABILITY.cs:8
+                room.Broadcast(new S_NOTIFY_LUNA_ABILITY   // 0.1.17a Protocol/S_NOTIFY_LUNA_ABILITY.cs:8
                 {
                     PlayerId = player.PublicInfo.PlayerId,
                 });

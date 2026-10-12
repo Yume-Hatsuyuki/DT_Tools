@@ -33,7 +33,7 @@ namespace DT_Tools.Features.CharacterMapPin
 
         /// 运行时关闭：销毁全部常驻箭头，并把已替换的 pin 贴图还原为原版。
         /// 原版 RefreshPlayerPin 对已存在的 pin 只调 SetLocalPosition、不重设 sprite
-        /// （0.1.16b UI_GameScene.cs:852-868（待核对） / UI_GameTablet.cs:1211-1226 的 else 分支），
+        /// （0.1.16b UI_GameScene.cs:852（待核对）-868（待核对） / UI_GameTablet.cs:1211-1226 的 else 分支），
         /// 所以热关闭后贴图不会自行还原，必须在这里按 PinSpriteKey 主动恢复（见 Ui.RestoreAllPins）。
         /// 死亡保留的 pin 先整批删除（玩家已 Despawn，原版不会替我们清理），再走常规还原。
         private static void OnDisabled()

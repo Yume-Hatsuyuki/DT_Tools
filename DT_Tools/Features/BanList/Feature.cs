@@ -10,7 +10,7 @@ using Steamworks;
 namespace DT_Tools.Features.BanList
 {
     /// 踢人黑名单：房主踢人时游戏把对方 SteamId 记进 GameRoom._bannedSteamIds
-    /// （0.1.16b Server.Game/GameRoom.cs:79），此后进房校验直接拒绝
+    /// （0.1.16b Server.Game/GameRoom.cs:79（待核对）），此后进房校验直接拒绝
     /// （HandleEnterPlayer，:1068，回包 ErrorKicked），且原版没有任何解封接口——
     /// 房主会话存续期间被踢者永远进不来，只有 FullReset（:522）才清空。
     ///

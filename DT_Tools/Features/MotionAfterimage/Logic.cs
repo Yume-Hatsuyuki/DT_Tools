@@ -440,7 +440,7 @@ namespace DT_Tools.Features.MotionAfterimage
             {
                 SkeletonDataAsset sda = Managers.Resource.Load<SkeletonDataAsset>(data.SkeletonPrefabName);
                 if (sda == null)
-                    throw new global::System.Exception("SkeletonDataAsset 加载失败: " + data.SkeletonPrefabName);
+                    throw new global::System.Exception($"SkeletonDataAsset 加载失败: {data.SkeletonPrefabName}");
 
                 anim.skeletonDataAsset = sda;
                 anim.Initialize(overwrite: true);
@@ -453,7 +453,7 @@ namespace DT_Tools.Features.MotionAfterimage
                 Material primary = anim.SkeletonDataAsset.atlasAssets[0].PrimaryMaterial;
                 Material srcMat = Managers.Resource.Load<Material>(matName);
                 if (srcMat == null)
-                    throw new global::System.Exception("材质加载失败: " + matName);
+                    throw new global::System.Exception($"材质加载失败: {matName}");
 
                 mat = Object.Instantiate(srcMat);
                 mat.mainTexture = primary.mainTexture;

@@ -20,30 +20,14 @@ namespace DT_Tools.Features.Jelly
         public Vector2 BaseColliderOffset;
     }
 
-    /// 果冻周期数学：全员/全体同相位（Time.unscaledTime % 周期），
-    /// 下压段 smoothstep + 回弹段阻尼余弦，每帧绝对赋值 scale。
-    ///
-    /// 玩家目标 = 挂 SkeletonAnimation 的视觉子节点（0.1.17a Player.cs:302/608）：
-    /// 主游戏从不写该节点的 scale/localPosition（Refresh 只归一化其 parent，Player.cs:2303），
-    /// 碰撞体、UIGroup（名牌/表情/体力条）、EffectGroup 均为其兄弟节点；Spine 动画也不写
-    /// Unity transform scale，互不覆盖。绝对赋值天然免疫游戏对视觉层级的归一化，
-    /// 晚加入/重生角色无需额外挂钩。
-    ///
-    /// 设备目标（IncludeDevices）= 多视觉节点启发式：
-    /// SkeletonAnimation 子节点（Corpse.cs:127/Chair.cs:31）优先 → 掉落物 ItemHolder 与
-    /// 根视觉设备 Mineral/Curtain 缩根（视觉 SpriteRenderer 就在根上）→ 其余找 "Body" 主视觉
-    /// （Computer/Boiler/Warp/Lever/ChatDevice/Flower/Miner/Harvest/Occult/Mushroom 等）+
-    /// 物品图标叶子节点（Battery/Slot/Slots/Required：充电座电池、矿机/储藏/饮料桌图标）。
-    /// 设备交互判定是纯数学矩形（DeviceManager.cs:692-746，position+数据表 Rects），
-    /// 与 scale 无关；设备一律不碰 localPosition（根 position=判定位置）。
-    /// 柜子/门等"视觉与视线遮挡 collider 同在根"的设备永远跳过（缩了改变遮挡判定）。
-    ///
-    /// 地形装饰（IncludeDecorations）= 当前房间（MapManager.CurrentPrefab）下按安全过滤
-    /// 枚举 SpriteRenderer：跳过 Tilemap（地板 tag"Room"/墙 tag"Wall"，墙进移动碰撞合体
-    /// MapManager.cs:69-72）、跳过自带/子树含 Collider2D 或 layer=Block(12)/Transmission(13)
-    /// 的节点（视线遮挡 collider 是 prefab 序列化、与移动合体分离的独立碰撞，MyPlayer.cs:1533
-    /// 等 mask=12288——无法从代码判断 sprite 与 collider 是否同节点，凡带 collider 一律不碰）。
-    /// ShadowCaster2D 形状在局部空间随 transform 变形，与 sprite 视觉自洽无坑。
+    /// 果冻周期：全员同相位（Time.unscaledTime 取模），下压段 smoothstep + 回弹段阻尼余弦，每帧绝对赋值 scale。
+    /// 玩家目标：挂 SkeletonAnimation 的视觉子节点（0.1.17a Player.cs:302/608）。主游戏不写该节点的 scale/localPosition；
+    /// 碰撞体、UIGroup、EffectGroup 都是它的兄弟节点，Spine 也不写 transform scale。绝对赋值因此不会被覆盖，晚加入或重生的角色无需额外挂钩。
+    /// 设备目标（IncludeDevices）：优先 SkeletonAnimation 子节点（Corpse.cs:127、Chair.cs:31）；掉落物与根视觉设备（Mineral/Curtain）缩根；
+    /// 其余找 "Body" 主视觉与图标叶子节点（Battery/Slot/Slots/Required）。设备交互判定是纯矩形（DeviceManager.cs:692-746），与 scale 无关，设备一律不改 localPosition。
+    /// 柜子、门等视觉与视线遮挡 collider 同在根上的设备永远跳过：缩放会改变遮挡判定。
+    /// 地形装饰（IncludeDecorations）：只处理当前房间（MapManager.CurrentPrefab）的 SpriteRenderer，跳过 Tilemap，以及带 Collider2D 或 layer=Block(12)/Transmission(13) 的节点。
+    /// 视线遮挡 collider 与移动碰撞由 prefab 序列化，无法从代码判断 sprite 与 collider 是否同节点，所以凡带 collider 一律不碰（MyPlayer.cs:1533 等 mask=12288）。
     internal static class JellyLogic
     {
         /// 横向幅度为纵向的 0.8 倍（体积守恒近似）。

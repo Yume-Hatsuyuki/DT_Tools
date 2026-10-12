@@ -210,7 +210,7 @@ namespace SuggestTags
         public const string Usage =
 @"用法: suggest-tags [--root <仓库根>] (--all | --unit <目录或 类名>) [--check] [--json] [--threshold 0.4]
   --all        对全部单元给出建议
-  --unit       只看一个单元（功能目录名，或命令的 Commands/目录::类名）
+  --unit       只看一个单元：功能目录名（如 DarkRadar）、模块/MCP 目录名，或类名（如 KillCommand）。按包含匹配
   --check      与声明的 Tags 对比，输出差异与一致性统计
   --json       以 JSON 输出
   --threshold  相对最高分的截断比例，默认 0.4";
@@ -304,6 +304,9 @@ namespace SuggestTags
 
     internal static class Scorer
     {
+        /// 类名信号相对于游戏类型引用的权重（经验值，见 README 的指标说明）。
+        private const double SelfNameWeight = 2.0;
+
         /// 思路：每个游戏类型的权重 = ln(1 + 单元总数 / 引用它的单元数)，越普遍（枢纽类）越低。
         /// 类型被规则命中时，把规则权重累加到对应标签上；成员的精确映射权重更高。
         public static List<UnitResult> Score(List<UnitInfo> units, Dictionary<UnitInfo, UnitEvidence> ev, GameMap map, double threshold)
@@ -350,6 +353,17 @@ namespace SuggestTags
                     var idf = Math.Log(1 + (double)n / memberDf[kv.Key]);
                     foreach (var t in tags) Add(t, kv.Key, idf * 1.5);
                 }
+
+                // 单元自身类名也是信号（如 AutoReadyModule → SysAutomation）。
+                // 游戏类型统计看不到模组内部的类，所以这里单独计一次，权重低于游戏类型引用。
+                var selfBest = new Dictionary<string, double>();
+                foreach (var rule in map.Rules)
+                {
+                    if (string.IsNullOrEmpty(u.ClassName) || !rule.Pattern.IsMatch(u.ClassName)) continue;
+                    foreach (var t in rule.Tags)
+                        selfBest[t] = Math.Max(selfBest.TryGetValue(t, out var b) ? b : 0, rule.Weight);
+                }
+                foreach (var kv2 in selfBest) Add(kv2.Key, "类名 " + u.ClassName, SelfNameWeight * kv2.Value);
 
                 r.AllScores = scores;
                 if (scores.Count > 0)

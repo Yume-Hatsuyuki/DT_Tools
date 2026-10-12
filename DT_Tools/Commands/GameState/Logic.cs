@@ -8,7 +8,7 @@ namespace DT_Tools.Commands.GameState
     /// 房主走 GameRoom.Instance.State（服务器权威）+ TrialManager.Instance.State，
     /// 并附带 IsTransitioning / IsMigrating 屏障标志；客户端走 Managers.Game.State
     /// （由 S_CHANGE_GAME_STATE 同步）+ TrialMirror（由 S_TRIAL_STATE 镜像，
-    /// 0.1.16b Server.Game/TrialMirror.cs:14-22、PacketHandler.cs:1022-1028）。
+    /// 0.1.16b Server.Game/TrialMirror.cs:14-22（待核对）、PacketHandler.cs:1022-1028）。
     internal static class GameStateLogic
     {
         /// 读取结果（供 Format 输出）。
@@ -39,7 +39,7 @@ namespace DT_Tools.Commands.GameState
                 result.Transitioning = room.IsTransitioning;
                 result.Migrating = room.IsMigrating;
 
-                // 裁判子状态以服务器 TrialManager 为准（0.1.16b Server.Game/TrialManager.cs:81/:93）
+                // 裁判子状态以服务器 TrialManager 为准（0.1.17a Server.Game/TrialManager.cs:81/:93）
                 if (result.State == EGameState.Trial && TrialManager.Instance != null)
                     result.TrialState = TrialManager.Instance.State;
             }

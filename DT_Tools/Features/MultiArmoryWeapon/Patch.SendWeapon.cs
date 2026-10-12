@@ -4,7 +4,7 @@ using Protocol;
 
 namespace DT_Tools.Features.MultiArmoryWeapon
 {
-    /// SendWeapon 前缀（私有方法，字符串定位：0.1.16b Server.Game/Armory.cs:132-134）：
+    /// SendWeapon 前缀（私有方法，字符串定位：0.1.17a Server.Game/Armory.cs:132-134）：
     /// 原版硬断言 ID == CurrentArmory.ID，多刀场景下从其它开放架拔刀会被静默拒绝。
     /// 前缀在本架处于开放态时把 CurrentArmory/_lastArmory/ArmoryPos 三件套接管到本架
     /// （与 TransferWeaponRandom 的同步方式一致），原版断言随之为真，发放流程照常执行。

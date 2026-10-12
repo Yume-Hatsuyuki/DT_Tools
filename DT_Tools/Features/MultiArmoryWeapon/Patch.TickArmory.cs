@@ -4,7 +4,7 @@ using Protocol;
 
 namespace DT_Tools.Features.MultiArmoryWeapon
 {
-    /// 原版 TickArmory 为私有方法（0.1.16b Server.Game/Armory.cs:154），且仅当 CurrentArmory == this 才走
+    /// 原版 TickArmory 为私有方法（0.1.17a Server.Game/Armory.cs:154），且仅当 CurrentArmory == this 才走
     /// 转移 CD；开启功能后整替：任意 Open 架独立走 CD（StateList[2]=总秒数、[3]=已过秒数），
     /// 到期随机转移到空架。
     [HarmonyPatch(typeof(Server.Game.Armory), "TickArmory")]
@@ -37,7 +37,7 @@ namespace DT_Tools.Features.MultiArmoryWeapon
                 else
                 {
                     __instance.BroadcastStateInArea();
-                    // TickArmory 为私有（0.1.16b Server.Game/Armory.cs:154），经 Traverse 续约 1 秒后的下一跳；
+                    // TickArmory 为私有（0.1.17a Server.Game/Armory.cs:154），经 Traverse 续约 1 秒后的下一跳；
                     // 调用再次进入本前缀，形成与原版一致的逐秒链。
                     Server.Game.TimeManager.Instance.PushSurvivalJob(1, () =>
                         Traverse.Create(__instance).Method("TickArmory").GetValue());

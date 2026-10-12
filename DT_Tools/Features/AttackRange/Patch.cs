@@ -8,7 +8,7 @@ namespace DT_Tools.Features.AttackRange
     /// （骨架与 0.1.16b MyPlayer.cs:2162（待核对） 一致，仅 224f → 可配置 Range）。
     /// 方法为 private，字符串定位：0.1.16b MyPlayer.cs:2162（待核对）。
     /// 覆盖范围注意：0.1.16b 教程局重写后用独立的 TutorialMyPlayer
-    /// （0.1.17a TutorialMyPlayer.cs:1070，继承 Tutorial_Player），不继承 MyPlayer、
+    /// （0.1.16b TutorialMyPlayer.cs:7（待核对），继承 Tutorial_Player），不继承 MyPlayer、
     /// 攻击不走 GetTargetPlayer，故本补丁不覆盖教学局，教学局内攻击距离仍为原版逻辑。
     [HarmonyPatch(typeof(MyPlayer), "GetTargetPlayer")]
     internal static class AttackRangePatch

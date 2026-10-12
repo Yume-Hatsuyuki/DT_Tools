@@ -7,26 +7,14 @@ using Server.Game;
 namespace DT_Tools.Commands.GiveMission
 {
     /// /givemission 业务：MissionManager 访问守卫、软前置联动初始化、任务派发。
-    ///
-    /// MissionManager 在发行程序集中是 internal 类（0.1.16b Server.Game/MissionManager.cs:10），
-    /// 所有访问统一走 Game.MissionAccess 反射访问器（反射目标行号与缓存策略见
-    /// MissionAccess.cs 头注释，本文件不再持有任何反射代码）。
-    /// StartMission 会把任务加入 ProgressMissionList、递归启动硬前置（PrevType）并按
-    /// ESchoolMission switch 激活设备，但不广播 S_MISSION_STATE，所以派发后额外调用
-    /// BroadcastMissionState() 让客户端立即刷新任务面板。
-    ///
-    /// 软前置联动初始化：MissionData.PrevType 只记录硬前置，但很多任务的设备初始化依赖
-    /// 另一条已完成的任务链（如 ScRune(12)←ScBookRune(11)、ScSurgery(1)←ScManikinStart(18)、
-    /// ScSprayCancer(20)←ScMakeSpray(2)、ScShakerDrink(22)←ScShakeShaker(16)←ScDrink(15)）。
-    /// 这些关系通过 NextType 表达。本命令构建反向 NextType 表，派发 T 时沿链收集软前置 P，
-    /// 逐个 StartMission(P) 跑设备初始化后立即从 ProgressMissionList 移除 P：
-    /// P 的设备状态被正确初始化，但玩家完成 P 时 ClearMission(P) 直接 return（不计分、
-    /// 不触发 NextType 链），只有 T 计分。派发前先 RemoveFromWaitQueue 清理队列残留，
-    /// 避免下次 StartNextFromQueue 把任务再次启动。
+    /// MissionManager 是 internal（0.1.17a Server.Game/MissionManager.cs:10），所有访问统一走 Game.MissionAccess 反射访问器（行号与缓存见其头注释）。
+    /// StartMission 会把任务加入 ProgressMissionList、递归启动硬前置（PrevType）并按 ESchoolMission 激活设备，但不广播 S_MISSION_STATE，所以派发后额外调用 BroadcastMissionState()，让客户端立即刷新任务面板。
+    /// 软前置联动：MissionData.PrevType 只记录硬前置，但不少任务的设备初始化依赖另一条已完成的任务链（如 ScRune(12)←ScBookRune(11)、ScSurgery(1)←ScManikinStart(18)、ScSprayCancer(20)←ScMakeSpray(2)、ScShakerDrink(22)←ScShakeShaker(16)←ScDrink(15)），这些关系通过 NextType 表达。
+    /// 本命令据此构建反向 NextType 表：派发任务 T 时沿链收集软前置 P，逐个 StartMission(P) 跑设备初始化，随后立即从 ProgressMissionList 移除 P。P 的设备状态被正确初始化，但玩家完成 P 时 ClearMission(P) 直接返回（不计分、不触发 NextType 链），只有 T 计分。派发前先 RemoveFromWaitQueue 清理队列残留，避免下次 StartNextFromQueue 把任务再次启动。
     internal static class GiveMissionLogic
     {
         /// switch 中无对应 Start_ScXXX 分支的占位任务类型
-        /// （0.1.16b MissionManager.cs:807-814（待核对） 空分组，另含枚举外的裸值 5/19）。
+        /// （0.1.16b MissionManager.cs:807（待核对）-814（待核对） 空分组，另含枚举外的裸值 5/19）。
         private static readonly HashSet<ESchoolMission> EmptyCaseMissions =
             new HashSet<ESchoolMission>
             {

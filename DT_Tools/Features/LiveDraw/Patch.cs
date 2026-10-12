@@ -112,7 +112,7 @@ namespace DT_Tools.Features.LiveDraw
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<LiveDrawFeature>(ex, "[庭审画布动态照片] 主循环异常");
+                    Log.Error<LiveDrawFeature>(ex, "主循环异常");
                 }
             }
         }
@@ -161,7 +161,7 @@ namespace DT_Tools.Features.LiveDraw
             }
             catch (Exception ex)
             {
-                Log.Error<LiveDrawFeature>(ex, "[庭审画布动态照片] 启动绘制失败");
+                Log.Error<LiveDrawFeature>(ex, "启动绘制失败");
             }
         }
 
@@ -438,7 +438,7 @@ namespace DT_Tools.Features.LiveDraw
             }
             catch (Exception ex)
             {
-                Log.Error<LiveDrawFeature>(ex, "[庭审画布动态照片] 动画帧发送失败");
+                Log.Error<LiveDrawFeature>(ex, "动画帧发送失败");
             }
         }
 

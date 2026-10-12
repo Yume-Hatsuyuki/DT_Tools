@@ -20,7 +20,7 @@ namespace DT_Tools.Features.UnlockMadeline
     }
 
     /// SaveManager.RecordGamePlayed 前缀（public，可用 nameof）：
-    /// 0.1.17a SaveManager.cs:10。原版只对已有键自增（SaveManager.cs:470），
+    /// 0.1.16b SaveManager.cs:466（待核对）。原版只对已有键自增（SaveManager.cs:470），
     /// 先为 101 补键，使本局对战计入了梅德琳的游玩次数。
     [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.RecordGamePlayed))]
     internal static class UnlockMadelineRecordPlayedPatch

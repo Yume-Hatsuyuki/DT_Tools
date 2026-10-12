@@ -5,7 +5,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.CustomRoomName
 {
     /// 进房后成员数元数据更新时再尝试一次（幂等）。
-    /// UpdateMemberCountMetadata 为公开方法：0.1.16b DummyClient/SteamLobbyManager.cs:449。
+    /// UpdateMemberCountMetadata 为公开方法：0.1.17a DummyClient/SteamLobbyManager.cs:449。
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.UpdateMemberCountMetadata))]
     internal static class CustomRoomNameMemberMetaPatch
     {

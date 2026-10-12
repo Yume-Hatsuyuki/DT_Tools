@@ -14,7 +14,7 @@ namespace DT_Tools.Features.BlackKillNotify
     /// 三连包（占用 → SendSecretChatMessage → 释放）。
     /// 房主半——OnDeadMurder 后缀直发：组文 → S_CHAT_MESSAGE(SecretChat) 经
     /// RecordSecretChat + Replicator.Secrets 广播黑方频道，不做占用/冷却校验。
-    /// RemainKill 局内只减不增（0.1.16b Server.Game/Player.cs:331-345 只在
+    /// RemainKill 局内只减不增（0.1.17a Server.Game/Player.cs:331-345 只在
     /// ConsumeKillAndRearm 递减；GameStart 归零的发包由 5 秒新鲜度门滤除）；
     /// 下降即本机击杀被主机接受。
     internal static class BlackKillNotifyLogic
@@ -22,7 +22,7 @@ namespace DT_Tools.Features.BlackKillNotify
         /// 击杀目标记录的有效期：超过即视为过期（开局归零包等陈旧触发不通报）。
         private const float TargetFreshSeconds = 5f;
 
-        /// 打字机空闲态：StateList[0]==0（占用时为占据者 PlayerId，0.1.16b Server.Game/ChatDevice.cs:52-59）。
+        /// 打字机空闲态：StateList[0]==0（占用时为占据者 PlayerId，0.1.17a Server.Game/ChatDevice.cs:52-59）。
         private const int ChatDeviceFreeState = 0;
 
         private static bool _hasRemain;
@@ -127,7 +127,7 @@ namespace DT_Tools.Features.BlackKillNotify
                     killer.RemainKill);
 
                 // 包构造逐句镜像 RelayDeviceChat 的 SecretChat 分支
-                // （0.1.16b Server.Game/HostPacketHandler.cs:668-686）：Seq 入主机日志序、
+                // （0.1.16b Server.Game/HostPacketHandler.cs:668-686（待核对））：Seq 入主机日志序、
                 // Replicator.Secrets 只发黑方频道；差异仅两处——不做占用/冷却校验（直发），
                 // DeviceId 取离受害者最近的一台打字机（仅影响秘密喂料面板的房间署名）。
                 var packet = new S_CHAT_MESSAGE

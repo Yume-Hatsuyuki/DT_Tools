@@ -7,12 +7,12 @@ using UnityEngine;
 namespace DT_Tools.Features.MultiArmoryWeapon
 {
     /// 多刀编排：刷刀后开放多架、到期随机转移；同步 CurrentArmory 等权威指针以兼容
-    /// 原版取刀断言（SendWeapon 要求 ID == CurrentArmory.ID：0.1.16b Server.Game/Armory.cs:134）与任务箭头。
+    /// 原版取刀断言（SendWeapon 要求 ID == CurrentArmory.ID：0.1.17a Server.Game/Armory.cs:134）与任务箭头。
     /// DeviceManager 私有成员定位（0.1.16b Server.Game/DeviceManager.cs）：_armories:28、_lastArmory:14、
     /// CurrentArmory:42（private set 属性）、ArmoryPos:44（private set 属性）。
     internal static class MultiArmoryWeaponLogic
     {
-        /// 私有字段 _armories（0.1.16b Server.Game/DeviceManager.cs:28）。
+        /// 私有字段 _armories（0.1.17a Server.Game/DeviceManager.cs:28）。
         private static List<Server.Game.Armory> GetArmories(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_armories").GetValue<List<Server.Game.Armory>>();
 
@@ -27,7 +27,7 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         /// 不能复用原版 MostVotedPlayerId 当「最高票玩家」：它的返回值语义是「原版处决目标」——
         /// 只有最高票为绑定凶手（TrialManager.cs:856-859）或主谋（:861-864）才返回对应 id，
         /// 其余情形（含投中其他黑方与白方）一律返回 -1（:866），据此过滤会永远不命中。
-        /// 因此这里自读 _candidates（0.1.16b Server.Game/TrialManager.cs:47，私有）统计唯一最高票：
+        /// 因此这里自读 _candidates（0.1.17a Server.Game/TrialManager.cs:47，私有）统计唯一最高票：
         /// 无票（:835-838）、平票（:840-853）、绑定凶手（原版已判白胜 :787-791）、主谋（独立出局语义 :801-816）
         /// 一律交还原版；其余仅当目标是活着的黑方才接管——死后被票出不算（原版 Trial Survive 豁免也仅限绑定凶手）。
         internal static bool TryGetAnyBlackCatch(Server.Game.TrialManager trial, out int catchId, out string skipReason)
@@ -161,8 +161,8 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         private static void OpenArmory(Server.Game.Armory armory, Server.Game.GameRoom room)
         {
             if (armory == null || room == null) return;
-            armory.RefreshState(EArmoryState.OpenArmory);          // 0.1.16b Server.Game/Armory.cs:56
-            try { armory.StartSelectBlackCount(); }                // 0.1.16b Server.Game/Armory.cs:76
+            armory.RefreshState(EArmoryState.OpenArmory);          // 0.1.17a Server.Game/Armory.cs:56
+            try { armory.StartSelectBlackCount(); }                // 0.1.17a Server.Game/Armory.cs:76
             catch (global::System.Exception ex) { Log.Warn<MultiArmoryWeaponFeature>($"StartSelectBlackCount 失败：{ex.Message}"); }
             Server.Game.Player masterMind = room.MasterMind;
             if (masterMind == null || !masterMind.WeaponPickupLocked)
@@ -187,10 +187,10 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         }
 
         /// 重置本架转移 CD 并续 TickArmory 逐秒链。不能走 RefreshState(OpenArmory)：
-        /// 原版仅在状态变化时才重置 StateList[2]/[3] 并续链（0.1.16b Server.Game/Armory.cs:56-74 的
+        /// 原版仅在状态变化时才重置 StateList[2]/[3] 并续链（0.1.17a Server.Game/Armory.cs:56-74 的
         /// `if (state2 != (int)state)` 门），而到期转移时本架必已是 OpenArmory，该调用是 no-op。
         /// 这里绕过它直写状态，对齐 Server.Game/Armory.cs:62-67 的 OpenArmory 分支语义；
-        /// TickArmory 为私有（0.1.16b Server.Game/Armory.cs:154），经 Traverse 续约下一跳（会再进补丁前缀）。
+        /// TickArmory 为私有（0.1.17a Server.Game/Armory.cs:154），经 Traverse 续约下一跳（会再进补丁前缀）。
         private static void RearmTransfer(Server.Game.Armory armory, Server.Game.GameRoom room)
         {
             armory.DeviceInfo.StateList[2] = room.WeaponMoveSecond;

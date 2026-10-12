@@ -27,7 +27,7 @@ namespace DT_Tools.Commands.ReportCorpse
                 string name = ReportCorpseLogic.FindPlayerName(d.ID);
                 string block = ReportCorpseLogic.GetBlockReason(device, d);
                 if (block == null) reportable++;
-                string status = block == null ? "可报警" : ("不可报警·" + block);
+                string status = block == null ? "可报警" : ($"不可报警·{block}");
                 sb.AppendLine($"  #{d.ID,-4} {name,-16}  ← {status}");
             }
 

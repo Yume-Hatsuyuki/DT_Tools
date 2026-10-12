@@ -11,7 +11,7 @@ namespace DT_Tools.Features.PhotoSend
 {
     /// 照片发送执行逻辑：解析来源（本地/http）→ 读图 → 缩放 → JPEG 压到 ≤160KB →
     /// 构造 C_CHAT_PHOTO 直发（SlotIndex=-1，不触碰 PhotoManager._shots/_sentPhotoIds；
-    /// 房主端数据通道不校验 SlotIndex，0.1.16b Server.Game/HostPacketHandler.cs:542；
+    /// 房主端数据通道不校验 SlotIndex，0.1.17a Server.Game/HostPacketHandler.cs:552；
     /// 回包 SlotIndex&lt;0 不落重发缓存，0.1.17a PhotoManager.cs:773）。
     /// 文字说明在本地图压缩成功后、发送前发出（保证"先文字后图片"的聊天顺序，失败不打空炮）。
     /// http 链接在后台线程下载（AGENTS.md §11：Unity API 仅主线程可碰），经
@@ -39,7 +39,7 @@ namespace DT_Tools.Features.PhotoSend
         {
             try
             {
-                chat?.SendChatMessage("[PhotoSend] " + text);
+                chat?.SendChatMessage($"[PhotoSend] {text}");
             }
             catch
             {
@@ -80,7 +80,7 @@ namespace DT_Tools.Features.PhotoSend
             }
             catch (Exception ex)
             {
-                Log.Warn<PhotoSendFeature>($"[PhotoSend] 发送失败：{ex}");
+                Log.Warn<PhotoSendFeature>($"发送失败：{ex}");
                 return "照片发送失败。";
             }
         }
@@ -253,7 +253,7 @@ namespace DT_Tools.Features.PhotoSend
             });
             // 与原版 SubmitPhoto 一致消费客户端节流预算（0.1.17a PhotoManager.cs:672）
             ConsumeBudgetMethod?.Invoke(Managers.Photo, null);
-            Log.Info<PhotoSendFeature>($"[PhotoSend] {name} 已发送：{jpeg.Length / 1024}KB（{outW}x{outH}px）");
+            Log.Info<PhotoSendFeature>($"{name} 已发送：{jpeg.Length / 1024}KB（{outW}x{outH}px）");
             return null;
         }
 
@@ -340,7 +340,7 @@ namespace DT_Tools.Features.PhotoSend
         /// 后台线程下载网络图片，完成后回主线程压缩发送；失败也回主线程聊天报错。
         private static void StartRemoteDownload(VoiceManager chat, string url)
         {
-            Log.Info<PhotoSendFeature>($"[PhotoSend] 开始下载远程图片：{url}");
+            Log.Info<PhotoSendFeature>($"开始下载远程图片：{url}");
             var job = new RemoteJob { Chat = chat, Url = url };
             new Thread(DownloadRun) { IsBackground = true, Name = "DT_PhotoSendDownload" }.Start(job);
         }
@@ -401,14 +401,14 @@ namespace DT_Tools.Features.PhotoSend
                     }
                     if (error != null)
                     {
-                        Log.Warn<PhotoSendFeature>($"[PhotoSend] {error}");
+                        Log.Warn<PhotoSendFeature>($"{error}");
                         ReportChatError(chat, error);
                     }
                 });
             }
             catch (Exception ex)
             {
-                Log.Warn<PhotoSendFeature>($"[PhotoSend] 远程图片下载失败：{ex}");
+                Log.Warn<PhotoSendFeature>($"远程图片下载失败：{ex}");
                 VoiceManager chat = job.Chat;
                 string text = "远程图片下载失败（详细原因见本地日志）";
                 CoroutineHost.Post(() => ReportChatError(chat, text));

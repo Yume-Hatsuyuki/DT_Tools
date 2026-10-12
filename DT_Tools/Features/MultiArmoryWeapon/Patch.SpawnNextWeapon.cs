@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.MultiArmoryWeapon
 {
-    /// 原版 SpawnNextWeapon(bool isInit)（0.1.16b Server.Game/DeviceManager.cs:509）只开放 CurrentArmory 一架；
+    /// 原版 SpawnNextWeapon(bool isInit)（0.1.17a Server.Game/DeviceManager.cs:509）只开放 CurrentArmory 一架；
     /// 刷刀后按 WeaponCount 补足 / 收敛开放架数（CurrentArmory 恒保留）。
     [HarmonyPatch(typeof(Server.Game.DeviceManager), nameof(Server.Game.DeviceManager.SpawnNextWeapon))]
     internal static class MultiArmoryWeaponSpawnNextWeaponPatch

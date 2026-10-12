@@ -131,9 +131,9 @@ namespace DT_Tools.WebConsole
             if (snap.SavePath == null)
                 return "尚未下载过安装包";
             if (!File.Exists(snap.SavePath))
-                return "文件已不存在：" + snap.SavePath;
+                return $"文件已不存在：{snap.SavePath}";
             if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-                return "仅支持 Windows 资源管理器定位：" + snap.SavePath;
+                return $"仅支持 Windows 资源管理器定位：{snap.SavePath}";
             try
             {
                 // explorer /select：打开所在文件夹并选中文件（比只开文件夹更直观）

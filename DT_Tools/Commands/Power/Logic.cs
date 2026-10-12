@@ -55,7 +55,7 @@ namespace DT_Tools.Commands.Power
             if (room == null) return CommandResult.Fail("invalid state");
 
             // 用全名限定：程序集里另有客户端 DeviceManager（Managers.Device，全局命名空间），
-            // 这里需要的是 Host 端 Server.Game.DeviceManager（0.1.16b Server.Game/DeviceManager.cs:10/:38）
+            // 这里需要的是 Host 端 Server.Game.DeviceManager（0.1.17a Server.Game/DeviceManager.cs:10/:38）
             var deviceManager = Server.Game.DeviceManager.Instance;
             int disconnected = deviceManager.GetDisconnectFuseCount();
             if (disconnected >= RequiredDisconnectedFuses)

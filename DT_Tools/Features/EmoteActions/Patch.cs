@@ -103,7 +103,7 @@ namespace DT_Tools.Features.EmoteActions
                 }
                 catch (Exception ex)
                 {
-                    Log.Error<EmoteActionsFeature>(ex, "[未实装动作] 按键检测异常");
+                    Log.Error<EmoteActionsFeature>(ex, "按键检测异常");
                 }
             }
         }
@@ -123,7 +123,7 @@ namespace DT_Tools.Features.EmoteActions
                 if (!warned)
                 {
                     warned = true;
-                    Log.Warn<EmoteActionsFeature>("[未实装动作] 当前角色骨骼里没有动画 " + animName + "，跳过。");
+                    Log.Warn<EmoteActionsFeature>("当前角色骨骼里没有动画 " + animName + "，跳过。");
                 }
                 return;
             }
@@ -132,7 +132,7 @@ namespace DT_Tools.Features.EmoteActions
             _actor = p;
             _acting = true;
             _endTime = Time.unscaledTime + anim.Duration + 0.15f;
-            Log.Info<EmoteActionsFeature>("[未实装动作] 播放 " + animName + "（时长 " + anim.Duration.ToString("F2") + "s）");
+            Log.Info<EmoteActionsFeature>("播放 " + animName + "（时长 " + anim.Duration.ToString("F2") + "s）");
 
             if (EmoteActionsFeature.SyncActions)
             {
@@ -178,7 +178,7 @@ namespace DT_Tools.Features.EmoteActions
             }
             catch (Exception ex)
             {
-                Log.Warn<EmoteActionsFeature>(ex, "[未实装动作] 同步广播失败");
+                Log.Warn<EmoteActionsFeature>(ex, "同步广播失败");
             }
         }
 
@@ -219,7 +219,7 @@ namespace DT_Tools.Features.EmoteActions
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn<EmoteActionsFeature>(ex, "[未实装动作] 同步接收异常");
+                    Log.Warn<EmoteActionsFeature>(ex, "同步接收异常");
                     return true;
                 }
             }
@@ -262,14 +262,14 @@ namespace DT_Tools.Features.EmoteActions
                 if (!RemoteWarned.TryGetValue(playerId, out bool warned) || !warned)
                 {
                     RemoteWarned[playerId] = true;
-                    Log.Warn<EmoteActionsFeature>("[未实装动作] 远端玩家 " + playerId + " 骨骼里没有动画 " + animName + "，跳过。");
+                    Log.Warn<EmoteActionsFeature>("远端玩家 " + playerId + " 骨骼里没有动画 " + animName + "，跳过。");
                 }
                 return;
             }
 
             p.PlayDeadlyTrickAnim(animName, false);
             RemoteEndTimes[playerId] = Time.unscaledTime + anim.Duration + 0.15f;
-            Log.Info<EmoteActionsFeature>("[未实装动作] 同步播放 " + playerId + $" 的 {animName}");
+            Log.Info<EmoteActionsFeature>("同步播放 " + playerId + $" 的 {animName}");
         }
 
         /// 远端动作收尾：到时 / 玩家移动 / 切状态 / 对象失效即还原并清理。

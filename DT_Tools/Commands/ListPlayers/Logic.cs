@@ -37,7 +37,7 @@ namespace DT_Tools.Commands.ListPlayers
 
         /// 房主 PlayerId：Host 端直接取 GameRoom.Host；客户端用 Steam Lobby 的 HostSteamId
         /// 在 Roster 里反查。识别失败返回 0
-        /// （0.1.16b DummyClient/SteamLobbyManager.cs:90 HostSteamId / :104 InLobby）。
+        /// （0.1.17a DummyClient/SteamLobbyManager.cs:90 HostSteamId / :104 InLobby）。
         public static int ResolveHostPlayerId()
         {
             if (HostGuard.IsHost)
@@ -142,7 +142,7 @@ namespace DT_Tools.Commands.ListPlayers
                     {
                         string pop = DecodePop(info.m_idPOPRelay);
                         if (!string.IsNullOrEmpty(pop))
-                            remoteIp = "sdr:" + pop;
+                            remoteIp = $"sdr:{pop}";
                         else
                             remoteIp = "sdr:(relay)";
                     }

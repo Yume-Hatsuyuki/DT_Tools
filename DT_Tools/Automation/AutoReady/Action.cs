@@ -7,7 +7,7 @@ namespace DT_Tools.Automation.AutoReady
     /// 动作：延迟等待 → 上限检查 → 定位 UI_GameScene 准备按钮 → 经原版
     /// OnClickReadyButton 发送 C_READY（0.1.17a UI_GameScene.cs:2162，私有方法；
     /// F5 快捷键即直接调用它 :4882）。房主（开局按钮可见）无需准备；
-    /// 原版开局只由房主发 C_START 触发（0.1.16b Server.Game/GameRoom.cs:1571-1587），
+    /// 原版开局只由房主发 C_START 触发（0.1.16b Server.Game/GameRoom.cs:1571-1587（待核对）），
     /// 准备动作因此不可能间接开局。
     internal static class AutoReadyAction
     {

@@ -30,7 +30,7 @@ namespace DT_Tools.Features.MotionAfterimage
         }
     }
 
-    /// 自己死亡：S_DEAD → GameManagerEX.Dead（0.1.17a GameManagerEX.cs:7）。
+    /// 自己死亡：S_DEAD → GameManagerEX.Dead（0.1.16b GameManagerEX.cs:334（待核对））。
     /// 原版对自己忽略 S_DESPAWN，故本地定格走此钩子。
     [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
     internal static class MotionAfterimageLocalDeadPatch
