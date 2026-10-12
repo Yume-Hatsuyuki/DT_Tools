@@ -10,3 +10,7 @@ DT_Tools/obj/
 
 # Node.js 的构建产物
 DT_Tools/WebUI/
+
+# 开发期工具的构建产物
+tools/**/bin/
+tools/**/obj/

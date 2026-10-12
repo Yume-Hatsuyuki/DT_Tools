@@ -37,10 +37,10 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 2. 每个补丁方法的第一行，必须写开关检查（§1）。
 3. 禁止 Features、Commands、Automation 三个域互相依赖。共享代码上浮到 `Game/`（§4）。
 4. 配置段名、键名禁止写字符串。禁止 `ConfigEntry<T>` 字段（§9 约束 5）。
-5. 引用游戏 API 之前，必须先核对游戏源码。私有成员必须带 `0.1.16b 文件:行号` 注释（§10）。
+5. 引用游戏 API 之前，必须先核对游戏源码。私有成员必须带 `0.1.17a 文件:行号` 注释（§10）。
 6. 日志只走 `Log` 门面。注释、日志、命令文案全用中文。禁止 `Debug.Log`（§11）。
 7. JSON 只走 `DT_Tools.Core.Json`。禁止手拼 JSON（§11）。
-8. 禁止修改 `0.1.16b/`、`libs/`、`DT_Tools/WebUI/`（§2、§12）。
+8. 禁止修改 `0.1.17a/`、`libs/`、`DT_Tools/WebUI/`（§2、§12）。
 9. 补丁有执行顺序依赖时，必须用 `[HarmonyPriority]`。禁止依赖挂载顺序（§5）。
 10. 多代理并行作业时，禁止运行 `dotnet build`（§3）。
 11. 禁止在仓库文件里写本机绝对路径（§3）。
@@ -57,7 +57,7 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 | 术语 | 含义 |
 | --- | --- |
-| 游戏源码 | `0.1.16b/` 目录。游戏的反编译源码。一切 API 的核对基准 |
+| 游戏源码 | `0.1.17a/` 目录。游戏的反编译源码。一切 API 的核对基准 |
 | 功能 | `Features/` 下的一个功能目录。类上带 `[PatchFeature]` 与 `Tags` |
 | 补丁 | 一个 `[HarmonyPatch]` 类。对应一个 Harmony 补丁点 |
 | 配置段 | .cfg 里的一个 `[段名]`。由 Feature 或 Module 类推导 |
@@ -97,7 +97,7 @@ if (!Engine.Enabled<本功能Feature>()) return;
 | `DT_Tools/` | 模组项目 | 插件源码和 `DT_Tools.csproj` |
 | `webui-src/` | 前端源码工程 | Vue 3 + Vite 桌面壳 WebUI（见 §12） |
 | `libs/` | 只读 | 游戏程序集。编译时引用 |
-| `0.1.16b/` | 只读。在仓库外的工作区根部 | 游戏源码 |
+| `0.1.17a/` | 只读。在仓库外的工作区根部 | 游戏源码 |
 
 ### 用户数据目录
 
@@ -192,7 +192,7 @@ Plugin.cs（装配根）
   ├ Automation/  自动化模块域（纯发包/只读）
   └ WebConsole/  HTTP+WebSocket 服务、路由、鉴权、API（含 Mcp/ 桥接子域）
       └ WebUI/   前端桌面壳（构建产物）
-最底层：0.1.16b 游戏程序集
+最底层：0.1.17a 游戏程序集
 ```
 
 ### 依赖规则
@@ -235,6 +235,8 @@ Plugin.cs（装配根）
 - 新增标签：`FeatureTag` 末尾追加一位，`FeatureTagCatalog.Entries` 追加一条。两处同步。
 - 发布后的 bit 位不得重排或复用。标签会被 WebUI、清单和 API 引用。
 - 标签字典经 `/api/config/tags` 下发。WebUI 不写死任何标签文字。
+- 标签建议工具：`tools/suggest-tags`（开发期，不进插件）。它给建议和证据，不改源码。用法与指标见其 README。
+  新增单元时先跑 `--unit`，再人工确认标签。
 
 ### `[AutomationModule]`
 
@@ -391,7 +393,7 @@ public sealed class XxxModule { }
 
 ### 约束 2：日志门面 `Log`
 
-- 游戏在全局命名空间有 `public static class Log`。位置：`0.1.16b/Log.cs`。
+- 游戏在全局命名空间有 `public static class Log`。位置：`0.1.17a/Log.cs`。
 - 本插件的日志门面也叫 `Log`。它放在 `DT_Tools` 根命名空间。
 - 不要“修复”这个布局。
 
@@ -447,7 +449,7 @@ public sealed class XxxModule { }
 - 引用游戏 API 之前，必须先在游戏源码里核对：存在性、可见性、签名。
 - 这条规则也管 `typeof(X)`、反射字符串、Traverse 成员名。
 - 私有成员用字符串定位（Traverse 或反射）。
-- 字符串定位处，必须加注释：`0.1.16b <文件>.cs:<行号>`。
+- 字符串定位处，必须加注释：`0.1.17a <文件>.cs:<行号>`。
 - 同名文件的注释，要带子目录前缀。
 - 能用 `nameof`，就必须用 `nameof`。
 
@@ -462,7 +464,7 @@ public sealed class XxxModule { }
 
 - `/agent` 有 4 条链。它们逐项判断服务端 StateList 的槽位。
 - 这些判断集中在 `Commands/Agent/Logic.ItemHelper.cs` 头部。
-- 位置：“设备 StateList 槽位布局表”。每行带 0.1.16b 行号。
+- 位置：“设备 StateList 槽位布局表”。每行带 0.1.17a 行号。
 - 游戏升级后，按这张表逐行复核。
 - 禁止新增没有锚点的槽位判断。
 
@@ -472,7 +474,7 @@ public sealed class XxxModule { }
 
 - 注释、配置描述、命令文案，全部用中文。
 - 注释要写机制依据：为什么能这么改。
-- 引用游戏源码时，必须带行号。
+- 引用游戏源码时，必须带行号。引用未经校验时，写成 `0.1.17a 文件:行号（待核对）`。
 - 引用本文件时，写成 `AGENTS.md §章节号`。
 
 ### 日志
@@ -803,7 +805,7 @@ MCP 服务器寄生于 WebConsole（同端口、同鉴权）。AI 客户端经 `
 
 ### 保留
 
-- 游戏源码引用：`0.1.16b File.cs:行号`，保持原文。
+- 游戏源码引用：`0.1.17a File.cs:行号`。未校验的标「（待核对）」。
 - 约束与不变量：“必须”“禁止”“否则”“只在…时”。
 - 依据：为什么这么写，原版怎么做，踩过什么坑。
 - 跨文件的依赖与调用时机：谁会调用、在哪个线程、什么阶段。
