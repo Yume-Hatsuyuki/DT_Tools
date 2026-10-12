@@ -15,10 +15,20 @@
 前提：仓库已 `dotnet restore DT_Tools/DT_Tools.csproj`（需要 `DT_Tools/obj/project.assets.json`）。
 
 ```bash
-dotnet run --project tools/suggest-tags -- --root . --all                # 全部单元的建议
-dotnet run --project tools/suggest-tags -- --root . --unit Features/DarkRadar
-dotnet run --project tools/suggest-tags -- --root . --check              # 与声明对比
-dotnet run --project tools/suggest-tags -- --root . --check --threshold 0.25 --json
+# 看一个单元的建议（功能目录名，或命令的类名都可以）
+dotnet run --project tools/suggest-tags -- --unit DarkRadar
+dotnet run --project tools/suggest-tags -- --unit KillCommand
+
+# 看全部单元的建议（输出较长）
+dotnet run --project tools/suggest-tags -- --all
+
+# 和代码里已经声明的 Tags 对比，找出差异和一致性统计
+dotnet run --project tools/suggest-tags -- --check
+
+# 其他参数
+#   --json              以 JSON 输出，方便脚本处理
+#   --threshold 0.4     截断比例（见下文）
+#   --root <路径>       仓库根，默认当前目录
 ```
 
 `--check` 输出三类信息：
