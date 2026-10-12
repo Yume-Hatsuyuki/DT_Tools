@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using System;
 using System.Linq;
 using System.Net;
@@ -26,6 +27,7 @@ namespace DT_Tools.WebConsole.Api
                             aliases = c.Aliases ?? Array.Empty<string>(),
                             usage = c.Usage,
                             description = c.Description,
+                            tags = FeatureTagCatalog.Names(c.Tags),
                             author = string.IsNullOrEmpty(c.Author) ? "佚名" : c.Author,
                         }));
             }

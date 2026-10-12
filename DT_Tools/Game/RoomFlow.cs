@@ -3,17 +3,17 @@ using Server.Game;
 namespace DT_Tools.Game
 {
     /// 房间流转助手（Game 层）：Join/ExitRoom 两个命令域共用的"是否在房/退出回大厅"行为。
-    /// IsInRoom：NetworkManager.InRoom 为 private（0.1.16b NetworkManager.cs:167，判
+    /// IsInRoom：NetworkManager.InRoom 为 private（0.1.17a NetworkManager.cs:167，判
     /// GameServer != null），GameServer 公开读（NetworkManager.cs:130）。
-    /// LeaveCurrentRoom：与原版退出确认 OnClickExitYes 同路径（0.1.16b UI_GameScene.cs:2305-2311）。
+    /// LeaveCurrentRoom：与原版退出确认 OnClickExitYes 同路径（0.1.17a UI_GameScene.cs:2305-2311）。
     public static class RoomFlow
     {
         public static bool IsInRoom => Managers.Network?.GameServer != null;
 
         public static void LeaveCurrentRoom()
         {
-            Managers.Network.Leave();                              // 0.1.16b NetworkManager.cs:1312
-            Managers.Scene.LoadScene(Define.EScene.LobbyScene);    // 0.1.16b SceneManagerEx.cs:9
+            Managers.Network.Leave();                              // 0.1.16b NetworkManager.cs:1312（待核对）
+            Managers.Scene.LoadScene(Define.EScene.LobbyScene);    // 0.1.17a SceneManagerEx.cs:9
         }
 
         /// 「切换/迁移中」屏障守卫：阶段切换（等待全体客户端加载）或主机迁移进行中时拒绝。

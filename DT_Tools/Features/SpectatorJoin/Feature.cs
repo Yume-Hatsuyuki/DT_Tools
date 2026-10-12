@@ -94,7 +94,7 @@ namespace DT_Tools.Features.SpectatorJoin
 
             foreach (GamePlayer sp in candidates)
             {
-                sp.IsSpectator = true;   // 0.1.16b Player.cs:1726 SetSpectator 等价赋值
+                sp.IsSpectator = true;   // 0.1.17a Player.cs:1726 SetSpectator 等价赋值
                 real--;
                 Log.Info<SpectatorJoinFeature>(
                     $"超员转观战：{sp.Name}(#{sp.PublicInfo.PlayerId})（最后准备者），真实玩家 {real + 1} → {real}（参与上限 {cap}）");

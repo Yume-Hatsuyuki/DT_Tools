@@ -4,7 +4,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.RemoveFog
 {
     /// 原版 OnGhostVisualChanged：SetRoomShadowCasters(state != 1)，整替为恒 false。
-    /// 方法为 protected override，字符串定位：0.1.16b MyPlayer.cs:1889。
+    /// 方法为 protected override，字符串定位：0.1.16b MyPlayer.cs:1889（待核对）。
     [HarmonyPatch(typeof(MyPlayer), "OnGhostVisualChanged")]
     internal static class RemoveFogPatch
     {

@@ -4,7 +4,7 @@ using Protocol;
 
 namespace DT_Tools.Features.BlackKillNotify
 {
-    /// MyPlayer.UseDeadlyTrick 前缀（public，0.1.16b MyPlayer.cs:751）：镜像其放行条件
+    /// MyPlayer.UseDeadlyTrick 前缀（public，0.1.17a MyPlayer.cs:751）：镜像其放行条件
     /// （IsDeadlyTrickReady、目标在册、ServerCanAttack、Black、持刀）——放行即本帧
     /// 必然发出 C_DEADLY_TRICK，先记下目标。必须在前缀记录：原方法发送后立即把
     /// DeadlyTrickTarget 置空（MyPlayer.cs:772），后缀读不到。处决技击杀与持刀共用

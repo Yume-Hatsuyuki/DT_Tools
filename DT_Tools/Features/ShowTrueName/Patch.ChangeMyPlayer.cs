@@ -5,8 +5,8 @@ using Protocol;
 namespace DT_Tools.Features.ShowTrueName
 {
     /// ChangeMyPlayer 后置：原版在非 Lobby 且切到自己时把 NameTag 关闭
-    /// （0.1.16b PlayerManager.cs:645），这里对非 Lobby 阶段强制打开。
-    /// 公共方法（nameof 定位）；Player.NameTag 属性：0.1.16b Player.cs:337。
+    /// （0.1.16b PlayerManager.cs:645（待核对）)，这里对非 Lobby 阶段强制打开。
+    /// 公共方法（nameof 定位）；Player.NameTag 属性：0.1.17a Player.cs:337。
     [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.ChangeMyPlayer))]
     internal static class ShowTrueNameChangeMyPlayerPatch
     {

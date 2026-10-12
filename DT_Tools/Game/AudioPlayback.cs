@@ -174,7 +174,7 @@ namespace DT_Tools.Game
             UnityEngine.Object.DontDestroyOnLoad(go);
             _source = go.AddComponent<AudioSource>();
             _source.playOnAwake = false;
-            VoiceMixerHub.Route(_source, false);   // 0.1.16b VoiceMixerHub.cs:75，归入 Game 混音组
+            VoiceMixerHub.Route(_source, false);   // 0.1.17a VoiceMixerHub.cs:4，归入 Game 混音组
             return _source;
         }
     }

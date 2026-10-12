@@ -14,7 +14,7 @@ namespace DT_Tools.Commands.Agent
     /// 因此是实时、无过期风险的权威数据。
     ///
     /// 可访问性说明（重要，直接引用会编译失败 CS0122）：
-    /// Server.Game.MissionManager 类本身是 `internal class`（0.1.16b MissionManager.cs:10），
+    /// Server.Game.MissionManager 类本身是 `internal class`（0.1.17a MissionManager.cs:10），
     /// DT_Tools 是独立编译、引用 Assembly-CSharp.dll 的外部程序集，无法在编译期直接写
     /// `Server.Game.MissionManager.Instance`。Server.Game.MissionMirror 则是
     /// `public static class`（0.1.16b Server.Game/MissionMirror.cs:5，HasState:11/ProgressTypes:7/WaitTypes:9），

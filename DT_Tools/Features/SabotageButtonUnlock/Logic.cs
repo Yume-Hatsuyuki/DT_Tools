@@ -8,13 +8,13 @@ using UnityEngine;
 namespace DT_Tools.Features.SabotageButtonUnlock
 {
     /// 显示层判定与交互提示整替：按档位扩展 DeviceBase.GetInteractSabotageMessageBase
-    /// （0.1.16b DeviceBase.cs:389-403 的 Dark/Black 门槛）与
-    /// UI_GameScene.ShowInteractSabotageText（0.1.16b UI_GameScene.cs:1358-1403 的 flag）
+    /// （0.1.16b DeviceBase.cs:389-403（待核对） 的 Dark/Black 门槛）与
+    /// UI_GameScene.ShowInteractSabotageText（0.1.17a UI_GameScene.cs:1358-1403 的 flag）
     /// 两层判定；ChatDevice/尸体/销毁证据目标维持原版 Black 分支不动。
     internal static class SabotageButtonUnlockLogic
     {
         /// 设备在当前档位下是否对本地玩家颜色放行（按设备实例判定：销毁证据目标是
-        /// 实例属性 DeviceBase.IsDestroyEvidenceTarget（0.1.16b DeviceBase.cs:78），
+        /// 实例属性 DeviceBase.IsDestroyEvidenceTarget（0.1.17a DeviceBase.cs:78），
         /// 黑方原版就可用，仅当白方档开启时才为白方放行）。
         public static bool ColorAllowedForDevice(DeviceBase device, EPlayerColor color)
         {
@@ -79,14 +79,14 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         }
 
         /// UI_GameScene.ShowInteractSabotageText 整替（私有方法，字符串定位：
-        /// 0.1.16b UI_GameScene.cs:1358-1403）：原版 flag 基础上按档位扩展
+        /// 0.1.16b UI_GameScene.cs:1358-1403（待核对）)：原版 flag 基础上按档位扩展
         /// Door/Fusebox 的放行分支，其余 UI 写入逐句保持原版。
         public static void RefreshSabotagePrompt(UI_GameScene scene)
         {
             var t = HarmonyLib.Traverse.Create(scene);
             var myPlayer = Managers.Player.MyPlayer;
             Go(scene, 22).SetVisible(visible: false, layoutIgnore: true);
-            if (t.Field("_carryTrickPromptActive").GetValue<bool>())   // 私有字段：0.1.16b UI_GameScene.cs:305
+            if (t.Field("_carryTrickPromptActive").GetValue<bool>())   // 私有字段：0.1.17a UI_GameScene.cs:305
             {
                 Go(scene, 22).SetVisible(true);
                 Txt(scene, 20).text = Managers.GetText("DeadlyTrickInteract");
@@ -188,8 +188,8 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         private static IEnumerator CoVerifyDestroy(float attemptRealtime)
         {
             yield return new WaitForSecondsRealtime(2f);
-            // 销毁证据走 2.5 秒读条（DeviceBase.UseSabotage → StartCasting，0.1.16b DeviceBase.cs:457-467），
-            // 读条结束（StopCasting 置空 CastingSlider，0.1.16b GameManagerEX.cs:788-792）后才发
+            // 销毁证据走 2.5 秒读条（DeviceBase.UseSabotage → StartCasting，0.1.17a DeviceBase.cs:457-467），
+            // 读条结束（StopCasting 置空 CastingSlider，0.1.17a GameManagerEX.cs:788-792）后才发
             // C_DESTROY_EVIDENCE、服务端才可能回执——读条未结束不能判定，否则成功也在窗口内误报"未生效"
             while (Managers.Game.CastingSlider != null)
                 yield return null;

@@ -25,7 +25,7 @@ namespace DT_Tools.Features.ChatHistory
     }
 
     /// 本机聊天历史（各频道分池）：全局聊天统一从 VoiceManager.SendChatMessage 发出
-    /// （0.1.16b VoiceManager.cs:1239），打字机两频道分别走 SendDeviceChatMessage（:1298）
+    /// （0.1.17a VoiceManager.cs:1298），打字机两频道分别走 SendDeviceChatMessage（:1298）
     /// 与 SendSecretChatMessage（:1303），在各自发送点记录，保证历史与实际发出一致。
     internal static class ChatHistoryStore
     {
@@ -96,21 +96,21 @@ namespace DT_Tools.Features.ChatHistory
         {
             foreach (var chat in UnityEngine.Object.FindObjectsByType<UI_DirectChat>(UnityEngine.FindObjectsSortMode.None))
             {
-                var input = Traverse.Create(chat).Field<TMP_InputField>("_input").Value;    // 0.1.16b UI_DirectChat.cs:26
+                var input = Traverse.Create(chat).Field<TMP_InputField>("_input").Value;    // 0.1.17a UI_DirectChat.cs:26
                 Ensure(input, ChatHistorySource.ChatBar, ChatHistoryChannel.GlobalChat);
             }
             foreach (var tablet in UnityEngine.Object.FindObjectsByType<UI_GameTablet>(UnityEngine.FindObjectsSortMode.None))
             {
-                // 与 BindInputField 同源查找（0.1.16b UI_GameTablet.cs:161 枚举名 ChatInputField，Util.cs:302 FindChild<T>）
+                // 与 BindInputField 同源查找（0.1.17a UI_GameTablet.cs:161 枚举名 ChatInputField，Util.cs:302 FindChild<T>）
                 var input = Util.FindChild<TMP_InputField>(tablet.gameObject, "ChatInputField", recursive: true);
                 Ensure(input, ChatHistorySource.Tablet, ChatHistoryChannel.GlobalChat);
             }
             foreach (var popup in UnityEngine.Object.FindObjectsByType<UI_ChatDevicePopup>(UnityEngine.FindObjectsSortMode.None))
             {
-                var input = Traverse.Create(popup).Field<TMP_InputField>("_input").Value;   // 0.1.16b UI_ChatDevicePopup.cs:42
+                var input = Traverse.Create(popup).Field<TMP_InputField>("_input").Value;   // 0.1.17a UI_ChatDevicePopup.cs:42
                 if (input == null)
                     continue;
-                var secret = Traverse.Create(popup).Field<bool>("_isSecret").Value;         // 0.1.16b UI_ChatDevicePopup.cs:36
+                var secret = Traverse.Create(popup).Field<bool>("_isSecret").Value;         // 0.1.17a UI_ChatDevicePopup.cs:36
                 Ensure(input, ChatHistorySource.Interphone,
                     secret ? ChatHistoryChannel.InterphoneSecret : ChatHistoryChannel.InterphoneOpen);
             }
@@ -146,7 +146,7 @@ namespace DT_Tools.Features.ChatHistory
         }
     }
 
-    /// 聊天历史导航器：挂在聊天输入框 GameObject 上（Util.GetOrAddComponent，0.1.16b Util.cs:262），
+    /// 聊天历史导航器：挂在聊天输入框 GameObject 上（Util.GetOrAddComponent，0.1.17a Util.cs:262），
     /// 输入框聚焦期间轮询 ↑/↓ 键翻看历史并回填。游戏聊天框均为单行 TMP_InputField，
     /// 单行模式下 ↑/↓ 无原版行为（TMP 仅在 MultiLineNewline 处理），不产生键位冲突。
     /// 回填后光标移到文本末尾，便于继续编辑或直接回车发送。

@@ -94,7 +94,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
         {
             if (storage.Items[index] != null)
             {
-                Server.Game.ItemManager.Instance.RemoveItem(storage.Items[index]);   // 0.1.16b ItemManager.cs:240
+                Server.Game.ItemManager.Instance.RemoveItem(storage.Items[index]);   // 0.1.17a ItemManager.cs:240
                 storage.Items[index] = null;
             }
 
@@ -114,7 +114,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
             if (interact == null)
                 return;
 
-            int index = interact.Index;                                    // 0.1.16b C_INTERACT_STORAGE.cs:45
+            int index = interact.Index;                                    // 0.1.16b C_INTERACT_STORAGE.cs:45（待核对）
             if (index < 0 || index >= storage.Items.Count)
                 return;
             if (storage.Items[index] != null)
@@ -137,7 +137,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
             // 这一格仍会在到点后补回。理由：
             // 1) 补货是「拿取时功能开启」动作的延迟收口，最多补一格，影响有界；
             // 2) 残留任务随整局结束由 TimeManager.ClearSurvivalJob 统一清空
-            //    （0.1.16b GameRoom.cs:540 FullReset 内调用 → Server.Game/TimeManager.cs:129），
+            //    （0.1.17a GameRoom.cs:540 FullReset 内调用 → Server.Game/TimeManager.cs:129），
             //    不会跨局泄漏；
             // 3) RefillIntervalSeconds 默认 -1（不排程），常态下根本不会产生闭包。
             int storageId = storage.ID;
@@ -185,7 +185,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
                 return;
 
             storage.DeviceInfo.StateList[index] = itemId;
-            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // 0.1.16b ItemManager.cs:43
+            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // 0.1.17a ItemManager.cs:43
             storage.BroadcastStateInArea();
             Log.Info<SupplyShelfRefillFeature>(
                 $"refilled storage={storage.ID} slot={index} itemId={itemId}");

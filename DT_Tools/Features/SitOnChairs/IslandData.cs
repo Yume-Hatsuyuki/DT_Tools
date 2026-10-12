@@ -11,7 +11,7 @@ namespace DT_Tools.Features.SitOnChairs
     /// 岛屿地图数据（原 IslandMap/data 内嵌版）：把 7 份岛屿数据 JSON/文本
     /// （与原版主图数据逐字段一致，仅 DeviceData 追加 11 条椅子设备）以
     /// EmbeddedResource 方式编译进 DT_Tools.dll，运行时读出为 TextAsset 并
-    /// 注入 ResourceManager._resources（0.1.16b ResourceManager.cs:11，私有字典，
+    /// 注入 ResourceManager._resources（0.1.17a ResourceManager.cs:11，私有字典，
     /// 反射写入），键名带 _Island 后缀，与 DataManager.MapKey（DataManager.cs:56）
     /// 拼接规则一致；随后把 LoadMapSet 的地图类型重定向为 Island 即可让游戏
     /// 加载这套数据。功能关闭时不注入，保持完全原版。

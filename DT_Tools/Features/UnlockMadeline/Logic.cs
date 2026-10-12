@@ -28,7 +28,7 @@ namespace DT_Tools.Features.UnlockMadeline
             "Madeline_standing_exp_sinister.sprite",
         };
 
-        // _data 为私有字段：0.1.16b SaveManager.cs:16；MarkDirty 为私有方法。
+        // _data 为私有字段：0.1.17a SaveManager.cs:16；MarkDirty 为私有方法。
 
         public static PlayerSaveData GetSaveData(SaveManager save)
             => Traverse.Create(save).Field("_data").GetValue<PlayerSaveData>();
@@ -37,7 +37,7 @@ namespace DT_Tools.Features.UnlockMadeline
             => Traverse.Create(save).Method("MarkDirty").GetValue();
 
         /// 确保 CharacterPlayCounts 含 101（原版 EnsureCharacterStats 明确跳过 101：
-        /// 0.1.16b SaveManager.cs:454；RecordGamePlayed 只对已有键自增：SaveManager.cs:470）。
+        /// 0.1.17a SaveManager.cs:487；RecordGamePlayed 只对已有键自增：SaveManager.cs:470）。
         /// 新补键时 MarkDirty。
         public static void SeedPlayCount(SaveManager save)
         {
@@ -50,7 +50,7 @@ namespace DT_Tools.Features.UnlockMadeline
             MarkDirty(save);
         }
 
-        /// 档案立绘位置表（私有静态只读字典）：0.1.16b UI_InfomationPopup.cs:68。
+        /// 档案立绘位置表（私有静态只读字典）：0.1.16b UI_InfomationPopup.cs:68（待核对）。
         private static Dictionary<string, Vector2> StandingPosList()
             => AccessTools.Field(typeof(UI_InfomationPopup), "STANDING_POS_LIST")
                 ?.GetValue(null) as Dictionary<string, Vector2>;
@@ -75,7 +75,7 @@ namespace DT_Tools.Features.UnlockMadeline
             dict.Remove("Medelin");
         }
 
-        /// 审判过场位置表（public 静态字段）：0.1.16b UI_TrialEvent.cs:143。
+        /// 审判过场位置表（public 静态字段）：0.1.16b UI_TrialEvent.cs:143（待核对）。
         public static void EnsureCutscenePos()
         {
             if (!UI_TrialEvent.CUTSCENE_POS_LIST.ContainsKey("Madeline"))
@@ -91,7 +91,7 @@ namespace DT_Tools.Features.UnlockMadeline
         }
 
         /// 选人列表排序：已拥有优先，其次中文序（或 DataId），与原版一致但不再
-        /// 过滤 ECharacterType.Madeline（原版过滤见 0.1.16b UI_PickPopup.cs:142）。
+        /// 过滤 ECharacterType.Madeline（原版过滤见 0.1.17a UI_PickPopup.cs:142）。
         public static IEnumerable<CharacterData> OrderedPickList()
             => from d in Managers.Data.CharacterDic.Values
                orderby Managers.Inventory.IsCharacterOwned(d.DataId) descending,
@@ -136,7 +136,7 @@ namespace DT_Tools.Features.UnlockMadeline
         }
 
         /// 表情图集不在 ResourceManager 缓存（Madeline 未开放），尝试经 Addressables
-        /// 同步预载进 _resources 字典（私有字段：0.1.16b ResourceManager.cs:11）。
+        /// 同步预载进 _resources 字典（私有字段：0.1.17a ResourceManager.cs:11）。
         /// 只试一次；Addressables 不可用时静默跳过（审判过场表情缺失可接受）。
         public static void EnsureExpsPreloaded()
         {

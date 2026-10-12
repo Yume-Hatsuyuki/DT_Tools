@@ -5,7 +5,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.UnlockCharacters
 {
     /// 原版 = 默认角色 + 已确认购买的商店角色（属性 getter，public，可用 nameof）：
-    /// 0.1.16b SteamInventorySource.cs:145。整替为默认 + 全部商店角色（不含 101）。
+    /// 0.1.16b SteamInventorySource.cs:145（待核对）。整替为默认 + 全部商店角色（不含 101）。
     [HarmonyPatch(typeof(SteamInventorySource), nameof(SteamInventorySource.OwnedCharacterIds),
         MethodType.Getter)]
     internal static class UnlockCharactersOwnedCharacterIdsPatch

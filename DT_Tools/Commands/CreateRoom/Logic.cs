@@ -8,7 +8,7 @@ using UnityEngine;
 namespace DT_Tools.Commands.CreateRoom
 {
     /// /create_room 业务编排：等大厅界面就绪 → 复刻原版 OnClickCreateButton 的
-    /// 建房前序（0.1.16b UI_LobbyScene.cs:1198）：回跳段 → 语音预连 → School 资源域
+    /// 建房前序（0.1.16b UI_LobbyScene.cs:1198（待核对）)：回跳段 → 语音预连 → School 资源域
     /// → Steam 建房。mic/语言/公开-私密的缺省值读大厅 UI 私有字段（与原版同源），
     /// 显式参数覆盖。回调在主线程（游戏主循环泵 Steam 回调）。
     internal static class CreateRoomLogic
@@ -49,7 +49,7 @@ namespace DT_Tools.Commands.CreateRoom
                 Managers.Network.ReturnLobbySection = section;
 
             var voiceTask = AccessTools.Method(typeof(UI_LobbyScene), "PrepareVoiceForRoomAsync")
-                ?.Invoke(scene, null) as System.Threading.Tasks.Task;   // 0.1.16b UI_LobbyScene.cs:1557
+                ?.Invoke(scene, null) as System.Threading.Tasks.Task;   // 0.1.16b UI_LobbyScene.cs:1557（待核对）
             if (voiceTask != null)
             {
                 while (!voiceTask.IsCompleted)
@@ -60,7 +60,7 @@ namespace DT_Tools.Commands.CreateRoom
                 Log.Warn("CreateRoom", "未找到 PrepareVoiceForRoomAsync，跳过语音预连。");
             }
 
-            var scopeTask = Managers.Resource.LoadScopeAsync("School");   // 0.1.16b ResourceManager.cs:220
+            var scopeTask = Managers.Resource.LoadScopeAsync("School");   // 0.1.17a ResourceManager.cs:220
             while (scopeTask != null && !scopeTask.IsCompleted)
                 yield return null;
             Managers.Data.LoadMapSet(EMapType.School);

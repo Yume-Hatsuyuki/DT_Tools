@@ -443,7 +443,7 @@ namespace DT_Tools.Features.LiveDraw
         }
 
         /// 客户端阶段判断：庭审且处于讨论（作画）阶段。用客户端 Managers.Game.State +
-        /// 静态单例 TrialManager.Instance.State（0.1.16b trial.cs:41 s_instance，State 为独立
+        /// 静态单例 TrialManager.Instance.State（0.1.16b trial.cs:41（待核对） s_instance，State 为独立
         /// 字段不依赖 GameRoom），任何玩家（含非房主）都能画；房主进程同样有效。
         private static bool InDrawPhase()
         {

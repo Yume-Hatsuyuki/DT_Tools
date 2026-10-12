@@ -4,7 +4,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.CharacterMapPin
 {
     /// HUD LateUpdate 后置（白方强制显示他人 Pin，独立开关 ShowPinsForWhite）。
-    /// LateUpdate 私有：0.1.16b UI_GameScene.cs:804；巡检本体在 Logic.SweepWhitePins。
+    /// LateUpdate 私有：0.1.17a UI_GameScene.cs:804；巡检本体在 Logic.SweepWhitePins。
     [HarmonyPatch(typeof(UI_GameScene), "LateUpdate")]
     internal static class CharacterMapPinWhitePinsPatch
     {

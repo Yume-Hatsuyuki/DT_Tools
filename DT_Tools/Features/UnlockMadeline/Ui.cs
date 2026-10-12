@@ -56,7 +56,7 @@ namespace DT_Tools.Features.UnlockMadeline
         private const string SomeoneMapBlackKey = "Someone_Map_Black.sprite";
         private const string SomeoneMapWhiteKey = "Someone_Map_White.sprite";
 
-        /// ResourceManager 缓存字典（私有字段 _resources：0.1.16b ResourceManager.cs:11）。
+        /// ResourceManager 缓存字典（私有字段 _resources：0.1.17a ResourceManager.cs:11）。
         private static Dictionary<string, Object> ResourcesDict(ResourceManager rm)
             => AccessTools.Field(typeof(ResourceManager), "_resources")?.GetValue(rm)
                as Dictionary<string, Object>;
@@ -347,20 +347,20 @@ namespace DT_Tools.Features.UnlockMadeline
             return scaled;
         }
 
-        /// UI_Base.GetImage 为 protected：0.1.16b UI_Base.cs:113。
+        /// UI_Base.GetImage 为 protected：0.1.17a UI_Base.cs:113。
         internal static Image GetImage(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetImage")?.Invoke(ui, new object[] { idx }) as Image;
 
-        /// UI_Base.GetObject 为 protected：0.1.16b UI_Base.cs:93。
+        /// UI_Base.GetObject 为 protected：0.1.17a UI_Base.cs:93。
         internal static GameObject GetObject(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetObject")?.Invoke(ui, new object[] { idx }) as GameObject;
 
-        /// UI_Base.GetText 为 protected：0.1.16b UI_Base.cs:103。
+        /// UI_Base.GetText 为 protected：0.1.17a UI_Base.cs:103。
         internal static TMP_Text GetText(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetText")?.Invoke(ui, new object[] { idx }) as TMP_Text;
 
         /// 选人面板立绘容器（UI_PickPopup.SetStanding 用 GetObject(6)，
-        /// 0.1.16b UI_PickPopup.cs:428）：原版 switch 未覆盖 Madeline，图区恒空，
+        /// 0.1.16b UI_PickPopup.cs:428（待核对）)：原版 switch 未覆盖 Madeline，图区恒空，
         /// 此处创建/复用一个常驻 Image 并挂到容器上。
         internal static Image EnsureMadelineStandingImage(Transform container)
         {

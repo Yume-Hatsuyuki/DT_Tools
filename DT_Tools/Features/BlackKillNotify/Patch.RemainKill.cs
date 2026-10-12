@@ -4,7 +4,7 @@ using Protocol;
 
 namespace DT_Tools.Features.BlackKillNotify
 {
-    /// MyPlayer.Modify 后缀（public，0.1.16b MyPlayer.cs:941）：仅 RemainKill 类型包
+    /// MyPlayer.Modify 后缀（public，0.1.17a MyPlayer.cs:941）：仅 RemainKill 类型包
     /// 进入检测。RemainKill 由服务端经 S_MODIFY_MY_PLAYER 只发攻击者本人
     /// （SendRemainKill → Session.Send，Server.Game/Player.cs:1834-1843），客户端在
     /// Modify 的 switch 里落到 Managers.Game.RemainKill（MyPlayer.cs:974-976）；

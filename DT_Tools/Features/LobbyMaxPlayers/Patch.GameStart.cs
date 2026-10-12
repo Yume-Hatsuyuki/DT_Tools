@@ -8,10 +8,10 @@ using Server.Game;
 
 namespace DT_Tools.Features.LobbyMaxPlayers
 {
-    /// GameStart 整替（0.1.16b GameRoom.cs:662-684）：StartPosList 打乱后分配，
+    /// GameStart 整替（0.1.17a GameRoom.cs:662-684）：StartPosList 打乱后分配，
     /// 人数超出出生点时 i % Count 循环复用，避免越界。仅当 MaxMembers &gt; 8 时接管，否则走原版。
-    /// 与原版（0.1.16b GameRoom.cs:681 直接赋 FirstBloodVictimId=0）的差异用
-    /// public RestoreFirstBloodVictimId（0.1.16b GameRoom.cs:167）等价实现。
+    /// 与原版（0.1.17a GameRoom.cs:681 直接赋 FirstBloodVictimId=0）的差异用
+    /// public RestoreFirstBloodVictimId（0.1.17a GameRoom.cs:167）等价实现。
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.GameStart))]
     internal static class LobbyMaxPlayersGameStartPatch
     {
@@ -23,10 +23,10 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             if (LobbyMaxPlayersFeature.MaxMembers <= 8)
                 return true;
 
-            ItemManager.Instance.ClearWithDespawn();            // public：0.1.16b ItemManager.cs:275
+            ItemManager.Instance.ClearWithDespawn();            // public：0.1.17a ItemManager.cs:275
 
-            __instance.CorpseMetas.Clear();                     // 0.1.16b GameRoom.cs:125
-            __instance.RoundStartPlayerCount = __instance.Players.Count;  // 0.1.16b GameRoom.cs:129
+            __instance.CorpseMetas.Clear();                     // 0.1.17a GameRoom.cs:125
+            __instance.RoundStartPlayerCount = __instance.Players.Count;  // 0.1.17a GameRoom.cs:129
             Log.Info<LobbyMaxPlayersFeature>(
                 $"本局人数 {__instance.RoundStartPlayerCount} → 黑幕击杀上限 {__instance.BlackKillLimit} 次（出生点循环复用）");
 
@@ -48,7 +48,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             }
             else
             {
-                list = Util.Shuffle(list, list.Count);          // 0.1.16b Util.cs:521
+                list = Util.Shuffle(list, list.Count);          // 0.1.16b Util.cs:521（待核对）
                 int n = __instance.Players.Count;
                 for (int i = 0; i < n; i++)
                     __instance.Players[i].GameStart(list[i % list.Count]);
@@ -64,8 +64,8 @@ namespace DT_Tools.Features.LobbyMaxPlayers
 
             InvokeMissionStart();
 
-            // FirstBloodVictimId 只有 private set（0.1.16b GameRoom.cs:127），走 public Restore
-            __instance.RestoreFirstBloodVictimId(0);            // 0.1.16b GameRoom.cs:167
+            // FirstBloodVictimId 只有 private set（0.1.17a GameRoom.cs:127），走 public Restore
+            __instance.RestoreFirstBloodVictimId(0);            // 0.1.17a GameRoom.cs:167
 
             AwardManager.Instance.StartRound();                 // 0.1.16b Server.Game/AwardManager.cs:48（public）
 

@@ -3,8 +3,8 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.NicknameLimit
 {
-    /// StartLobbySection 后置：原版会再调 OnValidateNickname（0.1.16b UI_LobbyScene.cs:855），
-    /// 之后补一次抬限并清红字。私有方法，字符串定位：0.1.16b UI_LobbyScene.cs:849。
+    /// StartLobbySection 后置：原版会再调 OnValidateNickname（0.1.17a UI_LobbyScene.cs:855），
+    /// 之后补一次抬限并清红字。私有方法，字符串定位：0.1.16b UI_LobbyScene.cs:849（待核对）。
     [HarmonyPatch(typeof(UI_LobbyScene), "StartLobbySection")]
     internal static class NicknameLimitStartLobbyPatch
     {

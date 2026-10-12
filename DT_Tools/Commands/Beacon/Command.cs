@@ -14,7 +14,7 @@ namespace DT_Tools.Commands.Beacon
     /// （见 0.1.16b Server.Game/GameRoom.cs:2321 HandleMove、:2349-2354 越界分流、
     /// Server.Game/Player.cs:733 Move）。
     /// 客户端 PlayerManager.HandleMove 显式忽略本机 MyPlayer（仅同步他人，S_MOVE 不会回拉本机坐标，
-    /// 见 0.1.16b PlayerManager.cs:467 HandleMove、469 的 MyPlayer 判断），故需本地主动落位——
+    /// 见 0.1.17a PlayerManager.cs:467 HandleMove、469 的 MyPlayer 判断），故需本地主动落位——
     /// 统一走 Game/Teleport.TryTeleport（本地落位 + C_MOVE + 相机跟随，与官方 HandleRespawn 同款）。
     internal sealed class BeaconCommand : ICommand
     {

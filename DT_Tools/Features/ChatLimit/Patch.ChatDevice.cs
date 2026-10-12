@@ -5,8 +5,8 @@ using TMPro;
 namespace DT_Tools.Features.ChatLimit
 {
     /// UI_ChatDevicePopup.Init 后置：抬高聊天设备输入框上限。
-    /// 公共方法（nameof 定位），0.1.16b UI_ChatDevicePopup.cs:74（:95 写 characterLimit = 100）；
-    /// 私有字段 _input：0.1.16b UI_ChatDevicePopup.cs:42。
+    /// 公共方法（nameof 定位），0.1.17a UI_ChatDevicePopup.cs:95（:95 写 characterLimit = 100）；
+    /// 私有字段 _input：0.1.17a UI_ChatDevicePopup.cs:42。
     [HarmonyPatch(typeof(UI_ChatDevicePopup), nameof(UI_ChatDevicePopup.Init))]
     internal static class ChatLimitChatDevicePatch
     {

@@ -15,7 +15,7 @@ namespace DT_Tools.Commands.HandWeapon
     /// - 生存阶段；
     /// - 本机颜色必须是 Dark（黑幕），且 Inventory.Weapon 有刀；
     /// - 目标存在、不是自己；已知 Black（KnownBlackIds，黑幕通过 S_NOTIFY_BLACK 掌握，
-    /// 0.1.16b PlayerManager.cs:54）的目标会被拒绝，因为服务端只接受 White；
+    /// 0.1.16b PlayerManager.cs:54（待核对）)的目标会被拒绝，因为服务端只接受 White；
     /// - 其余条件（目标存活、空手）客户端无权威视图，交由服务端静默裁决。
     ///
     /// 实现原理：原版 MyPlayer.UseHandWeapon 要求 224 单位内且无墙体遮挡的目标

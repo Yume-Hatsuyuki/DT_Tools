@@ -6,13 +6,13 @@ namespace DT_Tools.Game
 {
     /// 最近目标查找：0.1.16b MyPlayer.GetTargetPlayer（:2162，黑方攻击）与
     /// GetHandWeaponTarget（:2191，递刀）的共用骨架——
-    /// 遍历 Managers.Player.Players（0.1.16b PlayerManager.cs:42），
+    /// 遍历 Managers.Player.Players（0.1.16b PlayerManager.cs:42（待核对）)，
     /// 跳过 EPlayerState.Hide，Physics2D.Raycast 视线遮挡
-    /// （层掩码 12288：0.1.16b MyPlayer.cs:2180 / :2205），取距离最小者。
+    /// （层掩码 12288：0.1.16b MyPlayer.cs:2180（待核对） / :2205），取距离最小者。
     /// 调用方经谓词附加各自的过滤条件（如递刀排除 KnownBlackIds）。
     public static class NearestTargetFinder
     {
-        /// 视线遮挡层掩码（0.1.16b MyPlayer.cs:2180，攻击/递刀共用同一常量）。
+        /// 视线遮挡层掩码（0.1.16b MyPlayer.cs:2180（待核对），攻击/递刀共用同一常量）。
         private const int SightBlockMask = 12288;
 
         /// 从 from 出发、range 距离内、未被地形遮挡的最近玩家；谓词返回 false 的跳过。

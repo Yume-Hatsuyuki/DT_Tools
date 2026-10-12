@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.LobbyMinPlayers
 {
-    /// LOBBY_MIN_PLAYER getter 整替：0.1.16b Define.cs:2025-2036（正式服 5 / Playtest 0）。
+    /// LOBBY_MIN_PLAYER getter 整替：0.1.17a Define.cs:2021-2032（正式服 5 / Playtest 0）。
     /// Playtest 分支不再复制原版判断，直接放行原版 getter 自算（Define.cs:2029 调 IsPlaytestApp），
     /// 语义随游戏版本自动跟随。
     [HarmonyPatch(typeof(Define), nameof(Define.LOBBY_MIN_PLAYER), MethodType.Getter)]

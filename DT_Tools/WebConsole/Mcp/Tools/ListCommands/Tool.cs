@@ -28,6 +28,7 @@ namespace DT_Tools.WebConsole.Mcp.Tools.ListCommands
                     name = c.Name,
                     usage = c.Usage,
                     description = c.Description,
+                    tags = FeatureTagCatalog.Names(c.Tags),
                     requireHost = c.RequireHost,
                     author = string.IsNullOrEmpty(c.Author) ? "佚名" : c.Author,
                 })

@@ -11,7 +11,7 @@ namespace DT_Tools.Features.RemoveWallCollision
         {
             if (player == null)
                 return;
-            // BaseObject.Collider（0.1.16b BaseObject.cs:8）与 MyPlayer.PlayerCollider（0.1.16b MyPlayer.cs:65）
+            // BaseObject.Collider（0.1.17a BaseObject.cs:4）与 MyPlayer.PlayerCollider（0.1.17a MyPlayer.cs:65）
             if (player.Collider != null)
                 player.Collider.isTrigger = asTrigger;
             if (player.PlayerCollider != null)
@@ -28,7 +28,7 @@ namespace DT_Tools.Features.RemoveWallCollision
         }
 
         /// Enabled 关闭：恢复碰撞体。若本机玩家正处于躲藏态则保持 trigger——
-        /// 原版 HidePlayer(true) 就是把碰撞体置为 trigger（0.1.16b MyPlayer.cs:1009，:1016 写
+        /// 原版 HidePlayer(true) 就是把碰撞体置为 trigger（0.1.17a MyPlayer.cs:1009，:1016 写
         /// isTrigger=isHide），此时强改回实心会与掩体碰撞体互相挤压、可能把玩家挤出掩体，
         /// 服务器也可能判非法位置；退出躲藏时原版 HidePlayer(false) 会自然恢复实心。
         public static void RestoreLocalPlayer()
@@ -36,7 +36,7 @@ namespace DT_Tools.Features.RemoveWallCollision
             MyPlayer my = Managers.Player != null ? Managers.Player.MyPlayer : null;
             if (my != null && my.State == EPlayerState.Hide)
             {
-                // State：0.1.16b Player.cs:438（public EPlayerState State，取 PublicInfo.State）；
+                // State：0.1.17a Player.cs:438（public EPlayerState State，取 PublicInfo.State）；
                 // EPlayerState.Hide：0.1.16b Protocol/EPlayerState.cs:20
                 Log.Info<RemoveWallCollisionFeature>(
                     "本地玩家处于躲藏态，碰撞体保持 trigger，退出躲藏后由原版恢复实心");

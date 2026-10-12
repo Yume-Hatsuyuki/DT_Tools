@@ -70,7 +70,7 @@ namespace DT_Tools.Features.SupplyShelf
 
             if (bag.Count > slotCount)
             {
-                Util.Shuffle(bag, bag.Count);                          // 0.1.16b Util.cs:521
+                Util.Shuffle(bag, bag.Count);                          // 0.1.16b Util.cs:521（待核对）
                 bag = bag.Take(slotCount).ToList();
             }
 

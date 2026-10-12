@@ -47,7 +47,7 @@ namespace DT_Tools.Features.PhotoTools
             }
         }
 
-        /// CanStayInPhotoMode（0.1.16b PhotoManager.cs:224）Postfix：原版要求存活。
+        /// CanStayInPhotoMode（0.1.17a PhotoManager.cs:224）Postfix：原版要求存活。
         /// GhostCamera 开启时死亡（幽灵视角）按原版其余条件（可控制/非聊天/非表情/
         /// 非加载/非平板）重新判定放行；阶段限制保持原版（仅调查阶段）。
         [HarmonyPatch(typeof(PhotoManager), "CanStayInPhotoMode")]
@@ -90,7 +90,7 @@ namespace DT_Tools.Features.PhotoTools
             }
         }
 
-        /// CanEnterPhotoMode（0.1.16b PhotoManager.cs:195）Postfix：幽灵死亡态下
+        /// CanEnterPhotoMode（0.1.17a PhotoManager.cs:195）Postfix：幽灵死亡态下
         /// State 不是待机/移动/交互会被原版挡掉，GhostCamera 开启时跳过该检查。
         [HarmonyPatch(typeof(PhotoManager), "CanEnterPhotoMode")]
         internal static class PhotoGhostEnterPatch

@@ -4,7 +4,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.ShowTrueName
 {
     /// Dead 后置：可选「死后仍显」。原版 Dead 会关闭本机 NameTag
-    /// （0.1.16b GameManagerEX.cs:334，SetActive(false) 位于 :344）。
+    /// （0.1.17a GameManagerEX.cs:345，SetActive(false) 位于 :344）。
     /// 公共方法（nameof 定位）。
     [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
     internal static class ShowTrueNameDeadPatch

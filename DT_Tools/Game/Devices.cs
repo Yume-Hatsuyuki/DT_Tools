@@ -11,10 +11,10 @@ namespace DT_Tools.Game
     /// （SupplyShelf / SupplyShelfRefill 共用，原 SupplyShelf 私有 Logic 上浮）。
     public static class Devices
     {
-        /// 电闸损坏：StateList[0]==9999（0.1.16b Define.cs:554 DISCONNET_STATE；拉闸写入见 Server.Game/Fusebox.cs:122）。
+        /// 电闸损坏：StateList[0]==9999（0.1.17a Define.cs:554 DISCONNET_STATE；拉闸写入见 Server.Game/Fusebox.cs:122）。
         public const int FuseboxStateBroken = 9999;
 
-        /// 电闸完好：StateList[0]==0（0.1.16b Define.cs:556 NORMAL_STATE）。
+        /// 电闸完好：StateList[0]==0（0.1.17a Define.cs:556 NORMAL_STATE）。
         public const int FuseboxStateIntact = 0;
 
         /// 破坏任务武装：MissionType==-1（开局 StartFuseboxSabotage → StartMission 写入，0.1.16b Server.Game/Fusebox.cs:141）。

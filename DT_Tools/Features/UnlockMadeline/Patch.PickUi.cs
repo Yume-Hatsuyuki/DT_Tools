@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace DT_Tools.Features.UnlockMadeline
 {
     /// UI_PickPopup.RebuildPickList 整替（私有方法，字符串定位）：
-    /// 0.1.16b UI_PickPopup.cs:132。原版 where Type != ECharacterType.Madeline 过滤掉
+    /// 0.1.16b UI_PickPopup.cs:132（待核对）。原版 where Type != ECharacterType.Madeline 过滤掉
     /// 梅德琳；改为全角色列表（排序算法见 Logic.OrderedPickList，所有权经补丁恒真）。
     [HarmonyPatch(typeof(UI_PickPopup), "RebuildPickList")]
     internal static class UnlockMadelinePickRebuildPatch
@@ -19,7 +19,7 @@ namespace DT_Tools.Features.UnlockMadeline
             if (!Engine.Enabled<UnlockMadelineFeature>())
                 return true;
 
-            // _list 为私有字段：0.1.16b UI_PickPopup.cs:74
+            // _list 为私有字段：0.1.17a UI_PickPopup.cs:74
             var listField = Traverse.Create(__instance).Field<List<UI_PickSubItem>>("_list");
             List<UI_PickSubItem> list = listField.Value;
 
@@ -27,15 +27,15 @@ namespace DT_Tools.Features.UnlockMadeline
                 Managers.Resource.Destroy(item.gameObject);
             list.Clear();
 
-            // UI_Base.GetObject 为 protected：0.1.16b UI_Base.cs:93；容器 0 = 列表区
+            // UI_Base.GetObject 为 protected：0.1.17a UI_Base.cs:93；容器 0 = 列表区
             Transform container = Traverse.Create(__instance)
                 .Method("GetObject", new[] { typeof(int) })
                 .GetValue<GameObject>(0)
                 .transform;
             ScrollRect scroll = container.GetComponentInParent<ScrollRect>();
 
-            // OnPickCharacter（0.1.16b UI_PickPopup.cs:361）与 RegisterPickItem
-            //（0.1.16b UI_PickPopup.cs:163）均为私有实例方法
+            // OnPickCharacter（0.1.17a UI_PickPopup.cs:361）与 RegisterPickItem
+            //（0.1.16b UI_PickPopup.cs:163（待核对）)均为私有实例方法
             var onPickMethod = AccessTools.Method(typeof(UI_PickPopup), "OnPickCharacter");
             var onPickDelegate = (global::System.Action<PointerEventData>)global::System.Delegate.CreateDelegate(
                 typeof(global::System.Action<PointerEventData>),
@@ -56,9 +56,9 @@ namespace DT_Tools.Features.UnlockMadeline
     }
 
     /// UI_PickPopup.SetMainInfo 前缀整替（私有方法，字符串定位）：
-    /// 0.1.16b UI_PickPopup.cs:492。原版 default 分支对每个角色取 "&lt;Name&gt;Explain"
+    /// 0.1.16b UI_PickPopup.cs:492（待核对）。原版 default 分支对每个角色取 "&lt;Name&gt;Explain"
     /// 文本键（UI_PickPopup.cs:517），Madeline 无该文本数据，Managers.GetText 缺键必
-    /// Debug.LogError（0.1.16b Managers.cs:223-229）→ 非 Madeline 放行原版；
+    /// Debug.LogError（0.1.17a Managers.cs:223-229）→ 非 Madeline 放行原版；
     /// Madeline 时按原方法体（UI_PickPopup.cs:492-541）等价重写 UI 写入，
     /// 介绍行改用内置六语言文案（Logic.GetExplain），从源头消除缺键报错。
     [HarmonyPatch(typeof(UI_PickPopup), "SetMainInfo")]
@@ -82,7 +82,7 @@ namespace DT_Tools.Features.UnlockMadeline
                 return false;
             Transform transform = infoGo.transform;
 
-            // SetMainCharacterOnlyActive 为私有方法：0.1.16b UI_PickPopup.cs:572
+            // SetMainCharacterOnlyActive 为私有方法：0.1.17a UI_PickPopup.cs:572
             AccessTools.Method(typeof(UI_PickPopup), "SetMainCharacterOnlyActive")
                 ?.Invoke(__instance, new object[] { true });
 
@@ -117,7 +117,7 @@ namespace DT_Tools.Features.UnlockMadeline
     }
 
     /// UI_PickPopup.SetStanding 后缀（私有方法，字符串定位）：
-    /// 0.1.16b UI_PickPopup.cs:421。原版立绘 switch 不含 Madeline 类型，图区恒空；
+    /// 0.1.16b UI_PickPopup.cs:421（待核对）。原版立绘 switch 不含 Madeline 类型，图区恒空；
     /// 容器为 GetObject(6)（UI_PickPopup.cs:428），注入常驻 Image 并挂立绘。
     [HarmonyPatch(typeof(UI_PickPopup), "SetStanding")]
     internal static class UnlockMadelinePickStandingPatch

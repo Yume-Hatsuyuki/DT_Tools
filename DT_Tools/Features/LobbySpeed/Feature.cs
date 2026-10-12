@@ -3,7 +3,7 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.LobbySpeed
 {
     /// 大厅移速：FixedUpdateMove 的 deltaSpeed 倍率仅在 Lobby 下改写
-    /// （原版默认 1，速度 = PrivateInfo.Speed * deltaSpeed，0.1.16b MyPlayer.cs:1869 / :1880）。
+    /// （原版默认 1，速度 = PrivateInfo.Speed * deltaSpeed，0.1.17a MyPlayer.cs:1869 / :1880）。
     [PatchFeature(
         "大厅移速调整：可修改大厅内移动倍率（默认 1.0）。",
         defaultEnabled: false,

@@ -107,7 +107,7 @@ namespace DT_Tools.Game
             }
         }
 
-        /// StartMission()：开局启动任务分配（0.1.16b MissionManager.cs:355）。
+        /// StartMission()：开局启动任务分配（0.1.17a MissionManager.cs:355）。
         public static bool StartParameterless()
         {
             object inst = Instance;

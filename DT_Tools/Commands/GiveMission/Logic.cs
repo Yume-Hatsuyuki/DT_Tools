@@ -26,7 +26,7 @@ namespace DT_Tools.Commands.GiveMission
     internal static class GiveMissionLogic
     {
         /// switch 中无对应 Start_ScXXX 分支的占位任务类型
-        /// （0.1.16b MissionManager.cs:807-814 空分组，另含枚举外的裸值 5/19）。
+        /// （0.1.16b MissionManager.cs:807-814（待核对） 空分组，另含枚举外的裸值 5/19）。
         private static readonly HashSet<ESchoolMission> EmptyCaseMissions =
             new HashSet<ESchoolMission>
             {
@@ -84,7 +84,7 @@ namespace DT_Tools.Commands.GiveMission
                 return false;
             }
 
-            MissionData data = Managers.Data.GetMissionData((int)missionType);   // 0.1.16b DataManager.cs:105
+            MissionData data = Managers.Data.GetMissionData((int)missionType);   // 0.1.17a DataManager.cs:105
             if (data == null)
             {
                 code = "no mission data";
@@ -189,7 +189,7 @@ namespace DT_Tools.Commands.GiveMission
 
         /// 构建反向 NextType 表: NextType → [Type]。
         /// 例: MissionData{Type=11, NextType=12} → map[12] = [11]。
-        /// 数据源 Managers.Data.MissionList（0.1.16b DataManager.cs:26）。
+        /// 数据源 Managers.Data.MissionList（0.1.17a DataManager.cs:26）。
         private static void EnsureReverseNextMapBuilt()
         {
             if (_reverseMapBuilt) return;

@@ -246,7 +246,7 @@ namespace DT_Tools.Game
             return removed;
         }
 
-        /// 设置就绪态（大厅限定；Ready 属性 setter 会广播 S_READY，0.1.16b Player.cs:110-130）。
+        /// 设置就绪态（大厅限定；Ready 属性 setter 会广播 S_READY，0.1.17a Player.cs:110-130）。
         public static bool TrySetReady(string nameOrId, bool ready, out string error, out string text)
         {
             error = null;

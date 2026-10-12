@@ -52,6 +52,7 @@ namespace DT_Tools.Commands.Help
             name = c.Name,
             usage = c.Usage,
             description = c.Description,
+            tags = Core.Attributes.FeatureTagCatalog.Names(c.Tags),
             aliases = c.Aliases ?? Array.Empty<string>(),
             require_host = c.RequireHost,
             author = string.IsNullOrEmpty(c.Author) ? "佚名" : c.Author,

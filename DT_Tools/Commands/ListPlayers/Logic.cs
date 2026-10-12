@@ -219,7 +219,7 @@ namespace DT_Tools.Commands.ListPlayers
         }
 
         /// Steam 账号昵称（persona name）：同房间/同大厅玩家无需好友关系即可查
-        /// （查询模式对齐 0.1.16b GameHistoryStorage.cs:472 GetSteamName；
+        /// （查询模式对齐 0.1.17a GameHistoryStorage.cs:472 GetSteamName；
         /// 清洗对齐同文件 CleanName——去控制字符、NeutralizeRichText、截断 32）。
         /// Steam 未初始化 / 数据未就绪（空、"[unknown]"）返回 null。
         public static string SteamNameOf(ulong steamId)

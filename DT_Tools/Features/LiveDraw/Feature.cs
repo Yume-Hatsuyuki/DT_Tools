@@ -16,7 +16,7 @@ namespace DT_Tools.Features.LiveDraw
     ///
     /// 与照片发送器（PhotoSend）共用同一照片目录（默认 BepInEx/config/DT_Tools/photos/），
     /// 同一批照片既可在庭审发图也可上画布。阶段判断用客户端 TrialManager 单例
-    /// （Server.Game.TrialManager.Instance，0.1.16b trial.cs:41 s_instance；State 为独立
+    /// （Server.Game.TrialManager.Instance，0.1.16b trial.cs:41（待核对） s_instance；State 为独立
     /// 字段不依赖 GameRoom，非房主进程同样安全），不用服务端 GameRoom.Instance——
     /// 原版插件用服务端判断导致非房主画不了，此处修正为任何玩家可用。
     [PatchFeature(

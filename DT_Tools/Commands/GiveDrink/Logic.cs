@@ -31,7 +31,7 @@ namespace DT_Tools.Commands.GiveDrink
             }
 
             // 武器判定与原版同源：ItemManager.CreateAndInsertInven 按 item.Data.Type 分流
-            // （0.1.16b ItemManager.cs:21-26），不再用 2xxx 区间猜测
+            // （0.1.16b ItemManager.cs:21-26（待核对）)，不再用 2xxx 区间猜测
             if (IsWeapon(itemId) && player.Weapon != null)
                 player.RemoveWeapon();
 

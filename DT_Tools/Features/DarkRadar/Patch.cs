@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.DarkRadar
 {
-    /// 平板每帧刷新后巡检（LateUpdate 为私有方法，字符串定位：0.1.16b UI_GameTablet.cs:2992）。
+    /// 平板每帧刷新后巡检（LateUpdate 为私有方法，字符串定位：0.1.17a UI_GameTablet.cs:2992）。
     [HarmonyPatch(typeof(UI_GameTablet), "LateUpdate")]
     internal static class DarkRadarPatch
     {

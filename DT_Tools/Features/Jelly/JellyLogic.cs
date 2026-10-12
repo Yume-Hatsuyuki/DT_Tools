@@ -23,7 +23,7 @@ namespace DT_Tools.Features.Jelly
     /// 果冻周期数学：全员/全体同相位（Time.unscaledTime % 周期），
     /// 下压段 smoothstep + 回弹段阻尼余弦，每帧绝对赋值 scale。
     ///
-    /// 玩家目标 = 挂 SkeletonAnimation 的视觉子节点（0.1.16b Player.cs:302/608）：
+    /// 玩家目标 = 挂 SkeletonAnimation 的视觉子节点（0.1.17a Player.cs:302/608）：
     /// 主游戏从不写该节点的 scale/localPosition（Refresh 只归一化其 parent，Player.cs:2303），
     /// 碰撞体、UIGroup（名牌/表情/体力条）、EffectGroup 均为其兄弟节点；Spine 动画也不写
     /// Unity transform scale，互不覆盖。绝对赋值天然免疫游戏对视觉层级的归一化，

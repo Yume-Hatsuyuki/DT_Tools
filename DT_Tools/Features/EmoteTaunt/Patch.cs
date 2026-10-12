@@ -9,10 +9,10 @@ namespace DT_Tools.Features.EmoteTaunt
     /// 选用 Postfix 而非 Prefix 整替：与 EmoteHold 对 UseEmotion 的整替 Prefix 天然错开执行阶段，
     /// 两功能各自开关、互不干扰。
     /// 聊天走游戏自带全房广播：Managers.Voice.SendChatMessage
-    /// （0.1.16b VoiceManager.cs:1239 → SendChatPacket(NormalChat) → C_CHAT_MESSAGE，房主转发全房），
+    /// （0.1.17a VoiceManager.cs:1239 → SendChatPacket(NormalChat) → C_CHAT_MESSAGE，房主转发全房），
     /// 因此接收方无需安装任何插件、也无需房主启用本功能。
     /// 台词逐表情配置于 Feature（留空=该表情不喊话），防刷屏冷却见 Cooldown。
-    /// 庭审阶段：表情走 UI_TrialEvent.UseEmotion 而非 Player.UseEmotion（0.1.16b PacketHandler.cs:442），
+    /// 庭审阶段：表情走 UI_TrialEvent.UseEmotion 而非 Player.UseEmotion（0.1.17a PacketHandler.cs:442），
     /// 由下方 EmoteTauntTrialPatch 单独钩住，与平时共用台词与冷却。
     [HarmonyPatch(typeof(Player), nameof(Player.UseEmotion))]
     internal static class EmoteTauntPatch
@@ -69,7 +69,7 @@ namespace DT_Tools.Features.EmoteTaunt
         }
     }
 
-    /// 庭审阶段钩子：庭审中表情经 UI_TrialEvent.UseEmotion(playerId, emotionId)（0.1.16b UI_TrialEvent.cs:1687），
+    /// 庭审阶段钩子：庭审中表情经 UI_TrialEvent.UseEmotion(playerId, emotionId)（0.1.17a UI_TrialEvent.cs:1687），
     /// 本地玩家在庭审发表情也走此路（UI_EmotionSubItem 在 Trial 阶段不调 MyPlayer.UseEmotion）。
     /// 仅对本地玩家（MyPlayerID）的表情触发喊话，防冒名；台词与冷却与平时共享。
     [HarmonyPatch(typeof(UI_TrialEvent), nameof(UI_TrialEvent.UseEmotion))]

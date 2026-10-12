@@ -2,7 +2,7 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.DestroyEvidence
 {
-    /// 销毁证据读条。DeviceBase.UseSabotage 原版 2.5f（0.1.16b DeviceBase.cs:460）
+    /// 销毁证据读条。DeviceBase.UseSabotage 原版 2.5f（0.1.17a DeviceBase.cs:10）
     /// → CastingTime（仅本地表现；服务端冷却与判定不受影响）。
     /// 本功能管"单次破坏耗时多久"；"多久可以破坏一次"（冷却频率）是服务端的另一回事，
     /// 见「DestroyEvidenceCooldownServer」。

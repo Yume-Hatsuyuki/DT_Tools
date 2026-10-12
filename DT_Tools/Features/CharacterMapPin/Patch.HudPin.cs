@@ -4,7 +4,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.CharacterMapPin
 {
     /// HUD RefreshPlayerPin 后置：换上角色头像。私有方法，字符串定位：
-    /// 0.1.16b UI_GameScene.cs:852。
+    /// 0.1.16b UI_GameScene.cs:852（待核对）。
     [HarmonyPatch(typeof(UI_GameScene), "RefreshPlayerPin")]
     internal static class CharacterMapPinHudPinPatch
     {

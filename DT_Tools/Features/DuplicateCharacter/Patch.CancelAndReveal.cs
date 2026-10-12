@@ -7,7 +7,7 @@ using Server.Game;
 
 namespace DT_Tools.Features.DuplicateCharacter
 {
-    /// 取消确认只回操作者本人（CancelPickCharacter，0.1.16b GameRoom.cs:1777）。
+    /// 取消确认只回操作者本人（CancelPickCharacter，0.1.17a GameRoom.cs:1777）。
     /// 原版取消会全员广播 S_CANCEL_PICK_CHARACTER，对端收到后对被取消角色执行
     /// RefreshUI——两人同选 X 时，一人取消会把另一人自己格子的置灰错误地恢复。
     /// 改为只回本人后，锁定前其他客户端对选角动作完全无感知。
@@ -23,7 +23,7 @@ namespace DT_Tools.Features.DuplicateCharacter
                 return false;
 
             var t = Traverse.Create(__instance);
-            // _pickReady 为私有字段：0.1.16b GameRoom.cs:97
+            // _pickReady 为私有字段：0.1.17a GameRoom.cs:97
             if (!t.Field("_pickReady").GetValue<bool>())
             {
                 // 原版英文文案："CancelPickCharacter ignored - phase not ready yet"
@@ -84,7 +84,7 @@ namespace DT_Tools.Features.DuplicateCharacter
         }
     }
 
-    /// 开局占位 + 全员锁定后统一揭晓（PickCharacterTick，0.1.16b GameRoom.cs:1619）。
+    /// 开局占位 + 全员锁定后统一揭晓（PickCharacterTick，0.1.17a GameRoom.cs:1619）。
     /// 要点：
     /// - Prefix 捕获【进入时】的 StopWatch：原方法在【末尾】才 TimeManager.Tick() 自增，
     /// Postfix 读到的必是自增后值（进入 0 读到 1、进入 40 读到 41）。

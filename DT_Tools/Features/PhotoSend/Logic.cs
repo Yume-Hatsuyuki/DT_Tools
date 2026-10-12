@@ -12,13 +12,13 @@ namespace DT_Tools.Features.PhotoSend
     /// 照片发送执行逻辑：解析来源（本地/http）→ 读图 → 缩放 → JPEG 压到 ≤160KB →
     /// 构造 C_CHAT_PHOTO 直发（SlotIndex=-1，不触碰 PhotoManager._shots/_sentPhotoIds；
     /// 房主端数据通道不校验 SlotIndex，0.1.16b Server.Game/HostPacketHandler.cs:542；
-    /// 回包 SlotIndex&lt;0 不落重发缓存，0.1.16b PhotoManager.cs:773）。
+    /// 回包 SlotIndex&lt;0 不落重发缓存，0.1.17a PhotoManager.cs:773）。
     /// 文字说明在本地图压缩成功后、发送前发出（保证"先文字后图片"的聊天顺序，失败不打空炮）。
     /// http 链接在后台线程下载（AGENTS.md §11：Unity API 仅主线程可碰），经
     /// CoroutineHost.Post 回主线程再编码发包。成功返回 null，失败返回可读错误文案。
     internal static class PhotoSendLogic
     {
-        private const int JpegLimitBytes = 163840;   // 原版上限（0.1.16b PhotoManager.cs:700）
+        private const int JpegLimitBytes = 163840;   // 原版上限（0.1.16b PhotoManager.cs:700（待核对）)
         private const long DownloadLimitBytes = 20L * 1024 * 1024; // 网络图片下载上限，防超大文件撑爆内存
         private const int DownloadTimeoutMs = 10000;
 
@@ -26,7 +26,7 @@ namespace DT_Tools.Features.PhotoSend
         internal const string Usage =
             "用法：![文字](本地路径或http链接)，文字可空。例：![](cat.jpg)、![证据](https://a.com/x.jpg)";
 
-        /// PhotoManager.ConsumeBudget 私有方法（0.1.16b PhotoManager.cs:715），发送后同步客户端节流预算。
+        /// PhotoManager.ConsumeBudget 私有方法（0.1.17a PhotoManager.cs:715），发送后同步客户端节流预算。
         // Patches.System 命名空间会遮蔽全局 System，须写 global::（AGENTS.md §9 约束 3）
         private static readonly global::System.Reflection.MethodInfo ConsumeBudgetMethod =
             AccessTools.Method(typeof(PhotoManager), "ConsumeBudget");
@@ -197,7 +197,7 @@ namespace DT_Tools.Features.PhotoSend
                     outW = w;
                     outH = h;
                 }
-                // 质量比例搜索：与原版 EncodeAdaptive 同思路（0.1.16b PhotoManager.cs:600-623），
+                // 质量比例搜索：与原版 EncodeAdaptive 同思路（0.1.17a PhotoManager.cs:600-623），
                 // 按体积比例估算下一档质量，比线性盲降更快贴住 160KB 且不跌进低质量糊图；
                 // Original 模式放宽到 30（用户选择了分辨率优先）
                 int floorQuality = PhotoSendFeature.ScaleMode == ScaleModeType.Original ? 30 : 55;
@@ -251,7 +251,7 @@ namespace DT_Tools.Features.PhotoSend
                 SlotIndex = -1,
                 Data = global::Google.Protobuf.ByteString.CopyFrom(jpeg)
             });
-            // 与原版 SubmitPhoto 一致消费客户端节流预算（0.1.16b PhotoManager.cs:715）
+            // 与原版 SubmitPhoto 一致消费客户端节流预算（0.1.17a PhotoManager.cs:672）
             ConsumeBudgetMethod?.Invoke(Managers.Photo, null);
             Log.Info<PhotoSendFeature>($"[PhotoSend] {name} 已发送：{jpeg.Length / 1024}KB（{outW}x{outH}px）");
             return null;
@@ -273,7 +273,7 @@ namespace DT_Tools.Features.PhotoSend
             return next;
         }
 
-        /// 逐级减半降采样（原版 ResampleTo 同思路，0.1.16b PhotoManager.cs:566，级数不封顶）：
+        /// 逐级减半降采样（原版 ResampleTo 同思路，0.1.17a PhotoManager.cs:566，级数不封顶）：
         /// Unity Blit 只做单次线性采样，大比例一次缩会跳像素发糊；先 box 逐级减半到 2 倍内，
         /// 末次再 bilinear 到目标。输入纹理一律销毁，返回新纹理。须主线程。
         private static Texture2D ResizeTexture(Texture2D source, int w, int h)

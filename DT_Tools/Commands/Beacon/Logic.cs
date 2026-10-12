@@ -64,7 +64,7 @@ namespace DT_Tools.Commands.Beacon
                         error = $"#{pid} 就是本机自己，当前位置即目标，无需瞬移。";
                         return false;
                     }
-                    // 0.1.16b PlayerManager.cs:42 Players——只含存活且已 Spawn 的玩家；
+                    // 0.1.16b PlayerManager.cs:42（待核对） Players——只含存活且已 Spawn 的玩家；
                     // 死亡玩家收到 S_DESPAWN 后被移出该表，旁观者不入表，本机 MyPlayer 不在表内。
                     var other = LocalPlayer.FindClientPlayer(pid);
                     if (other == null)

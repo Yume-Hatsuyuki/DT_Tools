@@ -39,7 +39,7 @@ namespace DT_Tools.Commands.Agent
         /// 任务全部完成判定阈值。依据 Server.Game/MissionManager.cs CheckAllClear：
         /// Percent &gt;= 100 置 AllClear（0.1.16b :30 / :461）；客户端经
         /// S_MISSION_PROGRESS_PERCENT → 场景事件 ChangeMissionPercent 收到同一值
-        /// （0.1.16b GameManagerEX.cs:258、Define.cs:170）。
+        /// （0.1.16b GameManagerEX.cs:258（待核对）、Define.cs:170）。
         private const int AllClearPercent = 100;
 
         public static AgentRunner Instance { get; private set; }
@@ -81,7 +81,7 @@ namespace DT_Tools.Commands.Agent
         /// 订阅任务进度场景事件，用于检测"全部任务已完成"（见 AllClearPercent 依据）。
         ///
         /// 注意：Managers.Game.OnBroadcastSceneEvent 在每局游戏结束/重开时会被
-        /// GameManagerEX.Clear() 整体置 null（0.1.16b GameManagerEX.cs:280，Managers.Clear() 调用链），
+        /// GameManagerEX.Clear() 整体置 null（0.1.17a GameManagerEX.cs:7，Managers.Clear() 调用链），
         /// 不是移除单个订阅者，所以旧局的订阅不会自动带到新局——必须在每次 Runner 创建时
         /// 重新订阅，不能假设订阅一次全局有效。退订统一放在 OnDestroy 里。
         private void TrySubscribeMissionPercent()
