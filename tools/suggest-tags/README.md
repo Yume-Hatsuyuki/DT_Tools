@@ -12,7 +12,7 @@
 
 ## 用法
 
-前提：仓库已 `dotnet restore`（需要 `DT_Tools/obj/project.assets.json`）。
+前提：仓库已 `dotnet restore DT_Tools/DT_Tools.csproj`（需要 `DT_Tools/obj/project.assets.json`）。
 
 ```bash
 dotnet run --project tools/suggest-tags -- --root . --all                # 全部单元的建议
