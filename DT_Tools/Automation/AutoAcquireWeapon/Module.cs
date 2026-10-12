@@ -7,6 +7,7 @@ namespace DT_Tools.Automation.AutoAcquireWeapon
     [AutomationModule("开局自动取刀",
         "进入生存阶段后自动对开放武器架发送 C_INTERACT_ARMORY（白方拔刀 / 黑幕截刀）。",
         side: FeatureSide.Client,
+        Tags = FeatureTag.SysAutomation | FeatureTag.GameWeapon,
         Author = "梦初雪")]
     public sealed class AutoAcquireWeaponModule
     {

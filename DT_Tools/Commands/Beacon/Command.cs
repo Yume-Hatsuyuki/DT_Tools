@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Protocol;
 
@@ -22,6 +23,7 @@ namespace DT_Tools.Commands.Beacon
         public string Usage => "beacon [x y | spawn <#i> | player <#id> | lobby | error]";
         public string Description => "战略信标：瞬移到指定坐标。掉皮掉肉不掉队！（跟随控制台 / 客户端）";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.PlayerMove;
 
         public bool RequireHost => false;
 

@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
 
 namespace DT_Tools.Commands.Screenshot
@@ -15,6 +16,7 @@ namespace DT_Tools.Commands.Screenshot
         public string Usage => "shot [长边像素]";
         public string Description => "截图当前画面存为 PNG，返回绝对路径（长边默认 1280；含 UI 整帧，等待帧末完成后一次返回）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysDebug;
 
         public bool RequireHost => false;
 

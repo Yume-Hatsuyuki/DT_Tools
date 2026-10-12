@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
 using DT_Tools.Game;
 
@@ -28,6 +29,7 @@ namespace DT_Tools.Commands
             foreach (var type in types)
             {
                 var command = (ICommand)Activator.CreateInstance(type);
+                FeatureTagCatalog.Validate(command.Tags, type.FullName);
                 Commands.Add(command);
                 Claim(command.Name, command);
                 foreach (var alias in command.Aliases ?? Array.Empty<string>())

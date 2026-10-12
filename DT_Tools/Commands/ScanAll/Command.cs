@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.ScanAll
 {
@@ -16,6 +17,7 @@ namespace DT_Tools.Commands.ScanAll
         public string Usage => "scan_all <间隔秒>";
         public string Description => "知晓一切之人：对所有可扫描设备发 C_SCAN_DEVICE 收集全部线索（跟随控制台）。间隔 0=同帧一次发完，>0=每包间隔秒数，不带参数显示用法。⚠ 多人局：死亡玩家也可扫描且事后无法区分，慎用。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameEvidence;
 
         public bool RequireHost => false;
 

@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Protocol;
 
@@ -17,6 +18,7 @@ namespace DT_Tools.Commands.ReportCorpse
         public string Usage => "report [#corpseId]";
         public string Description => "客户端报警：无参列出场上尸体，带 #id 直接发 C_INTERACT_CORPSE 强制开会（跟随控制台）。⚠ 多人局：观战者也可强制开庭且事后无法区分，慎用。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameCorpse;
 
         public bool RequireHost => false;
 

@@ -25,8 +25,8 @@ namespace DT_Tools.Core
             new Dictionary<Type, string>();
         private static readonly Dictionary<string, string> SectionGroups =
             new Dictionary<string, string>(StringComparer.Ordinal);
-        private static readonly Dictionary<string, string> SectionCategories =
-            new Dictionary<string, string>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, FeatureTag> SectionTags =
+            new Dictionary<string, FeatureTag>(StringComparer.Ordinal);
         private static readonly List<ModuleInfo> ModuleInfos =
             new List<ModuleInfo>();
 
@@ -39,6 +39,7 @@ namespace DT_Tools.Core
             public string Description;
             public FeatureSide Side;
             public string Author;
+            public FeatureTag Tags;
             internal Action<bool> Tick;
         }
 
@@ -69,6 +70,7 @@ namespace DT_Tools.Core
                     Description = m.Description,
                     Side = m.Side,
                     Author = m.Author,
+                    Tags = m.Tags,
                     Tick = m.Tick,
                 });
             }
@@ -155,10 +157,10 @@ namespace DT_Tools.Core
         public static string GroupOfSection(string section)
             => section != null && SectionGroups.TryGetValue(section, out var group) ? group : null;
 
-        /// 装载期收集的功能分类元数据（Patches/&lt;分类&gt;/&lt;功能&gt; 目录名，FeatureLoader 推导）；
-        /// 非补丁功能段（基础设施、自动化模块）返回 null，配置协议据此下发 category 字段。
-        public static string CategoryOfSection(string section)
-            => section != null && SectionCategories.TryGetValue(section, out var category) ? category : null;
+        /// 装载期收集的功能标签（FeatureLoader 从 [PatchFeature] 读取，供配置协议下发）。
+        /// 基础设施段返回 FeatureTag.None，配置协议据此下发空的 tags 数组。
+        public static FeatureTag TagsOfSection(string section)
+            => section != null && SectionTags.TryGetValue(section, out var tags) ? tags : FeatureTag.None;
 
         /// 自动化模块泵：hostEnabled 为总开关值，由 AutomationHost 的主线程 Tick 调用。
         public static void TickModules(bool hostEnabled)
@@ -181,13 +183,13 @@ namespace DT_Tools.Core
             var enabled = BindSection(
                 config, feature.Type, feature.Section,
                 feature.Description, feature.DefaultEnabled, feature.Side, feature.Author);
-            if (!string.IsNullOrEmpty(feature.Category))
-                SectionCategories[feature.Section] = feature.Category;
+            SectionTags[feature.Section] = feature.Tags;
             FeatureLoader.WireLifecycle(feature.Type, feature.Section, enabled);
         }
 
         private static void BindModule(ConfigFile config, FeatureLoader.ModuleDesc module)
         {
+            SectionTags[module.Section] = module.Tags;
             var enabled = BindSection(
                 config, module.Type, module.Section,
                 module.Description, defaultEnabled: false, module.Side, module.Author);

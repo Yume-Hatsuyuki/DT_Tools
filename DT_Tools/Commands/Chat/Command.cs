@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Protocol;
 
@@ -25,6 +26,7 @@ namespace DT_Tools.Commands.Chat
         public string Usage => "chat [#deviceId] <text>";
         public string Description => "通过打字机发送全图文字：无参数列出 ID/位置；#id 指定机台；不写 id 则随机空闲机台。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.UiChat | FeatureTag.GameDevice;
         public bool RequireHost => false;
 
         public CommandResult Execute(CommandContext ctx)

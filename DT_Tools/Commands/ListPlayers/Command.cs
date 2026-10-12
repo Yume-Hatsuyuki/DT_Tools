@@ -1,5 +1,6 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.ListPlayers
 {
@@ -11,6 +12,7 @@ namespace DT_Tools.Commands.ListPlayers
         public string Usage => "list_players";
         public string Description => "列出所有玩家的 PlayerId / SteamId / Steam 昵称 / 游戏昵称 / P2P 远端 IP（及是否中继、ping），并标注房主。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.PlayerIdentity | FeatureTag.SysNetwork;
 
         public bool RequireHost => false;
 

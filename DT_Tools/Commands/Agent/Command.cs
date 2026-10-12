@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using System.Collections.Generic;
 using System.Text;
 using DT_Tools.Game;
@@ -29,6 +30,7 @@ namespace DT_Tools.Commands.Agent
         public string Usage => "agent [all|任务ID|名|#设备号|stop]";
         public string Description => "特工：按任务链自动推进（一步做不完就跳过做下一个）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysAutomation | FeatureTag.GameMission;
 
         public bool RequireHost => false;
 

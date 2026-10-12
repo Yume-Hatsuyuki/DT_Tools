@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Fusebox
@@ -36,6 +37,7 @@ namespace DT_Tools.Commands.Fusebox
         public string Usage => "sabotage_fuse [#id|all]";
         public string Description => "客户端拉闸停电（直接发 C_INTERACT_FUSEBOX 触发 DisconnetCable，绕过谜题，好人也可用）。⚠ 多人局：好人拉闸可拿「主谋」成就，游戏状态被污染且事后无法区分，慎用。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameFuse | FeatureTag.GameSabotage;
 
         public bool RequireHost => false;
 

@@ -1,5 +1,6 @@
 using System.Linq;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Server.Game;
 
@@ -18,6 +19,7 @@ namespace DT_Tools.Commands.Nickname
         public string Usage => "nick <target> <新昵称>";
         public string Description => "更改玩家昵称（任何阶段可用，需房主）。目标用 /list_players 查询；含空格的昵称直接跟在目标后写。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.PlayerIdentity | FeatureTag.SysHost;
         public bool RequireHost => true;
 
         public CommandResult Execute(CommandContext ctx)

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using DT_Tools.Patches.System.BanList;
+using DT_Tools.Features.BanList;
 
 namespace DT_Tools.Commands.BanList
 {

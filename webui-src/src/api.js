@@ -73,6 +73,7 @@ export const API = {
 
   // 配置
   configList: () => request('/api/config/list'),
+  configTags: () => request('/api/config/tags'),
   configUpdate: (section, key, value) => post('/api/config/update', { section, key, value }),
   configSave: () => post('/api/config/save'),
   configReset: (section) => post('/api/config/reset', section ? { section } : {}),

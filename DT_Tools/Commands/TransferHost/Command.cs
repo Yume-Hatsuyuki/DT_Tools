@@ -1,5 +1,6 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
 using DT_Tools.Game;
 using Protocol;
@@ -17,7 +18,7 @@ namespace DT_Tools.Commands.TransferHost
     /// - 目标玩家获得房主权限（开局判定 / 踢人 / 后续再转让），经服务端
     /// Host 字段校验即刻生效；
     /// - 原房主留在房间继续游戏；客户端房主标记的局内同步由
-    /// Patches/System/HostTransfer 补丁负责（需开启 [HostTransfer]）；
+    /// Features/HostTransfer 补丁负责（需开启 [HostTransfer]）；
     /// - 原房主之后退出房间时按原版机制自动迁移给新 Host，房间不解散。
     /// 可选参数 owner（/ owner / steam / 大厅）：同时把 Steam 大厅 owner 转让给
     /// 目标玩家（受控转让，依赖 [HostTransfer] 的防迁移拦截，不会触发全员误迁移）。
@@ -31,6 +32,7 @@ namespace DT_Tools.Commands.TransferHost
         public string Usage => "transferhost #<playerId> [owner]";
         public string Description => "将房主身份转让给指定玩家（大厅与局内均可，需房主；原房主留在房间）。加 owner 参数（owner/steam/大厅）可同时转让 Steam 大厅 owner。";
         public string Author => "合理";
+        public FeatureTag Tags => FeatureTag.SysHost;
 
         public bool RequireHost => true;
 
@@ -91,7 +93,7 @@ namespace DT_Tools.Commands.TransferHost
 
             // 客户端局内房主标记同步依赖 [HostTransfer] 功能（默认关闭），提示但不强拦：
             // 服务端权限（开局/踢人/再转让）不依赖该功能开关。
-            if (!Engine.EnabledOf(typeof(DT_Tools.Patches.System.HostTransfer.HostTransferFeature)))
+            if (!Engine.EnabledOf(typeof(DT_Tools.Features.HostTransfer.HostTransferFeature)))
                 ctx.Warn("提示: 客户端 [HostTransfer] 功能未开启，局内房主标记不会同步（服务端权限转让已生效）。");
 
             room.Host = target;
@@ -127,7 +129,7 @@ namespace DT_Tools.Commands.TransferHost
                 {
                     SteamMatchmaking.SetLobbyOwner(Managers.Network.Lobby.LobbyId, new CSteamID(steamId));
                     ctx.Reply($"Steam 大厅 owner 已转让给 {target.Name}（SteamId={steamId}）。");
-                    Log.Info<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                    Log.Info<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                         $"Steam 大厅 owner 已转让 → {target.Name} ({steamId})");
                 }
             }
@@ -153,7 +155,7 @@ namespace DT_Tools.Commands.TransferHost
                 }
                 if (republished > 0)
                 {
-                    Log.Info<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                    Log.Info<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                         $"房主转让后已向 {republished} 名观战者补发区域包");
                 }
             }
@@ -168,7 +170,7 @@ namespace DT_Tools.Commands.TransferHost
             try
             {
                 string transferText =
-                    DT_Tools.Patches.System.HostTransfer.HostTransferFeature.TransferText;
+                    DT_Tools.Features.HostTransfer.HostTransferFeature.TransferText;
                 if (string.IsNullOrWhiteSpace(transferText))
                     transferText = "将房主转让给";
                 string suffix = transferSteamOwner ? "（大厅owner）" : "（仅房主权限）";
@@ -191,7 +193,7 @@ namespace DT_Tools.Commands.TransferHost
                         targets = room.AlivePlayers;
                         break;
                     default:
-                        Log.Info<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                        Log.Info<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                             $"阶段 {room.State} 无聊天显示链路，转让通知仅房主可见");
                         return;
                 }
@@ -219,12 +221,12 @@ namespace DT_Tools.Commands.TransferHost
                     p.Session.Send(packet);
                     sentCount++;
                 }
-                Log.Info<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                Log.Info<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                     $"房主转让通知已广播（{channel}）→ {sentCount} 名玩家: {text}");
             }
             catch (global::System.Exception ex)
             {
-                Log.Error<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                Log.Error<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                     $"房主转让通知广播失败: {ex.Message}");
             }
         }

@@ -1,5 +1,6 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Google.Protobuf;
 
@@ -14,6 +15,7 @@ namespace DT_Tools.Commands.PacketCall
         public string Usage => "call_s <all|#id> <S_PacketName> [json]";
         public string Description => "向玩家发送 S_* 协议包（JSON 填充，房主）。无参显示帮助与包名自检。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysNetwork | FeatureTag.SysDebug;
 
         public bool RequireHost => true;
 

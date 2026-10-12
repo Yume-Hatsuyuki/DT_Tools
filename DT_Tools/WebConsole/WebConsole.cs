@@ -134,6 +134,7 @@ namespace DT_Tools.WebConsole
             router.Add("GET", "/api/commands", Api.CommandsApi.HandleList);
             router.Add("*", "/api/config/section/", Api.ConfigApi.HandleSectionLog);
             router.Add("GET", "/api/config/list", Api.ConfigApi.HandleList);
+            router.Add("GET", "/api/config/tags", Api.ConfigApi.HandleTags);
             router.Add("POST", "/api/config/update", Api.ConfigApi.HandleUpdate);
             router.Add("POST", "/api/config/save", Api.ConfigApi.HandleSave);
             router.Add("POST", "/api/config/reset", Api.ConfigApi.HandleReset);

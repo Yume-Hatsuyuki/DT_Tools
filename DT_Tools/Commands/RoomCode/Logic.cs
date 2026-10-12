@@ -1,7 +1,7 @@
 using DummyClient;
 using DT_Tools.Core;
 using DT_Tools.Game;
-using DT_Tools.Patches.System.LobbyMaxPlayers;
+using DT_Tools.Features.LobbyMaxPlayers;
 using Server.Game;
 using Steamworks;
 

@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.Power
 {
@@ -19,6 +20,7 @@ namespace DT_Tools.Commands.Power
         public string Usage => "blackout";
         public string Description => "强制触发全场停电（等效 Dark 断开第 2 个电箱，需房主·生存阶段）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameFuse;
 
         public bool RequireHost => true;
 

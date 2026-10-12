@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Fusebox
@@ -28,6 +29,7 @@ namespace DT_Tools.Commands.Fusebox
         public string Usage => "repair_fuse [#id|all]";
         public string Description => "客户端秒修损坏电闸（直接发 C_INTERACT_FUSEBOX，绕过 10 秒读条，仅生存阶段）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameFuse;
 
         public bool RequireHost => false;
 

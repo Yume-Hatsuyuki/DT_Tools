@@ -1,5 +1,6 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Google.Protobuf;
 
@@ -16,6 +17,7 @@ namespace DT_Tools.Commands.PacketCall
         public string Usage => "call_me <C_PacketName> [json]";
         public string Description => "以本客户端身份发送 C_* 意图包（JSON 填充）。无参显示帮助与包名自检。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysNetwork | FeatureTag.SysDebug;
 
         public bool RequireHost => false;
 

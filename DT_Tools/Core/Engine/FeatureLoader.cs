@@ -18,8 +18,8 @@ namespace DT_Tools.Core
             public Type Type;
             public string Section;
 
-            /// 分类 = 命名空间中 Patches 段的下一级（目录 Patches/&lt;分类&gt;/&lt;功能&gt;），随配置协议下发。
-            public string Category;
+            /// 功能标签（多选），随配置协议下发。
+            public FeatureTag Tags;
             public string Description;
             public bool DefaultEnabled;
             public FeatureSide Side;
@@ -34,6 +34,7 @@ namespace DT_Tools.Core
             public string Description;
             public FeatureSide Side;
             public string Author;
+            public FeatureTag Tags;
             internal Action<bool> Tick;
         }
 
@@ -73,6 +74,7 @@ namespace DT_Tools.Core
                 if (patch != null)
                 {
                     string section = DeriveSection(type);
+                    FeatureTagCatalog.Validate(patch.Tags, type.FullName);
                     ClaimSection(type, section, claimedSections);
                     if (!featureNamespaces.Add(type.Namespace ?? ""))
                         throw new InvalidOperationException(
@@ -81,7 +83,7 @@ namespace DT_Tools.Core
                     {
                         Type = type,
                         Section = section,
-                        Category = DeriveCategory(type),
+                        Tags = patch.Tags,
                         Description = patch.Description,
                         DefaultEnabled = patch.DefaultEnabled,
                         Side = patch.Side,
@@ -102,6 +104,7 @@ namespace DT_Tools.Core
                     if (tick == null)
                         throw new InvalidOperationException(
                             $"自动化模块 {type.FullName} 缺少 static void Tick(bool hostEnabled)。");
+                    FeatureTagCatalog.Validate(module.Tags, type.FullName);
                     modules.Add(new ModuleDesc
                     {
                         Type = type,
@@ -110,6 +113,7 @@ namespace DT_Tools.Core
                         Description = module.Description,
                         Side = module.Side,
                         Author = NormalizeAuthor(module.Author),
+                        Tags = module.Tags,
                         Tick = tick,
                     });
                     continue;
@@ -149,15 +153,6 @@ namespace DT_Tools.Core
                     return name.Substring(0, name.Length - suffix.Length);
             }
             return name;
-        }
-
-        /// 分类 = 命名空间里 Patches 段的下一级（目录 Patches/&lt;分类&gt;/&lt;功能&gt;，段名属功能级）。
-        /// 非两段结构（如功能直接挂在 Patches 下）返回 null——前端把它归入「其他」文件夹兜底。
-        public static string DeriveCategory(Type type)
-        {
-            string[] parts = (type.Namespace ?? "").Split('.');
-            int i = Array.IndexOf(parts, "Patches");
-            return i >= 0 && i + 2 < parts.Length ? parts[i + 1] : null;
         }
 
         /// 挂载一个补丁功能：对 Feature 同命名空间下所有带 [HarmonyPatch] 的类执行 PatchAll。

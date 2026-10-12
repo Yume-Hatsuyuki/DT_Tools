@@ -1,7 +1,7 @@
 using System.Linq;
 using DT_Tools.Commands;
 using DT_Tools.Game;
-using DT_Tools.Patches.System.DetectivePhaseFix;
+using DT_Tools.Features.DetectivePhaseFix;
 using Protocol;
 using Server.Game;
 

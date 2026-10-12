@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 
 namespace DT_Tools.Commands.ExitRoom
@@ -15,6 +16,7 @@ namespace DT_Tools.Commands.ExitRoom
         public string Usage => "exit_room";
         public string Description => "立即离开当前房间并返回大厅（含死亡观战阶段，无需等确认弹窗）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysRoom;
         public bool RequireHost => false;
 
         public CommandResult Execute(CommandContext ctx)

@@ -1,5 +1,6 @@
 using System.Linq;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
 using DT_Tools.Game;
 using Server.Game;
@@ -20,6 +21,7 @@ namespace DT_Tools.Commands.MyName
         public string Usage => "myname <新昵称>";
         public string Description => "更改自己的昵称（本地立即生效；重新进出房间后其他人可见）。含空格的昵称直接写。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.PlayerIdentity;
         public bool RequireHost => false;
 
         public CommandResult Execute(CommandContext ctx)

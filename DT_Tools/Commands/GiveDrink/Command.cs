@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Server.Game;
 
@@ -14,6 +15,7 @@ namespace DT_Tools.Commands.GiveDrink
         public string Usage => "givedrink <all|#id> <item>";
         public string Description => "给所有/指定玩家发放手持道具（含武器与任务道具）。不带参数时显示可用道具列表。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameWeapon;
 
         public bool RequireHost => true;
 

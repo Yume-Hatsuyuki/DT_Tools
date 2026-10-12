@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Protocol;
 
 namespace DT_Tools.Commands.Faction
@@ -11,6 +12,7 @@ namespace DT_Tools.Commands.Faction
         public string Usage => "list_white";
         public string Description => "列出当前局所有白方（仅游戏中、需房主）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameIntel;
 
         public bool RequireHost => true;
 

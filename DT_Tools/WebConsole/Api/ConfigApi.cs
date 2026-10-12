@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using DT_Tools.Core;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.WebConsole.Api
 {
@@ -12,6 +13,16 @@ namespace DT_Tools.WebConsole.Api
     {
         public static void HandleList(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, ConfigService.List(Engine.Config));
+
+        /// 功能标签字典（分组、键、中文名、说明）。WebUI 据此渲染标签筛选，标签文字不在前端写死。
+        public static void HandleTags(HttpListenerContext ctx)
+            => HttpServer.WriteJson(ctx.Response, FeatureTagCatalog.Entries.Select(e => new
+            {
+                key = e.Key,
+                group = e.Group,
+                label = e.Label,
+                description = e.Description,
+            }).ToArray());
 
         public static void HandleUpdate(HttpListenerContext ctx)
         {

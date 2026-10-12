@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.GameState
 {
@@ -12,6 +13,7 @@ namespace DT_Tools.Commands.GameState
         public string Usage => "game_state";
         public string Description => "查看当前游戏状态（裁判中含子阶段），房主/客户端均可用。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameRound;
 
         public bool RequireHost => false;
 

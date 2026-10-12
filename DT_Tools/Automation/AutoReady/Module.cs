@@ -7,6 +7,7 @@ namespace DT_Tools.Automation.AutoReady
     [AutomationModule("自动准备",
         "进入大厅后自动点击准备（与 F5/准备按钮同路径发包 C_READY）；只准备不代开局。",
         side: FeatureSide.Client,
+        Tags = FeatureTag.SysAutomation | FeatureTag.SysRoom,
         Author = "梦初雪")]
     public sealed class AutoReadyModule
     {

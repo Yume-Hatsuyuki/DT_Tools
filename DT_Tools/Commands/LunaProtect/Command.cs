@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Server.Game;
 
@@ -18,6 +19,7 @@ namespace DT_Tools.Commands.LunaProtect
         public string Usage => "luna_protect <all|#playerId>";
         public string Description => "给指定/全体存活玩家套用 Luna 护盾（亮灯时不可被 Black 刀杀，需房主·生存阶段）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameBuff | FeatureTag.GameKill;
 
         public bool RequireHost => true;
 

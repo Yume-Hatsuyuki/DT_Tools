@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 namespace DT_Tools.Commands.MicMusic
 {
     /// /mic_music &lt;url|路径&gt; [volume 0.8] [seconds 120] [local|online] | off — 虚拟麦克风点歌
@@ -13,6 +14,7 @@ namespace DT_Tools.Commands.MicMusic
         public string Usage => "mic_music <url|路径> [volume 0.8] [seconds 120] [local|online] | mic_music off";
         public string Description => "虚拟麦克风点歌：音乐混入你的麦克风发给全房（无需说话），播完自动还原采集管线；off 停止。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysAudio;
         public bool RequireHost => false;
 
         public CommandResult Execute(CommandContext ctx)

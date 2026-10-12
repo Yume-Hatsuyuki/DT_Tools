@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Server.Game;
 
 namespace DT_Tools.Commands.Kick
@@ -15,6 +16,7 @@ namespace DT_Tools.Commands.Kick
         public string Usage => "kick #<playerId>";
         public string Description => "将指定玩家踢出房间（仅大厅可用，需房主）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysHost | FeatureTag.SysRoom;
 
         public bool RequireHost => true;
 

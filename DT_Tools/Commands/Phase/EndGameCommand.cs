@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Protocol;
 
 namespace DT_Tools.Commands.Phase
@@ -12,6 +13,7 @@ namespace DT_Tools.Commands.Phase
         public string Usage => "end_game <white|black>";
         public string Description => "快速结束对局并直接进入总结算（仅房主；需指定胜方，支持 white/black 及中文别名）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameRound;
 
         public bool RequireHost => true;
 

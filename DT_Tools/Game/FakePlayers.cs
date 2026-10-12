@@ -53,7 +53,7 @@ namespace DT_Tools.Game
         /// HandleEnterPlayer 的大厅分支）：座位 ID → 角色 → 进房 → InitLobby → S_ADD_PLAYER 环
         /// → ConvertToDummy。characterId 传 RandomCharacterId 表示随机空闲角色。
         /// capacity = 有效房间人数上限（由 API 层解析：解除上限功能开启时为其 MaxMembers，
-        /// 否则原生 8——Game 层禁止反向引用 Patches）；座位表 16 仍是硬顶（ObjectUtils.cs:68-73）。
+        /// 否则原生 8——Game 层禁止反向引用 Features）；座位表 16 仍是硬顶（ObjectUtils.cs:68-73）。
         public static bool TryCreate(string rawName, int characterId, int capacity, out Server.Game.Player created, out string error, out string text)
         {
             created = null;

@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Server.Game;
 
 namespace DT_Tools.Commands.GiveBuff
@@ -18,6 +19,7 @@ namespace DT_Tools.Commands.GiveBuff
         public string Usage => "givebuff <all|#id> <buff|clear> [seconds|clear|0]";
         public string Description => "给所有/指定玩家添加或清除 BUFF。不带参数时显示可用 BUFF 列表。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameBuff;
 
         public bool RequireHost => true;
 

@@ -20,6 +20,9 @@ namespace DT_Tools.Core.Attributes
         /// 禁止引入全局作者常量兜底——作者归属逐模块声明，供不同贡献者合并 PR。
         public string Author { get; set; }
 
+        /// 功能标签（多选，1–3 个）。跨领域时同时标多个。词表与说明见 FeatureTag / FeatureTagCatalog。
+        public FeatureTag Tags { get; set; }
+
         public AutomationModuleAttribute(
             string displayName,
             string description = null,

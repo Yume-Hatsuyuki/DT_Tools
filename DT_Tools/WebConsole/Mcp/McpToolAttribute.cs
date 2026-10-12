@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using System;
 
 namespace DT_Tools.WebConsole.Mcp
@@ -15,6 +16,9 @@ namespace DT_Tools.WebConsole.Mcp
 
         /// 工具制作者，必须实名。
         public string Author { get; set; }
+
+        /// 功能标签（多选，1–3 个）。跨领域时同时标多个。词表与说明见 FeatureTag / FeatureTagCatalog。
+        public FeatureTag Tags { get; set; }
 
         public McpToolAttribute(string name, string description)
         {

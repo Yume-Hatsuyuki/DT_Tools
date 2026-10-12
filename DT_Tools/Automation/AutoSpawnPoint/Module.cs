@@ -7,6 +7,7 @@ namespace DT_Tools.Automation.AutoSpawnPoint
     [AutomationModule("开局指定出生点",
         "进入生存阶段后传送到 StartPosList 出生点（下拉）或自定义坐标。",
         side: FeatureSide.Client,
+        Tags = FeatureTag.SysAutomation | FeatureTag.PlayerMove,
         Author = "梦初雪")]
     public sealed class AutoSpawnPointModule
     {

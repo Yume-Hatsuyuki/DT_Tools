@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using DT_Tools.Commands;
 using DT_Tools.Core;
 using DT_Tools.WebConsole.Api;
@@ -8,6 +9,7 @@ namespace DT_Tools.WebConsole.Mcp.Tools.SetConfig
     /// set_config：改配置键并落盘。ConfigService.Update 本就供 HTTP 线程直调（同 /api/config/update）。
     [McpTool("set_config",
         "修改一个配置键并保存（类型必须匹配字段）。与 get_config 搭配：先读值再改。影响运行期行为，慎重。",
+        Tags = FeatureTag.SysData,
         Author = "梦初雪")]
     internal static class SetConfigTool
     {

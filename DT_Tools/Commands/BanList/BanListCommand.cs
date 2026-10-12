@@ -1,7 +1,8 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
-using DT_Tools.Patches.System.BanList;
+using DT_Tools.Features.BanList;
 
 namespace DT_Tools.Commands.BanList
 {
@@ -16,6 +17,7 @@ namespace DT_Tools.Commands.BanList
         public string Usage => "banlist";
         public string Description => "列出被踢封禁的玩家（名字 / SteamId / 被踢时间）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysHost;
 
         public bool RequireHost => true;
 

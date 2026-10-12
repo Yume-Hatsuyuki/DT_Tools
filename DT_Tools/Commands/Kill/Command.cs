@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Protocol;
 using Server.Game;
@@ -23,6 +24,7 @@ namespace DT_Tools.Commands.Kill
         public string Usage => "kill <all|#playerId>";
         public string Description => "颈环炸弹处决指定/全体存活玩家（需房主·Survive/Detective/Trial 阶段，立即倒地、6 秒后死亡）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameKill;
 
         public bool RequireHost => true;
 

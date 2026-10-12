@@ -1,5 +1,6 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using DummyClient;
 using Google.Protobuf;
@@ -16,6 +17,7 @@ namespace DT_Tools.Commands.PacketCall
         public string Usage => "call_c <#id> <C_PacketName> [json]";
         public string Description => "以指定玩家身份注入 C_* 包到 Host 处理链，无参显示帮助与包名自检。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysNetwork | FeatureTag.SysDebug;
 
         public bool RequireHost => true;
 

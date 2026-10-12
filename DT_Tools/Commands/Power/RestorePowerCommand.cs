@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.Power
 {
@@ -16,6 +17,7 @@ namespace DT_Tools.Commands.Power
         public string Usage => "restore_power";
         public string Description => "强制恢复全场电力（等效所有损坏电箱被修完，需房主·生存阶段）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameFuse;
 
         public bool RequireHost => true;
 

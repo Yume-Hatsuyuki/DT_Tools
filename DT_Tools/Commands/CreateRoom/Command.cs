@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
 using DT_Tools.Game;
 
@@ -18,6 +19,7 @@ namespace DT_Tools.Commands.CreateRoom
         public string Usage => "create_room [名称] [public|private]";
         public string Description => "从大厅创建联机房间并成为房主（异步，结果进日志；名称默认「DT 房间」，公开/私密不填跟随大厅 UI 选择）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysRoom;
 
         public bool RequireHost => false;
 

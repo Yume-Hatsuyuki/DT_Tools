@@ -20,9 +20,8 @@ namespace DT_Tools.Core
             /// 段落分组："automation"（自动化总开关+各模块，AUTOMATION 页）| "feature"（其余，CONFIG 页）。前端据此分流，不认识任何段名。
             public string Group;
 
-            /// 段所属分类（Patches/&lt;分类&gt;/&lt;功能&gt; 的分类目录名，Engine.CategoryOfSection）。
-            /// 非补丁功能段（WebConsole 等基础设施）为 null（序列化时省略），前端归入「其他」文件夹。
-            public string Category;
+            /// 段的功能标签（键名，见 FeatureTagCatalog）。基础设施段为空数组。
+            public string[] Tags;
 
             /// 本段的开关键名（引擎统一 Engine.EnabledKey）。前端经协议读取，不硬编码 'Enabled'。
             public string EnabledKey = Engine.EnabledKey;
@@ -66,7 +65,7 @@ namespace DT_Tools.Core
                     {
                         Section = def.Section,
                         Group = ClassifyGroup(def.Section),
-                        Category = Engine.CategoryOfSection(def.Section),
+                        Tags = FeatureTagCatalog.Names(Engine.TagsOfSection(def.Section)),
                     };
                     bySection[def.Section] = sec;
                 }

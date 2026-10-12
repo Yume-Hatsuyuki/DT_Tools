@@ -7,6 +7,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
     [AutomationModule("自动选择角色",
         "大厅使用所选角色模型；进入选角阶段后自动发送 C_PICK_CHARACTER（指定或随机）。",
         side: FeatureSide.Client,
+        Tags = FeatureTag.SysAutomation | FeatureTag.PlayerIdentity,
         Author = "梦初雪")]
     public sealed class AutoPickCharacterModule
     {

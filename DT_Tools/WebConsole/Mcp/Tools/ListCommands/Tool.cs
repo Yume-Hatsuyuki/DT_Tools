@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using System;
 using System.Linq;
 using DT_Tools.Commands;
@@ -8,6 +9,7 @@ namespace DT_Tools.WebConsole.Mcp.Tools.ListCommands
     /// list_commands：命令总表。纯内存读（CommandRegistry 启动后恒定），不经主线程。
     [McpTool("list_commands",
         "列出全部 DT_Tools 命令（name/usage/description/requireHost）。行动能力（发包、操控、查询、自动化）全部经 run_command 执行这些命令；本工具是 run_command 前的查阅面。",
+        Tags = FeatureTag.SysDebug,
         Author = "梦初雪")]
     internal static class ListCommandsTool
     {

@@ -1,7 +1,8 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
-using DT_Tools.Patches.System.BanList;
+using DT_Tools.Features.BanList;
 
 namespace DT_Tools.Commands.BanList
 {
@@ -17,6 +18,7 @@ namespace DT_Tools.Commands.BanList
         public string Usage => "unban <#序号|SteamId|名字|all>";
         public string Description => "解除封禁（配合 /banlist），让被踢的玩家能重新加入。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysHost;
 
         public bool RequireHost => true;
 

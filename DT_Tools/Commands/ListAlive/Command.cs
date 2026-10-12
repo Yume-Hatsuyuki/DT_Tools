@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Server.Game;
 
 namespace DT_Tools.Commands.ListAlive
@@ -12,6 +13,7 @@ namespace DT_Tools.Commands.ListAlive
         public string Usage => "list_alive";
         public string Description => "列出存活玩家并标注阵营（仅游戏中、需房主）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameIntel;
 
         public bool RequireHost => true;
 

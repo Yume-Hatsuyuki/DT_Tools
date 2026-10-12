@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.RoomList
 {
@@ -14,6 +15,7 @@ namespace DT_Tools.Commands.RoomList
         public string Usage => "room_list";
         public string Description => "列出当前所有公开房间（异步；日志 + JSON 回调）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysRoom | FeatureTag.SysNetwork;
 
         public bool RequireHost => false;
 

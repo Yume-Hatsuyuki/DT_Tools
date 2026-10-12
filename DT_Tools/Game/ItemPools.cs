@@ -11,7 +11,7 @@ namespace DT_Tools.Game
         Safe = 1,
     }
 
-    /// 鱼池 / 货架共用道具池（Game 层游戏数据表；原 Patches/System/RandomItems 纯共享
+    /// 鱼池 / 货架共用道具池（Game 层游戏数据表；原 Features/RandomItems 纯共享
     /// 目录上浮——武器区间判定与 60 项物品表属游戏行为数据，且消费方 ≥2 处）。
     /// 武器区间 [2000, 3000)。启用判定由调用方用 Engine.Enabled&lt;本功能&gt;() 自查。
     public static class ItemPools
@@ -89,7 +89,7 @@ namespace DT_Tools.Game
 
         /// 货架扩展池提供者：由货架随机道具功能（SupplyShelf）装载时发布，取值含
         /// 功能开启判定（未开启返回 null）。下游（SupplyShelfRefill 补货池）只读本层，
-        /// 消除 Patches 功能间的横向依赖（AGENTS.md §4）。
+        /// 消除 Features 功能间的横向依赖（AGENTS.md §4）。
         public static Func<int[]> ShelfPoolProvider;
     }
 }

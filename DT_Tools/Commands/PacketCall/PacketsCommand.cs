@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
 
@@ -18,6 +19,7 @@ namespace DT_Tools.Commands.PacketCall
         public string Usage => "packets [C|S|<包名>|<子串>] [子串]";
         public string Description => "协议包自省：列 C_*/S_* 包名与字段表（对照 .github/skills/MCP/MCP.md 协议目录）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysNetwork | FeatureTag.SysDebug;
 
         public bool RequireHost => false;
 

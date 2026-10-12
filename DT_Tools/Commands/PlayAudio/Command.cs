@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 namespace DT_Tools.Commands.PlayAudio
 {
     /// /play_audio &lt;url|路径&gt; [volume 0.8] [seconds 120] [local|online] — 控制台点播（仅本地播放，
@@ -15,6 +16,7 @@ namespace DT_Tools.Commands.PlayAudio
         public string Usage => "play_audio <url|路径> [volume 0.8] [seconds 120] [local|online]";
         public string Description => "点播音频（本地/在线，默认自动识别，仅本地播放）：默认完整播放、响度 1，可显式指定来源与时长/响度，与「StageMusic」阶段音乐相互独立。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysAudio;
         public bool RequireHost => false;
 
         public CommandResult Execute(CommandContext ctx)

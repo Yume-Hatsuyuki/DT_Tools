@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using System;
 using DT_Tools.Game;
 
@@ -13,6 +14,7 @@ namespace DT_Tools.Commands.StopMusic
         public string Usage => "stop_music";
         public string Description => "立即停止控制台点播（/play_audio）与虚拟麦克风广播（/mic_music）的音乐。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysAudio;
         public bool RequireHost => false;
 
         public CommandResult Execute(CommandContext ctx)

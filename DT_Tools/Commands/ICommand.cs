@@ -20,6 +20,9 @@ namespace DT_Tools.Commands
         /// 功能制作者（/api/commands 与补全列表黄字展示）。
         string Author { get; }
 
+        /// 功能标签（1–3 个）。词表见 Core.Attributes.FeatureTag。
+        Core.Attributes.FeatureTag Tags { get; }
+
         /// 是否仅房主可用（门禁由框架统一执行，命令内禁止重复校验）。
         bool RequireHost { get; }
 

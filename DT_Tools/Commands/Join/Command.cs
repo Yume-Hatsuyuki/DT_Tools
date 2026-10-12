@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
 using DT_Tools.Game;
 
@@ -16,6 +17,7 @@ namespace DT_Tools.Commands.Join
         public string Usage => "join <房间码>";
         public string Description => "按房间码进入其他房间（支持在对局中使用，将先退出当前房间）。目标房间在对局中则以观战进入。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysRoom;
         public bool RequireHost => false;
 
         public CommandResult Execute(CommandContext ctx)

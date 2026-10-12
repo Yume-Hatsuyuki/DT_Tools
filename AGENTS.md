@@ -35,7 +35,7 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 1. `[PatchFeature]`、`[AutomationModule]` 的参数必须写全。`Author` 逐功能实名。禁止全局作者常量（§7）。
 2. 每个补丁方法的第一行，必须写开关检查（§1）。
-3. 禁止 Patches、Commands、Automation 三个域互相依赖。共享代码上浮到 `Game/`（§4）。
+3. 禁止 Features、Commands、Automation 三个域互相依赖。共享代码上浮到 `Game/`（§4）。
 4. 配置段名、键名禁止写字符串。禁止 `ConfigEntry<T>` 字段（§9 约束 5）。
 5. 引用游戏 API 之前，必须先核对游戏源码。私有成员必须带 `0.1.16b 文件:行号` 注释（§10）。
 6. 日志只走 `Log` 门面。注释、日志、命令文案全用中文。禁止 `Debug.Log`（§11）。
@@ -44,7 +44,7 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 9. 补丁有执行顺序依赖时，必须用 `[HarmonyPriority]`。禁止依赖挂载顺序（§5）。
 10. 多代理并行作业时，禁止运行 `dotnet build`（§3）。
 11. 禁止在仓库文件里写本机绝对路径（§3）。
-12. `Patches/System/` 下的文件，禁止裸写 `System.X`（§9 约束 3）。
+12. 每个单元必须声明 1–3 个 `Tags`，且只能用 `FeatureTag` 里的标签。新增标签只追加位，不重排（§5）。
 13. MCP 工具实现触 Unity API，必须经 `WebConsole.RunOnMain`（§13）。
 14. 用户数据路径只从 `DtPaths` 取，禁止自行拼接 `BepInEx/config` 路径（§2）。
 15. 失败日志用 `Log.Warn(tag, ex, context)` / `Log.Error(tag, ex, context)`，禁止 `"…" + ex.Message`（§11）。
@@ -58,7 +58,7 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 | 术语 | 含义 |
 | --- | --- |
 | 游戏源码 | `0.1.16b/` 目录。游戏的反编译源码。一切 API 的核对基准 |
-| 功能 | `Patches/` 下的一个功能目录。类上带 `[PatchFeature]` |
+| 功能 | `Features/` 下的一个功能目录。类上带 `[PatchFeature]` 与 `Tags` |
 | 补丁 | 一个 `[HarmonyPatch]` 类。对应一个 Harmony 补丁点 |
 | 配置段 | .cfg 里的一个 `[段名]`。由 Feature 或 Module 类推导 |
 | 开关检查 | 补丁方法第一行的 `Engine.Enabled<T>()` 判断 |
@@ -70,11 +70,11 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 这是最常见的任务。共 7 步。
 
-分类共 5 个：Dev、Experience、Fun、Shop、System。
+功能不分目录分类，只打标签（§5「标签」）。
 
-1. 新建目录 `DT_Tools/Patches/<分类>/<功能名>/`。
+1. 新建目录 `DT_Tools/Features/<功能名>/`。
 2. 在游戏源码里核对 API 的存在性、签名、行号（见 §10）。
-3. 新建 `Feature.cs`。类写成 `sealed class`，加 `[PatchFeature]`。参数写法见 §7。
+3. 新建 `Feature.cs`。类写成 `sealed class`，加 `[PatchFeature]`，并声明 `Tags`。参数写法见 §7。
 4. 新建 `Patch.cs`。类写成 `static class`，加 `[HarmonyPatch]`。
 5. 在每个补丁方法的第一行，写开关检查（写法见下）。
 6. 构建（见 §3）。
@@ -187,7 +187,7 @@ dotnet build DT_Tools/DT_Tools.csproj -p:GameManaged="<libs 的绝对路径>"
 Plugin.cs（装配根）
   ├ Core/        内核：反射装载、配置绑定、日志、JSON。不认识任何功能
   ├ Game/        游戏行为助手。≥2 处调用才上浮；只放行为，不放类型包装
-  ├ Patches/     Harmony 补丁功能域（Dev/Experience/Fun/Shop/System）
+  ├ Features/    Harmony 补丁功能域（平铺，每个功能一个目录，用标签分类）
   ├ Commands/    命令域（主线程命令泵执行）
   ├ Automation/  自动化模块域（纯发包/只读）
   └ WebConsole/  HTTP+WebSocket 服务、路由、鉴权、API（含 Mcp/ 桥接子域）
@@ -198,10 +198,10 @@ Plugin.cs（装配根）
 ### 依赖规则
 
 - 依赖方向只能向下：功能域 → Game → Core → 游戏。
-- 禁止 Patches、Commands、Automation 三个域互相依赖。
+- 禁止 Features、Commands、Automation 三个域互相依赖。
 - 例外一：命令域可以读功能的公开静态状态。例：`LobbyMaxPlayersFeature.MaxMembers`。
 - 例外二：WebConsole API 层和命令域同权。例：DummyApi 读 `LobbyMaxPlayersFeature.MaxMembers`。
-- `Game/` 禁止反向引用 `Patches/`。
+- `Game/` 禁止反向引用 `Features/`。
 
 ### 上浮规则
 
@@ -220,8 +220,21 @@ Plugin.cs（装配根）
 - 挂载同命名空间下所有 `[HarmonyPatch]` 类。
 - 逐补丁 try/catch。任何一个补丁失败，整个功能就跳过。
 - 失败只影响这一个功能。
-- 分类由命名空间 `Patches/<分类>/<功能>` 自动推导。
-- 分类经 `/api/config/list` 的 `category` 字段下发。
+- 分类靠 `Tags`，目录不分类。标签的规则见下文「标签」。
+- 标签经 `/api/config/list` 的 `tags` 字段下发。
+
+### 标签
+
+标签是功能的分类方式。目录只用来放代码，不分类。一个单元可以同时属于几个领域。
+
+- 词表在 `Core/Attributes/FeatureTag.cs`（`[Flags]`，`ulong`，38 位）。
+- 字典在 `Core/Attributes/FeatureTagCatalog.cs`，给出分组、中文名、说明。
+- 四个分组：玩家、界面、玩法、系统。字典顺序即分组顺序。
+- 适用于四类单元：`[PatchFeature]`、`[AutomationModule]`、`[McpTool]`、`ICommand`（属性 `Tags`）。
+- 每个单元至少 1 个，最多 3 个。未定义的位、空标签、超过 3 个，加载时直接抛出。这和重名命名空间一样属于声明错误。
+- 新增标签：`FeatureTag` 末尾追加一位，`FeatureTagCatalog.Entries` 追加一条。两处同步。
+- 发布后的 bit 位不得重排或复用。标签会被 WebUI、清单和 API 引用。
+- 标签字典经 `/api/config/tags` 下发。WebUI 不写死任何标签文字。
 
 ### `[AutomationModule]`
 
@@ -278,7 +291,7 @@ Plugin.cs（装配根）
 
 ## 7. 特性元数据：一律显式声明
 
-`[PatchFeature]` 和 `[AutomationModule]` 的所有参数，必须显式写出，一个不缺。
+`[PatchFeature]` 和 `[AutomationModule]` 的所有参数，必须显式写出，一个不缺。`Tags` 也一样，必填。
 
 参数有默认值，省略也能编译。但省略会让读者分不清：是有意取默认值，还是漏写。
 
@@ -291,6 +304,7 @@ Plugin.cs（装配根）
     "一句话说明功能。",
     defaultEnabled: false,
     side: FeatureSide.Host,
+    Tags = FeatureTag.GameKill | FeatureTag.PlayerCombat,
     Author = "<你的名字>")]
 public sealed class XxxFeature { }
 ```
@@ -301,6 +315,7 @@ public sealed class XxxFeature { }
 [AutomationModule("卡片标题",
     "一句话说明功能。",
     side: FeatureSide.Client,
+    Tags = FeatureTag.SysAutomation,
     Author = "<你的名字>")]
 public sealed class XxxModule { }
 ```
@@ -313,6 +328,7 @@ public sealed class XxxModule { }
 | 2 | `defaultEnabled` | — | 默认是否启用 |
 | 3 | `side` | `side` | 作用面（规则见下） |
 | 4 | `Author` | `Author` | 功能制作者。必须实名 |
+| 5 | `Tags` | `Tags` | 功能标签，1–3 个。必填（见 §5「标签」） |
 
 未写 `Author` 时，系统按“佚名”署名。这仍然算漏写。
 
@@ -379,12 +395,11 @@ public sealed class XxxModule { }
 - 本插件的日志门面也叫 `Log`。它放在 `DT_Tools` 根命名空间。
 - 不要“修复”这个布局。
 
-### 约束 3：`Patches/System/` 遮蔽全局 `System`
+### 约束 3：功能目录平铺，不再有分类层
 
-- `Patches/System/` 分类会遮蔽全局 `System`。
-- 该命名空间链上的任何文件，文件体内不能裸写 `System.X` 全限定名。裸写会解析失败。
-- 改用 `global::System.*`，或者 using + 短名。
-- 文件顶部的 `using System…;` 不受影响。
+- 功能目录是 `Features/<功能名>/`，没有分类子目录。
+- 旧版 `Patches/System/` 会遮蔽全局 `System`，2.0.0.0 起已经不存在。
+- 文件体内仍然推荐 `global::System.*`，但不再是强制要求。
 
 ### 约束 4：Feature、Module、Patch 的类型
 
@@ -584,6 +599,7 @@ public sealed class XxxModule { }
 | `/api/run` | POST | 执行命令。请求体 = 原始命令文本。请求头 `X-DT-Session: <会话id>`。响应 = CommandResult 信封 |
 | `/api/commands` | GET | 返回 `[{name, aliases, usage, description, author}]` |
 | `/api/config/list` | GET | 配置段列表（字段见下） |
+| `/api/config/tags` | GET | 功能标签字典（见下） |
 | `/api/config/update`、`save`、`reset`、`import` | POST | 修改、保存、重置、导入配置。`reset` 带 key 时，必须同时带 section |
 | `/api/config/export.cfg` | GET | 导出 cfg 文本 |
 | `/api/config/section/{段}/log` | GET / POST | 查询或清空段日志。返回 `{ok, section, seq, lines:[…]}` |
@@ -609,10 +625,10 @@ public sealed class XxxModule { }
 
 #### `/api/config/list` 的返回
 
-- 形状：`[{section, group, category, enabledKey, entries:[…]}]`。
+- 形状：`[{section, group, tags, enabledKey, entries:[…]}]`。
 - `group` 取 "automation" 或 "feature"。
-- `category` = Patches 分类目录名。由 `FeatureLoader.DeriveCategory` 推导。
-- 基础设施段没有 `category`。前端把它归入“其他”。
+- `tags` = 功能标签键数组，由 `FeatureTagCatalog.Names(Engine.TagsOfSection(section))` 给出。基础设施段为空数组。
+- `GET /api/config/tags` 返回标签字典：`[{key, group, label, description}]`。
 - `reset` 带 key 时，后端拒绝跨段的同名重置。
 
 #### 假人 API
@@ -664,7 +680,7 @@ public sealed class XxxModule { }
 | --- | --- |
 | `terminal` | Kali 终端 |
 | `console` | 旧版控制台 |
-| `config` | 配置。两级导航：分类文件夹 → 功能段。根视图搜索跨分类平铺。网格 / 列表两种视图 |
+| `config` | 配置。标签筛选（按领域分组，多选任一命中）+ 搜索。段平铺，网格 / 列表两种视图 |
 | `automation` | 自动化。同款两种视图（列表行给模块说明） |
 | `log` | 全量日志 |
 | `dummy` | 假人管理 |
@@ -673,13 +689,13 @@ public sealed class XxxModule { }
 - 跨应用共享组件在 `apps/common/`，共 6 个：`SuggestPopup`、`FolderGrid`、`LogPanel`、`EntryList`、`CropperHost`、`FileBrowser`。
 - `FileBrowser` 是本机文件选择弹窗。数据源是 `/api/fs/list`。
 
-#### 文件夹视图（`FolderGrid` 的网格 / 列表）
+#### 段视图（`FolderGrid` 的网格 / 列表）
 
 - `FolderGrid` 有两种视图，**状态是模块级单例**（`composables/useFolderView.js`，存 `dt_foldergrid_view_v1`）：
   在 DT 配置页切换，自动化页跟着变 —— 两页共用一份，不各写一套。
 - 切换按钮在**各页自己的工具栏**上（不进组件、不做浮动按钮），样式沿用 `tb-btn`。
 - 列表行的说明由**父级**经 `descOf` prop 提供，参数是 `FolderGrid` 的 **item 对象**（不是 key）：
-  DT 配置页给分类说明 / 段摘要，自动化页给模块说明。
+  DT 配置页给段摘要（行首附标签），自动化页给模块说明。
   ⚠️ 两页的实现必须都收 item —— 2026-10-07 实际踩过：自动化页写成收 key，
   `find(x => x.id === key)` 永不命中，整列说明为空。
 - 段摘要的取法：段开关键（`enabledKey`）描述的正文，用 `configUtils.splitDesc` 剥掉

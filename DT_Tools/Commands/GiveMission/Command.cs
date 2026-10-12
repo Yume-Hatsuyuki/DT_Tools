@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Protocol;
 using Server.Game;
 
@@ -14,6 +15,7 @@ namespace DT_Tools.Commands.GiveMission
         public string Usage => "givemission [任务类型]";
         public string Description => "给所有玩家派发特定任务，自动联动初始化前置设备（仅房主、生存阶段可用）。不带参数时显示任务列表。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameMission;
 
         public bool RequireHost => true;
 

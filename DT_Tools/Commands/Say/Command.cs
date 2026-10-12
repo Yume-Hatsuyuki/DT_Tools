@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Server.Game;
 
@@ -18,6 +19,7 @@ namespace DT_Tools.Commands.Say
         public string Usage => "say <all|#id> <text>";
         public string Description => "给指定/所有玩家发送文字：生存阶段走密聊浮层，大厅/裁判走聊天面板（房主）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.UiChat;
 
         public bool RequireHost => true;
 

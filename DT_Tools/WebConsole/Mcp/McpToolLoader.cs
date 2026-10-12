@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Commands;
 using Newtonsoft.Json.Linq;
 
@@ -13,6 +14,7 @@ namespace DT_Tools.WebConsole.Mcp
         public string Name;
         public string Description;
         public string Author;
+        public FeatureTag Tags;
         public JObject SchemaJson;
         public Func<JObject, CommandResult> Execute;
     }
@@ -40,6 +42,8 @@ namespace DT_Tools.WebConsole.Mcp
                 if (string.IsNullOrWhiteSpace(attr.Author))
                     throw new InvalidOperationException($"MCP 工具 {type.FullName} 漏写 Author（逐工具实名，禁止兜底）");
 
+                FeatureTagCatalog.Validate(attr.Tags, type.FullName);
+
                 var schemaMethod = type.GetMethod("Schema", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
                 var executeMethod = type.GetMethod("Execute", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(JObject) }, null);
                 if (schemaMethod == null || executeMethod == null)
@@ -50,6 +54,7 @@ namespace DT_Tools.WebConsole.Mcp
 
                 map[attr.Name] = new McpToolDef
                 {
+                    Tags = attr.Tags,
                     Name = attr.Name,
                     Description = attr.Description,
                     Author = attr.Author.Trim(),
