@@ -1,3 +1,4 @@
+using System;
 using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.SitOnChairs
@@ -53,7 +54,34 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// Enabled 热切换回调（引擎在主线程调用）：大厅内立即切回校园地图集，局内只记录。
         /// </summary>
-        internal static void OnDisabled() => IslandMapSwitch.Apply(false);
+        internal static void OnDisabled()
+        {
+            StandUpIfSitting();
+            IslandMapSwitch.Apply(false);
+        }
+
+        /// <summary>
+        /// 关闭功能时若正坐着，立即起身。坐姿相关补丁（LocalSitAnimPatch、LocalSitMovePatch）
+        /// 只在坐着时拦截移动与动画，关闭后不起身会把玩家锁在坐姿里。
+        /// </summary>
+        private static void StandUpIfSitting()
+        {
+            if (!LocalSit.IsSitting && !GameSit.IsSitting)
+            {
+                return;
+            }
+            try
+            {
+                MyPlayer my = Managers.Player?.MyPlayer;
+                LocalSit.Stand(my);
+                GameSit.Stand(my);
+                Log.Info<SitOnChairsFeature>("功能已关闭，已起身。");
+            }
+            catch (Exception ex)
+            {
+                Log.Error<SitOnChairsFeature>(ex, "关闭时起身失败");
+            }
+        }
 
     }
 }
