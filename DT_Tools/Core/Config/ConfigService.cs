@@ -38,6 +38,14 @@ namespace DT_Tools.Core
             public string[] Tags;
 
             /// <summary>
+            /// 段的作用面键：client（客户端）| host（服务端）| both（双端）；无作用面时为 null。
+            /// </summary>
+            /// <remarks>
+            /// 前端据此做作用面过滤，键名与 FeatureSide 一一对应。
+            /// </remarks>
+            public string Side;
+
+            /// <summary>
             /// 本段的开关键名（引擎统一 Engine.EnabledKey）。
             /// </summary>
             /// <remarks>
@@ -85,6 +93,7 @@ namespace DT_Tools.Core
                         Section = def.Section,
                         Group = ClassifyGroup(def.Section),
                         Tags = FeatureTagCatalog.Names(Engine.TagsOfSection(def.Section)),
+                        Side = SideKeyOf(Engine.SideOfSection(def.Section)),
                     };
                     bySection[def.Section] = sec;
                 }
@@ -343,6 +352,23 @@ namespace DT_Tools.Core
             catch
             {
                 result.Skipped++;
+            }
+        }
+
+        /// <summary>
+        /// 作用面枚举 → 协议键（client / host / both）；无作用面返回 null。
+        /// </summary>
+        /// <param name="side">功能或模块声明的作用面。</param>
+        /// <returns>协议键；无作用面时为 null。</returns>
+        private static string SideKeyOf(FeatureSide? side)
+        {
+            if (side == null) return null;
+            switch (side.Value)
+            {
+                case FeatureSide.Client: return "client";
+                case FeatureSide.Host: return "host";
+                case FeatureSide.Both: return "both";
+                default: return null;
             }
         }
 

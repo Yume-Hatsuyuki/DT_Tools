@@ -31,6 +31,8 @@ namespace DT_Tools.Core
             new Dictionary<string, string>(StringComparer.Ordinal);
         private static readonly Dictionary<string, FeatureTag> SectionTags =
             new Dictionary<string, FeatureTag>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, FeatureSide> SectionSides =
+            new Dictionary<string, FeatureSide>(StringComparer.Ordinal);
         private static readonly List<ModuleInfo> ModuleInfos =
             new List<ModuleInfo>();
 
@@ -185,6 +187,14 @@ namespace DT_Tools.Core
             => section != null && SectionTags.TryGetValue(section, out var tags) ? tags : FeatureTag.None;
 
         /// <summary>
+        /// 段的作用面（客户端 / 服务端 / 双端）；基础设施段没有作用面，返回 null。
+        /// </summary>
+        /// <param name="section">段名。</param>
+        /// <returns>作用面；无作用面时为 null。</returns>
+        public static FeatureSide? SideOfSection(string section)
+            => section != null && SectionSides.TryGetValue(section, out var side) ? side : (FeatureSide?)null;
+
+        /// <summary>
         /// 自动化模块泵：hostEnabled 为总开关值，由 AutomationHost 的主线程 Tick 调用。
         /// </summary>
         /// <param name="hostEnabled">自动化总开关的当前值。</param>
@@ -209,12 +219,14 @@ namespace DT_Tools.Core
                 config, feature.Type, feature.Section,
                 feature.Description, feature.DefaultEnabled, feature.Side, feature.Author);
             SectionTags[feature.Section] = feature.Tags;
+            SectionSides[feature.Section] = feature.Side;
             FeatureLoader.WireLifecycle(feature.Type, feature.Section, enabled);
         }
 
         private static void BindModule(ConfigFile config, FeatureLoader.ModuleDesc module)
         {
             SectionTags[module.Section] = module.Tags;
+            SectionSides[module.Section] = module.Side;
             var enabled = BindSection(
                 config, module.Type, module.Section,
                 module.Description, defaultEnabled: false, module.Side, module.Author);
