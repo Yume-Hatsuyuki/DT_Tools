@@ -23,5 +23,7 @@ namespace DT_Tools.Features.ChatLimit
         /// 运行时打开：对当前已存在的输入框补一次扫描。
         /// </summary>
         private static void OnEnabled() => ChatLimitLogic.ApplyToExistingUi();
+
+        private static void OnDisabled() => ChatLimitLogic.RestoreExistingUi();
     }
 }

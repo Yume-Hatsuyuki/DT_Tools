@@ -39,6 +39,32 @@ namespace DT_Tools.Features.ChatLimit
         }
 
         /// <summary>
+        /// 热关闭时把已存在的输入框上限还原为原版（只还原被抬高到 Cap 的那些）。
+        /// </summary>
+        public static void RestoreExistingUi()
+        {
+            try
+            {
+                var fields = Object.FindObjectsByType<TMP_InputField>(FindObjectsSortMode.None);
+                int n = 0;
+                foreach (var f in fields)
+                {
+                    if (f == null || f.characterLimit != Cap)
+                    {
+                        continue;
+                    }
+                    f.characterLimit = VanillaChatLimit;
+                    n++;
+                }
+                Log.Info<ChatLimitFeature>($"已还原 {n} 个输入框上限 → {VanillaChatLimit}");
+            }
+            catch (global::System.Exception ex)
+            {
+                Log.Error<ChatLimitFeature>(ex, "还原输入框上限失败");
+            }
+        }
+
+        /// <summary>
         /// Enabled 热开启时对当前已存在的 TMP 输入框补一次扫描。
         /// </summary>
         public static void ApplyToExistingUi()
