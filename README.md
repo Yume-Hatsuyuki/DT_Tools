@@ -22,7 +22,7 @@
 ## 界面展示
 
 <img src="images/屏幕截图_6-10-2026_12224_127.0.0.1.jpeg" width="850">
-<img src="images/屏幕截图_6-10-2026_12027_127.0.0.1.jpeg" width="850">
+<img src="images/屏幕截图_13-10-2026_21537_127.0.0.1.jpeg" width="850">
 
 ---
 
@@ -164,13 +164,16 @@ Deadly Trick/winhttp.dll
 
 > 为方便快速理解本项目结构，可使用以下在线工具：
 
-- **架构图 GitDiagram**：自动生成可交互的系统架构图，点击模块可跳转到对应源码。  
+- [![GitDiagram](https://img.shields.io/badge/GitDiagram-Architecture-6f42c1?style=flat)](https://gitdiagram.com/yume-hatsuyuki/dt_tools)
+  **架构图 GitDiagram**：自动生成可交互的系统架构图，点击模块可跳转到对应源码。  
   https://gitdiagram.com/yume-hatsuyuki/dt_tools
 
-- **代码摘要 DeepWiki**：生成可交互的仓库 Wiki / 文档，便于问答和分析。  
+- [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Yume-Hatsuyuki/DT_Tools)
+  **代码摘要 DeepWiki**：生成可交互的仓库 Wiki / 文档，便于问答和分析。  
   https://deepwiki.com/yume-hatsuyuki/dt_tools
 
-- **代码摘要 GitIngest**：将整个仓库整理成适合 AI / LLM 阅读的文本，便于问答和分析。  
+- [![GitIngest](https://img.shields.io/badge/GitIngest-Code_Context-ff6b6b?style=flat)](https://gitingest.com/yume-hatsuyuki/dt_tools)
+  **代码摘要 GitIngest**：将整个仓库整理成适合 AI / LLM 阅读的文本，便于问答和分析。  
   https://gitingest.com/yume-hatsuyuki/dt_tools
 
 ---
