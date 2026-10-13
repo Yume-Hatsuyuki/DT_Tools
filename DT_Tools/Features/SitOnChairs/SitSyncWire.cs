@@ -19,16 +19,24 @@ namespace DT_Tools.Features.SitOnChairs
         internal static string Rise(int chairId) => $"{Prefix}RISE|{chairId}{Suffix}";
 
         /// <summary>
-        /// 是否为坐姿同步报文（只看前后缀，不校验内容）。
+        /// 是否为坐姿同步报文：前后缀匹配，且内容以 SIT| 或 RISE| 开头。
         /// </summary>
-        /// <remarks>长度不足前后缀之和时直接返回 false。StartsWith 区域敏感比较会忽略零宽字符，单独的 “[]” 会被判为前后缀匹配，继续截取时越界。</remarks>
+        /// <remarks>普通聊天即使以 [ 开头、以 ] 结尾（如 “[hi]”）也不是同步报文，不能被拦截。前后缀比较区域敏感、会忽略零宽字符，所以还要检查内容。长度不足前后缀之和时直接返回 false，避免截取越界。</remarks>
         /// <param name="message">聊天内容，可为 null 或空字符串。</param>
-        /// <returns>前后缀均匹配且长度足够时为 true。</returns>
+        /// <returns>是坐姿同步报文时为 true；否则为 false，接收端应原样显示。</returns>
         internal static bool IsWire(string message)
-            => !string.IsNullOrEmpty(message)
-               && message.Length >= Prefix.Length + Suffix.Length
-               && message.StartsWith(Prefix)
-               && message.EndsWith(Suffix);
+        {
+            if (string.IsNullOrEmpty(message) || message.Length < Prefix.Length + Suffix.Length)
+            {
+                return false;
+            }
+            if (!message.StartsWith(Prefix) || !message.EndsWith(Suffix))
+            {
+                return false;
+            }
+            string body = message.Substring(Prefix.Length, message.Length - Prefix.Length - Suffix.Length);
+            return body.StartsWith("SIT|", StringComparison.Ordinal) || body.StartsWith("RISE|", StringComparison.Ordinal);
+        }
 
         /// <summary>
         /// 解析报文。
