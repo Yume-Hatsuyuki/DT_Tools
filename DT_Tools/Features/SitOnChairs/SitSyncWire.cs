@@ -21,10 +21,14 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 是否为坐姿同步报文（只看前后缀，不校验内容）。
         /// </summary>
+        /// <remarks>长度不足前后缀之和时直接返回 false。StartsWith 区域敏感比较会忽略零宽字符，单独的 “[]” 会被判为前后缀匹配，继续截取时越界。</remarks>
         /// <param name="message">聊天内容，可为 null 或空字符串。</param>
-        /// <returns>前后缀均匹配时为 true。</returns>
+        /// <returns>前后缀均匹配且长度足够时为 true。</returns>
         internal static bool IsWire(string message)
-            => !string.IsNullOrEmpty(message) && message.StartsWith(Prefix) && message.EndsWith(Suffix);
+            => !string.IsNullOrEmpty(message)
+               && message.Length >= Prefix.Length + Suffix.Length
+               && message.StartsWith(Prefix)
+               && message.EndsWith(Suffix);
 
         /// <summary>
         /// 解析报文。
