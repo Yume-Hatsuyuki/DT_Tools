@@ -6,9 +6,11 @@ namespace DT_Tools.Commands.Agent
 {
     /// <summary>
     /// 生成源：假人/采矿/取电/花/炼金药等（对应旧 AgentGenerateChain.cs，原 CollectGenerate）。
+    /// </summary>
+    /// <remarks>
     /// 挖矿冷却字段 <see cref="AgentGenerateChain.MineralMineCooldown"/> 语义不变，
     /// 由 Planner 每 tick 调用一次本类，本类内部自减。
-    /// </summary>
+    /// </remarks>
     internal static class AgentGenerateChain
     {
         // ═══════════════════════════════════════════════════
@@ -17,8 +19,10 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 挖矿后冷却 tick 数：等待服务端 S_SPAWN_DEVICE 回包与客户端 Cache 刷新，避免矿石还没落地就重复发送挖矿包。
-        /// 服务端 Mineral.HandleEvent 零冷却、零状态锁（0.1.17a Server.Game/Mineral.cs:26/43，每次收到 C_HANDLE_MINERAL{IsSuccess=true} 即无条件 CreateAndDropItem + 广播），此值不是在模拟服务器限制，纯粹是等待网络 RTT。0.25s tick 下取 2 tick = 0.5s，对常见 Steam P2P 延迟（约 50-200ms）留约 2 倍余量。实测联机延迟明显更高可调大；始终低延迟可尝试调至 1。
         /// </summary>
+        /// <remarks>
+        /// 服务端 Mineral.HandleEvent 零冷却、零状态锁（0.1.17a Server.Game/Mineral.cs:26/43，每次收到 C_HANDLE_MINERAL{IsSuccess=true} 即无条件 CreateAndDropItem + 广播），此值不是在模拟服务器限制，纯粹是等待网络 RTT。0.25s tick 下取 2 tick = 0.5s，对常见 Steam P2P 延迟（约 50-200ms）留约 2 倍余量。实测联机延迟明显更高可调大；始终低延迟可尝试调至 1。
+        /// </remarks>
         private const int MineralCooldownTicks = 2; // 原 5（对应旧 0.6s tick，等效 3s，明显过量）
 
         /// <summary>

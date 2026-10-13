@@ -169,9 +169,11 @@ namespace DT_Tools.Core
 
         /// <summary>
         /// 挂载一个补丁功能：对 Feature 同命名空间下所有带 [HarmonyPatch] 的类执行 PatchAll。
+        /// </summary>
+        /// <remarks>
         /// 自管 Harmony（Feature 声明 static Harmony 字段，如 Transpiler 动态卸载）时跳过自动挂载。
         /// 任一补丁失败即抛出，由 Engine 计入 FailedCount（失败隔离到功能级）。
-        /// </summary>
+        /// </remarks>
         public static void Mount(Harmony harmony, FeatureDesc feature)
         {
             if (!HasSelfManagedHarmony(feature.Type))
@@ -201,11 +203,13 @@ namespace DT_Tools.Core
 
         /// <summary>
         /// Enabled 热切换接线：记录变更日志并回调 OnEnabled/OnDisabled（如实现）。
+        /// </summary>
+        /// <remarks>
         /// SettingChanged 在写入值的线程同步触发（WebUI 的 HTTP 线程 / BepInEx 的
         /// .cfg 文件监听线程），而钩子普遍触碰 Unity API（UnlockMadeline 纹理注入、
         /// ChatLimit 场景扫描、NicknameLimit UI 还原等）——统一经 CoroutineHost.Post
         /// 投递到主线程执行，另捕获 on 值防快速连切两次时读到过期状态。
-        /// </summary>
+        /// </remarks>
         public static void WireLifecycle(Type featureType, string section, ConfigEntry<bool> enabled)
         {
             enabled.SettingChanged += (_, __) =>
@@ -272,8 +276,10 @@ namespace DT_Tools.Core
 
         /// <summary>
         /// 作者兜底：逐项声明优先，未声明按「佚名」署名。
-        /// 禁止引入全局作者常量（历史教训：全局署名会吞掉不同贡献者的归属）。
         /// </summary>
+        /// <remarks>
+        /// 禁止引入全局作者常量（历史教训：全局署名会吞掉不同贡献者的归属）。
+        /// </remarks>
         private static string NormalizeAuthor(string author)
             => string.IsNullOrWhiteSpace(author) ? "佚名" : author.Trim();
     }

@@ -15,8 +15,11 @@ namespace DT_Tools.Features.SitOnChairs
     /// 注入 ResourceManager._resources（0.1.17a ResourceManager.cs:11，私有字典，
     /// 反射写入），键名带 _Island 后缀，与 DataManager.MapKey（DataManager.cs:56）
     /// 拼接规则一致；随后把 LoadMapSet 的地图类型重定向为 Island 即可让游戏
-    /// 加载这套数据。功能关闭时不注入，保持完全原版。
+    /// 加载这套数据。
     /// </summary>
+    /// <remarks>
+    /// 功能关闭时不注入，保持完全原版。
+    /// </remarks>
     internal static class IslandData
     {
         /// <summary>

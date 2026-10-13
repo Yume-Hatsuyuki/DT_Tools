@@ -4,13 +4,15 @@ namespace DT_Tools.Features.SitOnChairs
 {
     /// <summary>
     /// 可坐椅子（原 IslandMap 插件整合版）：对局地图里原本只是贴图的长椅/沙发可以坐下。
+    /// </summary>
+    /// <remarks>
     /// 数据层面：把原版主图（School）的加载重定向为岛屿数据（数据与原版逐字段一致，
     /// 仅在 DeviceData 中追加 11 条椅子设备：花园长椅×2、炼金室沙发×1、等待室咖啡椅×8）。
     /// 椅子复用游戏自带的坐姿动画（14_Sitting / EPlayerState.Sit），走到椅子旁按 E 坐下、再按 E 起身；
     /// 花园长椅/沙发走游戏原生同步通道（C_INTERACT_CHAIR，全房可见）；
     /// 等待室咖啡椅默认只作装饰（CafeSit=false 时按 E 无效、不显示提示），开启 CafeSit 后本地可坐（仅自己可见）。
     /// 关闭本功能后回到完全原版地图（数据不注入、椅子条目消失）。
-    /// </summary>
+    /// </remarks>
     [PatchFeature(
         "可坐椅子：花园长椅×2、炼金室沙发×1 可坐下/起身（房主装了即全房同步）；等待室咖啡椅默认仅装饰，可开启本地坐；可选开启坐姿同步（SyncSitting）——装本 mod 的玩家互见坐姿，无需房主。按 E 交互，复用游戏自带坐姿动画。",
         defaultEnabled: false,

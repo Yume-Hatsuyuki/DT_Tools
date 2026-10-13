@@ -10,9 +10,11 @@ namespace DT_Tools.Game
     {
         /// <summary>
         /// 存活且非观战的玩家，按 PlayerId 升序。
+        /// </summary>
+        /// <remarks>
         /// 假人（IsDummy）是服务端完整实体（只是没有客户端回发包），服务端测试命令
         /// （处决/发放/保护/列表）需要把它们当作正常目标，不再排除。
-        /// </summary>
+        /// </remarks>
         public static List<Server.Game.Player> AliveTargets(Server.Game.GameRoom room)
             => room.Players
                 .Where(p => p?.PublicInfo != null && p.IsAlive && !p.IsSpectator)

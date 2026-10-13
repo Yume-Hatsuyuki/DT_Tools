@@ -4,13 +4,16 @@ namespace DT_Tools.Commands
 {
     /// <summary>
     /// 命令行分词（shell 惯例的收敛版）：按空白切分；引号只在 token 起始位置生效——
-    /// 起始引号到配对闭合引号之间的空白按字面保留、引号本身剥掉。带空格的文件路径
+    /// 起始引号到配对闭合引号之间的空白按字面保留、引号本身剥掉。
+    /// </summary>
+    /// <remarks>
+    /// 带空格的文件路径
     /// 因此可整体加引号（Windows「复制文件地址」的 "C:\a b\歌.mp3" 即此形态）；
     /// 不加引号的连续 token 由参数层用空格拼回，引号非强制。
     /// token 中部的引号保持字面（say("hi there") 之类代码参数不会被吃掉引号、
     /// 行为与纯空格切分一致）；未闭合的引号吃到行尾。空 token（连续空白、空引号对）
     /// 一律丢弃，与旧的 RemoveEmptyEntries 语义等价。唯一调用点：WebConsole 命令泵。
-    /// </summary>
+    /// </remarks>
     internal static class CommandTokenizer
     {
         public static string[] Tokenize(string raw)

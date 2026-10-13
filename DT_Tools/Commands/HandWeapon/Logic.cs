@@ -7,8 +7,10 @@ namespace DT_Tools.Commands.HandWeapon
 {
     /// <summary>
     /// /hand_weapon 业务：身份/阶段/目标校验 + C_HAND_WEAPON 发包。
-    /// 错误码沿用旧实现的细粒度 SetResult 值（前端 / 脚本按此判定）。
     /// </summary>
+    /// <remarks>
+    /// 错误码沿用旧实现的细粒度 SetResult 值（前端 / 脚本按此判定）。
+    /// </remarks>
     internal static class HandWeaponLogic
     {
         public static CommandResult Execute(CommandContext ctx)

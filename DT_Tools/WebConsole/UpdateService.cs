@@ -12,10 +12,12 @@ namespace DT_Tools.WebConsole
     /// <summary>
     /// 更新检测与下载服务：请求 GitHub Releases latest，与插件当前版本比较
     /// （当前版本来自 DT_Tools.csproj 的 &lt;Version&gt;，编译期注入 MyPluginInfo.PLUGIN_VERSION）。
+    /// </summary>
+    /// <remarks>
     /// 线程模型与 SteamApi 同源：全部工作在 HTTP 线程 / 专用后台线程完成，不触碰 Unity API。
     /// 检测结果缓存 3 分钟（与 WebUI 前端轮询节奏一致，多标签页共享，也压住 GitHub 匿名
     /// 60 次/时的限流）；手动检查绕过缓存。下载在专用线程进行，进度经状态轮询读取。
-    /// </summary>
+    /// </remarks>
     public static class UpdateService
     {
         private const string ReleaseApiUrl =
@@ -70,10 +72,13 @@ namespace DT_Tools.WebConsole
         public static string CurrentVersion => MyPluginInfo.PLUGIN_VERSION;
 
         /// <summary>
-        /// 返回状态 JSON（经 Json.To 序列化）。force=false 走缓存；force=true 绕过缓存
+        /// 返回状态 JSON（经 Json.To 序列化）。
+        /// </summary>
+        /// <remarks>
+        /// force=false 走缓存；force=true 绕过缓存
         /// 立即请求 GitHub（手动检查）。GitHub 拉取在持锁内同步进行——并发的状态轮询
         /// 会排队等结果，与 SteamApi 的锁内请求策略一致。
-        /// </summary>
+        /// </remarks>
         public static object GetStatus(bool force)
         {
             lock (Gate)
@@ -107,9 +112,12 @@ namespace DT_Tools.WebConsole
         }
 
         /// <summary>
-        /// 启动新版 zip 的后台下载。必须先有检测结果（资产地址来自 Release 缓存）；
-        /// 已在进行中或没有可用资产时返回失败信封。成功受理立即返回，进度走状态轮询。
+        /// 启动新版 zip 的后台下载。
         /// </summary>
+        /// <remarks>
+        /// 必须先有检测结果（资产地址来自 Release 缓存）；
+        /// 已在进行中或没有可用资产时返回失败信封。成功受理立即返回，进度走状态轮询。
+        /// </remarks>
         public static object StartDownload()
         {
             ReleaseSnapshot release;
@@ -266,8 +274,11 @@ namespace DT_Tools.WebConsole
         }
 
         /// <summary>
-        /// 比较 "v1.0.8.9" 形式的版本号：逐段数字比较，缺段补 0。tag 更新返回 true。
+        /// 比较 "v1.0.8.9" 形式的版本号：逐段数字比较，缺段补 0。
         /// </summary>
+        /// <remarks>
+        /// tag 更新返回 true。
+        /// </remarks>
         public static bool IsNewer(string tag, string current)
         {
             int[] a = ParseVersion(tag);

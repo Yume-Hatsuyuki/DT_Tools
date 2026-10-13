@@ -13,8 +13,11 @@ namespace DT_Tools.Commands.PacketCall
 {
     /// <summary>
     /// /call_s、/call_c 共用业务（对应旧 PacketCallHelper）：反射枚举 Protocol 包、
-    /// protobuf JSON 填充、发送/注入。房主门禁由框架 RequireHost 统一执行。
+    /// protobuf JSON 填充、发送/注入。
     /// </summary>
+    /// <remarks>
+    /// 房主门禁由框架 RequireHost 统一执行。
+    /// </remarks>
     internal static class PacketCallLogic
     {
         private const int HelpSampleCount = 10;
@@ -175,9 +178,12 @@ namespace DT_Tools.Commands.PacketCall
         }
 
         /// <summary>
-        /// 解析目标：all | #id。成功返回 true；targetAll / targetId 有效。
-        /// 复用 Game/TargetSpec（全项目唯一实现，随其语义同时接受纯数字 ID）。
+        /// 解析目标：all | #id。
         /// </summary>
+        /// <remarks>
+        /// 成功返回 true；targetAll / targetId 有效。
+        /// 复用 Game/TargetSpec（全项目唯一实现，随其语义同时接受纯数字 ID）。
+        /// </remarks>
         public static bool TryParseTarget(string token, out bool targetAll, out int targetId, out string error)
         {
             targetAll = false;
@@ -198,8 +204,11 @@ namespace DT_Tools.Commands.PacketCall
         }
 
         /// <summary>
-        /// 校验活动房间（有玩家的 GameRoom）。失败返回 null 并已回复。
+        /// 校验活动房间（有玩家的 GameRoom）。
         /// </summary>
+        /// <remarks>
+        /// 失败返回 null 并已回复。
+        /// </remarks>
         public static GameRoom RequireRoom(CommandContext ctx)
         {
             var room = GameRoom.Instance;

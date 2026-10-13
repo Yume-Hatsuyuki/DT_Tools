@@ -7,10 +7,11 @@ namespace DT_Tools.Commands.Agent
 {
     /// <summary>
     /// 道具 / 矿石 / 花相关工具方法（对应旧 AgentItemHelper.cs + AgentChainHelper.cs）。
-    ///
+    /// </summary>
+    /// <remarks>
     /// MissionsOfItem（一对多映射）+ IsItemMissionActive（结合 AgentMissionState 权威
     /// 任务进度判断"是否真的存在于本局"）取代了旧静态白名单式的 IsMissionItem + 单值 MissionOfItem。
-    /// </summary>
+    /// </remarks>
     internal static class AgentItemHelper
     {
         // ═══════════════════════════════════════════════════
@@ -134,8 +135,11 @@ namespace DT_Tools.Commands.Agent
         }
 
         /// <summary>
-        /// 收集柜某色剩余需求。State[1+type]=需求次数；State[4..6]==type 为已交。
+        /// 收集柜某色剩余需求。
         /// </summary>
+        /// <remarks>
+        /// State[1+type]=需求次数；State[4..6]==type 为已交。
+        /// </remarks>
         public static int CollectorRemain(IList<int> st, int type)
         {
             if (st == null || type < 0 || type > 2 || st.Count < 7) return 0;
@@ -152,12 +156,14 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 花盆 SubType（对应 Protocol.EFlowerType）→ 采摘产出的花 DataId。
+        /// </summary>
+        /// <remarks>
         /// 依据 Server.Game/Flower.cs 的 Interact(State==2) 分支显式核实：
         /// EFlowerType: FlowerNone=0, FlowerRed=1, FlowerBlue=2, FlowerYellow=3, FlowerPink=4
         /// 产出: FlowerRed→1021, FlowerBlue→1022, FlowerYellow→1023, FlowerPink→1024
         /// 用显式枚举匹配而非线性公式，避免枚举顺序/起始值变化导致的偏移错误
         /// （原 "1021+subType" 假设与真实枚举不符，曾导致花色映射全部错位、Pink 越界返回 0）。
-        /// </summary>
+        /// </remarks>
         public static int FlowerItemId(int subType)
         {
             switch ((EFlowerType)subType)
@@ -179,6 +185,8 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 道具 DataId → 可满足的任务集合（数组：同一道具可被多种任务消耗，如电池 1015 可交给矿工/传送/Bio 任一处；由场上设备状态匹配决定，不预设去向）。
+        /// </summary>
+        /// <remarks>
         /// 依据：Server.Game 源码中各设备 Interact / HandleEvent 的消耗条件。格式：道具 → 任务号(设备)。
         /// 1008 U 盘     → ScFixPc(17)             Computer.Interact
         /// 1009 人体模型 → ScManikinStart(18)      Mission.Interact(Surgery, State==0)
@@ -200,7 +208,7 @@ namespace DT_Tools.Commands.Agent
         /// 1051/1052 书  → ScFire(4)/ScBookRune(11)
         /// Occult.InteractOccultFire(动态 Bubble 匹配)
         /// / Rune.Interact(StateList[4]==hand)
-        /// </summary>
+        /// </remarks>
         private static readonly Dictionary<int, int[]> s_itemMissions = new Dictionary<int, int[]>
         {
             { ItemUsb, new[] { (int)ESchoolMission.ScFixPc } },
@@ -241,11 +249,13 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 道具当前是否"仍有意义"：其候选任务集合中至少有一个在场上真正激活中。
+        /// </summary>
+        /// <remarks>
         /// 依据 AgentMissionState（读取 Server.Game.MissionManager/MissionMirror 的权威
         /// 任务进度），不再依赖静态白名单或本地猜测的设备状态扫描。
         /// AgentMissionState 未就绪时保守返回 true（不误丢/误拒），避免游戏刚加载、
         /// 任务状态还没同步到时把所有道具当作无效。
-        /// </summary>
+        /// </remarks>
         public static bool IsItemMissionActive(int itemId)
         {
             var missions = MissionsOfItem(itemId);
@@ -305,9 +315,11 @@ namespace DT_Tools.Commands.Agent
         /// <summary>
         /// 丢弃手上物品：优先走 Inventory.DropHand（本地立即生效），回退直接发包
         /// C_DROP_ITEM（Item 可能为空，服务端用当前 Hand）。
+        /// </summary>
+        /// <remarks>
         /// 不在此处捕获异常——步骤异常统一由 AgentRunner.ExecuteBatch 的 try/catch
         /// 经 ctx 通道记录（旧版此处 Debug.LogWarning 已按日志规范移除）。
-        /// </summary>
+        /// </remarks>
         public static void TryDropHand()
         {
             var inv = Managers.Player?.MyPlayer?.Inventory;
@@ -333,13 +345,15 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 计算当前仍需要的花色 DataId 集合（喷雾合成台 + 调酒台的空缺目标槽）。
+        /// </summary>
+        /// <remarks>
         /// 供 VacuumChain/GenerateChain 复用，避免同一"缺口"概念在两处各写一份。
         ///
         /// 依据 Server.Game/Cancer.cs InteractCompounder：
         /// Cancer SubType=1，State[4]/[5]=目标花 DataId，State[2]/[3]=对应物理槽（0=空）。
         /// 依据 Server.Game/Drink.cs InteractTable：
         /// Drink SubType=0，State[2]/[3]=目标花 DataId，State[4]/[5]=对应已放槽（0=空）。
-        /// </summary>
+        /// </remarks>
         public static HashSet<int> BuildNeededFlowerIds(List<DeviceBase> devices)
         {
             var needed = new HashSet<int>();
@@ -372,10 +386,12 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 计算当前仍需要的矿物 DataId 集合（工艺台所需 + 收集柜缺口）。
+        /// </summary>
+        /// <remarks>
         /// 供 VacuumChain/GenerateChain 复用，消除两份同构计算（范本：BuildNeededFlowerIds）。
         /// 依据：工艺台所需矿见槽位布局表 Craft 行（Craft.cs:86-89）；
         /// 收集柜需求/已交槽见 Collector 行（Collector.cs:88-104）。
-        /// </summary>
+        /// </remarks>
         public static HashSet<int> BuildNeededMineralIds(List<DeviceBase> devices)
         {
             var needed = new HashSet<int>();
@@ -436,8 +452,10 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 扫描仪下一个需要的颜色 1红 2绿 3蓝 4黄；0=任务未开或已放齐。
-        /// State[1]/[2]=目标色，State[3]/[4]=已放，State[5]=完成。
         /// </summary>
+        /// <remarks>
+        /// State[1]/[2]=目标色，State[3]/[4]=已放，State[5]=完成。
+        /// </remarks>
         public static int ScannerNextNeededColor(List<DeviceBase> devices)
         {
             foreach (var d in devices)

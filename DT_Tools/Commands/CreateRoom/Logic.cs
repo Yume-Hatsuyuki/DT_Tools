@@ -10,9 +10,12 @@ namespace DT_Tools.Commands.CreateRoom
     /// <summary>
     /// /create_room 业务编排：等大厅界面就绪 → 复刻原版 OnClickCreateButton 的
     /// 建房前序（0.1.16b UI_LobbyScene.cs:1198（待核对）)：回跳段 → 语音预连 → School 资源域
-    /// → Steam 建房。mic/语言/公开-私密的缺省值读大厅 UI 私有字段（与原版同源），
-    /// 显式参数覆盖。回调在主线程（游戏主循环泵 Steam 回调）。
+    /// → Steam 建房。
     /// </summary>
+    /// <remarks>
+    /// mic/语言/公开-私密的缺省值读大厅 UI 私有字段（与原版同源），
+    /// 显式参数覆盖。回调在主线程（游戏主循环泵 Steam 回调）。
+    /// </remarks>
     internal static class CreateRoomLogic
     {
         private const float LobbyUiTimeoutSeconds = 15f;

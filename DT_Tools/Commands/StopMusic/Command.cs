@@ -6,9 +6,11 @@ namespace DT_Tools.Commands.StopMusic
 {
     /// <summary>
     /// /stop_music — 立即停止控制台点播（/play_audio）与虚拟麦克风广播（/mic_music）。
+    /// </summary>
+    /// <remarks>
     /// 与阶段音乐解耦：只停这两个命令引擎（Game/AudioPlayback + Game/MicBroadcast）；
     /// 阶段音乐由其触发器与配置自行管理。
-    /// </summary>
+    /// </remarks>
     internal sealed class StopMusicCommand : ICommand
     {
         public string Name => "stop_music";

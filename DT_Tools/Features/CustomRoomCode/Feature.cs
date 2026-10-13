@@ -3,10 +3,13 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.CustomRoomCode
 {
     /// <summary>
-    /// 自定义房间码：建房用自定义码替代随机码。加入方按 Steam lobby data "code"
+    /// 自定义房间码：建房用自定义码替代随机码。
+    /// </summary>
+    /// <remarks>
+    /// 加入方按 Steam lobby data "code"
     /// 精确等于过滤搜索（0.1.16b DummyClient/SteamLobbyManager.cs:178-193（待核对）），
     /// 写入即对加入方生效。与 CustomRoomName 互不影响（不同的 data 键）。
-    /// </summary>
+    /// </remarks>
     [PatchFeature(
         "自定义房间码：建房用自定义码替代随机码（留空仍随机）；修改配置会立刻写入当前房间（需房主）。\n字符自动大写并过滤为 A–Z / 0–9，最长 7 位（与原版一致）。码不做全局唯一校验，撞码时加入方会进入匹配到的第一个房间。",
         defaultEnabled: false,

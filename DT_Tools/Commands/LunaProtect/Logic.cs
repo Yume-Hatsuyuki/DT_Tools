@@ -7,13 +7,14 @@ namespace DT_Tools.Commands.LunaProtect
 {
     /// <summary>
     /// /luna_protect 业务：阶段守卫 + S_NOTIFY_LUNA_ABILITY 广播。
-    ///
+    /// </summary>
+    /// <remarks>
     /// Luna 护盾不是 BUFF，而是客户端 MyPlayer.HasLunaShield 判定：亮灯时，Luna 本人或
     /// 客户端 LunaAbilityIds 名单内的玩家，Black 出刀会被拦截（播放 RunaShieldSfx，
     /// 不发送 C_KILL_PLAYER）。名单的原版同步方式是 Soi 用 RuleBreaker 偷到 Luna 技能后
     /// 服务端广播 S_NOTIFY_LUNA_ABILITY，本命令发送同一个包；该包每包只携带一个
     /// PlayerId，all 时对每名玩家各广播一包（room.Broadcast 走全体客户端含房主自身）。
-    /// </summary>
+    /// </remarks>
     internal static class LunaProtectLogic
     {
         /// <summary>

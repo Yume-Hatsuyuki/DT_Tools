@@ -6,10 +6,13 @@ using DT_Tools.Core;
 namespace DT_Tools
 {
     /// <summary>
-    /// 全项目唯一日志入口。Info / Warn / Error / Fatal / Debug 同时写三处：BepInEx 主日志、全局环形缓冲（WebUI 控制台页）、按 tag 的段级环形缓冲（WebUI 配置 / 自动化页）。
+    /// 全项目唯一日志入口。
+    /// </summary>
+    /// <remarks>
+    /// Info / Warn / Error / Fatal / Debug 同时写三处：BepInEx 主日志、全局环形缓冲（WebUI 控制台页）、按 tag 的段级环形缓冲（WebUI 配置 / 自动化页）。
     /// Exception() 的完整堆栈只进 BepInEx（LogOutput.log 可查），环形缓冲只留单行摘要，避免大文本刷掉常用条目。tag 一律用段名：Log.Info&lt;TFeature>(…) 自动取 Engine.SectionOf&lt;T>()。
     /// 注意：本类必须放在 DT_Tools 根命名空间。游戏在全局命名空间有一个 public static class Log（0.1.16b Log.cs），C# 命名空间查找链上 DT_Tools.Log 优先于它，否则会被遮蔽。
-    /// </summary>
+    /// </remarks>
     public static class Log
     {
         private const int GlobalCapacity = 2000;
@@ -24,8 +27,10 @@ namespace DT_Tools
 
         /// <summary>
         /// 每条日志写入后触发（WebConsole 订阅后经 WebSocket 推给前端）。
-        /// 订阅方必须只做入队等轻量操作、绝不阻塞——事件可能从主线程或 HTTP 线程发出。
         /// </summary>
+        /// <remarks>
+        /// 订阅方必须只做入队等轻量操作、绝不阻塞——事件可能从主线程或 HTTP 线程发出。
+        /// </remarks>
         public static event Action<LogEntry> EntryAppended;
 
         public static void Init(ManualLogSource source) => _src = source;

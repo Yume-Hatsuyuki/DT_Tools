@@ -11,8 +11,10 @@ namespace DT_Tools.Core
 {
     /// <summary>
     /// 配置枚举与读写（内存优先；Save / overwrite 才落盘）。
-    /// 导入解析用 Newtonsoft（JToken），禁止手写逐字符扫描。
     /// </summary>
+    /// <remarks>
+    /// 导入解析用 Newtonsoft（JToken），禁止手写逐字符扫描。
+    /// </remarks>
     public static class ConfigService
     {
         public sealed class SectionDto
@@ -20,18 +22,27 @@ namespace DT_Tools.Core
             public string Section;
 
             /// <summary>
-            /// 段落分组："automation"（自动化总开关+各模块，AUTOMATION 页）| "feature"（其余，CONFIG 页）。前端据此分流，不认识任何段名。
+            /// 段落分组："automation"（自动化总开关+各模块，AUTOMATION 页）| "feature"（其余，CONFIG 页）。
             /// </summary>
+            /// <remarks>
+            /// 前端据此分流，不认识任何段名。
+            /// </remarks>
             public string Group;
 
             /// <summary>
-            /// 段的功能标签（键名，见 FeatureTagCatalog）。基础设施段为空数组。
+            /// 段的功能标签（键名，见 FeatureTagCatalog）。
             /// </summary>
+            /// <remarks>
+            /// 基础设施段为空数组。
+            /// </remarks>
             public string[] Tags;
 
             /// <summary>
-            /// 本段的开关键名（引擎统一 Engine.EnabledKey）。前端经协议读取，不硬编码 'Enabled'。
+            /// 本段的开关键名（引擎统一 Engine.EnabledKey）。
             /// </summary>
+            /// <remarks>
+            /// 前端经协议读取，不硬编码 'Enabled'。
+            /// </remarks>
             public string EnabledKey = Engine.EnabledKey;
 
             public List<EntryDto> Entries = new List<EntryDto>();
@@ -98,8 +109,10 @@ namespace DT_Tools.Core
         /// 段落分组：全组判定零段名字符串——基础设施段查装载期收集的
         /// [ConfigSection(Group=…)] 元数据（Engine.GroupOfSection），自动化模块段查
         /// Engine.AutomationModules 元数据，其余（补丁功能 / WebConsole 基础设施）→ "feature"。
-        /// 前端按此分流显示，禁止硬编码段名。
         /// </summary>
+        /// <remarks>
+        /// 前端按此分流显示，禁止硬编码段名。
+        /// </remarks>
         private static string ClassifyGroup(string section)
         {
             string group = Engine.GroupOfSection(section);

@@ -8,13 +8,15 @@ namespace DT_Tools.Commands.Fusebox
 {
     /// <summary>
     /// /sabotage_fuse [#id|all]：客户端拉闸，无视拔螺栓谜题，直接发 C_INTERACT_FUSEBOX（跟随控制台，非房主可用，仅生存阶段）。
+    /// </summary>
+    /// <remarks>
     /// 服务端 DisconnetCable 只校验 MissionType==-1（开局武装的 3 个电闸，0.1.17a Server.Game/Fusebox.cs:114），
     /// 没有颜色、距离、谜题校验，所以好人也能拉闸；第 2 个电闸拉断会获得 OnBlackout「主谋」成就。
     /// 多人局使用会污染成就与进程归属，服务端无法区分是否为命令所为。
     /// 谜题进度 C_HANDLE_FUSEBOX.SaveProgress 只是表现层广播，拉断只看 C_INTERACT_FUSEBOX（StateList[0]==0），故直接发包可绕过谜题。
     /// 服务端 DeviceManager.Interact 有 500ms InteractLock，all 模式用协程每 0.6 秒发一包。
     /// 示例：/sabotage_fuse 查看列表；/sabotage_fuse all 拉断全部（第 2 个触发全场停电）；/拆电 #12 拉断指定电闸。
-    /// </summary>
+    /// </remarks>
     internal sealed class SabotageFuseCommand : ICommand
     {
         public string Name => "sabotage_fuse";
@@ -108,8 +110,10 @@ namespace DT_Tools.Commands.Fusebox
 
         /// <summary>
         /// all 模式：用协程逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。
-        /// 第 2 个电闸拉断时会触发全场停电 + ClearFuseboxSabotage，第 3 个包将被服务端拒绝。
         /// </summary>
+        /// <remarks>
+        /// 第 2 个电闸拉断时会触发全场停电 + ClearFuseboxSabotage，第 3 个包将被服务端拒绝。
+        /// </remarks>
         private static CommandResult SabotageAll(List<DeviceBase> armed, CommandContext ctx)
         {
             if (armed.Count == 0)

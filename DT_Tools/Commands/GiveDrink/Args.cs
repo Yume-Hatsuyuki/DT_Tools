@@ -4,9 +4,12 @@ using System.Collections.Generic;
 namespace DT_Tools.Commands.GiveDrink
 {
     /// <summary>
-    /// /givedrink 参数：&lt;all|#id&gt; [item]。目标缺省 all，道具缺省 can01；
-    /// 第一参不是 all / #id 时视为道具名（即 "/givedrink knife" = 全体发匕首）。
+    /// /givedrink 参数：&lt;all|#id&gt; [item]。
     /// </summary>
+    /// <remarks>
+    /// 目标缺省 all，道具缺省 can01；
+    /// 第一参不是 all / #id 时视为道具名（即 "/givedrink knife" = 全体发匕首）。
+    /// </remarks>
     internal sealed class GiveDrinkArgs
     {
         public bool All { get; private set; }

@@ -5,9 +5,12 @@ using System.Linq;
 namespace DT_Tools.Core.Attributes
 {
     /// <summary>
-    /// 功能标签字典：分组、中文名、说明。枚举值只在 FeatureTag 定义，这里只做展示与校验。
-    /// 新增标签时两处同步：FeatureTag 追加一位，这里追加一条。
+    /// 功能标签字典：分组、中文名、说明。
     /// </summary>
+    /// <remarks>
+    /// 枚举值只在 FeatureTag 定义，这里只做展示与校验。
+    /// 新增标签时两处同步：FeatureTag 追加一位，这里追加一条。
+    /// </remarks>
     public static class FeatureTagCatalog
     {
         /// <summary>
@@ -73,8 +76,10 @@ namespace DT_Tools.Core.Attributes
 
         /// <summary>
         /// 校验单元的标签：至少 1 个、最多 MaxPerUnit 个、只含已定义的标签。
-        /// 不合格直接抛出——与命名空间重复一样属于声明错误，禁止兜底。
         /// </summary>
+        /// <remarks>
+        /// 不合格直接抛出——与命名空间重复一样属于声明错误，禁止兜底。
+        /// </remarks>
         public static void Validate(FeatureTag tags, string owner)
         {
             ulong bits = (ulong)tags;

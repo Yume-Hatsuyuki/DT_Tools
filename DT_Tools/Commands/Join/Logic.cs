@@ -10,9 +10,11 @@ namespace DT_Tools.Commands.Join
     /// <summary>
     /// /join 业务编排：离开当前房间（原版退出确认同路径）→ 等大厅 UI 就绪 →
     /// 按房间码搜索 → 复用原版进房编排 ProceedLobbyEnter（加载界面/语音/资源域）。
+    /// </summary>
+    /// <remarks>
     /// 目标房间正在对局时，原版本就以观战加入（UI_LobbyScene 的确认弹窗只是提示，
     /// ProceedSteamJoin 两条分支同路径，UI_LobbyScene.cs:1359-1366），此处直接进入。
-    /// </summary>
+    /// </remarks>
     internal static class JoinLogic
     {
         private const float LobbyUiTimeoutSeconds = 15f;

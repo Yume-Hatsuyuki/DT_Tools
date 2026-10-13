@@ -6,8 +6,11 @@ namespace DT_Tools.Commands.GameState
     /// <summary>
     /// /game_state — 查询当前游戏主状态机 EGameState（大厅 / 选角 / 生存 / 调查 /
     /// 学级裁判 / 总结算）；处于学级裁判时附加裁判子状态机 ETrialState
-    /// （讨论 / 投票 / 开票 / 真相公开 / 审判结果）。纯读命令，房主与普通客户端均可执行。
+    /// （讨论 / 投票 / 开票 / 真相公开 / 审判结果）。
     /// </summary>
+    /// <remarks>
+    /// 纯读命令，房主与普通客户端均可执行。
+    /// </remarks>
     internal sealed class GameStateCommand : ICommand
     {
         public string Name => "game_state";

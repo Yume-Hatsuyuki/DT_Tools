@@ -6,8 +6,10 @@ namespace DT_Tools.Features.AutoFishMine
     /// 一键钓鱼挖矿（合并功能）：走近钓鱼点/矿机自动开始，并自动完成对应小游戏——
     /// 钓鱼：自动在咬钩瞬间提竿、收线阶段自动连按（UI_FishingSlider 四阶段机）；
     /// 挖矿：滑块摆入目标区自动连击，3 次成功自动收获（UI_MineralSlider）。
-    /// 纯客户端行为，协议走游戏原生通道（C_HANDLE_FISHING / C_HANDLE_MINERAL），不伪造数据。
     /// </summary>
+    /// <remarks>
+    /// 纯客户端行为，协议走游戏原生通道（C_HANDLE_FISHING / C_HANDLE_MINERAL），不伪造数据。
+    /// </remarks>
     [PatchFeature(
         "一键钓鱼挖矿：走近钓鱼点/矿机自动开始，自动完成钓鱼（咬钩提竿+收线连按）与挖矿（滑块连击）小游戏，自动收获。",
         defaultEnabled: false,

@@ -5,8 +5,10 @@ namespace DT_Tools.Core
 {
     /// <summary>
     /// 全项目唯一 JSON 入口（Newtonsoft，游戏自带程序集）。
-    /// 序列化对象用匿名对象或 DTO；禁止手拼 JSON 字符串与手写解析。
     /// </summary>
+    /// <remarks>
+    /// 序列化对象用匿名对象或 DTO；禁止手拼 JSON 字符串与手写解析。
+    /// </remarks>
     public static class Json
     {
         /// <summary>

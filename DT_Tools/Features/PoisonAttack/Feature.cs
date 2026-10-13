@@ -12,7 +12,10 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.PoisonAttack
 {
     /// <summary>
-    /// 毒杀（服务端权威，房主开启后全员可用）。黑方持刀时按毒杀键，对近距离目标下毒。
+    /// 毒杀（服务端权威，房主开启后全员可用）。
+    /// </summary>
+    /// <remarks>
+    /// 黑方持刀时按毒杀键，对近距离目标下毒。
     /// 判定距离、存活、阶段与原版刀人（Player.UseWeapon）一致，但允许对柜中（EPlayerState.Hide）目标下毒，毒发时先强制出柜。
     /// 时序（服务端 GameRoom 队列）：
     /// - 下毒：黑方弹屏提示，进入 31 秒毒杀冷却（覆盖原版 20 秒刀冷却，并同步 S_COOLTIME_WEAPON）。
@@ -25,7 +28,7 @@ namespace DT_Tools.Features.PoisonAttack
     /// - 对局在毒发前结束则毒发失效，目标不死，警告与脚印一并取消。
     /// 指令：毒杀键发 C_ATTACK{TargetId, Item=手持刀}（原版攻击通道，不走聊天）；无准星目标时 TargetId=-1，服务端选黑方身边最近的存活玩家。
     /// 刀人键走 C_KILL_PLAYER，服务端据此区分刀人与毒杀。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch]
     [PatchFeature(
         "毒杀：黑方持刀时按毒杀键（默认 K，刀人 Q 不变）对近距离目标下毒，30 秒后毒发死亡；毒发前 5 秒目标弹屏警告；毒杀冷却 31 秒；死亡时在柜中先强制出柜、不触发 Deadly Trick。服务端实现，房主开启后全员可用。",
@@ -428,9 +431,11 @@ namespace DT_Tools.Features.PoisonAttack
 
         /// <summary>
         /// 毒发前警告：SecretChat 弹屏（原版 UI_SecretChatOverlay 原生渲染，全员客户端可见）。
+        /// </summary>
+        /// <remarks>
         /// 文本为“您将于N秒后死亡”，N = 警告提前量配置（默认 5，随配置动态变化）。
         /// 仅在 Survive 阶段弹——若游戏已结束（结束前不足毒发时长下毒），不弹警告、不死亡。
-        /// </summary>
+        /// </remarks>
         private static void WarnDeath(Server.Game.GameRoom room, GamePlayer attacker, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))
@@ -458,10 +463,12 @@ namespace DT_Tools.Features.PoisonAttack
         /// <summary>
         /// 毒发：先处理柜中状态（强制出柜）再走原版刀人死亡链路；
         /// 不触发 Deadly Trick（毒发仅 OnDead，不发 S_DEADLY_TRICK）。
+        /// </summary>
+        /// <remarks>
         /// 若游戏已结束（Survive 阶段结束，含"结束前不足 30 秒下毒"的场景），毒发不生效，
         /// 被毒杀者不会死亡。
         /// 死亡后把死亡前 3 秒收集的反向脚印写入其尸体（尸体未被发现时原版不广播脚印）。
-        /// </summary>
+        /// </remarks>
         private static void ExecutePoisonDeath(Server.Game.GameRoom room, GamePlayer attacker, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))

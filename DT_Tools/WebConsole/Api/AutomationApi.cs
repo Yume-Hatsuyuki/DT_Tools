@@ -9,9 +9,11 @@ namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
     /// /api/automation/* — 总开关、模块列表、模块日志。
+    /// </summary>
+    /// <remarks>
     /// 模块元数据来自 Engine.AutomationModules（id 即配置段名）；
     /// 开关统一写 BepInEx 配置项（引擎的 [Config] 绑定会实时回写字段）。
-    /// </summary>
+    /// </remarks>
     public static class AutomationApi
     {
         public static void HandleStatus(HttpListenerContext ctx)

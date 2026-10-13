@@ -9,9 +9,11 @@ namespace DT_Tools.Features.MultiArmoryWeapon
     /// <summary>
     /// 多刀编排：刷刀后开放多架、到期随机转移；同步 CurrentArmory 等权威指针以兼容
     /// 原版取刀断言（SendWeapon 要求 ID == CurrentArmory.ID：0.1.17a Server.Game/Armory.cs:134）与任务箭头。
+    /// </summary>
+    /// <remarks>
     /// DeviceManager 私有成员定位（0.1.16b Server.Game/DeviceManager.cs）：_armories:28、_lastArmory:14、
     /// CurrentArmory:42（private set 属性）、ArmoryPos:44（private set 属性）。
-    /// </summary>
+    /// </remarks>
     internal static class MultiArmoryWeaponLogic
     {
         /// <summary>
@@ -29,13 +31,15 @@ namespace DT_Tools.Features.MultiArmoryWeapon
 
         /// <summary>
         /// 「投票任意黑方胜利」命中判定：庭审最高票（唯一）是任意活着的黑方（非本庭绑定凶手、非主谋）时为 true。
+        /// </summary>
+        /// <remarks>
         /// 不能复用原版 MostVotedPlayerId 当「最高票玩家」：它的返回值语义是「原版处决目标」——
         /// 只有最高票为绑定凶手（TrialManager.cs:856-859）或主谋（:861-864）才返回对应 id，
         /// 其余情形（含投中其他黑方与白方）一律返回 -1（:866），据此过滤会永远不命中。
         /// 因此这里自读 _candidates（0.1.17a Server.Game/TrialManager.cs:47，私有）统计唯一最高票：
         /// 无票（:835-838）、平票（:840-853）、绑定凶手（原版已判白胜 :787-791）、主谋（独立出局语义 :801-816）
         /// 一律交还原版；其余仅当目标是活着的黑方才接管——死后被票出不算（原版 Trial Survive 豁免也仅限绑定凶手）。
-        /// </summary>
+        /// </remarks>
         internal static bool TryGetAnyBlackCatch(Server.Game.TrialManager trial, out int catchId, out string skipReason)
         {
             catchId = -1;
@@ -270,9 +274,11 @@ namespace DT_Tools.Features.MultiArmoryWeapon
 
         /// <summary>
         /// 多刀取证：除 CurrentArmory 外，把所有已拔刀（WeaponTime&gt;0）的架一并 SendScanInfo。
+        /// </summary>
+        /// <remarks>
         /// 原版 SendForensics 只扫 CurrentArmory（0.1.17a Server.Game/GameRoom.cs:2161），
         /// 多刀下其余架的拔刀时间不会自动进平板，扫到也会因权威指针被挪走而变成 00:00。
-        /// </summary>
+        /// </remarks>
         public static void SendExtraWeaponForensics(Server.Game.DeviceManager dm, Server.Game.Player player)
         {
             if (dm == null || player == null)

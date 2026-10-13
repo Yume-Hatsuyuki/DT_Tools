@@ -6,8 +6,10 @@ namespace DT_Tools.Features.UnlockMadeline
 {
     /// <summary>
     /// 运行期状态：裁切产物缓存、注入键记录、一次性标记。
-    /// 只存字段与容器；游戏调用在 Logic / Ui。
     /// </summary>
+    /// <remarks>
+    /// 只存字段与容器；游戏调用在 Logic / Ui。
+    /// </remarks>
     internal static class UnlockMadelineState
     {
         public static Sprite Insight;

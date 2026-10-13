@@ -42,8 +42,10 @@ namespace DT_Tools.Features.SeolCarry
 
         /// <summary>
         /// 执行搬人：给目标玩家加传送流程（Stop + Casting + 延迟后 Move 到 P）。
-        /// 返回 true 表示已拦截原技能并完成搬人。
         /// </summary>
+        /// <remarks>
+        /// 返回 true 表示已拦截原技能并完成搬人。
+        /// </remarks>
         public static bool TryCarry(Server.Game.Player seol, C_USE_SKILL pkt)
         {
             if (seol == null || pkt == null) return false;

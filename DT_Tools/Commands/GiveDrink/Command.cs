@@ -7,9 +7,11 @@ namespace DT_Tools.Commands.GiveDrink
 {
     /// <summary>
     /// /givedrink &lt;all|#id&gt; [item] — 给所有/指定玩家发放手持道具（含武器与任务道具）。
+    /// </summary>
+    /// <remarks>
     /// 不带参数时打印可用道具列表，不执行发放。发放走 ItemManager.CreateAndInsertInven
     /// 原生链路，客户端背包可见、可使用/攻击。
-    /// </summary>
+    /// </remarks>
     internal sealed class GiveDrinkCommand : ICommand
     {
         public string Name => "givedrink";

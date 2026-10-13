@@ -4,8 +4,11 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Commands.Phase
 {
     /// <summary>
-    /// /enter_vote — 强制进入投票阶段（Discuss → VotePhase）。仅房主。
+    /// /enter_vote — 强制进入投票阶段（Discuss → VotePhase）。
     /// </summary>
+    /// <remarks>
+    /// 仅房主。
+    /// </remarks>
     internal sealed class EnterVoteCommand : ICommand
     {
         public string Name => "enter_vote";

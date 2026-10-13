@@ -16,8 +16,10 @@ namespace DT_Tools.Features.UnlockMadeline
 
         /// <summary>
         /// 人物档案立绘位置（Madeline 缺键时原版回退到 STANDING_BASE_POS 通用底位）。
-        /// 值为旧版标定：档案页立绘居中略下沉。
         /// </summary>
+        /// <remarks>
+        /// 值为旧版标定：档案页立绘居中略下沉。
+        /// </remarks>
         public static readonly Vector2 ProfileStandingPos = new Vector2(0f, -450f);
 
         /// <summary>
@@ -116,9 +118,12 @@ namespace DT_Tools.Features.UnlockMadeline
                select d;
 
         /// <summary>
-        /// 选人面板介绍文案（六语言）。原版取 "&lt;Name&gt;Explain" 文本键（0.1.16b
-        /// UI_PickPopup.cs:517），Madeline 无对应文本数据，故本地内置。
+        /// 选人面板介绍文案（六语言）。
         /// </summary>
+        /// <remarks>
+        /// 原版取 "&lt;Name&gt;Explain" 文本键（0.1.16b
+        /// UI_PickPopup.cs:517），Madeline 无对应文本数据，故本地内置。
+        /// </remarks>
         public static string GetExplain()
         {
             switch (Managers.Language)
@@ -158,8 +163,10 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 表情图集不在 ResourceManager 缓存（Madeline 未开放），尝试经 Addressables
         /// 同步预载进 _resources 字典（私有字段：0.1.17a ResourceManager.cs:11）。
-        /// 只试一次；Addressables 不可用时静默跳过（审判过场表情缺失可接受）。
         /// </summary>
+        /// <remarks>
+        /// 只试一次；Addressables 不可用时静默跳过（审判过场表情缺失可接受）。
+        /// </remarks>
         public static void EnsureExpsPreloaded()
         {
             if (UnlockMadelineState.ExpsTried)

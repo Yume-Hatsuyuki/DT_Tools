@@ -9,6 +9,8 @@ namespace DT_Tools.Game
 {
     /// <summary>
     /// Server.Game.MissionManager 反射访问器（全项目唯一，消费方：FishingPond / LobbyMaxPlayers / GiveMission / Agent）。
+    /// </summary>
+    /// <remarks>
     /// 该类在发行程序集中是 internal（0.1.16b Server.Game/MissionManager.cs:10（待核对）），无法编译期引用，但成员签名固定，可通过反射访问：Instance、ProgressMissionList、WaitMissionQueue、ClearMission、StartMission() 为 public；BroadcastMissionState、RemoveFromWaitQueue、StartMission(MissionData) 为 private。外层类不可见不妨碍反射。Data.MissionData 是 public，直接引用。
     /// 反射目标（0.1.16b，升级时全文核对）：
     /// Type 全名 "Server.Game.MissionManager" → MissionManager.cs:10；Instance（static property getter）→ :14；ProgressMissionList → :26；WaitMissionQueue → :28；
@@ -16,7 +18,7 @@ namespace DT_Tools.Game
     /// RemoveFromWaitQueue(int)（private）→ :592；StartMission(Data.MissionData)（private）→ :701。
     /// 定位：typeof(Managers).Assembly.GetType(全名)，不硬编码程序集名。Type/PropertyInfo 进程内不变，static readonly 缓存一次；失败短路不重试。
     /// 调用失败一律返回 false/null，由调用方按自己的上下文记日志。
-    /// </summary>
+    /// </remarks>
     public static class MissionAccess
     {
         private static bool _init;

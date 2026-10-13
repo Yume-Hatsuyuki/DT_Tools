@@ -8,8 +8,10 @@ namespace DT_Tools.Features.RepairFuse
     /// <summary>
     /// Fusebox.Interact 整替：总时长改配置，读条起点仍取服务端已修 tick
     /// （原版 Interact 为 Fusebox.cs:39-63，GetRepairTick 为 :65-72，读 StateList[2] 在 :71）。
-    /// protected override，字符串定位。
     /// </summary>
+    /// <remarks>
+    /// protected override，字符串定位。
+    /// </remarks>
     [HarmonyPatch(typeof(Fusebox), "Interact")]
     internal static class RepairFusePatch
     {

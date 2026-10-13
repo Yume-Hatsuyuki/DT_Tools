@@ -29,11 +29,14 @@ namespace DT_Tools.Automation.AutoSpawnPoint
         public static float DelaySeconds = 15f;
 
         /// <summary>
-        /// 统一节拍入口。注意：在对局中（已处于 Survive）热启用本模块时，
+        /// 统一节拍入口。
+        /// </summary>
+        /// <remarks>
+        /// 注意：在对局中（已处于 Survive）热启用本模块时，
         /// State.Reset 已把 LastState 归 NoneState、DoneThisRound=false，下一拍
         /// Trigger 会视作"新进入 Survive"，立即按 DelaySeconds 计时并触发本局传送
         /// ——与 AutoAcquireWeapon / AutoPickCharacter 共有的统一模式，属预期行为。
-        /// </summary>
+        /// </remarks>
         public static void Tick(bool hostEnabled)
         {
             if (!hostEnabled || !Engine.Enabled<AutoSpawnPointModule>())

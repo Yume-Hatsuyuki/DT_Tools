@@ -41,17 +41,22 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 是否改变 Hand 状态（进手/出手/替换手上物品）。
+        /// </summary>
+        /// <remarks>
         /// 依据：Server.Game/ItemManager.cs InsertInven（0.1.16b:101）在 Hand 非空时会强制
         /// DropItem 踢落已持物品（见 105-108 行），故同一 tick 内改 Hand 的步骤最多执行 1 个。
         /// 不改 Hand 的步骤（状态机推进、无道具直清）互不干扰，可在同一 tick 全部执行。
-        /// </summary>
+        /// </remarks>
         public bool ChangesHand;
     }
 
     /// <summary>
-    /// 步骤收集委托。changesHand 默认 false（不改变 Hand），与拆分前的调用点保持兼容——
-    /// 仅在 Runner 引入"每 tick 多步"后才需要各 Add() 调用显式标注 true。
+    /// 步骤收集委托。
     /// </summary>
+    /// <remarks>
+    /// changesHand 默认 false（不改变 Hand），与拆分前的调用点保持兼容——
+    /// 仅在 Runner 引入"每 tick 多步"后才需要各 Add() 调用显式标注 true。
+    /// </remarks>
     internal delegate void AddDel(int priority, string label, int? mission, int deviceId,
         Action send, bool changesHand = false);
 }

@@ -9,8 +9,10 @@ namespace DT_Tools.Features.AlwaysShowPing
 {
     /// <summary>
     /// 延迟常显逻辑：保证 UI_PingIndicator 在任意阶段可见并按间隔刷新。
-    /// 私有字段定位见 0.1.17a UI_GameScene.cs。
     /// </summary>
+    /// <remarks>
+    /// 私有字段定位见 0.1.17a UI_GameScene.cs。
+    /// </remarks>
     internal static class AlwaysShowPingLogic
     {
         /// <summary>
@@ -65,9 +67,12 @@ namespace DT_Tools.Features.AlwaysShowPing
         }
 
         /// <summary>
-        /// 保证指示器节点处于激活层级。若父链被 Lobby 面板关掉，则挂到
-        /// UI_GameScene 根节点（避免随 Lobby/Common 面板切换被关掉）。
+        /// 保证指示器节点处于激活层级。
         /// </summary>
+        /// <remarks>
+        /// 若父链被 Lobby 面板关掉，则挂到
+        /// UI_GameScene 根节点（避免随 Lobby/Common 面板切换被关掉）。
+        /// </remarks>
         private static void EnsureVisible(UI_GameScene scene, UI_PingIndicator indicator)
         {
             GameObject go = indicator.gameObject;

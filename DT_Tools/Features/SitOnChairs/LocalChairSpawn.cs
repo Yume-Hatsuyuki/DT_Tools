@@ -8,9 +8,11 @@ namespace DT_Tools.Features.SitOnChairs
 {
     /// <summary>
     /// 本地模拟椅子（非房主专用补丁）：椅子设备由房主服务端在开局时生成并下发（0.1.17a Server.Game/GameRoom.cs:679 InitDevices + DeviceManager.HandleAddDevice），客户端本地注入的岛屿数据只是“模板”，真正的设备实例必须来自服务端。
+    /// </summary>
+    /// <remarks>
     /// 因此房主未装本 mod 时，非房主客户端本地没有任何椅子设备，看不到交互提示、无法坐下。本模块在检测到“对局内设备缓存中没有椅子”时，把 11 把椅子（长椅×2、沙发×1、咖啡椅×8）以本地注入数据（Managers.Data.DeviceDic 的 DataId 19901-19918）直接 spawn 进本地 DeviceManager.Cache：本地立即出现椅子、显示“坐下”提示、按 E 本地坐（GameSit）。
     /// 装本 mod 的客户端各自按相同 DeviceId 本地 spawn（坐标一致），配合 SyncSitting 聊天广播即可互见坐姿；未装 mod 的客户端没有任何椅子（服务端不认这些设备）。房主装了 mod 时服务端已下发椅子（Cache 有 Chair），本模块自动跳过，不重复。
-    /// </summary>
+    /// </remarks>
     internal static class LocalChairSpawn
     {
         /// <summary>

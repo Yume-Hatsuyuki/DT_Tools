@@ -7,8 +7,11 @@ using UnityEngine.Networking;
 namespace DT_Tools.Game
 {
     /// <summary>
-    /// 点播来源类型。Auto=按前缀自动识别（http(s) 在线、其余本地）。
+    /// 点播来源类型。
     /// </summary>
+    /// <remarks>
+    /// Auto=按前缀自动识别（http(s) 在线、其余本地）。
+    /// </remarks>
     public enum AudioPlaybackSource
     {
         Auto = 0,
@@ -42,9 +45,11 @@ namespace DT_Tools.Game
         /// <summary>
         /// 点播入口：kind 指定来源类型（Local/Online 显式指定，Auto 按前缀识别），
         /// volume 0~1（调用方决定默认值），maxSeconds &lt;=0 表示完整播放。
+        /// </summary>
+        /// <remarks>
         /// 解析失败返回 false（原因已在 ResolveSource 内告警），不打断当前播放
         /// （输错来源不应清空正在响的音乐）。
-        /// </summary>
+        /// </remarks>
         public static bool Play(string rawSource, AudioPlaybackSource kind, float volume, float maxSeconds)
         {
             string uri = ResolveUri(rawSource, kind);

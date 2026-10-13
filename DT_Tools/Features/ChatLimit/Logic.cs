@@ -4,10 +4,13 @@ using UnityEngine;
 namespace DT_Tools.Features.ChatLimit
 {
     /// <summary>
-    /// 输入框上限抬升与全场景扫描。原版各聊天输入框硬编码 characterLimit = 100
+    /// 输入框上限抬升与全场景扫描。
+    /// </summary>
+    /// <remarks>
+    /// 原版各聊天输入框硬编码 characterLimit = 100
     /// （0.1.16b UI_GameTablet.cs:871（待核对）、UI_DirectChat.cs:88、UI_ChatDevicePopup.cs:95）。
     /// 房主侧发言过滤（原 GameRoom.SanitizeChat）已拆分至 System/ChatSanitize。
-    /// </summary>
+    /// </remarks>
     internal static class ChatLimitLogic
     {
         /// <summary>

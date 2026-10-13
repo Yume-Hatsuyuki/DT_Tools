@@ -4,10 +4,12 @@ namespace DT_Tools.Features.BlackAttack
 {
     /// <summary>
     /// 黑方击杀次数与武器冷却（房主权威）。
+    /// </summary>
+    /// <remarks>
     /// KillLimit 覆盖 GameRoom.BlackKillLimit（原版：开局人数&lt;6 为 1，否则 2）；
     /// Cooltime 覆盖 StartWeaponCooltime 的首次 5s（DelayAcquireWeapon）与再装填 20s
     /// （ConsumeKillAndRearm）；其它调用（如 LockKnifeForSeconds）不改。
-    /// </summary>
+    /// </remarks>
     [PatchFeature(
         "黑方攻击：可自定义击杀次数上限与攻击冷却（秒）。房主侧生效。",
         defaultEnabled: false,

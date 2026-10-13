@@ -9,16 +9,21 @@ namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
     /// /api/config/* — 配置列表/更新/保存/重置/导入/导出 + 功能段日志。
-    /// 数据源统一走 ConfigService（与 WebUI 同一协议）；API 层不认识任何具体功能。
     /// </summary>
+    /// <remarks>
+    /// 数据源统一走 ConfigService（与 WebUI 同一协议）；API 层不认识任何具体功能。
+    /// </remarks>
     public static class ConfigApi
     {
         public static void HandleList(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, ConfigService.List(Engine.Config));
 
         /// <summary>
-        /// 功能标签字典（分组、键、中文名、说明）。WebUI 据此渲染标签筛选，标签文字不在前端写死。
+        /// 功能标签字典（分组、键、中文名、说明）。
         /// </summary>
+        /// <remarks>
+        /// WebUI 据此渲染标签筛选，标签文字不在前端写死。
+        /// </remarks>
         public static void HandleTags(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, FeatureTagCatalog.Entries.Select(e => new
             {

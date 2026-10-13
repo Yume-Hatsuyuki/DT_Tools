@@ -9,10 +9,12 @@ namespace DT_Tools.Features.DuplicateCharacter
 {
     /// <summary>
     /// 取消确认只回操作者本人（CancelPickCharacter，0.1.17a GameRoom.cs:1777）。
+    /// </summary>
+    /// <remarks>
     /// 原版取消会全员广播 S_CANCEL_PICK_CHARACTER，对端收到后对被取消角色执行
     /// RefreshUI——两人同选 X 时，一人取消会把另一人自己格子的置灰错误地恢复。
     /// 改为只回本人后，锁定前其他客户端对选角动作完全无感知。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.CancelPickCharacter))]
     internal static class DuplicateCharacterCancelPickPatch
     {
@@ -88,12 +90,14 @@ namespace DT_Tools.Features.DuplicateCharacter
 
     /// <summary>
     /// 开局占位 + 全员锁定后统一揭晓（PickCharacterTick，0.1.17a GameRoom.cs:1619）。
+    /// </summary>
+    /// <remarks>
     /// - Prefix 捕获进入时的 StopWatch。原方法在末尾才 TimeManager.Tick() 自增，所以 Postfix 读到的是自增后的值（进入 0 读到 1，进入 40 读到 41）。
     /// - 进入值 == 0：StartPick（:1592）ResetStopWatch 后直接调用，每轮恰一次。此时选角弹窗已随状态切换建好，占位包紧随 S_FADE_IN 按序到达，不会被丢弃。
     /// - “中途进房或重连错过占位”经 0.1.16b 源码核对不可能发生，无需补发快照：新进房被 HandleEnterPlayer 状态闸门拒绝（:1037，闸门 :1083）；选角阶段断线由 HandlePeerDisconnect（:1341/:1367）整除玩家并回落 Lobby（选角轮整体终止，:1621）；重连 HandlePeerRejoin（:1457-1475）只复活 dummy 化玩家且只在非选角阶段发生；迁移期 SetMigrationPhase（:507-511）同被 :1083 拒绝。
     /// - 进入值 >= 40：CheckPickAllDone 提前 SetStopWatch(40) 或自然数到 40 强制补选。两种路径的下一次调用进入值都是 40，且原版补选体已在本 Postfix 之前执行完，_pickPlayers 即全部最终分位；41~44 为 5 秒准备期（45 切 Survive）。
     /// 用 _revealed 保证只揭晓一次。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.PickCharacterTick))]
     internal static class DuplicateCharacterRevealPatch
     {

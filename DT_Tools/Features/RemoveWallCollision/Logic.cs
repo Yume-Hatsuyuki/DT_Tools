@@ -5,8 +5,10 @@ namespace DT_Tools.Features.RemoveWallCollision
 {
     /// <summary>
     /// 穿墙：仅对本地玩家两个碰撞体改 trigger（精确逐碰撞体处理）。
-    /// 刻意不动 Physics2D.IgnoreLayerCollision——那是全局层碰撞开关，会把同机其他玩家一起陪绑穿墙。
     /// </summary>
+    /// <remarks>
+    /// 刻意不动 Physics2D.IgnoreLayerCollision——那是全局层碰撞开关，会把同机其他玩家一起陪绑穿墙。
+    /// </remarks>
     internal static class RemoveWallCollisionLogic
     {
         public static void ApplyColliderTo(MyPlayer player, bool asTrigger)
@@ -32,11 +34,14 @@ namespace DT_Tools.Features.RemoveWallCollision
         }
 
         /// <summary>
-        /// Enabled 关闭：恢复碰撞体。若本机玩家正处于躲藏态则保持 trigger——
+        /// Enabled 关闭：恢复碰撞体。
+        /// </summary>
+        /// <remarks>
+        /// 若本机玩家正处于躲藏态则保持 trigger——
         /// 原版 HidePlayer(true) 就是把碰撞体置为 trigger（0.1.17a MyPlayer.cs:1009，:1016 写
         /// isTrigger=isHide），此时强改回实心会与掩体碰撞体互相挤压、可能把玩家挤出掩体，
         /// 服务器也可能判非法位置；退出躲藏时原版 HidePlayer(false) 会自然恢复实心。
-        /// </summary>
+        /// </remarks>
         public static void RestoreLocalPlayer()
         {
             MyPlayer my = Managers.Player != null ? Managers.Player.MyPlayer : null;

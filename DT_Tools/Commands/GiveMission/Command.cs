@@ -7,9 +7,12 @@ namespace DT_Tools.Commands.GiveMission
 {
     /// <summary>
     /// /givemission [任务类型] — 给所有玩家派发特定任务，自动联动初始化前置设备
-    /// （仅房主、生存阶段可用）。不带参数时显示任务列表。
-    /// 枚举名 / 数字 / 中文别名均可；ScNone 不允许派发。
+    /// （仅房主、生存阶段可用）。
     /// </summary>
+    /// <remarks>
+    /// 不带参数时显示任务列表。
+    /// 枚举名 / 数字 / 中文别名均可；ScNone 不允许派发。
+    /// </remarks>
     internal sealed class GiveMissionCommand : ICommand
     {
         public string Name => "givemission";

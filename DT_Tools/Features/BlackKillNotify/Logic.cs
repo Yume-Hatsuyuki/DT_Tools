@@ -10,10 +10,12 @@ namespace DT_Tools.Features.BlackKillNotify
 {
     /// <summary>
     /// 击杀通报编排（客户端 / 房主两半共用）。
+    /// </summary>
+    /// <remarks>
     /// 客户端半：记录击杀目标（KnifeAttack / DeadlyTrick 两个前缀喂入，覆盖式只认最近一次）→ RemainKill 下降检测（Modify 后缀）→ 挑空闲打字机 → 模拟触碰三连包（占用 → SendSecretChatMessage → 释放）。
     /// 房主半：OnDeadMurder 后缀直发，组文后经 S_CHAT_MESSAGE(SecretChat)、RecordSecretChat 与 Replicator.Secrets 广播黑方频道，不做占用或冷却校验。
     /// RemainKill 局内只减不增（0.1.17a Server.Game/Player.cs:331-345，只在 ConsumeKillAndRearm 递减；GameStart 归零的发包由 5 秒新鲜度门滤除），下降即本机击杀被主机接受。
-    /// </summary>
+    /// </remarks>
     internal static class BlackKillNotifyLogic
     {
         /// <summary>
@@ -112,10 +114,13 @@ namespace DT_Tools.Features.BlackKillNotify
         }
 
         /// <summary>
-        /// 房主半入口：Server.Game.Player.OnDeadMurder 后缀调用。异常整体吞掉——
+        /// 房主半入口：Server.Game.Player.OnDeadMurder 后缀调用。
+        /// </summary>
+        /// <remarks>
+        /// 异常整体吞掉——
         /// Postfix 抛出会打断宿主 OnDead 剩余流程（ExitPlayer 等）。主机侧代码仅在
         /// 房主进程执行，无需额外 IsHost 判定。
-        /// </summary>
+        /// </remarks>
         public static void NotifyFromHost(Server.Game.Player victim, Server.Game.Player killer)
         {
             try

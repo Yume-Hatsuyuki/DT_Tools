@@ -7,9 +7,11 @@ namespace DT_Tools.Commands.Agent
 {
     /// <summary>
     /// /agent [all|任务ID|名|#设备号|stop]：特工，按任务链自动推进（一步做不完就跳过做下一个）。
+    /// </summary>
+    /// <remarks>
     /// 优先级：无等待 / 仓储获取物 / 采矿 > 设备生成 > 计时类 > 摇酒（移动）最后。手空时“顺手牵羊”获取仓储与地面任务道具。
     /// 实现拆分（原 11 个文件，逻辑未改）：Args（参数/别名）、Logic.Types（Pri / AgentFilter / AgentStep / AddDel）、Logic.ItemHelper（道具/矿石/花工具、任务链关联、扫描仪颜色）、Logic.MissionState（任务激活状态的权威数据源，Host 反射 MissionManager，客户端 MissionMirror）、Logic.DeliveryChain（交付链）、Logic.VacuumChain（顺手牵羊）、Logic.InstantChain（无道具直清）、Logic.GenerateChain（生成源，含挖矿冷却字段）、Logic.Planner（PlanAll/Next/Peek 调度）、Logic.Runner（MonoBehaviour tick 驱动）。
-    /// </summary>
+    /// </remarks>
     internal sealed class AgentCommand : ICommand
     {
         public string Name => "agent";

@@ -4,9 +4,12 @@ using System;
 namespace DT_Tools.WebConsole.Mcp
 {
     /// <summary>
-    /// MCP 工具元数据。标注在 WebConsole/Mcp/Tools/&lt;工具名&gt;/Tool.cs 的 sealed static 类上，
-    /// McpToolLoader 反射发现，零注册代码。Author 逐工具实名——漏写时加载直接报错（禁止兜底）。
+    /// MCP 工具元数据。
     /// </summary>
+    /// <remarks>
+    /// 标注在 WebConsole/Mcp/Tools/&lt;工具名&gt;/Tool.cs 的 sealed static 类上，
+    /// McpToolLoader 反射发现，零注册代码。Author 逐工具实名——漏写时加载直接报错（禁止兜底）。
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class McpToolAttribute : Attribute
     {
@@ -26,8 +29,11 @@ namespace DT_Tools.WebConsole.Mcp
         public string Author { get; set; }
 
         /// <summary>
-        /// 功能标签（多选，1–3 个）。跨领域时同时标多个。词表与说明见 FeatureTag / FeatureTagCatalog。
+        /// 功能标签（多选，1–3 个）。
         /// </summary>
+        /// <remarks>
+        /// 跨领域时同时标多个。词表与说明见 FeatureTag / FeatureTagCatalog。
+        /// </remarks>
         public FeatureTag Tags { get; set; }
 
         public McpToolAttribute(string name, string description)

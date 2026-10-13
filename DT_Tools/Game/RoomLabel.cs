@@ -5,9 +5,11 @@ namespace DT_Tools.Game
 {
     /// <summary>
     /// 房间名本地化助手（收敛旧 WeaponPacketHelper.GetRoomLabel 与 BeaconCommand.ResolveRoomLabel，两处共享同一条 TextDic 本地化路径）。
+    /// </summary>
+    /// <remarks>
     /// FromDevice：设备摆放地区取 DeviceData.RoomType（配置写死，与服务端 AreaManager.GetArea(pos).Data 同源）→ TextDic 本地化名（与平板扫描 UI_GameTablet.SetWeaponInfo 同源）。FromPos：坐标按 224 网格反查 MapArray → ERoomType → TextDic，与服务端 GetArea 同款算法。
     /// 依据：0.1.17a Server.Game/AreaManager.cs:74-80（GetArea）、DataManager.cs:28（MapArray）/30（TextDic）、Data/DeviceData.cs:34（RoomType）、Data/TextData.cs:10（Text）。返回 (本地化名称, raw 枚举名)；无文本时本地化名称回退为枚举名。
-    /// </summary>
+    /// </remarks>
     public static class RoomLabel
     {
         /// <summary>
@@ -19,8 +21,11 @@ namespace DT_Tools.Game
         private const string UnknownRaw = "Unknown";
 
         /// <summary>
-        /// 坐标 → 房间名（224 网格反查 MapArray）。/beacon 列表与落点显示用。
+        /// 坐标 → 房间名（224 网格反查 MapArray）。
         /// </summary>
+        /// <remarks>
+        /// /beacon 列表与落点显示用。
+        /// </remarks>
         public static (string localized, string raw) FromPos(PosInfo pos)
         {
             var mapData = Managers.Data?.MapData;
@@ -44,8 +49,11 @@ namespace DT_Tools.Game
         }
 
         /// <summary>
-        /// 设备 → 房间名（DeviceData.RoomType）。武器架 / 电闸列表用。
+        /// 设备 → 房间名（DeviceData.RoomType）。
         /// </summary>
+        /// <remarks>
+        /// 武器架 / 电闸列表用。
+        /// </remarks>
         public static (string localized, string raw) FromDevice(DeviceBase device)
         {
             ERoomType roomType = device?.Data?.RoomType ?? ERoomType.DefaultRoom;

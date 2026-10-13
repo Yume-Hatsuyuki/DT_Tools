@@ -4,9 +4,11 @@ namespace DT_Tools.Features.LoginReward
 {
     /// <summary>
     /// 登录奖励（趣味）：库存初始化后请求发放实验数据，动画在房间 UI 就绪且（有真实发放或强制动画）时播放。
+    /// </summary>
+    /// <remarks>
     /// 0.1.17a 行为：InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）经 SteamInventorySource.cs:964 把 gold×30+silver×10 折成 drop 单位（每单位 10 实验数据），交 FreeCurrencyDrops.Enqueue → SteamInventory.TriggerItemDrop。每日上限仍为 250（InventoryManager.DailyCap / FreeCurrencyDrops 硬编码），由客户端按当日已用生成器数 ×10 记账（SteamInventorySource.DailyEarned → _drops.DailyUsed）。
     /// 掉落串行。结果超时、空结果复查、失败退避可配（默认等于官方 20 / 65 / 2~60）。只影响客户端等待，不让 Steam 掉落更快；过短可能把慢响应误判为空结果。OnProgress 每次成功掉落时中间回调，终态以 FreeDropPendingUnits 回落到请求前基线为准。
-    /// </summary>
+    /// </remarks>
     [PatchFeature(
         "每日登录奖励：进入游戏后按配置请求 Steam 掉落发放实验数据，并在房间 UI 就绪后播放获取动画（受官方每日限额 250 约束）。",
         defaultEnabled: false,

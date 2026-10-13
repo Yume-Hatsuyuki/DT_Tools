@@ -11,8 +11,11 @@ namespace DT_Tools.Features.CustomRoomName
     internal static class CustomRoomNameLogic
     {
         /// <summary>
-        /// 订阅 RoomName 配置项变更（订阅骨架在 Game/RoomLobbyData）。变更即尝试写入当前房间，WebUI 经 ConfigApi 改配置后无需额外特判即可生效。
+        /// 订阅 RoomName 配置项变更（订阅骨架在 Game/RoomLobbyData）。
         /// </summary>
+        /// <remarks>
+        /// 变更即尝试写入当前房间，WebUI 经 ConfigApi 改配置后无需额外特判即可生效。
+        /// </remarks>
         public static void WireRoomNameChanged()
             => RoomLobbyData.WireChanged<CustomRoomNameFeature>(
                 nameof(CustomRoomNameFeature.RoomName), reason => TryApplyRoomName(reason));
@@ -44,9 +47,12 @@ namespace DT_Tools.Features.CustomRoomName
 
         /// <summary>
         /// 房间名清洗的唯一实现：trim → 去富文本 → trim → 64 字符截断
-        /// （0.1.17a Util.cs:172 NeutralizeRichText）。64 截断常量只在此处出现；
-        /// CreateLobby 前缀等所有调用方一律复用本方法，禁止再写第二份清洗链。
+        /// （0.1.17a Util.cs:172 NeutralizeRichText）。
         /// </summary>
+        /// <remarks>
+        /// 64 截断常量只在此处出现；
+        /// CreateLobby 前缀等所有调用方一律复用本方法，禁止再写第二份清洗链。
+        /// </remarks>
         internal static string SanitizeName()
         {
             string name = CustomRoomNameFeature.RoomName?.Trim() ?? "";

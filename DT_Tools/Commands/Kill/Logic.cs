@@ -38,8 +38,10 @@ namespace DT_Tools.Commands.Kill
 
         /// <summary>
         /// 单目标校验：观战者 / 已死亡不可处决。
-        /// （0.1.16b Server.Game/Player.cs:857-878（待核对）），假会话只丢弃发给自己的包，死亡流程完整。
         /// </summary>
+        /// <remarks>
+        /// （0.1.16b Server.Game/Player.cs:857-878（待核对）），假会话只丢弃发给自己的包，死亡流程完整。
+        /// </remarks>
         public static bool IsTargetKillable(Server.Game.Player target, out string text, out string code)
         {
             int id = target.PublicInfo.PlayerId;

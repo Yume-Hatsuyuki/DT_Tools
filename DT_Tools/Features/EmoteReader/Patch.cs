@@ -7,12 +7,14 @@ namespace DT_Tools.Features.EmoteReader
     /// <summary>
     /// UseEmotion 后置：与 EmoteTaunt 共用同一方法但方向相反——这里只解读"别人"的表情
     /// （Managers.Player.MyPlayer == __instance 时跳过，不自我解说）。
+    /// </summary>
+    /// <remarks>
     /// 表情 id→解读台词映射与 EmoteTaunt 的 18 个表情一一对应（0.1.16b Emotions.cs），
     /// 台词逐表情配置于 Feature（配置页可直接修改，留空=该表情不解读）。
     /// 广播描述的是"对方的行为"（XX 的解读），不是冒充对方发言，无冒名风险。
     /// 庭审阶段：表情走 UI_TrialEvent.UseEmotion 而非 Player.UseEmotion（0.1.17a PacketHandler.cs:442），
     /// 由下方 EmoteReaderTrialPatch 单独钩住，与平时共用台词与冷却。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch(typeof(Player), nameof(Player.UseEmotion))]
     internal static class EmoteReaderPatch
     {

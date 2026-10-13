@@ -5,13 +5,14 @@ namespace DT_Tools.Commands.Power
 {
     /// <summary>
     /// /restore_power — 强制恢复全场电力（仅房主、仅生存阶段）。
-    ///
+    /// </summary>
+    /// <remarks>
     /// 直接复用原版 DeviceManager.RefuseAllFuse：重连全部已断开的电箱
     /// （Fusebox.ConnetCable）。断开计数归 0 时 AreaManager.RefreshLight
     /// 点亮全部区域并广播 FuseOnSfx，同时安排 60 秒后由
     /// DeviceManager.StartFuseboxSabotage 重新随机发放 3 个电箱破坏任务。
     /// 等效于所有损坏电箱被玩家修完，不影响玩家正在进行的正常修线流程。
-    /// </summary>
+    /// </remarks>
     internal sealed class RestorePowerCommand : ICommand
     {
         public string Name => "restore_power";

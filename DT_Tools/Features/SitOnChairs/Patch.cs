@@ -507,8 +507,11 @@ namespace DT_Tools.Features.SitOnChairs
 
         /// <summary>
         /// 接收端：聊天接收入口识别坐姿指令（零宽前缀）→ 拦截聊天显示 +
-        /// 远端椅子换角色坐姿形象 + 隐藏该玩家模型；起身时还原。无需房主，装本 mod 即可互见。
+        /// 远端椅子换角色坐姿形象 + 隐藏该玩家模型；起身时还原。
         /// </summary>
+        /// <remarks>
+        /// 无需房主，装本 mod 即可互见。
+        /// </remarks>
         [HarmonyPatch(typeof(VoiceManager), "EnqueueNormalChat")]
         internal static class SitSyncReceivePatch
         {

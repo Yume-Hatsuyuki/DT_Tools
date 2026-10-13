@@ -5,10 +5,13 @@ using UnityEngine;
 namespace DT_Tools.Features.LoginReward
 {
     /// <summary>
-    /// 发放与弹窗流程（0.1.17a）：TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）→ SteamInventorySource.GrantFreeFromStars（:964）→ FreeCurrencyDrops.Enqueue → 串行 SteamInventory.TriggerItemDrop。OnProgress 可能多次中间回调；终态为 FreeDropPendingUnits 回落到请求前基线后读 LastRevealEarned，再 TryShowPopup。
+    /// 发放与弹窗流程（0.1.17a）：TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）→ SteamInventorySource.GrantFreeFromStars（:964）→ FreeCurrencyDrops.Enqueue → 串行 SteamInventory.TriggerItemDrop。
+    /// </summary>
+    /// <remarks>
+    /// OnProgress 可能多次中间回调；终态为 FreeDropPendingUnits 回落到请求前基线后读 LastRevealEarned，再 TryShowPopup。
     /// 终态规则：earned>0 走官方动画；earned≤0 立即视为“当日已满 / 未发放”，不死等。中间 OnProgress（单次 +10）不得提前裁决。
     /// 在途竞态：GrantFreeFromStars 入口把 _revealEarned 清 0（InventoryManager.cs:353），真终态要等 drop 回调写入（:356）。TryGrant 发请求前把 _revealEarned 置 InFlightEarned(-1)，同步 OnChanged 见 -1 即过滤；批次完成判定另看 FreeDropPendingUnits。
-    /// </summary>
+    /// </remarks>
     internal static class LoginRewardLogic
     {
         /// <summary>
@@ -21,8 +24,10 @@ namespace DT_Tools.Features.LoginReward
 
         /// <summary>
         /// 订阅库存回调并安排首次发放尝试（Init 后缀与 OnEnabled 热开启共用）。
-        /// Init 可能多次触发（每次启动流程），按实例判重。
         /// </summary>
+        /// <remarks>
+        /// Init 可能多次触发（每次启动流程），按实例判重。
+        /// </remarks>
         public static void Attach(InventoryManager inv)
         {
             if (inv == null)
@@ -107,8 +112,10 @@ namespace DT_Tools.Features.LoginReward
 
         /// <summary>
         /// 判定 FreeCurrencyDrops 批次是否结束。
-        /// pending ≤ 请求前基线 且 LastRevealEarned 已离开在途标记 → 终态。
         /// </summary>
+        /// <remarks>
+        /// pending ≤ 请求前基线 且 LastRevealEarned 已离开在途标记 → 终态。
+        /// </remarks>
         private static void TryResolveBatch()
         {
             if (LoginRewardState.RevealResolved)
@@ -225,10 +232,13 @@ namespace DT_Tools.Features.LoginReward
         }
 
         /// <summary>
-        /// 实验数据 → 金星/银星（gold×30+silver×10）。上限读库存组件 DailyCap
+        /// 实验数据 → 金星/银星（gold×30+silver×10）。
+        /// </summary>
+        /// <remarks>
+        /// 上限读库存组件 DailyCap
         /// （0.1.17a InventoryManager.cs:38，原版即硬编码 250），由调用方传入。
         /// SteamInventorySource 再按 num/10 折成 drop 单位（每单位 10）。
-        /// </summary>
+        /// </remarks>
         private static void AmountToStars(int amount, int cap, out int gold, out int silver)
         {
             int value = Mathf.Clamp(amount, 0, cap);

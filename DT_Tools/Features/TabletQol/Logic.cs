@@ -273,11 +273,12 @@ namespace DT_Tools.Features.TabletQol
 
         /// <summary>
         /// 确认：关掉确认栏，然后调用**原版**提交函数。
-        ///
+        /// </summary>
+        /// <remarks>
         /// 用 `AccessTools.Method` + `Invoke` 而不是 `Traverse.Method(name, args)`：后者按"参数个数 + 值"
         /// 挑重载，传 `null`（`PointerEventData` 用不到）时可能静默匹配不上。
         /// `Suppress` 期间放行 Prefix，避免"确认 → 又弹一次框"。
-        /// </summary>
+        /// </remarks>
         private static void ConfirmAndSubmit(UI_ClueSubItem card)
         {
             Hide();

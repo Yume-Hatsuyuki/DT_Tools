@@ -7,8 +7,10 @@ namespace DT_Tools.WebConsole
 {
     /// <summary>
     /// WebUI 静态资源服务：白名单（index/login/css/js）+ Mime 表 + 防目录穿越。
-    /// WebUI 缺失时页面返回 503，API 不受影响。
     /// </summary>
+    /// <remarks>
+    /// WebUI 缺失时页面返回 503，API 不受影响。
+    /// </remarks>
     public static class StaticFiles
     {
         private static string _webRoot;

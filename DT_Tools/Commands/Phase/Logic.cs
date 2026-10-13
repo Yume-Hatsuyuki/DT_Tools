@@ -41,9 +41,12 @@ namespace DT_Tools.Commands.Phase
         }
 
         /// <summary>
-        /// 强制进入调查阶段（Detective）。仅允许从生存阶段（Survive）进入；
-        /// 有未处理尸体时按原版"时间到发现尸体"流程走。
+        /// 强制进入调查阶段（Detective）。
         /// </summary>
+        /// <remarks>
+        /// 仅允许从生存阶段（Survive）进入；
+        /// 有未处理尸体时按原版"时间到发现尸体"流程走。
+        /// </remarks>
         public static CommandResult EnterDetective(CommandContext ctx)
         {
             var room = ValidateRoom(ctx);
@@ -118,8 +121,11 @@ namespace DT_Tools.Commands.Phase
         }
 
         /// <summary>
-        /// 强制进入投票阶段（VotePhase）。仅 Discuss 可用。
+        /// 强制进入投票阶段（VotePhase）。
         /// </summary>
+        /// <remarks>
+        /// 仅 Discuss 可用。
+        /// </remarks>
         public static CommandResult EnterVote(CommandContext ctx)
         {
             var room = ValidateRoom(ctx);
@@ -151,8 +157,11 @@ namespace DT_Tools.Commands.Phase
         }
 
         /// <summary>
-        /// 跳过投票阶段立即开票（VoteResult）。仅 VotePhase 可用。
+        /// 跳过投票阶段立即开票（VoteResult）。
         /// </summary>
+        /// <remarks>
+        /// 仅 VotePhase 可用。
+        /// </remarks>
         public static CommandResult SkipVote(CommandContext ctx)
         {
             var room = ValidateRoom(ctx);

@@ -7,9 +7,12 @@ namespace DT_Tools.Features.StageMusic
 {
     /// <summary>
     /// 击杀触发：Handle_S_KILL_PLAYER 是"本机击杀了人"的权威信号（服务端只发凶手，
-    /// 0.1.16b Server.Game/DeviceManager.cs:588-609（待核对））。PacketHandler 为 internal（PacketHandler.cs:9），
-    /// TargetMethod 运行时解析。
+    /// 0.1.16b Server.Game/DeviceManager.cs:588-609（待核对））。
     /// </summary>
+    /// <remarks>
+    /// PacketHandler 为 internal（PacketHandler.cs:9），
+    /// TargetMethod 运行时解析。
+    /// </remarks>
     [HarmonyPatch]
     internal static class StageMusicKillTrigger
     {
@@ -80,10 +83,12 @@ namespace DT_Tools.Features.StageMusic
     /// <summary>
     /// 审判子阶段触发：UI_TrialEvent.StartState（私有，0.1.17a UI_TrialEvent.cs:1652）在
     /// 审判内部 Discuss→VotePhase→VoteResult→Replay→TrialResult 每次切换时调用。
+    /// </summary>
+    /// <remarks>
     /// 只覆盖前四个子阶段——TrialResult 子阶段沿用 StageMusicExecutionTrigger（更精确，
     /// 挂在裁决数据到达的 TrialResult 方法上，而非仅仅状态切换的瞬间），避免同一时机
     /// 两个触发器都响应造成重复判断。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch(typeof(UI_TrialEvent), "StartState")]
     internal static class StageMusicTrialStateTrigger
     {
@@ -142,8 +147,11 @@ namespace DT_Tools.Features.StageMusic
     /// <summary>
     /// 发现尸体触发：Handle_S_DISCOVER_CORPSE 仅发给发现者本人（0.1.16b
     /// Server.Game/Corpse.cs:349 只 player.Session.Send，其余人仅收 SeeCorpseSfx 音效），
-    /// 即本机发现尸体时播放。PacketHandler 为 internal，TargetMethod 运行时解析。
+    /// 即本机发现尸体时播放。
     /// </summary>
+    /// <remarks>
+    /// PacketHandler 为 internal，TargetMethod 运行时解析。
+    /// </remarks>
     [HarmonyPatch]
     internal static class StageMusicDiscoverCorpseTrigger
     {
@@ -160,10 +168,12 @@ namespace DT_Tools.Features.StageMusic
     /// <summary>
     /// 自己死亡触发：S_DEAD 只发死者本人（0.1.17a Server.Game/Player.cs:827），
     /// 客户端 Handle_S_DEAD 调 Managers.Game.Dead()（PacketHandler.cs:392）。
+    /// </summary>
+    /// <remarks>
     /// 不能挂 Handle_S_NOTIFY_DEAD——那是发给存活灵媒（SoulSense）的知晓通知，
     /// 不是受害者本人（Server.Game/Player.cs:935-946）。
     /// PacketHandler 为 internal，TargetMethod 运行时解析。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch]
     internal static class StageMusicSelfDeadTrigger
     {
@@ -201,10 +211,12 @@ namespace DT_Tools.Features.StageMusic
     /// 黑幕继承触发：S_NOTIFY_BLACK 的接收者收到的都是"别人的 id"——0.1.16b
     /// Server.Game/Player.cs:220-238 的全部发送点：主脑收新黑幕 id、新黑幕本人收主脑 id、
     /// 死者收新黑幕 id，旧条件 PlayerId==本机 永假成死分支。
+    /// </summary>
+    /// <remarks>
     /// 判据复刻客户端自己的分支语义（PacketHandler.cs:500）：收包瞬间新黑幕尚未收到
     /// S_CURRENT_COLOR、MyPlayer.Color 仍为 Dark；ByHand=false 排除递刀
     /// （递刀由 StageMusicGiveKnifeTrigger 覆盖）；IsAlive 排除死者接收者。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch]
     internal static class StageMusicBlackSuccessionTrigger
     {

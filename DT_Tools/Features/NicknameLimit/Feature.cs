@@ -4,11 +4,13 @@ namespace DT_Tools.Features.NicknameLimit
 {
     /// <summary>
     /// 取消主页昵称限制（权重 CJK×2+字母数字 ≤12），可选放开字符白名单。
+    /// </summary>
+    /// <remarks>
     /// 源码侧无 characterLimit；若 Prefab 仍设了硬上限，一并抬高。
     /// 门禁点：OnValidateNickname / EnsureNicknameOrShowError / StartLobbySection 重校验
     /// （0.1.16b UI_LobbyScene.cs:855（待核对）)/ 各进房入口读 _isNickNameValid——
     /// 全部经由 Logic.IsNameAcceptable 单一判定源，字符与字数两个维度在此正交。
-    /// </summary>
+    /// </remarks>
     [PatchFeature(
         "取消主页昵称字数上限：可超过原版权重 12；AllowAnyChar 开启后允许空格、符号、emoji 等任意字符（空名仍不可用）。\n服务端不过滤昵称字符。关闭时自动还原输入框上限与原版门禁。",
         defaultEnabled: false,

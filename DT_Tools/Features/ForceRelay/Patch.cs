@@ -7,8 +7,10 @@ namespace DT_Tools.Features.ForceRelay
     /// <summary>
     /// 在原版 ConfigureTransportSelection 之后覆盖为强制中继
     /// （0.1.17a DummyClient/SteamP2PTransport.cs:182）。
-    /// Init 每次进房会再调一次；OnPatched 时 Steam 可能未就绪，此处是主生效点。
     /// </summary>
+    /// <remarks>
+    /// Init 每次进房会再调一次；OnPatched 时 Steam 可能未就绪，此处是主生效点。
+    /// </remarks>
     [HarmonyPatch(typeof(SteamP2PTransport), "ConfigureTransportSelection")]
     internal static class ForceRelayConfigurePatch
     {

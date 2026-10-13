@@ -9,8 +9,10 @@ namespace DT_Tools.Core
     /// <summary>
     /// Core 常驻协程宿主：命令域等需要延时/分帧执行的非补丁逻辑统一挂这里，
     /// 避免依赖某个具体功能组件（如 WebConsole）存活造成横向耦合。
-    /// 组件按需惰性创建（DontDestroyOnLoad），仅主线程可用（命令都在主线程执行）。
     /// </summary>
+    /// <remarks>
+    /// 组件按需惰性创建（DontDestroyOnLoad），仅主线程可用（命令都在主线程执行）。
+    /// </remarks>
     public static class CoroutineHost
     {
         private static HostComponent _component;
@@ -19,8 +21,11 @@ namespace DT_Tools.Core
         private static int _mainThreadId = -1;
 
         /// <summary>
-        /// 启动协程；宿主未就绪时自动创建。返回值可交给 StopCoroutine。
+        /// 启动协程；宿主未就绪时自动创建。
         /// </summary>
+        /// <remarks>
+        /// 返回值可交给 StopCoroutine。
+        /// </remarks>
         public static Coroutine Start(IEnumerator routine)
         {
             EnsureCreated();
@@ -38,9 +43,12 @@ namespace DT_Tools.Core
         }
 
         /// <summary>
-        /// 确保宿主组件就绪。须在 Unity 主线程调用（Plugin.Awake 启动即建），
-        /// 此后任意线程 Post 的动作都有确定的主线程泵。
+        /// 确保宿主组件就绪。
         /// </summary>
+        /// <remarks>
+        /// 须在 Unity 主线程调用（Plugin.Awake 启动即建），
+        /// 此后任意线程 Post 的动作都有确定的主线程泵。
+        /// </remarks>
         public static void EnsureCreated()
         {
             if (_component == null)
@@ -53,10 +61,13 @@ namespace DT_Tools.Core
 
         /// <summary>
         /// 把动作投递到 Unity 主线程：本就在主线程则同步执行，否则入队由
-        /// HostComponent.Update 下一帧泵掉。SettingChanged 这类发自 HTTP / BepInEx
+        /// HostComponent.Update 下一帧泵掉。
+        /// </summary>
+        /// <remarks>
+        /// SettingChanged 这类发自 HTTP / BepInEx
         /// 文件监听线程的回调须经此入口才能安全触碰 Unity API（渲染调用在非主线程
         /// 会原生崩溃，其余多为不可跨线程的异常）。
-        /// </summary>
+        /// </remarks>
         public static void Post(Action action)
         {
             if (action == null)

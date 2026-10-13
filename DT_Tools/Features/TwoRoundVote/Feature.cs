@@ -13,11 +13,13 @@ namespace DT_Tools.Features.TwoRoundVote
 {
     /// <summary>
     /// 二轮投票制（房主权威）：把原版「一次审判即终局」改为「至多两次审判」。
+    /// </summary>
+    /// <remarks>
     /// 第一轮投出黑方 → 单独处刑黑方（黑幕不连带处刑），其余白方与黑幕进入第二轮：
     /// 黑幕身份不变、出生点随机重排、任务进度与时间重置，其余规则与原版一轮投票制完全一致。
     /// 第一轮投出黑幕或白方（含平票/弃票）→ 直接结束，结算与原版一致。
     /// 第二轮结算走原版逻辑：黑方胜利时，第一轮已处刑的黑方因 Color=Black 自动计入胜者。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch]
     [PatchFeature(
         "二轮投票制：第一轮投出黑方后不结束，单独处刑黑方，白方与黑幕进入第二轮（黑幕身份不变、出生点随机、任务与时间重置）；投出黑幕或白方则直接结束。第二轮黑方胜利时，第一轮的黑方同样计入胜利。房主侧生效。",
@@ -28,8 +30,11 @@ namespace DT_Tools.Features.TwoRoundVote
     public sealed class TwoRoundVoteFeature
     {
         /// <summary>
-        /// 当前对局是否已进入第二轮。匹配开始时（StartPick）复位。
+        /// 当前对局是否已进入第二轮。
         /// </summary>
+        /// <remarks>
+        /// 匹配开始时（StartPick）复位。
+        /// </remarks>
         private static bool IsRoundTwo;
 
         /// <summary>
@@ -46,10 +51,12 @@ namespace DT_Tools.Features.TwoRoundVote
 
         /// <summary>
         /// 原版在黑方被投且黑幕存活时下发 RemainingExecute=2（黑幕连带处刑演出）。
+        /// </summary>
+        /// <remarks>
         /// 第一轮必须单独处刑黑方（RemainingExecute=0），黑幕存活进入第二轮；其余字段与奖励逻辑保持原版。
         /// Priority.First：与上游 MultiArmoryWeapon（投票任意黑方胜利，同样整替本方法）并存时，
         /// 二轮制作为更上层的流程改写优先接管第一轮结算演出；MultiArmoryWeapon 在第二轮（走原版结算）正常生效。
-        /// </summary>
+        /// </remarks>
         [HarmonyPatch(typeof(TrialManager), "StartTrialResult")]
         [HarmonyPriority(Priority.First)]
         [HarmonyPrefix]
@@ -92,11 +99,13 @@ namespace DT_Tools.Features.TwoRoundVote
 
         /// <summary>
         /// 原版：最高票为黑方 → WhiteWin 并结束；否则 BlackWin 并结束。
+        /// </summary>
+        /// <remarks>
         /// 二轮制：第一轮最高票为黑方 → 单独处刑并全量重置后进入第二轮（Trial→Survive）；
         /// 第一轮最高票为黑幕/白方（或平票/弃票）→ 放行原版直接结束。
         /// Priority.First：与 MultiArmoryWeapon（任意黑方胜利判白胜）并存时，第一轮投出黑方
         /// 优先进入第二轮而非直接判胜；MultiArmoryWeapon 未命中时放行原版，二轮局第二轮亦正常生效。
-        /// </summary>
+        /// </remarks>
         [HarmonyPatch(typeof(TrialManager), "FinalizeTrialResult")]
         [HarmonyPriority(Priority.First)]
         [HarmonyPrefix]
@@ -214,12 +223,15 @@ namespace DT_Tools.Features.TwoRoundVote
         }
 
         /// <summary>
-        /// 第二轮任务重置。MissionManager 在发行程序集中为 internal，经反射调用。
+        /// 第二轮任务重置。
+        /// </summary>
+        /// <remarks>
+        /// MissionManager 在发行程序集中为 internal，经反射调用。
         /// 修复③：原版 StartMission() 内部用 GameRoom.Instance.AliveCount 发布任务——
         /// 二轮在处刑黑方前调用（AliveCount 仍含黑方）→ 任务数量比第二轮实际人数多 1、
         /// GoalPoint=playerCount*15 偏大 → 任务进度百分比增长低于预期。
         /// 这里直接反射调用 private MissionAllocator(int) 并传入第二轮实际参与人数。
-        /// </summary>
+        /// </remarks>
         private static void ResetMissionProgress(int playerCount)
         {
             Type mmType = AccessTools.TypeByName("Server.Game.MissionManager");
@@ -255,9 +267,11 @@ namespace DT_Tools.Features.TwoRoundVote
         /// <summary>
         /// 修复①：复位「锁门计时中断残留」的门 —— 黑幕锁门（StateList[2]=0 + LockDoor 置 State=2
         /// + TickDoor 预约）被 ResetSurvival 清队列打断后，门保持 State=2 且 StateList[2] 不再推进。
+        /// </summary>
+        /// <remarks>
         /// 特征：StateList[0]==2（锁）且 StateList[2] &lt; StateList[1]（倒计时未走满）。
         /// StartSurvive 开局锁的门（StateList[2]==StateList[1]）保持原样，与首轮开局一致。
-        /// </summary>
+        /// </remarks>
         private static void ForceResetLockedDoors()
         {
             foreach (Server.Game.Device device in Server.Game.DeviceManager.Instance.Objects)
@@ -306,10 +320,12 @@ namespace DT_Tools.Features.TwoRoundVote
 
         /// <summary>
         /// 修复②：客户端在二轮（本局第二次进入 Survive）开始时清空 ScannedDeviceSet。
+        /// </summary>
+        /// <remarks>
         /// 原版该集合由新一局 InitRound/场景重载清空；二轮不重载场景导致第一轮扫描过的设备残留，
         /// 客户端 DeviceBase.SetBubble 会强制把已扫描设备 Bubble 置 0 → 搬运地点提示/调查点不显示。
         /// 仅在 mod 开启时生效（房主开启后，房主客户端自动修复；同房其他装 mod 且开启的玩家同样修复）。
-        /// </summary>
+        /// </remarks>
         [HarmonyPatch(typeof(GameManagerEX), "StartState")]
         [HarmonyPostfix]
         private static void PostfixStartState_Client(GameManagerEX __instance, EGameState state)

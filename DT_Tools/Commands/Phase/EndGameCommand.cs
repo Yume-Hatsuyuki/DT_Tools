@@ -5,9 +5,12 @@ using Protocol;
 namespace DT_Tools.Commands.Phase
 {
     /// <summary>
-    /// /end_game &lt;white|black&gt; — 快速结束对局进入总结算。仅房主。
-    /// 支持 white/black 及中文别名（白/白方/w、黑/黑方/b）。
+    /// /end_game &lt;white|black&gt; — 快速结束对局进入总结算。
     /// </summary>
+    /// <remarks>
+    /// 仅房主。
+    /// 支持 white/black 及中文别名（白/白方/w、黑/黑方/b）。
+    /// </remarks>
     internal sealed class EndGameCommand : ICommand
     {
         public string Name => "end_game";

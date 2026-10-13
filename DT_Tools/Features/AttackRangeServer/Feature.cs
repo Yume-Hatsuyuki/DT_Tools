@@ -3,9 +3,12 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.AttackRangeServer
 {
     /// <summary>
-    /// 服务端攻击距离判定：GameRoom.AttackPlayer 用 Util.UnifiedAttackRect（攻击盒，0.1.17a Util.cs:71，前向 80 / 后向 40）对 PlayerHitRect 做 AABB 碰撞（0.1.16b Server.Game/GameRoom.cs:2382-2402（待核对））。客户端 AttackRange 只放宽了选人距离（MyPlayer.cs:2178 的 224），超原版范围的攻击会在服务端判定落空（表现为空挥不掉血）。
-    /// 本功能把攻击盒前向延伸 ExtraForwardReach 个单位，两端数值需配合调节。注意：UnifiedAttackRect 同时被白方假武器试人判定 GetFakeWeaponPlayer（0.1.16b MyPlayer.cs:2222（待核对））消费，同一静态属性无法分离，开启后房主机上假武器可命中的范围同步变宽。
+    /// 服务端攻击距离判定：GameRoom.AttackPlayer 用 Util.UnifiedAttackRect（攻击盒，0.1.17a Util.cs:71，前向 80 / 后向 40）对 PlayerHitRect 做 AABB 碰撞（0.1.16b Server.Game/GameRoom.cs:2382-2402（待核对））。
     /// </summary>
+    /// <remarks>
+    /// 客户端 AttackRange 只放宽了选人距离（MyPlayer.cs:2178 的 224），超原版范围的攻击会在服务端判定落空（表现为空挥不掉血）。
+    /// 本功能把攻击盒前向延伸 ExtraForwardReach 个单位，两端数值需配合调节。注意：UnifiedAttackRect 同时被白方假武器试人判定 GetFakeWeaponPlayer（0.1.16b MyPlayer.cs:2222（待核对））消费，同一静态属性无法分离，开启后房主机上假武器可命中的范围同步变宽。
+    /// </remarks>
     [PatchFeature(
         "服务端攻击距离判定：把黑方攻击判定盒前向延伸 ExtraForwardReach（原版前向 80）。\n与客户端「AttackRange」配合使用（需房主运行本插件，两端数值需实测对齐，客户端拉大后服务端不放行就是空挥）。\n注意：白方假武器试人判定（GetFakeWeaponPlayer）共用同一攻击盒，范围会同步变宽。",
         defaultEnabled: false,

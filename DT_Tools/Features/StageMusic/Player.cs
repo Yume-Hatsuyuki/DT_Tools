@@ -12,12 +12,15 @@ namespace DT_Tools.Features.StageMusic
 {
     /// <summary>
     /// 阶段音乐播放器（单播放槽）：同 URI 播放中不重播（连杀防重复）、新触发停旧播新
-    /// （切阶段只保留一首）、限长到点停止（-1/0 不限）。音频按 URI 缓存，
+    /// （切阶段只保留一首）、限长到点停止（-1/0 不限）。
+    /// </summary>
+    /// <remarks>
+    /// 音频按 URI 缓存，
     /// 配置指纹变化时全部销毁重建（资源释放）。本地播放；MicBroadcast 配置开启时
     /// 同时经 Game/MicBroadcast 虚拟麦克风混流发往全房（仅混流不本地重播，
     /// 广播随本播放槽启停；与 /mic_music 手动点歌互斥、后触发者接管）。
     /// 控制台点播已迁至 Game/AudioPlayback（独立引擎，互不共享状态）。
-    /// </summary>
+    /// </remarks>
     internal static class StageMusicPlayer
     {
         private static AudioSource _source;
@@ -91,8 +94,11 @@ namespace DT_Tools.Features.StageMusic
         }
 
         /// <summary>
-        /// 阶段独立时长上限（秒）。-1/0 = 不限。
+        /// 阶段独立时长上限（秒）。
         /// </summary>
+        /// <remarks>
+        /// -1/0 = 不限。
+        /// </remarks>
         private static float MaxSecondsOf(MusicStage stage)
         {
             switch (stage)
@@ -157,8 +163,11 @@ namespace DT_Tools.Features.StageMusic
         }
 
         /// <summary>
-        /// 停止当前阶段音乐（阶段切换触发与未配置阶段共用）。麦克风广播随播放槽一起停止。
+        /// 停止当前阶段音乐（阶段切换触发与未配置阶段共用）。
         /// </summary>
+        /// <remarks>
+        /// 麦克风广播随播放槽一起停止。
+        /// </remarks>
         public static void StopCurrent()
         {
             _playingUri = null;
@@ -313,9 +322,12 @@ namespace DT_Tools.Features.StageMusic
 
         /// <summary>
         /// URI 解析（阶段音乐用）：来源由 TrackSource 统一指定（不再按 http 前缀猜测，
-        /// 避免本地文件命名含 http 字样时被误判）。Http 要求 http(s):// 前缀；
-        /// Local 转为 file:/// URI。
+        /// 避免本地文件命名含 http 字样时被误判）。
         /// </summary>
+        /// <remarks>
+        /// Http 要求 http(s):// 前缀；
+        /// Local 转为 file:/// URI。
+        /// </remarks>
         private static string ResolveUri(string raw)
         {
             if (StageMusicFeature.Source == TrackSource.Http)

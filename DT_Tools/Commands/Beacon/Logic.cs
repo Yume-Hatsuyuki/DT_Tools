@@ -11,8 +11,10 @@ namespace DT_Tools.Commands.Beacon
     {
         /// <summary>
         /// 把解析好的参数解析为具体落点（拷贝 PosInfo，避免与他人 PosInfo 别名共享）。
-        /// targetPlayerId &gt; 0 表示目标来自 player #id（仅用于结果 JSON 回带）。
         /// </summary>
+        /// <remarks>
+        /// targetPlayerId &gt; 0 表示目标来自 player #id（仅用于结果 JSON 回带）。
+        /// </remarks>
         public static bool ResolveTarget(BeaconArgs args, MapData mapData, MyPlayer my,
             out PosInfo pos, out string label, out int targetPlayerId, out string error)
         {
@@ -101,8 +103,10 @@ namespace DT_Tools.Commands.Beacon
         /// &lt;b>仅 Survive / Detective 阶段&lt;/b> fallback 到 ErrorPos（0.1.16b
         /// Server.Game/GameRoom.cs:2349-2354）；其余阶段（Lobby/Vote/Trial 等）整包
         /// 静默丢弃——本机已本地落位，但服务端不广播 S_MOVE，他人视角仍在原地。
-        /// 这里只做粗略边界提示，不做精确可行走判定（避免依赖服务端 MapArray）。
         /// </summary>
+        /// <remarks>
+        /// 这里只做粗略边界提示，不做精确可行走判定（避免依赖服务端 MapArray）。
+        /// </remarks>
         public static string OutOfBoundsWarning(PosInfo pos, MapData mapData)
         {
             if (pos == null || mapData?.MapSize == null || mapData.MapOffset == null)

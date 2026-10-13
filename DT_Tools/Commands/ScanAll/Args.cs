@@ -3,8 +3,11 @@ using System.Globalization;
 namespace DT_Tools.Commands.ScanAll
 {
     /// <summary>
-    /// /scan_all 参数：发包间隔（秒）。0=同帧一次发完，&gt;0=每包间隔。
+    /// /scan_all 参数：发包间隔（秒）。
     /// </summary>
+    /// <remarks>
+    /// 0=同帧一次发完，&gt;0=每包间隔。
+    /// </remarks>
     internal static class ScanAllArgs
     {
         /// <summary>

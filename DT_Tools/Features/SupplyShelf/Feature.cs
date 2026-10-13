@@ -6,9 +6,11 @@ namespace DT_Tools.Features.SupplyShelf
 {
     /// <summary>
     /// 货架随机道具（房主权威）：开局整替 DeviceManager.InitStorage，从扩展池刷道具。
+    /// </summary>
+    /// <remarks>
     /// 补货与首轮必出见 SupplyShelfRefill（下游：Refill 经 Game/ItemPools.ShelfPoolProvider
     /// 只读本层发布的投放池，无 Features 间横向依赖——AGENTS.md §4）。
-    /// </summary>
+    /// </remarks>
     [PatchFeature(
         "货架随机道具：开局从扩展池刷道具。Mode 选正常/安全；AlwaysFilled 控制是否留空槽。",
         defaultEnabled: false,

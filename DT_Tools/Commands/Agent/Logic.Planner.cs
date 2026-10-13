@@ -6,21 +6,27 @@ using Protocol;
 namespace DT_Tools.Commands.Agent
 {
     /// <summary>
-    /// 任务规划器（对应旧 AgentPlanner.cs）。四条 Collect 链体位于独立文件
+    /// 任务规划器（对应旧 AgentPlanner.cs）。
+    /// </summary>
+    /// <remarks>
+    /// 四条 Collect 链体位于独立文件
     /// （Logic.DeliveryChain / Logic.VacuumChain / Logic.InstantChain / Logic.GenerateChain）。
     ///
     /// PlanAll 返回并保留完整有序步骤列表。Runner 借此在同一 tick 内批量执行：
     /// 所有 ChangesHand==false 的步骤（互不干扰，可全部执行）+ 优先级最高的 1 个
     /// ChangesHand==true 的步骤（同 tick 最多 1 次，依据见 AgentStep.ChangesHand 注释）。
-    /// </summary>
+    /// </remarks>
     internal static class AgentPlanner
     {
         public static List<string> Peek(AgentFilter filter) =>
             PlanAll(filter).Select(s => s.Label).ToList();
 
         /// <summary>
-        /// 多步版本：供 Runner 在单 tick 内批量执行。已按 Priority 升序排列。
+        /// 多步版本：供 Runner 在单 tick 内批量执行。
         /// </summary>
+        /// <remarks>
+        /// 已按 Priority 升序排列。
+        /// </remarks>
         public static List<AgentStep> NextBatch(AgentFilter filter) => PlanAll(filter);
 
         private static List<AgentStep> PlanAll(AgentFilter filter)

@@ -29,11 +29,14 @@ namespace DT_Tools.Features.TabletQol
 
         /// <summary>
         /// 卡片自己的"现在能不能提交"判据（`CanSubmitProposition()`，私有，转储 :86295 ——
-        /// 讨论阶段 + 存活 + 尚未提交）。读不到就返回 false ⇒ Prefix 放行原版，不做任何拦截。
+        /// 讨论阶段 + 存活 + 尚未提交）。
+        /// </summary>
+        /// <remarks>
+        /// 读不到就返回 false ⇒ Prefix 放行原版，不做任何拦截。
         ///
         /// 这里**只查这一条**：原版自己还有 `IsValid(Clue.Info)`（命题完整）那道门（:86490），
         /// 由原版负责判断 —— 确认栏不该去猜它的结论。
-        /// </summary>
+        /// </remarks>
         private static bool CanSubmit(UI_ClueSubItem card)
         {
             try

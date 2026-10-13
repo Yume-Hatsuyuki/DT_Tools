@@ -12,10 +12,12 @@ namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
     /// GET /api/log/ws：WebSocket 日志流（单向推送，客户端消息一律忽略）。
+    /// </summary>
+    /// <remarks>
     /// 握手后先重放环形缓冲中 seq > since 的条目（?since=N，缺省 0），之后实时增量。每帧为 JSON 数组 [{seq,time,level,tag,msg,session}]；15 秒无增量发心跳 {"t":"ping"}。
     /// 无缝隙衔接：先注册进广播表，再取快照重放，发送时按 lastSentSeq 去重——注册与重放之间落盘的条目不漏，重放与实时的交界不重（旧 SSE 无 since、无去重，断线重连全量重放是已确认缺陷）。
     /// 线程模型：握手在 HTTP 请求线程上阻塞直到连接结束（每连接占一个请求线程）；发送由每连接独立的发送线程驱动（队列泵 + AutoResetEvent）。广播方（Log.EntryAppended）只入队，绝不阻塞；慢消费超过上限直接断开。鉴权由 Router 在分发前统一完成（未授权握手收 401）。
-    /// </summary>
+    /// </remarks>
     public static class LogStreamApi
     {
         private const int HeartbeatMs = 15000;
@@ -25,11 +27,14 @@ namespace DT_Tools.WebConsole.Api
             new ConcurrentDictionary<WsClient, bool>();
 
         /// <summary>
-        /// 运行时 WS 能力探测：0=未知 1=可用 2=不支持。Unity 的 Mono 对
+        /// 运行时 WS 能力探测：0=未知 1=可用 2=不支持。
+        /// </summary>
+        /// <remarks>
+        /// Unity 的 Mono 对
         /// HttpListener.AcceptWebSocketAsync 抛 NotImplementedException（实机确认）——
         /// 探测一次后：不支持时后续握手静默回 501（前端自动降级轮询 /api/log），
         /// 避免前端每次重连都打一条警告刷屏 BepInEx。
-        /// </summary>
+        /// </remarks>
         private static int _wsCapability;
 
         /// <summary>
@@ -146,8 +151,11 @@ namespace DT_Tools.WebConsole.Api
 
             /// <summary>
             /// 连接主体：注册后重放快照，随后在当前线程跑接收循环（探测断开），
-            /// 发送交给独立线程。返回即连接结束。
+            /// 发送交给独立线程。
             /// </summary>
+            /// <remarks>
+            /// 返回即连接结束。
+            /// </remarks>
             internal void Serve()
             {
                 var sender = new Thread(SenderLoop) { IsBackground = true, Name = "DT_WS_Send" };

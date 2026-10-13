@@ -11,10 +11,12 @@ namespace DT_Tools.WebConsole.Api
     /// /api/mp3/* — 随身MP3 应用后端：驱动 Game/MicBroadcast 的会话（与 /mic_music、
     /// StageMusic 共用同一引擎，后触发者接管）加传输控制（暂停/跳转/响度/麦克风混入
     /// 开关/本地静音），歌单持久化在 Mp3Playlist（DtPaths.Mp3Playlist）。
+    /// </summary>
+    /// <remarks>
     /// 播放即入歌单（去重）；自然播完经 MicBroadcast.TrackFinished 自动连播下一首（循环）。
     /// 全部端点经 WebConsole.RunOnMain 在 Unity 主线程执行（引擎与歌单都只碰主线程），
     /// 响应沿用命令信封 {ok, error, data}；错误码小写英文短词，中文详情在 data.message。
-    /// </summary>
+    /// </remarks>
     public static class Mp3Api
     {
         private const string Tag = "Mp3";
@@ -134,8 +136,11 @@ namespace DT_Tools.WebConsole.Api
 
         /// <summary>
         /// POST /api/mp3/pause — 暂停：记住进度并销毁引擎会话（还原语音管线，
-        /// 不留挂起状态）；恢复时从书签位置重建。幂等：已暂停返回成功。
+        /// 不留挂起状态）；恢复时从书签位置重建。
         /// </summary>
+        /// <remarks>
+        /// 幂等：已暂停返回成功。
+        /// </remarks>
         public static void HandlePause(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -153,8 +158,11 @@ namespace DT_Tools.WebConsole.Api
             });
 
         /// <summary>
-        /// POST /api/mp3/resume — 恢复：从书签位置重建会话。幂等：已在播放返回成功。
+        /// POST /api/mp3/resume — 恢复：从书签位置重建会话。
         /// </summary>
+        /// <remarks>
+        /// 幂等：已在播放返回成功。
+        /// </remarks>
         public static void HandleResume(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -368,8 +376,10 @@ namespace DT_Tools.WebConsole.Api
 
         /// <summary>
         /// 启动播放并挂连播回调；静音偏好立即生效（加载完成应用 mute，避免先响一下）。
-        /// 任何新播放都使暂停书签作废；startSeconds&gt;0 时从该位置重建（恢复暂停）。
         /// </summary>
+        /// <remarks>
+        /// 任何新播放都使暂停书签作废；startSeconds&gt;0 时从该位置重建（恢复暂停）。
+        /// </remarks>
         private static CommandResult PlayInternal(string path, int index, float startSeconds = 0f)
         {
             var store = Mp3Playlist.Get();
@@ -387,11 +397,14 @@ namespace DT_Tools.WebConsole.Api
         }
 
         /// <summary>
-        /// 自然播完自动连播。注意：引擎回调发生在 Stop() 之后（phase 已 idle），
+        /// 自然播完自动连播。
+        /// </summary>
+        /// <remarks>
+        /// 注意：引擎回调发生在 Stop() 之后（phase 已 idle），
         /// 当前曲目必须直接按路径查表——不能用 CurrentIndex()（其含 idle=-1 守卫，
         /// 会让连播永远落回第一首）。播放方式：list=顺序循环、single=单曲循环（重播当前）、
         /// random=随机不重复。
-        /// </summary>
+        /// </remarks>
         private static void OnTrackFinished()
         {
             var store = Mp3Playlist.Get();

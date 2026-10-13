@@ -4,8 +4,10 @@ namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
     /// /api/update/* — 更新检测与下载（数据源 GitHub Releases latest，经 UpdateService）。
-    /// 与 SteamApi 同类：纯 HTTP/后台线程工作，不触碰 Unity API；鉴权由 Router 统一处理。
     /// </summary>
+    /// <remarks>
+    /// 与 SteamApi 同类：纯 HTTP/后台线程工作，不触碰 Unity API；鉴权由 Router 统一处理。
+    /// </remarks>
     public static class UpdateApi
     {
         /// <summary>

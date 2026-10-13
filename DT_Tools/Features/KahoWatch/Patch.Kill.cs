@@ -5,8 +5,11 @@ namespace DT_Tools.Features.KahoWatch
 {
     /// <summary>
     /// 刀人成功提示（0.1.16b Player.OnDeadMurder，private）：凶手为被监视者且目标死亡时
-    /// 提示 KAHO。该服务端方法仅在房主进程执行，无需 IsHost 判定。
+    /// 提示 KAHO。
     /// </summary>
+    /// <remarks>
+    /// 该服务端方法仅在房主进程执行，无需 IsHost 判定。
+    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.Player), "OnDeadMurder")]
     internal static class KahoWatchKillPatch
     {

@@ -13,9 +13,12 @@ namespace DT_Tools.Commands.GiveBuff
     internal sealed class GiveBuffArgs
     {
         /// <summary>
-        /// 单次添加 BUFF 的最大时长（秒）。与原版 Raasrush/DetailCheck/MindControl
-        /// 等被动技能挂载时长一致（3600000 ms）。
+        /// 单次添加 BUFF 的最大时长（秒）。
         /// </summary>
+        /// <remarks>
+        /// 与原版 Raasrush/DetailCheck/MindControl
+        /// 等被动技能挂载时长一致（3600000 ms）。
+        /// </remarks>
         public const int MaxDurationSeconds = 3600;
 
         public bool All { get; private set; }

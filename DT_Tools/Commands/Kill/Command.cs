@@ -9,9 +9,11 @@ namespace DT_Tools.Commands.Kill
 {
     /// <summary>
     /// /kill &lt;all|#playerId>：颈环炸弹处决（仅房主，Survive / Detective / Trial，6 秒延迟）。
+    /// </summary>
+    /// <remarks>
     /// 机制：Player.OnDeadCollarBomb() 是原版 GameRoom.GameOver() 全员处决的同一路径，命令只是把“GameOver 时全员同时爆炸”的特权开放给单玩家或全体。非审判阶段先预热：DeadDetective 语义 buff + 全员广播 Louis 瞄准镜（S_PLAY_EFFECT 绕开原版 SendVFX 只发 Owner 的限制）+ LouisSkillSfx 警告音；随后调用 OnDeadCollarBomb，它先立即广播 DyingVfx 倒地（896m 内可见），PushAfter(6000) 后才真死亡（0.1.16b Server.Game/Player.cs:857-878（待核对））。
     /// 风险：全员击杀会触发 4 秒后自动总结算；Trial 杀 Black 会让 EndTrial 无法正确处决黑方（OnDead 的 IsAlive 守卫兜底，已死直接 return）。
-    /// </summary>
+    /// </remarks>
     internal sealed class KillCommand : ICommand
     {
         public string Name => "kill";

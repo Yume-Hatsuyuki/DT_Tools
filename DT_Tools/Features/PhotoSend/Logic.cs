@@ -14,10 +14,12 @@ namespace DT_Tools.Features.PhotoSend
     /// 构造 C_CHAT_PHOTO 直发（SlotIndex=-1，不触碰 PhotoManager._shots/_sentPhotoIds；
     /// 房主端数据通道不校验 SlotIndex，0.1.17a Server.Game/HostPacketHandler.cs:552；
     /// 回包 SlotIndex&lt;0 不落重发缓存，0.1.17a PhotoManager.cs:773）。
+    /// </summary>
+    /// <remarks>
     /// 文字说明在本地图压缩成功后、发送前发出（保证"先文字后图片"的聊天顺序，失败不打空炮）。
     /// http 链接在后台线程下载（AGENTS.md §11：Unity API 仅主线程可碰），经
     /// CoroutineHost.Post 回主线程再编码发包。成功返回 null，失败返回可读错误文案。
-    /// </summary>
+    /// </remarks>
     internal static class PhotoSendLogic
     {
         private const int JpegLimitBytes = 163840;   // 原版上限（0.1.16b PhotoManager.cs:700（待核对）)
@@ -58,8 +60,11 @@ namespace DT_Tools.Features.PhotoSend
         }
 
         /// <summary>
-        /// 执行发送：压缩成功后才发文字说明并出图；远程链接先发文字再异步下载。主线程调用。
+        /// 执行发送：压缩成功后才发文字说明并出图；远程链接先发文字再异步下载。
         /// </summary>
+        /// <remarks>
+        /// 主线程调用。
+        /// </remarks>
         public static string Execute(VoiceManager chat, string alt, string argument)
         {
             try
@@ -98,8 +103,11 @@ namespace DT_Tools.Features.PhotoSend
         }
 
         /// <summary>
-        /// 发送文字说明。SendingCaption 闸期间发送，防止文字被自己的补丁再次解析成指令。
+        /// 发送文字说明。
         /// </summary>
+        /// <remarks>
+        /// SendingCaption 闸期间发送，防止文字被自己的补丁再次解析成指令。
+        /// </remarks>
         private static void SendCaption(VoiceManager chat, string alt)
         {
             if (string.IsNullOrEmpty(alt))
@@ -164,8 +172,11 @@ namespace DT_Tools.Features.PhotoSend
         }
 
         /// <summary>
-        /// 图片字节解码 → 先按原分辨率编码，超 160KB 再按缩放模式降级。须主线程。
+        /// 图片字节解码 → 先按原分辨率编码，超 160KB 再按缩放模式降级。
         /// </summary>
+        /// <remarks>
+        /// 须主线程。
+        /// </remarks>
         private static string CompressToJpeg(byte[] image, out byte[] jpeg, out int outW, out int outH)
         {
             jpeg = null;
@@ -257,8 +268,11 @@ namespace DT_Tools.Features.PhotoSend
         }
 
         /// <summary>
-        /// 直发：构造 C_CHAT_PHOTO（SlotIndex=-1）直接发，不触碰相册。须主线程。
+        /// 直发：构造 C_CHAT_PHOTO（SlotIndex=-1）直接发，不触碰相册。
         /// </summary>
+        /// <remarks>
+        /// 须主线程。
+        /// </remarks>
         private static string SendPhoto(byte[] jpeg, string name, int outW, int outH)
         {
             var sink = Managers.Network?.GameServer;
@@ -322,8 +336,11 @@ namespace DT_Tools.Features.PhotoSend
         }
 
         /// <summary>
-        /// GPU 缩放一步：Blit 到临时 RT 后 ReadPixels 回 CPU 纹理。须主线程。
+        /// GPU 缩放一步：Blit 到临时 RT 后 ReadPixels 回 CPU 纹理。
         /// </summary>
+        /// <remarks>
+        /// 须主线程。
+        /// </remarks>
         private static Texture2D BlitToTexture(Texture2D src, int w, int h)
         {
             var target = new Texture2D(w, h, TextureFormat.RGBA32, false);

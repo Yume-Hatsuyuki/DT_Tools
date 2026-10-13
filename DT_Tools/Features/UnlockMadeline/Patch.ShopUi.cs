@@ -83,8 +83,10 @@ namespace DT_Tools.Features.UnlockMadeline
     /// <summary>
     /// UI_InfoSkillSubItem.SetInfo(ESkillType, bool, bool) 后缀（public 重载，
     /// 可用 nameof）：0.1.16b UI_InfoSkillSubItem.cs:92（待核对）。
-    /// 己方 SuperRazer 技能条目为 Madeline 时替换头像与名字（原版无其资源）。
     /// </summary>
+    /// <remarks>
+    /// 己方 SuperRazer 技能条目为 Madeline 时替换头像与名字（原版无其资源）。
+    /// </remarks>
     [HarmonyPatch(typeof(UI_InfoSkillSubItem), nameof(UI_InfoSkillSubItem.SetInfo),
         new global::System.Type[] { typeof(ESkillType), typeof(bool), typeof(bool) })]
     internal static class UnlockMadelineSkillInfoPatch

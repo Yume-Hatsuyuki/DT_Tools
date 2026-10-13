@@ -11,9 +11,11 @@ namespace DT_Tools.Features.MotionAfterimage
 {
     /// <summary>
     /// 活体残影：对齐 FlashVfx（ColorPlayerShadow + Idle 定格 + alpha 淡出）。
+    /// </summary>
+    /// <remarks>
     /// 死亡定格：ShadowPlayerShadow 黑色最后一帧。
     /// Survive / Detective 地图内生效（可分别开关）。
-    /// </summary>
+    /// </remarks>
     internal static class MotionAfterimageLogic
     {
         private static readonly string[] PrefabCandidates = { "ShadowPartnerVfx", "FlashVfx" };
@@ -178,9 +180,11 @@ namespace DT_Tools.Features.MotionAfterimage
 
         /// <summary>
         /// 只保留「最后一次 Despawn」的黑色定格：先删旧再新建。
+        /// </summary>
+        /// <remarks>
         /// 无采样历史时从 PlayerCache 补全角色/坐标（幽灵视角下他人死亡也能定格）。
         /// 自己通常不走 Despawn（客户端忽略 S_DESPAWN self），见 OnLocalPlayerDead。
-        /// </summary>
+        /// </remarks>
         public static void OnPlayerDespawned(int playerId)
         {
             if (!Engine.Enabled<MotionAfterimageFeature>())

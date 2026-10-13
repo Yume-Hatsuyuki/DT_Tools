@@ -10,10 +10,13 @@ namespace DT_Tools.Features.LobbyMaxPlayers
 {
     /// <summary>
     /// GameStart 整替（0.1.17a GameRoom.cs:662-684）：StartPosList 打乱后分配，
-    /// 人数超出出生点时 i % Count 循环复用，避免越界。仅当 MaxMembers &gt; 8 时接管，否则走原版。
+    /// 人数超出出生点时 i % Count 循环复用，避免越界。
+    /// </summary>
+    /// <remarks>
+    /// 仅当 MaxMembers &gt; 8 时接管，否则走原版。
     /// 与原版（0.1.17a GameRoom.cs:681 直接赋 FirstBloodVictimId=0）的差异用
     /// public RestoreFirstBloodVictimId（0.1.17a GameRoom.cs:167）等价实现。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.GameStart))]
     internal static class LobbyMaxPlayersGameStartPatch
     {

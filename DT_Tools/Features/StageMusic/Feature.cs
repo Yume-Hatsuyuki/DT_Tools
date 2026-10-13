@@ -4,6 +4,8 @@ namespace DT_Tools.Features.StageMusic
 {
     /// <summary>
     /// 阶段音乐（客户端，实验性）：按游戏阶段播放自定义音乐（来源由 TrackSource 指定：http 链接或本地文件，仅本地收听）。
+    /// </summary>
+    /// <remarks>
     /// 触发点（0.1.16b 源码，2026-09 补充审计）：
     /// 击杀 Handle_S_KILL_PLAYER（只发凶手，PacketHandler.cs:953）；递刀 UseHandWeapon（MyPlayer.cs:779）；阶段切换 GameManagerEX.StartState（GameManagerEX.cs:386，六阶段）；
     /// 处刑 UI_TrialEvent.TrialResult（UI_TrialEvent.cs:1214）；大厅 UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2209）与 StartLobby（GameManagerEX.cs:447）；
@@ -14,7 +16,7 @@ namespace DT_Tools.Features.StageMusic
     /// 原版 BGM 可选静音（各阶段原版会播 DetectiveBGM、TrialMainBGM、Beta_Result_BGM 等，含 MainTitleBGM）。
     /// 麦克风广播（MicBroadcast 配置，默认关）：经 Game/MicBroadcast 混入全房；随播放槽启停，与 /mic_music 互斥（后触发者接管）。
     /// 未来扩展：新增阶段 = 加 MusicStage 成员 + 对应 [Config] 字段 + 触发补丁。
-    /// </summary>
+    /// </remarks>
     [PatchFeature(
         "[实验性] 阶段音乐：按游戏阶段播放自定义音乐（TrackSource 统一选择在线链接或本地文件，" +
         "17 个阶段独立配置曲目/音量/时长上限——原 8 阶段 + 选角/审判四子阶段/发现尸体/" +

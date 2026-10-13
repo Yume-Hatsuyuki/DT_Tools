@@ -13,11 +13,14 @@ namespace DT_Tools.Commands.RoomCode
     internal static class RoomCodeLogic
     {
         /// <summary>
-        /// 读取房间号 / 人数 / 上限。失败返回 false（提示与错误码已给出）。
+        /// 读取房间号 / 人数 / 上限。
+        /// </summary>
+        /// <remarks>
+        /// 失败返回 false（提示与错误码已给出）。
         /// max：LobbyMaxPlayers 开启时用其生效进房上限（命令域引用功能公开状态，
         /// AGENTS.md §4 例外一），否则原版常量 SteamLobbyManager.MaxMembers（0.1.16b
         /// DummyClient/SteamLobbyManager.cs:10，值为 8）。
-        /// </summary>
+        /// </remarks>
         public static bool TryRead(
             out string code,
             out bool isHost,

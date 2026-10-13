@@ -17,10 +17,12 @@ namespace DT_Tools.Features.SpectatorJoin
     {
         /// <summary>
         /// GameStart：观战者不参与出生点分配，进入幽灵观战模式（EnterSpectator）。
+        /// </summary>
+        /// <remarks>
         /// 其余与原版 + LobbyMaxPlayers 对齐：StartPosList 打乱后分配，人数超出
         /// 出生点时 i % Count 循环复用；RoundStartPlayerCount 只统计真实玩家，
         /// 不影响黑方击杀上限。
-        /// </summary>
+        /// </remarks>
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.GameStart))]
         [HarmonyPrefix]
@@ -147,8 +149,10 @@ namespace DT_Tools.Features.SpectatorJoin
 
         /// <summary>
         /// StartPick：观战者不进入存活池、不参与角色颜色分配、不会被随机为黑方/主谋。
-        /// 其余与原版一致。
         /// </summary>
+        /// <remarks>
+        /// 其余与原版一致。
+        /// </remarks>
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(GameRoom), "StartPick")]
         [HarmonyPrefix]

@@ -10,10 +10,12 @@ namespace DT_Tools.Commands.Fusebox
 {
     /// <summary>
     /// 修电 / 拆电共用业务（校验与协程发包；设备查询已上浮 Game/Devices.cs）。
+    /// </summary>
+    /// <remarks>
     /// 原版：同一个 C_INTERACT_FUSEBOX 经 DeviceManager.Interact → Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16），按 StateList[0] 分流：0 → DisconnetCable（拉闸，:114），9999 → ConnetCable（修电，:97）。
     /// DisconnetCable 仅校验 MissionType==-1（开局 StartFuseboxSabotage 武装的 3 个电闸），无颜色、距离、谜题校验（好人也能拉闸）；ConnetCable 无身份或读条校验。
     /// 服务端 DeviceManager.Interact 有 500ms InteractLock（Player.InteractLock setter 内 PushAfter(500)），连续发包需间隔 >0.5s。
-    /// </summary>
+    /// </remarks>
     internal static class FuseboxLogic
     {
         /// <summary>
@@ -38,9 +40,11 @@ namespace DT_Tools.Commands.Fusebox
 
         /// <summary>
         /// 校验本机已进入对局 + 已连上 Host + 处于生存阶段。
+        /// </summary>
+        /// <remarks>
         /// 失败时输出提示并经 code 返回对应错误码（沿用旧实现）。
         /// 修电/拆电都只在 Survive 阶段生效。
-        /// </summary>
+        /// </remarks>
         public static bool ValidateClient(CommandContext ctx, out string code)
         {
             if (!LocalPlayer.TryGetPlayer(out _, out string localError))
@@ -67,8 +71,10 @@ namespace DT_Tools.Commands.Fusebox
 
         /// <summary>
         /// 收集已损坏电闸（StateList[0]==9999），可用于修电。
-        /// （已武装完好的电闸查询走 Game/Devices.ArmedIntactFuseboxes()）
         /// </summary>
+        /// <remarks>
+        /// （已武装完好的电闸查询走 Game/Devices.ArmedIntactFuseboxes()）
+        /// </remarks>
         public static List<DeviceBase> CollectBroken()
         {
             return Devices.AllOf(EDeviceType.Fusebox)
@@ -80,8 +86,11 @@ namespace DT_Tools.Commands.Fusebox
         }
 
         /// <summary>
-        /// 按 ID 查找电闸。返回 (设备, 错误信息)；不存在时设备为 null。
+        /// 按 ID 查找电闸。
         /// </summary>
+        /// <remarks>
+        /// 返回 (设备, 错误信息)；不存在时设备为 null。
+        /// </remarks>
         public static DeviceBase FindFusebox(int id, out string error)
         {
             if (Managers.Device.Cache.TryGetValue(id, out var dev))
@@ -126,9 +135,11 @@ namespace DT_Tools.Commands.Fusebox
 
         /// <summary>
         /// all 模式协程：逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。
+        /// </summary>
+        /// <remarks>
         /// 每次发包前校验网络链路和游戏阶段，对局结束 / 断线时中止。
         /// action 描述用于日志（"修电"/"拆电"）。
-        /// </summary>
+        /// </remarks>
         public static IEnumerator SendPackets(List<int> ids, string action, CommandContext ctx)
         {
             int sent = 0;

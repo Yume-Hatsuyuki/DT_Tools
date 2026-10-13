@@ -4,8 +4,10 @@ namespace DT_Tools.Core.Attributes
 {
     /// <summary>
     /// 标记基础设施配置段（不属于任何功能，如自动化总开关）。
-    /// 段名同样按"类名去后缀（Host/Options/Settings）"推导；类上的 [Config] 字段由引擎绑定。
     /// </summary>
+    /// <remarks>
+    /// 段名同样按"类名去后缀（Host/Options/Settings）"推导；类上的 [Config] 字段由引擎绑定。
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class ConfigSectionAttribute : Attribute
     {
@@ -20,9 +22,12 @@ namespace DT_Tools.Core.Attributes
         public string Description { get; }
 
         /// <summary>
-        /// WebUI 分组（"automation" = 前端 AUTOMATION 页）。引擎在装载期收集进
-        /// Engine.GroupOfSection 元数据表，配置层据此分组而不硬编码段名。
+        /// WebUI 分组（"automation" = 前端 AUTOMATION 页）。
         /// </summary>
+        /// <remarks>
+        /// 引擎在装载期收集进
+        /// Engine.GroupOfSection 元数据表，配置层据此分组而不硬编码段名。
+        /// </remarks>
         public string Group { get; set; }
 
         public ConfigSectionAttribute(string description = null)

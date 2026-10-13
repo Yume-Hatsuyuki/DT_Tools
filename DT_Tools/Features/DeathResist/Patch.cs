@@ -6,8 +6,11 @@ using UnityEngine;
 namespace DT_Tools.Features.DeathResist
 {
     /// <summary>
-    /// 死亡抗拒补丁：仅客户端。会话内用 _active 标记本局是否已假活。
+    /// 死亡抗拒补丁：仅客户端。
     /// </summary>
+    /// <remarks>
+    /// 会话内用 _active 标记本局是否已假活。
+    /// </remarks>
     internal static class DeathResistPatches
     {
         /// <summary>

@@ -9,9 +9,11 @@ namespace DT_Tools.Automation.AutoPickCharacter
 {
     /// <summary>
     /// 运行时从 Managers.Data.CharacterDic 读取角色目录（含梅德琳），供发包前校验与 WebUI 下拉；展示名为中文（英文），中文从 TextDic 查。
+    /// </summary>
+    /// <remarks>
     /// 梅德琳（DataId=101）：不同版本角色表里 101 的 Name 可能是 "Madeline" 或 "Medelin"，而文本表只有 "Madeline" 这个 key。因此 101 一律以 ID 识别，英文名固定为 Madeline，中文名按 [表内 Name, Madeline, Medelin] 依次尝试；其余角色照常按 Name 读取。
     /// 文本一律直接查 TextDic，不调用 Managers.GetText：GetText 缺 key 时会 Debug.LogError，而下拉数据会被 WebUI 轮询，会刷屏。
-    /// </summary>
+    /// </remarks>
     internal static class AutoPickCharacterLogic
     {
         public const int RandomId = -2;
@@ -98,8 +100,10 @@ namespace DT_Tools.Automation.AutoPickCharacter
 
         /// <summary>
         /// OptionProviders 用：value 为 DataId（含随机 -2），label 为「中文 (English)」。
-        /// 角色表未就绪时只会有"随机"一项，不影响 UI。
         /// </summary>
+        /// <remarks>
+        /// 角色表未就绪时只会有"随机"一项，不影响 UI。
+        /// </remarks>
         public static IReadOnlyList<ConfigOption> Options()
         {
             var all = ListAll(includeRandom: true);

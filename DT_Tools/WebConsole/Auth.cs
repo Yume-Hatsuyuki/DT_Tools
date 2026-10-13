@@ -6,10 +6,13 @@ using System.Text;
 namespace DT_Tools.WebConsole
 {
     /// <summary>
-    /// 访问鉴权。密码为空 → 完全放行（本机回环使用场景）；
+    /// 访问鉴权。
+    /// </summary>
+    /// <remarks>
+    /// 密码为空 → 完全放行（本机回环使用场景）；
     /// 非空 → 登录校验密码后发放会话 token（HttpOnly cookie），
     /// 后续请求凭 cookie dt_token 或 ?token= 校验【token】而非明文密码。
-    /// </summary>
+    /// </remarks>
     public sealed class Auth
     {
         private readonly string _password;

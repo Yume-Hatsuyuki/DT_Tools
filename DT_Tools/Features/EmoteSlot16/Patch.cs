@@ -68,9 +68,11 @@ namespace DT_Tools.Features.EmoteSlot16
 
     /// <summary>
     /// 存档：老 8 槽存档迁移到 32 槽（原槽位保留、新槽位置空）。
+    /// </summary>
+    /// <remarks>
     /// 注意：原版 EnsureSchema 在 EquippedEmoticonIds.Length != 8 时会重置为默认 8 槽，
     /// 因此 32 槽数据必须在 Prefix 备份、Postfix 恢复，否则重启游戏后第 9-32 槽表情会丢失。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch(typeof(SaveManager), "EnsureSchema")]
     internal static class SaveSchemaMigratePatch
     {
@@ -527,10 +529,12 @@ namespace DT_Tools.Features.EmoteSlot16
 
     /// <summary>
     /// 商店配置页点击径向板：把页内索引换算为实际槽位（页*8 + 页内索引）后选中。
+    /// </summary>
+    /// <remarks>
     /// 原版 SelectSlot/UpdateSelectionVisuals 对实际槽位 >=8 不会高亮（_slots 只有 8 个元素，
     /// i == _selectedSlot 永远不匹配），这里手动维护选中态：槽位高亮页内槽、列表按 _selectedEmoteId 高亮。
     /// （翻页键在 UI_ShopPopup.Update 中处理，中键也走那里；本方法不重复处理中键，避免双翻页。）
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch(typeof(UI_Shop_EmoticonCustom), "OnClickBoard")]
     internal static class ShopClickBoardPatch
     {

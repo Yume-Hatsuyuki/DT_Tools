@@ -22,10 +22,13 @@ namespace DT_Tools.WebConsole.Mcp
     }
 
     /// <summary>
-    /// MCP 工具注册表：反射发现本程序集全部 [McpTool] 类。与 CommandRegistry 同风格，
+    /// MCP 工具注册表：反射发现本程序集全部 [McpTool] 类。
+    /// </summary>
+    /// <remarks>
+    /// 与 CommandRegistry 同风格，
     /// 零注册代码；同名工具直接报错。工具类契约：static JObject Schema() +
     /// static CommandResult Execute(JObject args)（返回值经 Json.To 进 MCP content）。
-    /// </summary>
+    /// </remarks>
     internal static class McpToolLoader
     {
         private static Dictionary<string, McpToolDef> _tools;

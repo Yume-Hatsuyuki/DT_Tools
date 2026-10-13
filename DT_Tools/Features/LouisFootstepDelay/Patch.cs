@@ -7,10 +7,13 @@ namespace DT_Tools.Features.LouisFootstepDelay
     /// <summary>
     /// OnDeadMurder 后缀：死者带路易斯警报标记（DeadDetective）时，给凶手提前施加
     /// FootprintMs 的脚印追踪；原版稍后 AddBuff(Footprint, 3000) 因该 buff 已存在被跳过，
-    /// 总时长即配置值。该服务端方法仅在房主进程执行（客户端上 HostPacketHandler 链路
+    /// 总时长即配置值。
+    /// </summary>
+    /// <remarks>
+    /// 该服务端方法仅在房主进程执行（客户端上 HostPacketHandler 链路
     /// 不运行），无需 IsHost 判定。异常整体吞掉——Postfix 抛出会打断宿主 OnDeadMurder
     /// 剩余流程。
-    /// </summary>
+    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.Player), "OnDeadMurder")]
     internal static class LouisFootstepDelayPatch
     {

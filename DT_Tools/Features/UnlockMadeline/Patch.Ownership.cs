@@ -6,8 +6,10 @@ namespace DT_Tools.Features.UnlockMadeline
     /// <summary>
     /// SteamInventorySource.IsCharacterOwned：原版对 101(Madeline) 恒 false
     /// （public，可用 nameof）：0.1.16b SteamInventorySource.cs:688（待核对）。
-    /// 仅 101 整替为 true，其余走原版（与 UnlockCharacters 互补）。
     /// </summary>
+    /// <remarks>
+    /// 仅 101 整替为 true，其余走原版（与 UnlockCharacters 互补）。
+    /// </remarks>
     [HarmonyPatch(typeof(SteamInventorySource), nameof(SteamInventorySource.IsCharacterOwned))]
     internal static class UnlockMadelineSteamOwnedPatch
     {

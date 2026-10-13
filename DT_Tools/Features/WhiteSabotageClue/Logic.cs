@@ -18,10 +18,12 @@ namespace DT_Tools.Features.WhiteSabotageClue
         /// （0.1.16b Server.Game/Device.cs:222-260（待核对）：30 秒冷却 → 标记既有证据链 →
         /// 新增一条销毁痕迹），差异点仅一处——痕迹记录真实玩家身份（原版按行为人
         /// 颜色记固定假身份：黑方 66613 / 黑幕 11037，Device.cs:244-250）。
+        /// </summary>
+        /// <remarks>
         /// 与 Game/SabotageClue.AddClue 的 30 秒窗口去重不同：原版销毁不走窗口去重，
         /// 每次销毁都新增一条；也不发 S_LEFT_CLUE（原版没有）。OnEvidenceDestroyed 为
         /// protected virtual（Device.cs:263），经反射调用以保留子类覆写。
-        /// </summary>
+        /// </remarks>
         public static void DestroyEvidence(Device device, Server.Game.Player player)
         {
             player.CanDestroyEvidence = false;

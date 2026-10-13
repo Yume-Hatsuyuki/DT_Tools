@@ -17,8 +17,11 @@ namespace DT_Tools.Features.CustomRoomCode
         private const int MaxCodeLength = 7;
 
         /// <summary>
-        /// 订阅 RoomCode 配置项变更（订阅骨架在 Game/RoomLobbyData）。变更即尝试写入当前房间，WebUI 改配置后无需额外特判即可生效。
+        /// 订阅 RoomCode 配置项变更（订阅骨架在 Game/RoomLobbyData）。
         /// </summary>
+        /// <remarks>
+        /// 变更即尝试写入当前房间，WebUI 改配置后无需额外特判即可生效。
+        /// </remarks>
         public static void WireRoomCodeChanged()
             => RoomLobbyData.WireChanged<CustomRoomCodeFeature>(
                 nameof(CustomRoomCodeFeature.RoomCode), reason => TryApplyRoomCode(reason));
@@ -47,8 +50,11 @@ namespace DT_Tools.Features.CustomRoomCode
         /// <summary>
         /// 房间码清洗的唯一实现：trim → 大写 → 仅保留 A–Z / 0–9（与原版输入校验
         /// OnValidateRoomCodeChar 一致，0.1.17a UI_LobbyScene.cs:1732）→ 7 位截断
-        /// （原版随机码长度，Util.cs:185）。清洗后为空 = 放行原版随机码。
+        /// （原版随机码长度，Util.cs:185）。
         /// </summary>
+        /// <remarks>
+        /// 清洗后为空 = 放行原版随机码。
+        /// </remarks>
         internal static string SanitizeCode()
         {
             string code = CustomRoomCodeFeature.RoomCode?.Trim().ToUpperInvariant() ?? "";

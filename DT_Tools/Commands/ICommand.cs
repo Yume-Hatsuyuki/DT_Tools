@@ -1,10 +1,13 @@
 namespace DT_Tools.Commands
 {
     /// <summary>
-    /// 控制台命令契约。框架负责：注册（反射发现）、房主门禁（RequireHost）、异常兜底、
+    /// 控制台命令契约。
+    /// </summary>
+    /// <remarks>
+    /// 框架负责：注册（反射发现）、房主门禁（RequireHost）、异常兜底、
     /// 结果序列化（CommandResult → Newtonsoft）。命令只做：解析参数 → 调用 Logic → 格式化输出。
     /// 输出双通道：ctx.Reply/Warn（人类可读文本）+ 返回值 CommandResult（机器 JSON），两者都写。
-    /// </summary>
+    /// </remarks>
     public interface ICommand
     {
         /// <summary>
@@ -33,8 +36,11 @@ namespace DT_Tools.Commands
         string Author { get; }
 
         /// <summary>
-        /// 功能标签（1–3 个）。词表见 Core.Attributes.FeatureTag。
+        /// 功能标签（1–3 个）。
         /// </summary>
+        /// <remarks>
+        /// 词表见 Core.Attributes.FeatureTag。
+        /// </remarks>
         Core.Attributes.FeatureTag Tags { get; }
 
         /// <summary>

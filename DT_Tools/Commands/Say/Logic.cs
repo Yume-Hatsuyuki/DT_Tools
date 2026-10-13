@@ -39,9 +39,12 @@ namespace DT_Tools.Commands.Say
         }
 
         /// <summary>
-        /// 构造 S_CHAT_MESSAGE。PlayerId 恒为 0：客户端 GetPlayerCache(0) 查不到玩家
-        /// → 名字为空 → 只显示文字，等同"系统发言"。
+        /// 构造 S_CHAT_MESSAGE。
         /// </summary>
+        /// <remarks>
+        /// PlayerId 恒为 0：客户端 GetPlayerCache(0) 查不到玩家
+        /// → 名字为空 → 只显示文字，等同"系统发言"。
+        /// </remarks>
         public static S_CHAT_MESSAGE BuildPacket(EChatType channel, string text)
         {
             var packet = new S_CHAT_MESSAGE

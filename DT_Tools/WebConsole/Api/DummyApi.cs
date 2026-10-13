@@ -11,10 +11,12 @@ namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
     /// /api/dummy/* — 假人管理应用的后端（Game/FakePlayers 的 HTTP 面）。
+    /// </summary>
+    /// <remarks>
     /// GameRoom 及其玩家只能在 Unity 主线程读写：所有端点经 WebConsole.RunOnMain
     /// 同步执行（复用 /api/run 的队列与 5 秒超时保护）。
     /// 响应沿用命令信封 {ok, error, data}；错误码小写英文短词，中文详情在 data.message。
-    /// </summary>
+    /// </remarks>
     public static class DummyApi
     {
         /// <summary>
@@ -112,9 +114,12 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 有效房间人数上限：「房间人数上限」功能（LobbyMaxPlayers）开启时用其 MaxMembers
         /// （1–16，其 GameStart 补丁已做出生点循环复用，>8 不越界）；关闭时回原生 8
-        /// （0.1.16b Define.cs:752（待核对）)。Game 层禁止反向引用 Features（AGENTS.md §4），
-        /// 故在 API 顶层解析后作为参数传给 FakePlayers；座位表 16 为硬顶。
+        /// （0.1.16b Define.cs:752（待核对）)。
         /// </summary>
+        /// <remarks>
+        /// Game 层禁止反向引用 Features（AGENTS.md §4），
+        /// 故在 API 顶层解析后作为参数传给 FakePlayers；座位表 16 为硬顶。
+        /// </remarks>
         private static int ResolveRoomCapacity()
         {
             try

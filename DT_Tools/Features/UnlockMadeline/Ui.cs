@@ -9,8 +9,10 @@ namespace DT_Tools.Features.UnlockMadeline
     /// <summary>
     /// 资源注入与 UI 附加：从现有图集裁切出 Madeline 缺失的贴图并写入
     /// ResourceManager 缓存字典；选人立绘 Image 的创建/复用；审判过场表情层替换。
-    /// 所有裁切 Rect / 缩放系数集中在本文件顶部具名常量。
     /// </summary>
+    /// <remarks>
+    /// 所有裁切 Rect / 缩放系数集中在本文件顶部具名常量。
+    /// </remarks>
     internal static class UnlockMadelineUi
     {
         // 裁切参数（来源：DT_Tools v1 实测标定，目标图集为游戏自带
@@ -92,9 +94,11 @@ namespace DT_Tools.Features.UnlockMadeline
 
         /// <summary>
         /// 注入全部缺失资源（可从 IsInit setter 补丁或 OnEnabled 热开启调用）。
+        /// </summary>
+        /// <remarks>
         /// 已注入短路：两个入口可能重复触发（如场景重载再次置 IsInit），反复执行会
         /// 重复创建裁切纹理滞留显存，故一个开启周期只注入一次（Cleanup 复位标记）。
-        /// </summary>
+        /// </remarks>
         public static void InjectAll(ResourceManager rm)
         {
             if (UnlockMadelineState.Injected)
@@ -214,9 +218,11 @@ namespace DT_Tools.Features.UnlockMadeline
 
         /// <summary>
         /// 从 Madeline 立绘裁正方形脸区，缩放到 88×88（与 statement 同尺寸）。
+        /// </summary>
+        /// <remarks>
         /// 官方 Map_Black / Map_White 主要差边框色（粉/绿），脸本身亮度一致，
         /// 故 Black/White 共用同一张裁切，不再压暗。
-        /// </summary>
+        /// </remarks>
         private static void InjectMapSpritesFromStanding(Dictionary<string, Object> dict, Texture2D orig)
         {
             if (dict.TryGetValue("Madeline_Map_White.sprite", out var existW) && existW is Sprite

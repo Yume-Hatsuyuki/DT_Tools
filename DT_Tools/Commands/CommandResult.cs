@@ -5,9 +5,11 @@ namespace DT_Tools.Commands
 {
     /// <summary>
     /// 命令结果信封：Newtonsoft 序列化为 {"ok":…,"error":…,"data":…}（camelCase）。
+    /// </summary>
+    /// <remarks>
     /// data 用匿名对象 / DTO（键名即想要的 JSON 形状），禁止字符串拼接。
     /// 错误码约定：小写英文短词（"host only"、"no room"、"invalid target"），与前端约定一致。
-    /// </summary>
+    /// </remarks>
     public sealed class CommandResult
     {
         public bool Ok { get; private set; }
@@ -20,8 +22,11 @@ namespace DT_Tools.Commands
 
         /// <summary>
         /// 延迟完成回调（ctx.Defer() 通道挂入）：非空表示本结果是占位、真实结果稍后经
-        /// <see cref="Complete"/> 回填。等待方（pump/RunOnMain）据此跳过立即回填。
+        /// <see cref="Complete"/> 回填。
         /// </summary>
+        /// <remarks>
+        /// 等待方（pump/RunOnMain）据此跳过立即回填。
+        /// </remarks>
         private Action<CommandResult> _deferredComplete;
 
         [JsonIgnore]

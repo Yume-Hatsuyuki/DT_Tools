@@ -7,8 +7,10 @@ namespace DT_Tools.Features.Jelly
 {
     /// <summary>
     /// 单个果冻对象的状态：采集的视觉基准、是否动过 localPosition。
-    /// Target=果冻作用节点；Collider 系列仅根视觉设备（矿山/窗帘）的反缩放补偿使用。
     /// </summary>
+    /// <remarks>
+    /// Target=果冻作用节点；Collider 系列仅根视觉设备（矿山/窗帘）的反缩放补偿使用。
+    /// </remarks>
     internal sealed class JellyState
     {
         public bool Captured;
@@ -24,6 +26,8 @@ namespace DT_Tools.Features.Jelly
 
     /// <summary>
     /// 果冻周期：全员同相位（Time.unscaledTime 取模），下压段 smoothstep + 回弹段阻尼余弦，每帧绝对赋值 scale。
+    /// </summary>
+    /// <remarks>
     /// 玩家目标：挂 SkeletonAnimation 的视觉子节点（0.1.17a Player.cs:302/608）。主游戏不写该节点的 scale/localPosition；
     /// 碰撞体、UIGroup、EffectGroup 都是它的兄弟节点，Spine 也不写 transform scale。绝对赋值因此不会被覆盖，晚加入或重生的角色无需额外挂钩。
     /// 设备目标（IncludeDevices）：优先 SkeletonAnimation 子节点（Corpse.cs:127、Chair.cs:31）；掉落物与根视觉设备（Mineral/Curtain）缩根；
@@ -31,7 +35,7 @@ namespace DT_Tools.Features.Jelly
     /// 柜子、门等视觉与视线遮挡 collider 同在根上的设备永远跳过：缩放会改变遮挡判定。
     /// 地形装饰（IncludeDecorations）：只处理当前房间（MapManager.CurrentPrefab）的 SpriteRenderer，跳过 Tilemap，以及带 Collider2D 或 layer=Block(12)/Transmission(13) 的节点。
     /// 视线遮挡 collider 与移动碰撞由 prefab 序列化，无法从代码判断 sprite 与 collider 是否同节点，所以凡带 collider 一律不碰（MyPlayer.cs:1533 等 mask=12288）。
-    /// </summary>
+    /// </remarks>
     internal static class JellyLogic
     {
         /// <summary>
@@ -151,8 +155,11 @@ namespace DT_Tools.Features.Jelly
         }
 
         /// <summary>
-        /// 关闭/清理：把所有被跟踪对象（玩家+设备+装饰）的视觉基准写回。返回写回成功的数量。
+        /// 关闭/清理：把所有被跟踪对象（玩家+设备+装饰）的视觉基准写回。
         /// </summary>
+        /// <remarks>
+        /// 返回写回成功的数量。
+        /// </remarks>
         public static int RestoreAll()
         {
             int restored = 0;
@@ -380,8 +387,10 @@ namespace DT_Tools.Features.Jelly
 
         /// <summary>
         /// UI 按钮增量补扫（节流 1 秒）：只新增不删除；已销毁按钮的伪 null 条目顺手清掉。
-        /// 不做全量重建——先还原再变形会造成周期性抖动。
         /// </summary>
+        /// <remarks>
+        /// 不做全量重建——先还原再变形会造成周期性抖动。
+        /// </remarks>
         private static void EnsureUiScan()
         {
             if (Time.unscaledTime < _nextUiScan)
@@ -421,8 +430,11 @@ namespace DT_Tools.Features.Jelly
         }
 
         /// <summary>
-        /// 核心：对目标节点施加当前相位的果冻系数。返回 1=已施加。
+        /// 核心：对目标节点施加当前相位的果冻系数。
         /// </summary>
+        /// <remarks>
+        /// 返回 1=已施加。
+        /// </remarks>
         private static int ApplyScale(Transform t, JellyState st, bool allowPosComp = true, bool compensateCollider = false)
         {
             if (t == null)

@@ -15,9 +15,12 @@ namespace DT_Tools.Features.SitOnChairs
     /// 根物体 = 透明 SpriteRenderer（sortingOrder 240，仅承载设备交互与定位），
     /// 子物体 Skeleton = MeshRenderer（sortingOrder 260 = 坐姿人物层级）+ SkeletonAnimation，
     /// 骨架数据取任意已加载的角色骨骼资源（FindSkeletonData），坐下时 Chair.ChangeCharacter
-    /// 会按坐的人的角色换骨骼。同时负责坐姿偏移（椅子设备整体移动到 数据坐标+偏移）
-    /// 与坐姿人物渲染层级设置。
+    /// 会按坐的人的角色换骨骼。
     /// </summary>
+    /// <remarks>
+    /// 同时负责坐姿偏移（椅子设备整体移动到 数据坐标+偏移）
+    /// 与坐姿人物渲染层级设置。
+    /// </remarks>
     internal static class ChairFactory
     {
         /// <summary>

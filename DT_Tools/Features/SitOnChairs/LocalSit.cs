@@ -11,8 +11,11 @@ namespace DT_Tools.Features.SitOnChairs
     /// 不创建任何设备对象（0.1.17a Server.Game/GameRoom.cs:678 InitDevices() 只在
     /// GameStart 时调用），所以等待室咖啡椅只能本地假装坐下：钉住玩家位置、播放
     /// 14_Sitting 坐姿动画、把玩家渲染层级抬到 260，起身还原位置与动画；不发送
-    /// 任何网络包，别人看不到（引擎限制）。仅当 CafeSit=true 且处于 Lobby 状态时启用。
+    /// 任何网络包，别人看不到（引擎限制）。
     /// </summary>
+    /// <remarks>
+    /// 仅当 CafeSit=true 且处于 Lobby 状态时启用。
+    /// </remarks>
     internal static class LocalSit
     {
         private static Chair _chair;

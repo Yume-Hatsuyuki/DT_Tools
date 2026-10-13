@@ -3,9 +3,12 @@ using System.IO;
 namespace DT_Tools.Core
 {
     /// <summary>
-    /// 用户数据根目录 BepInEx/config/DT_Tools/。插件目录只放 DLL 与 WebUI，更新时整体替换不会丢数据。
-    /// 用户数据路径只能从这里取，禁止在别处自行拼接。
+    /// 用户数据根目录 BepInEx/config/DT_Tools/。
     /// </summary>
+    /// <remarks>
+    /// 插件目录只放 DLL 与 WebUI，更新时整体替换不会丢数据。
+    /// 用户数据路径只能从这里取，禁止在别处自行拼接。
+    /// </remarks>
     public static class DtPaths
     {
         public static string Root => Path.Combine(BepInEx.Paths.ConfigPath, "DT_Tools");

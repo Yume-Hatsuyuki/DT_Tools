@@ -5,9 +5,11 @@ namespace DT_Tools.Features.PhotoSend
 {
     /// <summary>
     /// 聊天触发补丁：`![文字](路径)` 直发照片（严格 markdown 括号对，半角）。
+    /// </summary>
+    /// <remarks>
     /// 文字非空时先发一条同内容的普通聊天消息再发照片；文字可空（`![](路径)`），路径不允许为空。
     /// 大厅/观战/死亡（原版照片入口不可用的状态）与其余 `!` 开头消息一律放行不接管。
-    /// </summary>
+    /// </remarks>
     internal static class Patch
     {
         /// <summary>
@@ -88,8 +90,11 @@ namespace DT_Tools.Features.PhotoSend
         }
 
         /// <summary>
-        /// 解析 markdown 图片语法：`[` 文字 `](` 路径 `)`。文字可空（Trim 后），路径不允许为空。
+        /// 解析 markdown 图片语法：`[` 文字 `](` 路径 `)`。
         /// </summary>
+        /// <remarks>
+        /// 文字可空（Trim 后），路径不允许为空。
+        /// </remarks>
         private static ParseResult TryParseMarkdown(string body, out string alt, out string argument)
         {
             alt = null;

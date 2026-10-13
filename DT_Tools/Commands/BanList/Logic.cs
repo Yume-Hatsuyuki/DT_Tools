@@ -15,9 +15,12 @@ namespace DT_Tools.Commands.BanList
         public const string AllKeyword = "all";
 
         /// <summary>
-        /// 把参数解析成封禁条目。#序号 = /banlist 列表里的序号；
-        /// 纯数字 = SteamId（SteamID64 是 17 位长数字，不会与序号语义混淆）；其余按名字匹配。
+        /// 把参数解析成封禁条目。
         /// </summary>
+        /// <remarks>
+        /// #序号 = /banlist 列表里的序号；
+        /// 纯数字 = SteamId（SteamID64 是 17 位长数字，不会与序号语义混淆）；其余按名字匹配。
+        /// </remarks>
         public static bool TryResolve(string arg, List<BanListFeature.BanEntry> bans,
             out BanListFeature.BanEntry target, out string error)
         {

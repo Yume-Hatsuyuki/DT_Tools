@@ -4,8 +4,10 @@ namespace DT_Tools.Features.ChatLimit
 {
     /// <summary>
     /// 取消聊天输入框字数截断（客户端）：原版各聊天输入框硬编码 characterLimit = 100。
-    /// 房主侧发言长度过滤是另一道独立闸门，见「ChatSanitize」（两处上限需配合）。
     /// </summary>
+    /// <remarks>
+    /// 房主侧发言长度过滤是另一道独立闸门，见「ChatSanitize」（两处上限需配合）。
+    /// </remarks>
     [PatchFeature(
         "取消聊天输入框字数截断：原版输入框上限 100，开启后抬升上限（默认 1000，可改 MaxLength）。\n房主侧发言过滤为独立功能「ChatSanitize」，客户端上限高于其值时发言仍会被服务端截断。",
         defaultEnabled: false,

@@ -10,8 +10,10 @@ namespace DT_Tools.Core
 {
     /// <summary>
     /// 装载门面：Engine.Load 完成发现 → 绑定 → 挂载 → 生命周期接线。
-    /// 功能代码只用到三个成员：Enabled&lt;T&gt;()（门闩）、SectionOf&lt;T&gt;()（段名）、TickModules（自动化泵）。
     /// </summary>
+    /// <remarks>
+    /// 功能代码只用到三个成员：Enabled&lt;T&gt;()（门闩）、SectionOf&lt;T&gt;()（段名）、TickModules（自动化泵）。
+    /// </remarks>
     public static class Engine
     {
         public sealed class LoadResult
@@ -171,8 +173,10 @@ namespace DT_Tools.Core
 
         /// <summary>
         /// 装载期收集的功能标签（FeatureLoader 从 [PatchFeature] 读取，供配置协议下发）。
-        /// 基础设施段返回 FeatureTag.None，配置协议据此下发空的 tags 数组。
         /// </summary>
+        /// <remarks>
+        /// 基础设施段返回 FeatureTag.None，配置协议据此下发空的 tags 数组。
+        /// </remarks>
         public static FeatureTag TagsOfSection(string section)
             => section != null && SectionTags.TryGetValue(section, out var tags) ? tags : FeatureTag.None;
 

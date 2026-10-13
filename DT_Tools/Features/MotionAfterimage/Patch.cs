@@ -20,8 +20,10 @@ namespace DT_Tools.Features.MotionAfterimage
 
     /// <summary>
     /// 他人 Despawn：只保留最后一次黑色定格（0.1.16b PlayerManager.cs:434（待核对）)。
-    /// Hide/进柜子不走此路径。
     /// </summary>
+    /// <remarks>
+    /// Hide/进柜子不走此路径。
+    /// </remarks>
     [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.Despawn), new[] { typeof(int) })]
     internal static class MotionAfterimageDespawnPatch
     {
@@ -36,8 +38,10 @@ namespace DT_Tools.Features.MotionAfterimage
 
     /// <summary>
     /// 自己死亡：S_DEAD → GameManagerEX.Dead（0.1.16b GameManagerEX.cs:334（待核对））。
-    /// 原版对自己忽略 S_DESPAWN，故本地定格走此钩子。
     /// </summary>
+    /// <remarks>
+    /// 原版对自己忽略 S_DESPAWN，故本地定格走此钩子。
+    /// </remarks>
     [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
     internal static class MotionAfterimageLocalDeadPatch
     {

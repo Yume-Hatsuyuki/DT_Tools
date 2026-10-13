@@ -7,9 +7,11 @@ namespace DT_Tools.Features.GhostInteract
 {
     /// <summary>
     /// 幽灵交互（0.1.17a）：设备交互 + 对话 + 拖尸 + 销毁证据 + 杀人。
+    /// </summary>
+    /// <remarks>
     /// 阵营：ExitPlayer 不改 Color，死后仍为 White/Black/Dark；本功能在「全能」模式下
     /// 对幽灵放宽颜色限制（销毁证据/杀人/拖尸不要求原为黑/暗）。
-    /// </summary>
+    /// </remarks>
     internal static class Patches
     {
         internal static bool AllowsDevice(DeviceBase device)
@@ -189,8 +191,10 @@ namespace DT_Tools.Features.GhostInteract
 
         /// <summary>
         /// MyPlayer.CanDropHand（0.1.17a MyPlayer.cs:1608）要求 IsAlive，且状态须 Idle/Run。
-        /// 幽灵死后多为 Hide，导致 UI 丢弃键与 TryDropHand 全失效。
         /// </summary>
+        /// <remarks>
+        /// 幽灵死后多为 Hide，导致 UI 丢弃键与 TryDropHand 全失效。
+        /// </remarks>
         [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.CanDropHand))]
         internal static class CanDropHandPatch
         {
@@ -265,8 +269,10 @@ namespace DT_Tools.Features.GhostInteract
 
         /// <summary>
         /// 原版 UI_MineralSlider.StopCasting 是空的；StopCasting 外层会 Destroy。
-        /// 这里在小游戏结束路径上再兜一次，避免引用丢失后条挂在 UIGroup。
         /// </summary>
+        /// <remarks>
+        /// 这里在小游戏结束路径上再兜一次，避免引用丢失后条挂在 UIGroup。
+        /// </remarks>
         [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.StopCasting), new[] { typeof(UI_Casting) })]
         internal static class StopCastingCleanupPatch
         {
@@ -293,8 +299,10 @@ namespace DT_Tools.Features.GhostInteract
 
         /// <summary>
         /// 死后 EndState 被 !IsAlive 短路，离开 Mining 时不会 StopCasting。
-        /// 仅在「结束 Mining 状态」时补一次，不挡进行中的小游戏。
         /// </summary>
+        /// <remarks>
+        /// 仅在「结束 Mining 状态」时补一次，不挡进行中的小游戏。
+        /// </remarks>
         [HarmonyPatch(typeof(MyPlayer), "EndState")]
         internal static class EndStateMiningPatch
         {
@@ -452,8 +460,10 @@ namespace DT_Tools.Features.GhostInteract
 
         /// <summary>
         /// ExitPlayer（0.1.17a Player.cs:947）在死后执行：IsGhost=true、移出 AlivePlayers。
-        /// 在此恢复 CanAttack / CanDestroyEvidence / CanUseItem，便于幽灵继续黑向行为。
         /// </summary>
+        /// <remarks>
+        /// 在此恢复 CanAttack / CanDestroyEvidence / CanUseItem，便于幽灵继续黑向行为。
+        /// </remarks>
         [HarmonyPatch(typeof(Server.Game.Player), nameof(Server.Game.Player.ExitPlayer))]
         internal static class ExitPlayerPatch
         {
@@ -523,8 +533,10 @@ namespace DT_Tools.Features.GhostInteract
 
         /// <summary>
         /// Device.DestroyEvidence（0.1.17a Device.cs:219）：要求 IsAlive + Black/Dark。
-        /// 幽灵开启后不限阵营；逻辑镜像原版后半段。
         /// </summary>
+        /// <remarks>
+        /// 幽灵开启后不限阵营；逻辑镜像原版后半段。
+        /// </remarks>
         [HarmonyPatch(typeof(Server.Game.Device), nameof(Server.Game.Device.DestroyEvidence))]
         internal static class DestroyEvidencePatch
         {
@@ -583,8 +595,10 @@ namespace DT_Tools.Features.GhostInteract
 
         /// <summary>
         /// Armory.AcquireWeapon / AcquireWeaponDark 原版限 White/Dark 且暗方恢复 tick 查 IsAlive。
-        /// 幽灵杀人需要能取刀：对死人放宽为任意阵营走 SendWeapon。
         /// </summary>
+        /// <remarks>
+        /// 幽灵杀人需要能取刀：对死人放宽为任意阵营走 SendWeapon。
+        /// </remarks>
         [HarmonyPatch(typeof(Server.Game.Armory), "AcquireWeapon")]
         internal static class AcquireWeaponPatch
         {
@@ -751,8 +765,10 @@ namespace DT_Tools.Features.GhostInteract
         /// <summary>
         /// 原版多处 BroadcastSceneEvent(ShowUI) 不带 state，value1=-1，
         /// ShowUI 落入 default 分支会 GetObject(80).SetActive(false) 关掉 ActionGroup。
-        /// 这里统一在死后强制拉回 Survive 操作栏。
         /// </summary>
+        /// <remarks>
+        /// 这里统一在死后强制拉回 Survive 操作栏。
+        /// </remarks>
         internal static void RestoreGhostHud(UI_GameScene ui)
         {
             if (ui == null || !GhostInteractFeature.AllowShowHud)

@@ -47,8 +47,10 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         /// <summary>
         /// 档位放行路径下的消息求值（镜像原版 GetInteractSabotageMessageBase 通过
         /// 颜色门槛后的余下逻辑：存活 → 设备态 → 置键有效标志 → 取设备文案）。
-        /// IsActiveInteractSabotageKey 为 protected set（DeviceBase.cs:62），经反射写入。
         /// </summary>
+        /// <remarks>
+        /// IsActiveInteractSabotageKey 为 protected set（DeviceBase.cs:62），经反射写入。
+        /// </remarks>
         public static string EvaluateMessage(DeviceBase device, int index)
         {
             if (!Managers.Game.IsAlive)
@@ -65,9 +67,11 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         /// <summary>
         /// 输入分发放行（Patch.Input 三处入口共用）：放行设备的 Special 键/杀按钮
         /// 优先触发破坏（与已亮出的提示一致），返回 true 表示已接管本次输入。
+        /// </summary>
+        /// <remarks>
         /// 文案经 GetInteractSabotageMessageBase（显示层补丁已按档位接管：白方走
         /// EvaluateMessage、黑方走原版）——文案为空（如门已锁）时不接管，走原版行为。
-        /// </summary>
+        /// </remarks>
         public static bool TryDispatchExtended(MyPlayer my)
         {
             if (my == null || my.Color == EPlayerColor.Dark)

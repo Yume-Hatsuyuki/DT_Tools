@@ -55,8 +55,11 @@ namespace DT_Tools.Game
                 .ToList();
 
         /// <summary>
-        /// 服务端设备管理器的全部货架（私有字段 _storages，0.1.17a Server.Game/DeviceManager.cs:32）。房主侧功能用。
+        /// 服务端设备管理器的全部货架（私有字段 _storages，0.1.17a Server.Game/DeviceManager.cs:32）。
         /// </summary>
+        /// <remarks>
+        /// 房主侧功能用。
+        /// </remarks>
         public static List<Server.Game.Storage> GetStorages(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_storages").GetValue<List<Server.Game.Storage>>();
     }

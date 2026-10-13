@@ -7,8 +7,10 @@ namespace DT_Tools.Features.SeolCarry
     /// 技能键恢复可用（绕过冷却）；Seol 对准任意玩家按下技能键（C_USE_SKILL{TargetId}），
     /// 服务端拦截本次技能（不触发原时停），改为给目标玩家加传送流程（EBuffType.Stop +
     /// Casting + 2 秒后强制 Move 到 P）——取巧实现"搬人"：把目标传送到 Seol 时停结束时的位置。
-    /// 全程服务端逻辑（房主进程），Seol 无需装 mod；搬人后 Seol 技能进入原 60 秒冷却。
     /// </summary>
+    /// <remarks>
+    /// 全程服务端逻辑（房主进程），Seol 无需装 mod；搬人后 Seol 技能进入原 60 秒冷却。
+    /// </remarks>
     [PatchFeature(
         "Seol 时停搬人：Seol 时停结束后技能键恢复，对准某人按技能键，把该玩家传送回 Seol 时停结束时的位置（服务端，房主装生效，Seol 无需装）。",
         defaultEnabled: false,

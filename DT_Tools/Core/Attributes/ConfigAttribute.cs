@@ -4,8 +4,10 @@ namespace DT_Tools.Core.Attributes
 {
     /// <summary>
     /// 标记功能/模块/基础设施类上的静态配置字段（普通类型，默认值写在字段初始化器里）。
-    /// 键名 = 字段名；引擎绑定后把当前值回写字段，配置热改时实时同步。
     /// </summary>
+    /// <remarks>
+    /// 键名 = 字段名；引擎绑定后把当前值回写字段，配置热改时实时同步。
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Field, Inherited = false)]
     public sealed class ConfigAttribute : Attribute
     {

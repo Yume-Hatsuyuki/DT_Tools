@@ -11,11 +11,13 @@ namespace DT_Tools.Commands.TransferHost
 {
     /// <summary>
     /// /transferhost #&lt;playerId> [owner]：将房主身份转让给指定玩家（大厅与局内均可，需房主）。
+    /// </summary>
+    /// <remarks>
     /// 原版房主只在退出房间时自动迁移（GameRoom.HandleLeavePlayer 内 Host = Players.FirstOrDefault()，仅 Lobby 广播 S_SET_HOST）。本命令允许主动交出：服务端 GameRoom.Host 切换为目标，并向全员广播 S_SET_HOST（所有阶段）。
     /// 转让后：目标获得房主权限（开局判定、踢人、再次转让），经服务端 Host 字段校验即刻生效；原房主留在房间继续游戏；客户端房主标记的局内同步由 Features/HostTransfer 补丁负责（需开启 [HostTransfer]）；原房主之后退出时按原版机制迁移给新房主，房间不解散。
     /// 可选参数 owner（或 steam、大厅）：同时把 Steam 大厅 owner 转让给目标（依赖 [HostTransfer] 的防迁移拦截，不会触发全员误迁移）。
     /// 按阶段向全员广播通知：#原房主 &lt;TransferText 配置> #新房主（仅房主权限 / 大厅 owner）；TransferText 默认“将房主转让给”。
-    /// </summary>
+    /// </remarks>
     internal sealed class TransferHostCommand : ICommand
     {
         public string Name => "transferhost";

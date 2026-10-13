@@ -4,8 +4,11 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Automation.AutoReady
 {
     /// <summary>
-    /// 进入大厅后自动准备。只准备，绝不发送开局包 C_START（原版也无全员准备自动开局）。
+    /// 进入大厅后自动准备。
     /// </summary>
+    /// <remarks>
+    /// 只准备，绝不发送开局包 C_START（原版也无全员准备自动开局）。
+    /// </remarks>
     [AutomationModule("自动准备",
         "进入大厅后自动点击准备（与 F5/准备按钮同路径发包 C_READY）；只准备不代开局。",
         side: FeatureSide.Client,

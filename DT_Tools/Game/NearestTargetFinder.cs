@@ -10,8 +10,10 @@ namespace DT_Tools.Game
     /// 遍历 Managers.Player.Players（0.1.16b PlayerManager.cs:42（待核对）)，
     /// 跳过 EPlayerState.Hide，Physics2D.Raycast 视线遮挡
     /// （层掩码 12288：0.1.16b MyPlayer.cs:2180（待核对） / :2205），取距离最小者。
-    /// 调用方经谓词附加各自的过滤条件（如递刀排除 KnownBlackIds）。
     /// </summary>
+    /// <remarks>
+    /// 调用方经谓词附加各自的过滤条件（如递刀排除 KnownBlackIds）。
+    /// </remarks>
     public static class NearestTargetFinder
     {
         /// <summary>
@@ -21,8 +23,10 @@ namespace DT_Tools.Game
 
         /// <summary>
         /// 从 from 出发、range 距离内、未被地形遮挡的最近玩家；谓词返回 false 的跳过。
-        /// 复刻原版语义：Raycast 命中遮挡层（返回 true）视为不可直达，剔除该目标。
         /// </summary>
+        /// <remarks>
+        /// 复刻原版语义：Raycast 命中遮挡层（返回 true）视为不可直达，剔除该目标。
+        /// </remarks>
         public static Player Find(Vector2 from, float range, Predicate<Player> filter = null)
         {
             Player best = null;

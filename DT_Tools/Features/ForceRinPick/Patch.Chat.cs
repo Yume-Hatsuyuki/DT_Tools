@@ -105,8 +105,10 @@ namespace DT_Tools.Features.ForceRinPick
     /// <summary>
     /// 服务端聊天入口（0.1.16b HostPacketHandler.Handle_C_CHAT_MESSAGE，static）：解析
     /// `!force 目标 [角色]` 指令——命中则标记目标玩家并拦截本次聊天（指令文本不广播全房）。
-    /// 仅在房主进程执行（客户端上 HostPacketHandler 链路不运行），无需 IsHost 判定。
     /// </summary>
+    /// <remarks>
+    /// 仅在房主进程执行（客户端上 HostPacketHandler 链路不运行），无需 IsHost 判定。
+    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.HostPacketHandler), "Handle_C_CHAT_MESSAGE")]
     internal static class ForceRinPickChatPatch
     {
