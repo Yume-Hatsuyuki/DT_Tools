@@ -62,7 +62,7 @@ function toggleTag(key) {
   if (i === -1) activeTags.value.push(key);
   else activeTags.value.splice(i, 1);
 }
-function clearFilters() { activeTags.value = []; statusFilter.value = null; }
+function clearFilters() { activeTags.value = []; statusFilter.value = null; sideFilter.value = null; }
 
 /** 启用状态过滤：null = 不筛选，'on' = 仅启用，'off' = 仅未启用。与标签过滤为「且」关系。 */
 const statusFilter = ref(null);
@@ -82,6 +82,19 @@ function matchStatus(s) {
   const e = enabledOf(s);
   return statusFilter.value === 'on' ? e === true : e === false;
 }
+
+/** 作用面过滤：null = 不筛选；'client' = 客户端，'host' = 服务端，'both' = 双端。与其它过滤为「且」关系。 */
+const sideFilter = ref(null);
+/** 各作用面的功能段数（无作用面的段不计）。 */
+const sideCounts = computed(() => {
+  const counts = { client: 0, host: 0, both: 0 };
+  for (const s of featureSections.value) {
+    if (s.side === 'client' || s.side === 'host' || s.side === 'both') counts[s.side]++;
+  }
+  return counts;
+});
+function toggleSide(v) { sideFilter.value = sideFilter.value === v ? null : v; }
+function matchSide(s) { return !sideFilter.value || s.side === sideFilter.value; }
 
 async function loadTags() {
   const cat = await API.configTags();
@@ -146,7 +159,7 @@ function matchSection(s, q) {
 const visibleSections = computed(() => {
   const q = query.value.trim().toLowerCase();
   return featureSections.value
-    .filter(s => matchStatus(s) && matchTags(s) && matchSection(s, q))
+    .filter(s => matchStatus(s) && matchSide(s) && matchTags(s) && matchSection(s, q))
     .map(toSectionTile);
 });
 
@@ -224,6 +237,18 @@ onUnmounted(stopAutoRefresh);
           未启用<em>{{ statusCounts.off }}</em>
         </button>
       </div>
+      <div class="tag-group">
+        <span class="tag-group-name">作用面</span>
+        <button class="tag-chip" :class="{ on: sideFilter === 'client' }" @click="toggleSide('client')">
+          客户端<em>{{ sideCounts.client }}</em>
+        </button>
+        <button class="tag-chip" :class="{ on: sideFilter === 'host' }" @click="toggleSide('host')">
+          服务端<em>{{ sideCounts.host }}</em>
+        </button>
+        <button class="tag-chip" :class="{ on: sideFilter === 'both' }" @click="toggleSide('both')">
+          双端<em>{{ sideCounts.both }}</em>
+        </button>
+      </div>
       <div v-for="g in tagGroups" :key="g.name" class="tag-group">
         <span class="tag-group-name">{{ g.name }}</span>
         <button v-for="t in g.tags" :key="t.key"
@@ -236,7 +261,7 @@ onUnmounted(stopAutoRefresh);
       </div>
       <div class="tag-tools">
         <span v-if="activeTags.length > 1" class="tag-hint">多选：任一命中</span>
-        <button v-if="activeTags.length || statusFilter" class="tag-clear" @click="clearFilters">清除筛选</button>
+        <button v-if="activeTags.length || statusFilter || sideFilter" class="tag-clear" @click="clearFilters">清除筛选</button>
       </div>
     </div>
 
@@ -317,7 +342,7 @@ onUnmounted(stopAutoRefresh);
   flex-shrink: 0;
 }
 .tag-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.tag-group-name { font-size: 11px; color: var(--text-2); width: 3em; flex-shrink: 0; }
+.tag-group-name { font-size: 11px; color: var(--text-2); width: 3.5em; flex-shrink: 0; }
 .tag-chip {
   background: var(--surface-2);
   border: 1px solid var(--line);
