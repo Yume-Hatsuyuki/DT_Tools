@@ -17,8 +17,6 @@ namespace DT_Tools.Features.WhiteSabotageClue
     [HarmonyPatch]
     internal static class WhiteBreakPowerCluePatch
     {
-        // 方法体里不写 System.Reflection 全限定——Patches/System 目录遮蔽命名空间链上的
-        // System 成员（AGENTS.md §9 约束 3），改用 using 导入的 MethodBase 短名
         private static MethodBase TargetMethod()
             => AccessTools.Method(typeof(Server.Game.Fusebox), "DisconnetCable");
 
