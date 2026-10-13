@@ -58,27 +58,26 @@ function New-RpcBody {
     return ($Payload | ConvertTo-Json -Depth 20 -Compress)
 }
 
+# 使用 .NET HttpClient：4xx/5xx 不抛异常，状态码与响应体都能直接读取，PS 5.1 与 PS 7 行为一致
+Add-Type -AssemblyName System.Net.Http
+$script:Http = New-Object -TypeName System.Net.Http.HttpClient
+$script:Http.Timeout = [TimeSpan]::FromSeconds(20)
+
 function Invoke-Mcp {
-    # 发送一条 JSON-RPC 请求体，返回 HTTP 状态码与原始响应文本（4xx/5xx 也不抛异常）
+    # 发送一条 JSON-RPC 请求体，返回 HTTP 状态码与原始响应文本
     param([string]$Body, [string]$AuthToken = $Token)
-    $headers = @{}
-    if ($AuthToken) { $headers["Authorization"] = "Bearer " + $AuthToken }
+    $method = [System.Net.Http.HttpMethod]::Post
+    $req = New-Object -TypeName System.Net.Http.HttpRequestMessage -ArgumentList $method, $Url
+    $req.Content = New-Object -TypeName System.Net.Http.StringContent -ArgumentList $Body, ([System.Text.Encoding]::UTF8), "application/json"
+    if ($AuthToken) {
+        $req.Headers.Authorization = New-Object -TypeName System.Net.Http.Headers.AuthenticationHeaderValue -ArgumentList "Bearer", $AuthToken
+    }
     try {
-        $r = Invoke-WebRequest -Uri $Url -Method Post -Body $Body -ContentType "application/json" -Headers $headers -UseBasicParsing -TimeoutSec 20
-        return [pscustomobject]@{ Status = [int]$r.StatusCode; Raw = [string]$r.Content }
+        $resp = $script:Http.SendAsync($req).GetAwaiter().GetResult()
+        $raw = $resp.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+        return [pscustomobject]@{ Status = [int]$resp.StatusCode; Raw = [string]$raw }
     } catch {
-        $resp = $_.Exception.Response
-        if ($null -eq $resp) {
-            return [pscustomobject]@{ Status = 0; Raw = [string]$_.Exception.Message }
-        }
-        $status = [int]$resp.StatusCode
-        if ($resp -is [System.Net.HttpWebResponse]) {
-            $sr = New-Object System.IO.StreamReader($resp.GetResponseStream())
-            $raw = $sr.ReadToEnd()
-        } else {
-            $raw = $resp.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        }
-        return [pscustomobject]@{ Status = $status; Raw = [string]$raw }
+        return [pscustomobject]@{ Status = 0; Raw = [string]$_.Exception.Message }
     }
 }
 
