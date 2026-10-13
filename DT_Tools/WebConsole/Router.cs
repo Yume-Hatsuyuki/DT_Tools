@@ -47,7 +47,24 @@ namespace DT_Tools.WebConsole
             _routes.Add(new Route { Method = method, Prefix = prefix, Handler = handler });
         }
 
+        /// <summary>
+        /// 请求分发入口：请求体超限统一回复 413，其它异常原样抛给上层。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public void Dispatch(HttpListenerContext ctx)
+        {
+            try
+            {
+                DispatchCore(ctx);
+            }
+            catch (BodyTooLargeException)
+            {
+                Log.Warn("WebConsole", "已拒绝超大请求体：" + ctx.Request.HttpMethod + " " + ctx.Request.Url.AbsolutePath + "。");
+                HttpServer.WriteText(ctx.Response, 413, "Payload Too Large");
+            }
+        }
+
+        private void DispatchCore(HttpListenerContext ctx)
         {
             var req = ctx.Request;
             var resp = ctx.Response;
