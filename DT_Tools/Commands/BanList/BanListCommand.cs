@@ -28,7 +28,7 @@ namespace DT_Tools.Commands.BanList
         {
             if (!Engine.Enabled<BanListFeature>())
             {
-                ctx.Reply("踢人黑名单功能未启用，无法查询（WebUI → 游戏系统 → 踢人黑名单）。");
+                ctx.Reply("踢人黑名单功能未启用，无法查询（WebUI → DT 配置 → BanList）。");
                 return CommandResult.Fail("feature disabled");
             }
             var bans = BanListFeature.Snapshot();
