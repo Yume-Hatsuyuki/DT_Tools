@@ -44,5 +44,16 @@ namespace DT_Tools.Features.SitOnChairs
 
         [Config("调试日志：周期性输出玩家坐标/状态、每把椅子的坐标/距离/是否在交互框内/渲染层级。建议调好后关闭。")]
         public static bool Debug = false;
+
+        /// <summary>
+        /// Enabled 热切换回调（引擎在主线程调用）：大厅内立即切到岛屿地图集，局内只记录。
+        /// </summary>
+        internal static void OnEnabled() => IslandMapSwitch.Apply(true);
+
+        /// <summary>
+        /// Enabled 热切换回调（引擎在主线程调用）：大厅内立即切回校园地图集，局内只记录。
+        /// </summary>
+        internal static void OnDisabled() => IslandMapSwitch.Apply(false);
+
     }
 }
