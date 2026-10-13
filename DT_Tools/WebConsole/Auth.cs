@@ -60,7 +60,8 @@ namespace DT_Tools.WebConsole
             }
 
             _throttle.RecordSuccess(ip);
-            resp.SetCookie(new Cookie("dt_token", _token, "/") { HttpOnly = true });
+            // SameSite=Strict：跨站页面发起的请求不携带会话 cookie（curl 等非浏览器客户端不受影响）
+            resp.AddHeader("Set-Cookie", "dt_token=" + _token + "; Path=/; HttpOnly; SameSite=Strict");
             Log.Info("WebConsole", "登录成功。");
             HttpServer.WriteText(resp, 200, "ok");
         }
