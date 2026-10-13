@@ -33,6 +33,8 @@ namespace DT_Tools.Core
         /// <summary>
         /// 功能配置了自定义目录则用它，否则用默认照片目录。
         /// </summary>
+        /// <param name="configured">功能配置的目录；为空或空白时使用默认照片目录。</param>
+        /// <returns>最终使用的照片目录路径。</returns>
         public static string ResolvePhotoFolder(string configured) =>
             string.IsNullOrWhiteSpace(configured) ? DefaultPhotoFolder : configured.Trim();
 
@@ -41,6 +43,7 @@ namespace DT_Tools.Core
         /// <summary>
         /// 写文件前调用：保证父目录存在。
         /// </summary>
+        /// <param name="filePath">目标文件的完整路径，函数只创建其父目录。</param>
         public static void EnsureParentOf(string filePath) =>
             Directory.CreateDirectory(Path.GetDirectoryName(filePath));
     }

@@ -80,6 +80,8 @@ namespace DT_Tools.Core.Attributes
         /// <remarks>
         /// 不合格直接抛出——与命名空间重复一样属于声明错误，禁止兜底。
         /// </remarks>
+        /// <param name="tags">单元声明的标签集合（位标志）。</param>
+        /// <param name="owner">声明这些标签的单元名，用于校验失败时定位。</param>
         public static void Validate(FeatureTag tags, string owner)
         {
             ulong bits = (ulong)tags;
@@ -96,6 +98,8 @@ namespace DT_Tools.Core.Attributes
         /// <summary>
         /// 标签 → 键名数组（按字典顺序），供 JSON 与 WebUI 使用。
         /// </summary>
+        /// <param name="tags">要转换的标签集合（位标志）。</param>
+        /// <returns>标签的键名数组，按字典顺序排列。</returns>
         public static string[] Names(FeatureTag tags)
         {
             if (tags == FeatureTag.None) return new string[0];

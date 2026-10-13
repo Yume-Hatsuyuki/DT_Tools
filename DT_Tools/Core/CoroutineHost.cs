@@ -26,6 +26,8 @@ namespace DT_Tools.Core
         /// <remarks>
         /// 返回值可交给 StopCoroutine。
         /// </remarks>
+        /// <param name="routine">要执行的协程迭代器，由宿主逐帧推进。</param>
+        /// <returns>协程句柄，交给 Stop 可以提前结束它。</returns>
         public static Coroutine Start(IEnumerator routine)
         {
             EnsureCreated();
@@ -35,6 +37,7 @@ namespace DT_Tools.Core
         /// <summary>
         /// 停止 Start 返回的协程；宿主/协程已失效时静默。
         /// </summary>
+        /// <param name="routine">Start 返回的协程句柄；宿主或协程已失效时静默忽略。</param>
         public static void Stop(Coroutine routine)
         {
             if (routine == null || _component == null)
@@ -68,6 +71,7 @@ namespace DT_Tools.Core
         /// 文件监听线程的回调须经此入口才能安全触碰 Unity API（渲染调用在非主线程
         /// 会原生崩溃，其余多为不可跨线程的异常）。
         /// </remarks>
+        /// <param name="action">要在主线程执行的动作；在主线程调用时立即同步执行，否则入队，等待下一帧执行。</param>
         public static void Post(Action action)
         {
             if (action == null)

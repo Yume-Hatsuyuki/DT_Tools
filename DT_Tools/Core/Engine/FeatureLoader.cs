@@ -140,6 +140,8 @@ namespace DT_Tools.Core
         /// GetTypes 的容错版：程序集部分类型加载失败（如可选依赖缺失）时退回已成功的类型，
         /// 避免整机发现阶段崩溃。
         /// </summary>
+        /// <param name="assembly">要枚举类型的程序集。</param>
+        /// <returns>能成功加载的类型列表；部分类型加载失败时只返回已成功的部分。</returns>
         internal static List<Type> SafeGetTypes(Assembly assembly)
         {
             try
@@ -156,6 +158,8 @@ namespace DT_Tools.Core
         /// <summary>
         /// 段名 = 类名去后缀（Feature/Module/Host/Options/Settings）。
         /// </summary>
+        /// <param name="type">功能或模块的类型。</param>
+        /// <returns>段名，即类名去掉 Feature、Module、Host、Options、Settings 后缀。</returns>
         public static string DeriveSection(Type type)
         {
             string name = type.Name;
@@ -174,6 +178,8 @@ namespace DT_Tools.Core
         /// 自管 Harmony（Feature 声明 static Harmony 字段，如 Transpiler 动态卸载）时跳过自动挂载。
         /// 任一补丁失败即抛出，由 Engine 计入 FailedCount（失败隔离到功能级）。
         /// </remarks>
+        /// <param name="harmony">挂载补丁使用的 Harmony 实例。</param>
+        /// <param name="feature">要挂载的功能描述，决定扫描哪些补丁类。</param>
         public static void Mount(Harmony harmony, FeatureDesc feature)
         {
             if (!HasSelfManagedHarmony(feature.Type))
@@ -210,6 +216,9 @@ namespace DT_Tools.Core
         /// ChatLimit 场景扫描、NicknameLimit UI 还原等）——统一经 CoroutineHost.Post
         /// 投递到主线程执行，另捕获 on 值防快速连切两次时读到过期状态。
         /// </remarks>
+        /// <param name="featureType">功能类型；若实现了 OnEnabled / OnDisabled，开关切换时会回调。</param>
+        /// <param name="section">配置段名，写入变更日志时使用。</param>
+        /// <param name="enabled">Enabled 配置项。其 SettingChanged 在写入值的线程上同步触发。</param>
         public static void WireLifecycle(Type featureType, string section, ConfigEntry<bool> enabled)
         {
             enabled.SettingChanged += (_, __) =>
@@ -233,6 +242,8 @@ namespace DT_Tools.Core
         /// <summary>
         /// 调用类型的无参静态方法（Public/NonPublic），不存在则静默跳过。
         /// </summary>
+        /// <param name="type">要查找静态方法的类型。</param>
+        /// <param name="methodName">无参静态方法名，公开与非公开均可。</param>
         public static void InvokeStaticIfPresent(Type type, string methodName)
         {
             var method = type.GetMethod(
@@ -280,6 +291,8 @@ namespace DT_Tools.Core
         /// <remarks>
         /// 禁止引入全局作者常量（历史教训：全局署名会吞掉不同贡献者的归属）。
         /// </remarks>
+        /// <param name="author">功能声明的作者；未声明时为空。</param>
+        /// <returns>作者名；未声明时返回「佚名」。</returns>
         private static string NormalizeAuthor(string author)
             => string.IsNullOrWhiteSpace(author) ? "佚名" : author.Trim();
     }

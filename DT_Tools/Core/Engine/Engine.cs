@@ -168,6 +168,8 @@ namespace DT_Tools.Core
         /// 装载期收集的段落分组元数据（[ConfigSection(Group=…)]）；
         /// 未标注的段返回 null（配置层再按功能/模块归属兜底）。
         /// </summary>
+        /// <param name="section">段名。</param>
+        /// <returns>分组名；未标注 [ConfigSection(Group)] 的段返回 null。</returns>
         public static string GroupOfSection(string section)
             => section != null && SectionGroups.TryGetValue(section, out var group) ? group : null;
 
@@ -177,12 +179,15 @@ namespace DT_Tools.Core
         /// <remarks>
         /// 基础设施段返回 FeatureTag.None，配置协议据此下发空的 tags 数组。
         /// </remarks>
+        /// <param name="section">段名。</param>
+        /// <returns>功能标签；基础设施段返回 FeatureTag.None。</returns>
         public static FeatureTag TagsOfSection(string section)
             => section != null && SectionTags.TryGetValue(section, out var tags) ? tags : FeatureTag.None;
 
         /// <summary>
         /// 自动化模块泵：hostEnabled 为总开关值，由 AutomationHost 的主线程 Tick 调用。
         /// </summary>
+        /// <param name="hostEnabled">自动化总开关的当前值。</param>
         public static void TickModules(bool hostEnabled)
         {
             foreach (var module in ModuleInfos)

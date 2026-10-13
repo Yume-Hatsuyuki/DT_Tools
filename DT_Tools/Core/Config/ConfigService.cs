@@ -309,6 +309,8 @@ namespace DT_Tools.Core
         /// <summary>
         /// JSON 反序列化出的 object 值 → 配置更新用的原始字符串（与导出格式互逆）。
         /// </summary>
+        /// <param name="value">JSON 反序列化得到的值。</param>
+        /// <returns>写回配置用的字符串，格式与导出时一致。</returns>
         private static string NormalizeRaw(object value)
         {
             switch (value)
@@ -360,6 +362,8 @@ namespace DT_Tools.Core
         /// 枚举值序列化为成员名（accepts.options 用的就是名称；裸 BoxedValue 会被
         /// JSON 写成数字，前端下拉匹配不上，出现「0 (未在列表中)」）。
         /// </summary>
+        /// <param name="value">待导出的配置值，枚举会被转为成员名。</param>
+        /// <returns>导出用的值；枚举为成员名字符串。</returns>
         private static object DisplayValue(object value)
             => value is Enum e ? Enum.GetName(e.GetType(), e) ?? e.ToString() : value;
 

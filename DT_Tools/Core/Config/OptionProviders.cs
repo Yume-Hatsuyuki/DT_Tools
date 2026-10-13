@@ -18,6 +18,9 @@ namespace DT_Tools.Core
         /// <summary>
         /// 为 (section, key) 绑定选项提供者；重复绑定以后者为准。
         /// </summary>
+        /// <param name="section">配置段名，与功能或模块注册的段名一致。</param>
+        /// <param name="key">段内的配置键名。</param>
+        /// <param name="provider">每次导出配置时调用，不缓存。数据未就绪时应返回空列表而不是 null。</param>
         public static void Bind(string section, string key, Func<IReadOnlyList<ConfigOption>> provider)
         {
             if (string.IsNullOrEmpty(section)) throw new ArgumentException("section required", nameof(section));
@@ -33,6 +36,9 @@ namespace DT_Tools.Core
         /// 未绑定返回 null（区别于"已绑定但当前为空"的空列表，
         /// 调用方据此决定是否回退到枚举 / 数值范围）。
         /// </remarks>
+        /// <param name="section">配置段名。</param>
+        /// <param name="key">段内的配置键名。</param>
+        /// <returns>已绑定时为提供者当前返回的列表，可能为空；未绑定时为 null。</returns>
         public static IReadOnlyList<ConfigOption> TryGet(string section, string key)
         {
             if (!Map.TryGetValue((section, key), out var provider))
