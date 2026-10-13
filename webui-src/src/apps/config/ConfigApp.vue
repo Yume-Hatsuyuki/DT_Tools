@@ -206,8 +206,10 @@ onUnmounted(stopAutoRefresh);
           {{ t.label }}<em v-if="tagCounts.get(t.key)">{{ tagCounts.get(t.key) }}</em>
         </button>
       </div>
-      <span v-if="activeTags.length > 1" class="tag-hint">多选：任一命中</span>
-      <button v-if="activeTags.length" class="tag-clear" @click="clearTags">清除筛选</button>
+      <div class="tag-tools">
+        <span v-if="activeTags.length > 1" class="tag-hint">多选：任一命中</span>
+        <button v-if="activeTags.length" class="tag-clear" @click="clearTags">清除筛选</button>
+      </div>
     </div>
 
     <div v-if="toast" class="toast" :class="{ error: toast.error }">{{ toast.text }}</div>
@@ -278,16 +280,16 @@ onUnmounted(stopAutoRefresh);
 
 .tag-bar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   padding: 8px 14px;
   border-bottom: 1px solid var(--line);
   background: var(--surface-1);
   flex-shrink: 0;
 }
 .tag-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.tag-group-name { font-size: 11px; color: var(--text-2); margin-right: 2px; }
+.tag-group-name { font-size: 11px; color: var(--text-2); width: 3em; flex-shrink: 0; }
 .tag-chip {
   background: var(--surface-2);
   border: 1px solid var(--line);
@@ -301,6 +303,7 @@ onUnmounted(stopAutoRefresh);
 .tag-chip:hover { color: var(--text-0); border-color: var(--line-strong); }
 .tag-chip.on { color: var(--accent-cyan); border-color: var(--accent-cyan-dim); }
 .tag-chip em { font-style: normal; font-size: 10px; color: var(--text-2); margin-left: 5px; }
+.tag-tools { display: flex; justify-content: flex-end; align-items: center; gap: 12px; min-height: 18px; }
 .tag-hint { font-size: 11px; color: var(--text-2); }
 .tag-clear { background: none; border: none; color: var(--text-2); cursor: pointer; font-size: 11.5px; }
 .tag-clear:hover { color: var(--accent-cyan); }
