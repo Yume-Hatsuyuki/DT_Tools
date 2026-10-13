@@ -62,7 +62,26 @@ function toggleTag(key) {
   if (i === -1) activeTags.value.push(key);
   else activeTags.value.splice(i, 1);
 }
-function clearTags() { activeTags.value = []; }
+function clearFilters() { activeTags.value = []; statusFilter.value = null; }
+
+/** 启用状态过滤：null = 不筛选，'on' = 仅启用，'off' = 仅未启用。与标签过滤为「且」关系。 */
+const statusFilter = ref(null);
+/** 启用 / 未启用的段数（只统计带开关的功能段；无开关的段两者都不计）。 */
+const statusCounts = computed(() => {
+  let on = 0, off = 0;
+  for (const s of featureSections.value) {
+    const e = enabledOf(s);
+    if (e === true) on++;
+    else if (e === false) off++;
+  }
+  return { on, off };
+});
+function toggleStatus(v) { statusFilter.value = statusFilter.value === v ? null : v; }
+function matchStatus(s) {
+  if (!statusFilter.value) return true;
+  const e = enabledOf(s);
+  return statusFilter.value === 'on' ? e === true : e === false;
+}
 
 async function loadTags() {
   const cat = await API.configTags();
@@ -127,7 +146,7 @@ function matchSection(s, q) {
 const visibleSections = computed(() => {
   const q = query.value.trim().toLowerCase();
   return featureSections.value
-    .filter(s => matchTags(s) && matchSection(s, q))
+    .filter(s => matchStatus(s) && matchTags(s) && matchSection(s, q))
     .map(toSectionTile);
 });
 
@@ -196,6 +215,15 @@ onUnmounted(stopAutoRefresh);
     </div>
 
     <div v-if="!openSection && tagGroups.length" class="tag-bar">
+      <div class="tag-group">
+        <span class="tag-group-name">状态</span>
+        <button class="tag-chip" :class="{ on: statusFilter === 'on' }" @click="toggleStatus('on')">
+          启用<em>{{ statusCounts.on }}</em>
+        </button>
+        <button class="tag-chip" :class="{ on: statusFilter === 'off' }" @click="toggleStatus('off')">
+          未启用<em>{{ statusCounts.off }}</em>
+        </button>
+      </div>
       <div v-for="g in tagGroups" :key="g.name" class="tag-group">
         <span class="tag-group-name">{{ g.name }}</span>
         <button v-for="t in g.tags" :key="t.key"
@@ -208,7 +236,7 @@ onUnmounted(stopAutoRefresh);
       </div>
       <div class="tag-tools">
         <span v-if="activeTags.length > 1" class="tag-hint">多选：任一命中</span>
-        <button v-if="activeTags.length" class="tag-clear" @click="clearTags">清除筛选</button>
+        <button v-if="activeTags.length || statusFilter" class="tag-clear" @click="clearFilters">清除筛选</button>
       </div>
     </div>
 
