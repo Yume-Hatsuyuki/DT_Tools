@@ -4,14 +4,9 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands
 {
-    /// 音频来源参数解析核心（/mic_music 与 /play_audio 共用）：
-    /// &lt;url|路径&gt; + 任意顺序的参数（volume/秒 关键字、local/online 来源标记）。
-    /// 引号分词在更上游的 CommandTokenizer 完成（带空格路径可整体加引号），本层把
-    /// 路径 token 用空格拼回——引号非强制：直接连写同样成立，只有与数字参数产生
-    /// 歧义时（如无扩展名文件名以数字结尾）才需要引号。
-    /// 参数不约束顺序（像常规软件的命名参数）：local|online 标记与 volume/seconds
-    /// 关键字出现在任何位置都生效；旧式位置写法（尾部最多两个纯数字，先 seconds
-    /// 后 volume）仍兼容。关键字优先于位置参数，已被关键字占用的槽位不再从尾部吃数字。
+    /// 音频来源参数解析核心（/mic_music 与 /play_audio 共用）：<url|路径> + 任意顺序的参数（volume / 秒 关键字、local / online 来源标记）。
+    /// 引号分词在更上游的 CommandTokenizer 完成（带空格路径可整体加引号），本层把路径 token 用空格拼回。引号非强制：直接连写同样成立，只有与数字参数产生歧义时（如无扩展名文件名以数字结尾）才需要引号。
+    /// 参数不约束顺序：local|online 与 volume / seconds 关键字出现在任何位置都生效；旧式位置写法（尾部最多两个纯数字，先 seconds 后 volume）仍兼容。关键字优先于位置参数，已被关键字占用的槽位不再从尾部吃数字。
     internal sealed class AudioSourceArgs
     {
         public AudioPlaybackSource SourceKind { get; private set; } = AudioPlaybackSource.Auto;

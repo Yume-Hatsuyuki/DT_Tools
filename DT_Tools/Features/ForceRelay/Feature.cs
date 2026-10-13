@@ -4,15 +4,9 @@ using Steamworks;
 
 namespace DT_Tools.Features.ForceRelay
 {
-    /// 隐私保护：强制 P2P 走 Steam SDR 中继，关闭 ICE 直连，避免交换真实公网/内网候选地址。
-    ///
-    /// 原版 SteamP2PTransport.ConfigureTransportSelection
-    /// （0.1.17a DummyClient/SteamP2PTransport.cs:182）设置：
-    /// ICE_Enable=-1（用户默认）、ICE_Penalty=0、SDR_Penalty=1000。
-    ///
-    /// 本功能覆盖为 ICE_Enable=0 + SDR_Penalty=0。两端各自生效（side=Both）。
-    /// OnPatched 时 Steam 可能尚未就绪，故全部 try/catch，真正生效依赖
-    /// ConfigureTransportSelection 的 Postfix（进房 Init 时必跑）。
+    /// 隐私保护：强制 P2P 走 Steam SDR 中继，关闭 ICE 直连，避免交换真实公网 / 内网候选地址。
+    /// 原版 SteamP2PTransport.ConfigureTransportSelection（0.1.17a DummyClient/SteamP2PTransport.cs:182）设置 ICE_Enable=-1（用户默认）、ICE_Penalty=0、SDR_Penalty=1000。本功能覆盖为 ICE_Enable=0 + SDR_Penalty=0，两端各自生效（side=Both）。
+    /// OnPatched 时 Steam 可能尚未就绪，故全部 try/catch；真正生效依赖 ConfigureTransportSelection 的 Postfix（进房 Init 时必跑）。
     [PatchFeature(
         "隐私保护强制中继：关闭 ICE 直连，P2P 仅走 Steam SDR 中继，避免暴露真实 IP（两端各自生效）。",
         defaultEnabled: false,

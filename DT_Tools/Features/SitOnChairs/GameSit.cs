@@ -5,15 +5,8 @@ using UnityEngine;
 
 namespace DT_Tools.Features.SitOnChairs
 {
-    /// 对局内（非 Lobby）椅子坐姿状态机，完全复刻游戏原生坐姿机制：
-    /// 原版坐下的表现 = 玩家模型隐藏（MyPlayer.HidePlayer(true)）+
-    /// 椅子 Spine 换成"角色坐在椅子上的形象"（Chair.ChangeCharacter(角色ID)
-    /// 加载角色骨架并播 14_Sitting 入座动画）；起身 = 玩家模型显示 +
-    /// 椅子形象还原（ChangeCharacter(0)，Spine 转透明）。
-    /// 原版 Chair.Interact 只发 C_INTERACT_CHAIR 等服务端（房主）响应——房主未装本
-    /// mod / 服务端没有这把椅子时永久无响应，导致"按 E 没反应"；本状态机在按 E 时
-    /// 本地立即执行同样的坐姿表现，同时照发原版网络包（房主装了则全房同步，
-    /// 没装也不影响本地坐姿）。起身同理本地还原。
+    /// 对局内（非 Lobby）椅子坐姿状态机，复刻游戏原生坐姿机制：坐下 = 玩家模型隐藏（MyPlayer.HidePlayer(true)）+ 椅子 Spine 换成“角色坐在椅子上的形象”（Chair.ChangeCharacter(角色ID) 加载角色骨架并播 14_Sitting 入座动画）；起身 = 玩家模型显示 + 椅子形象还原（ChangeCharacter(0)，Spine 转透明）。
+    /// 原版 Chair.Interact 只发 C_INTERACT_CHAIR 等服务端（房主）响应，房主未装本 mod 或服务端没有这把椅子时永久无响应（表现为“按 E 没反应”）。本状态机在按 E 时本地立即执行同样的坐姿表现，同时照发原版网络包（房主装了则全房同步，没装也不影响本地坐姿）。起身同理本地还原。
     internal static class GameSit
     {
         private static Chair _chair;

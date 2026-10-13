@@ -10,14 +10,12 @@ using UnityEngine;
 namespace DT_Tools.Features.SitOnChairs
 {
     /// 可坐椅子补丁集合（原 IslandMap v1.5.2 移植）：
-    /// 1. LoadMapSet：功能开启时把原版主图（School）加载重定向为岛屿数据（注入 7 份内嵌数据）；
-    /// 2. Spawn/SetInfo/GetText：保证运行时 Chair 预制体存在、坐姿人物层级/偏移正确、交互文案可用；
-    /// 3. GetInteractMessage/Interact：等待室咖啡椅默认不可坐（CafeSit=false 时提示为空、按 E 无效），
-    /// CafeSit=true 时在大厅本地坐下（不发网络包）；
-    /// 4. UpdateAnimation/FixedUpdateMove：坐着时暂停玩家动画与移动逻辑（本地坐姿用）；
-    /// 5. SearchInteractDevice（×3）：坐着时 [ / ] 实时微调坐姿高低、可选调试日志、椅子美术置顶；
-    /// 6. Managers.Update：确保非坐着状态时把抬高的椅子美术还原。
-    /// 所有补丁均以 Engine.Enabled&lt;SitOnChairsFeature&gt; 为总开关，关闭即完全原版行为。
+    /// 1. LoadMapSet：功能开启时把原版主图（School）加载重定向为岛屿数据（注入 7 份内嵌数据）。
+    /// 2. Spawn / SetInfo / GetText：保证运行时 Chair 预制体存在、坐姿人物层级 / 偏移正确、交互文案可用。
+    /// 3. GetInteractMessage / Interact：等待室咖啡椅默认不可坐（CafeSit=false 时提示为空、按 E 无效）；CafeSit=true 时在大厅本地坐下（不发网络包）。
+    /// 4. UpdateAnimation / FixedUpdateMove：坐着时暂停玩家动画与移动逻辑（本地坐姿用）。
+    /// 5. SearchInteractDevice（×3）：坐着时 [ / ] 实时微调坐姿高低、可选调试日志、椅子美术置顶。
+    /// 6. Managers.Update：确保非坐着状态时把抬高的椅子美术还原。所有补丁以 Engine.Enabled<SitOnChairsFeature> 为总开关，关闭即完全原版行为。
     internal static class Patches
     {
 

@@ -244,14 +244,9 @@ namespace DT_Tools.Features.CharacterMapPin
                 RestorePin(pin);
         }
 
-        /// 单个 pin 还原：根底图按原版 RefreshType 的取图逻辑走 UI_MinimapSubItem.PinSpriteKey
-        /// （public static，0.1.17a UI_MinimapSubItem.cs:88；Player → "minimap_player.sprite"）。
-        /// 黑幕 pin 语义特殊：已识破黑方的原版表现是 TurnBlack 的 minimap_black.sprite（:62-67），
-        /// 不在 PinSpriteKey 表内——按 PinSpriteKey 的原版逻辑统一还原为通用玩家底图即可，
-        /// 下一次识破事件触发时由原版 RefreshBlackPin 重新置黑；不调 sizeDelta（ApplyPin 替换时也没改尺寸）。
-        /// ComplyRules 子物体：ApplyPin 曾强制 SetVisible(true)，还原时——
-        /// 未识破态（AlreadyComplyRules=false，:39）按原版 SetInfo 默认隐藏（:57）；
-        /// 已识破态原版本就保持可见（TurnComplyRules :71-81），贴图恢复为原版所用的 &lt;角色&gt;_Map_Black。
+        /// 单个 pin 还原：根底图按原版 RefreshType 的取图逻辑走 UI_MinimapSubItem.PinSpriteKey（public static，0.1.17a UI_MinimapSubItem.cs:88；Player → "minimap_player.sprite"）。
+        /// 黑幕 pin 的已识破表现是 TurnBlack 的 minimap_black.sprite（:62-67），不在 PinSpriteKey 表内，统一还原为通用玩家底图即可，下一次识破事件由原版 RefreshBlackPin 重新置黑；不调 sizeDelta（ApplyPin 替换时也没改尺寸）。
+        /// ComplyRules 子物体：ApplyPin 曾强制 SetVisible(true)，还原时未识破态（AlreadyComplyRules=false，:39）按原版 SetInfo 默认隐藏（:57）；已识破态原版本就保持可见（TurnComplyRules :71-81），贴图恢复为原版所用的 <角色>_Map_Black。
         private static void RestorePin(UI_MinimapSubItem pin)
         {
             if (pin == null || pin.Type != Define.EMinimapPinType.Player)

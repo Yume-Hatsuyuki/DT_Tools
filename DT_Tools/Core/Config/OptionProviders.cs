@@ -3,14 +3,8 @@ using System.Collections.Generic;
 
 namespace DT_Tools.Core
 {
-    /// 动态下拉选项注册表。
-    ///
-    /// 用法（在功能的 OnLoaded 钩子里）：
-    /// OptionProviders.Bind(Engine.SectionOf&lt;AutoSpawnPointModule&gt;(), "SpawnIndex", AutoSpawnPointLogic.SpawnOptions);
-    ///
-    /// 配置导出 API 看到提供者就把结果放进 accepts.options，前端据此渲染下拉。
-    /// 提供者在每次导出时调用（不缓存），因此地图/角色表晚于插件加载就绪也没问题；
-    /// 数据未就绪时返回空列表即可，前端会自动退回输入框。
+    /// 动态下拉选项注册表。用法（功能的 OnLoaded 钩子里）：OptionProviders.Bind(Engine.SectionOf<AutoSpawnPointModule>(), "SpawnIndex", AutoSpawnPointLogic.SpawnOptions);
+    /// 配置导出 API 看到提供者就把结果放进 accepts.options，前端据此渲染下拉。提供者每次导出时调用（不缓存），因此地图 / 角色表晚于插件加载就绪也没问题；数据未就绪时返回空列表即可，前端会自动退回输入框。
     public static class OptionProviders
     {
         private static readonly Dictionary<(string Section, string Key), Func<IReadOnlyList<ConfigOption>>> Map =

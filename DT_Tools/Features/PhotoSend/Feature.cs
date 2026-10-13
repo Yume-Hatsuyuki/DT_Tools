@@ -13,14 +13,8 @@ namespace DT_Tools.Features.PhotoSend
         Original
     }
 
-    /// 照片发送器（PhotoSend）：游戏内聊天输入 `![文字](路径)`（严格 markdown 括号对），
-    /// 文字非空时先发一条普通聊天消息再从路径直发照片；文字可空（`![](路径)`），路径
-    /// 不允许为空。路径支持本地文件、相对图片目录（BepInEx/config/DT_Tools/photos/）
-    /// 的文件名或 http(s) 链接。
-    ///
-    /// 实现：读图（LoadImage）→ 缩放（保证 JPEG ≤160KB 原版上限）→ 构造 C_CHAT_PHOTO
-    /// 直发（SlotIndex=-1，不触碰相册）→ 房主转 S_CHAT_PHOTO 全房广播。
-    /// 完全走原版照片协议：无需房主权限、无需对方安装本 mod，庭审阶段也可直接发。
+    /// 照片发送器（PhotoSend）：游戏内聊天输入 `![文字](路径)`（严格 markdown 括号对）。文字非空时先发一条普通聊天消息，再从路径直发照片；文字可空（`![](路径)`），路径不允许为空。路径支持本地文件、相对图片目录（BepInEx/config/DT_Tools/photos/）的文件名，或 http(s) 链接。
+    /// 实现：读图（LoadImage）→ 缩放（保证 JPEG ≤160KB 原版上限）→ 构造 C_CHAT_PHOTO 直发（SlotIndex=-1，不触碰相册）→ 房主转 S_CHAT_PHOTO 全房广播。完全走原版照片协议：无需房主权限、无需对方安装本 mod，庭审阶段也可直接发。
     [PatchFeature(
         "照片发送器：聊天输入 ![文字](路径)（markdown 格式），文字非空先发一条文字再直发照片，文字可空、路径必填；" +
         "图片支持本地路径、相对图片目录的文件名或 http(s) 网络链接。\n" +

@@ -9,14 +9,8 @@ using Steamworks;
 
 namespace DT_Tools.Features.BanList
 {
-    /// 踢人黑名单：房主踢人时游戏把对方 SteamId 记进 GameRoom._bannedSteamIds
-    /// （0.1.16b Server.Game/GameRoom.cs:79（待核对）），此后进房校验直接拒绝
-    /// （HandleEnterPlayer，:1068，回包 ErrorKicked），且原版没有任何解封接口——
-    /// 房主会话存续期间被踢者永远进不来，只有 FullReset（:522）才清空。
-    ///
-    /// 本功能不改游戏行为，只做两件事：KickPlayer 补丁把「被踢时的名字与时间」缓存下来
-    /// （黑名单本体仍是游戏自己的集合，本表只补名字，游戏侧未拉黑就以游戏为准）；
-    /// 对命令域暴露快照（/banlist）与解封操作（/unban）。
+    /// 踢人黑名单：房主踢人时游戏把对方 SteamId 记进 GameRoom._bannedSteamIds（0.1.16b Server.Game/GameRoom.cs:79（待核对）），此后进房校验直接拒绝（HandleEnterPlayer，:1068，回包 ErrorKicked）。原版没有解封接口，房主会话存续期间被踢者永远进不来，只有 FullReset（:522）才清空。
+    /// 本功能不改游戏行为：KickPlayer 补丁缓存“被踢时的名字与时间”（黑名单本体仍是游戏自己的集合，本表只补名字，游戏侧未拉黑就以游戏为准）；对命令域暴露快照（/banlist）与解封（/unban）。
     [PatchFeature(
         "踢人黑名单：记录被踢玩家（名字/时间），供 /banlist 查询与 /unban 解封。",
         defaultEnabled: false,

@@ -7,14 +7,8 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// GET /api/fs/list?path=目录 — 只读列举本机目录，供 WebUI 内置文件选择器
-    /// （apps/common/FileBrowser.vue）浏览。path 为空 → 列出全部盘符（根视图，
-    /// parent=null）；path 指向文件 → 列出其所在目录（地址栏粘贴文件路径时能直接
-    /// 落在目标位置）。隐藏/系统属性条目（$RECYCLE.BIN、desktop.ini 等）不出现在列表里。
-    /// 由本机后端代为浏览是唯一可行通道：游戏 Mono 加载不了 System.Windows.Forms
-    /// （曾用的原生对话框反射方案已因此整体移除），浏览器安全模型又拿不到本地绝对
-    /// 路径。威胁面与 /api/run（可执行任意命令）一致：只读列举、不读文件内容，
-    /// 鉴权与跨站防护由 Router 统一处理。
+    /// GET /api/fs/list?path=目录：只读列举本机目录，供 WebUI 内置文件选择器（apps/common/FileBrowser.vue）浏览。path 为空则列出全部盘符（根视图，parent=null）；path 指向文件则列出其所在目录（地址栏粘贴文件路径时能直接落在目标位置）。隐藏 / 系统属性条目（$RECYCLE.BIN、desktop.ini 等）不出现在列表里。
+    /// 由本机后端代为浏览是唯一可行通道：游戏 Mono 加载不了 System.Windows.Forms（曾用的原生对话框反射方案已因此整体移除），浏览器安全模型又拿不到本地绝对路径。威胁面与 /api/run（可执行任意命令）一致：只读列举、不读文件内容，鉴权与跨站防护由 Router 统一处理。
     public static class FsApi
     {
         /// 音频扩展名，前端据此高亮可点播的文件。

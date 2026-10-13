@@ -4,13 +4,8 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LoginReward
 {
-    /// 按玩家自设秒数改写 FreeCurrencyDrops 客户端等待（0.1.17a FreeCurrencyDrops.cs）。
-    /// 官方硬编码：RESULT_TIMEOUT=20、RECHECK_WAIT=65、RETRY_MIN=2、RETRY_MAX=60。
-    /// 功能开启时读取 LoginRewardFeature 的 ResultTimeoutSec / EmptyRecheckSec /
-    /// RetryMinSec / RetryMaxSec（默认即官方值）：
-    /// 1. Update Prefix：结果超时短于官方时提前结束 in-flight 并 ScheduleRetry；
-    /// 2. TryHandleResult Postfix：空结果/Prime 的 _waitUntil 改为配置的复查秒数；
-    /// 3. ScheduleRetry Postfix：按配置的下限/上限重写指数退避。
+    /// 按玩家自设秒数改写 FreeCurrencyDrops 客户端等待（0.1.17a FreeCurrencyDrops.cs）。官方硬编码：RESULT_TIMEOUT=20、RECHECK_WAIT=65、RETRY_MIN=2、RETRY_MAX=60。
+    /// 功能开启时读取 LoginRewardFeature 的 ResultTimeoutSec / EmptyRecheckSec / RetryMinSec / RetryMaxSec（默认即官方值）：Update Prefix 在结果超时短于官方时提前结束 in-flight 并 ScheduleRetry；TryHandleResult Postfix 把空结果 / Prime 的 _waitUntil 改为配置的复查秒数；ScheduleRetry Postfix 按配置的下限 / 上限重写指数退避。
     /// 不改 Steam TriggerItemDrop 本身，也不能突破生成器冷却与每日次数上限。
     internal static class LoginRewardDropSpeed
     {

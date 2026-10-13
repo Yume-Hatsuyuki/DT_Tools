@@ -96,14 +96,9 @@ namespace DT_Tools.Commands.ListPlayers
                 .ToList();
         }
 
-        /// 通过 P2PSessionManager → SteamP2PSession.Connection → GetConnectionInfo
-        /// 取远端地址 / 是否中继 / ping。
-        /// 路径对齐 0.1.17a DummyClient/SteamP2PSession.cs:39 GetConnectionInfo、
-        /// DummyClient/P2PSessionManager.cs:39 TryGet。
-        ///
-        /// 拓扑说明：游戏是星型——客机只与房主建连，客机之间没有 P2P 句柄，
-        /// 故客机执行本命令时除房主外均为无连接（ip_src=—）。
-        /// SDR 下 m_addrRemote 常为空，此时用 m_idPOPRelay 显示 sdr:POP。
+        /// 通过 P2PSessionManager → SteamP2PSession.Connection → GetConnectionInfo 取远端地址 / 是否中继 / ping。
+        /// 路径对齐 0.1.17a DummyClient/SteamP2PSession.cs:39 GetConnectionInfo、DummyClient/P2PSessionManager.cs:39 TryGet。
+        /// 拓扑：游戏是星型，客机只与房主建连，客机之间没有 P2P 句柄，故客机执行本命令时除房主外均为无连接（ip_src=—）。SDR 下 m_addrRemote 常为空，此时用 m_idPOPRelay 显示 sdr:POP。
         public static void TryResolveConnection(ulong steamId, out string remoteIp, out bool? relayed, out int pingMs)
         {
             remoteIp = null;

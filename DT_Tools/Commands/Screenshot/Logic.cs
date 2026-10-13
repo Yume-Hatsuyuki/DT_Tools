@@ -9,14 +9,8 @@ using Object = UnityEngine.Object;
 
 namespace DT_Tools.Commands.Screenshot
 {
-    /// 截图实现（回调式，一次调用完成）：游戏用 URP，Camera.Render() 系同步方案全灭（URP
-    /// 不支持手动渲染，且会无视 clearFlags 清黑背缓冲）；Update 泵里直接 ReadPixels 背缓冲
-    /// 又不在绘制帧内（Unity 报 not inside drawing frame，未定义行为）。唯一合法点 = 帧末
-    /// （WaitForEndOfFrame：本帧渲染完、UI 已画、呈现前）——它必然晚于命令返回，故经
-    /// ctx.Defer() 延迟完成：命令占位返回，常驻协程在帧末捕获后回填结果，等待方一次拿到路径。
-    /// 读到纯色帧不判失败只打 blank 标记——加载页等纯色画面是合法帧，是否可用由看图方决定。
-    /// 窗口最小化时 Unity 停止渲染，WaitForEndOfFrame 不触发，由实时看门狗（5 秒）判失败。
-    /// 落盘目录选 BepInEx/cache（Paths.CachePath）：可写、随缓存清理、不污染插件目录。
+    /// 截图实现（回调式，一次调用完成）。游戏用 URP，Camera.Render() 系同步方案全灭（URP 不支持手动渲染，且会无视 clearFlags 清黑背缓冲）；Update 泵里直接 ReadPixels 背缓冲又不在绘制帧内（Unity 报 not inside drawing frame，未定义行为）。唯一合法点是帧末（WaitForEndOfFrame：本帧渲染完、UI 已画、呈现前），它必然晚于命令返回，故经 ctx.Defer() 延迟完成：命令占位返回，常驻协程在帧末捕获后回填结果，等待方一次拿到路径。
+    /// 读到纯色帧不判失败，只打 blank 标记（加载页等纯色画面是合法帧，是否可用由看图方决定）。窗口最小化时 Unity 停止渲染，WaitForEndOfFrame 不触发，由实时看门狗（5 秒）判失败。落盘目录选 BepInEx/cache（Paths.CachePath）：可写、随缓存清理、不污染插件目录。
     internal static class ScreenshotLogic
     {
         /// 实时看门狗超时：超时未等到帧末（窗口最小化/无新帧）按失败回填。

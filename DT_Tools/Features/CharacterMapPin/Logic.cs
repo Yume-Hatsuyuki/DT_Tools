@@ -131,14 +131,7 @@ namespace DT_Tools.Features.CharacterMapPin
         public static void DeleteHudPin(UI_GameScene scene, int id)
             => DeletePinOf?.Invoke(scene, id);
 
-        /// 「死亡保留 Pin」跟随服务器广播的强制位移（Patch.RespawnFollow 在
-        /// PlayerManager.HandleRespawn 后置调用）。复刻原版 Kaho（ComplyRules）对被追踪者的
-        /// 位置推送语义：服务器每次接受移动都向追踪者发 S_PIN_MOVE（含强制移动，
-        /// 0.1.16b Server.Game/Player.cs:764-770（待核对）），客户端经 Handle_S_PIN_MOVE
-        /// （0.1.17a PacketHandler.cs:231-237）调 RefreshComplyRulesPin，非强制分支走
-        /// SetTargetPosition 平滑（0.1.17a UI_GameScene.cs:901-904）——本方法与其同构：
-        /// HUD/平板两份保留 pin 一起平滑推到目标点，坐标换算与逐帧刷新同源
-        /// （SetTargetPosition 内联式 = Util.GetMinimapPosition，0.1.17a Util.cs:887-892）。
+        /// 「死亡保留 Pin」跟随服务器广播的强制位移（Patch.RespawnFollow 在 PlayerManager.HandleRespawn 后置调用）。复刻原版 Kaho（ComplyRules）对被追踪者的位置推送语义：服务器每次接受移动都向追踪者发 S_PIN_MOVE（含强制移动，0.1.16b Server.Game/Player.cs:764-770（待核对）），客户端经 Handle_S_PIN_MOVE（0.1.17a PacketHandler.cs:231-237）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.17a UI_GameScene.cs:901-904）。本方法与其同构：HUD / 平板两份保留 pin 一起平滑推到目标点，坐标换算与逐帧刷新同源（0.1.17a Util.cs:887-892）。
         public static void FollowKeptPin(int id, PosInfo pos)
         {
             Vector2 target = new Vector2(pos.X, pos.Y);
