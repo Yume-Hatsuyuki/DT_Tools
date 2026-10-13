@@ -7,17 +7,9 @@ using UnityEngine;
 namespace DT_Tools.Features.AutoFishMine
 {
     /// 一键钓鱼挖矿的三个补丁（同一功能，三个入口）：
-    /// 1) AutoStartPatch：DeviceManager.SearchInteractDevice Postfix——走近钓鱼点(EDeviceType.Fishing)
-    /// 或矿机(EDeviceType.Miner)自动 InteractBase 开始（Fishing.Interact→StartFishing，
-    /// Mineral.Interact→StartCasting，见 0.1.16b Fishing.cs:45（待核对） / Mineral.cs:34）。
-    /// 2) AutoFishingPatch：UI_FishingSlider.Update Postfix——钓鱼小游戏四阶段机（0.1.16b
-    /// UI_FishingSlider.cs:77-142）：Phase.Bite(1) 自动 EnterCatchIntro 提竿，
-    /// Phase.Reeling(3) 每帧 AddGauge（+0.05）模拟连按，gauge 满自动 EnterSuccess→收获。
-    /// 其余阶段（Waiting/CatchIntro/Success）由游戏自动推进。
-    /// 3) AutoMiningPatch：UI_MineralSlider.Update Postfix——滑块小游戏（0.1.16b UI_MineralSlider.cs:74（待核对））：
-    /// _isCatch 且 CheckCatch() 为 true（滑块进入目标区）时自动执行按键成功分支，
-    /// _successCount 累计 3 次后发 C_HANDLE_MINERAL(IsSuccess=true) 并 StopCasting 自动收获。
-    /// 所有协议均为游戏原生请求，失败只记录日志，不中断。
+    /// 1) AutoStartPatch：DeviceManager.SearchInteractDevice Postfix，走近钓鱼点（Fishing）或矿机（Miner）自动 InteractBase 开始（Fishing.cs:45（待核对）、Mineral.cs:34）。
+    /// 2) AutoFishingPatch：UI_FishingSlider.Update Postfix，钓鱼小游戏四阶段（0.1.16b UI_FishingSlider.cs:77-142）：Bite(1) 自动提竿；Reeling(3) 每帧 AddGauge（+0.05）模拟连按，满则自动收获。
+    /// 3) AutoMiningPatch：UI_MineralSlider.Update Postfix（0.1.16b UI_MineralSlider.cs:74（待核对））：滑块进入目标区（CheckCatch）时自动按成功分支，累计 3 次后发 C_HANDLE_MINERAL(IsSuccess=true) 并 StopCasting 收获。所有协议均为游戏原生请求，失败只记录日志，不中断。
     [HarmonyPatch(typeof(DeviceManager), nameof(DeviceManager.SearchInteractDevice))]
     internal static class AutoStartPatch
     {

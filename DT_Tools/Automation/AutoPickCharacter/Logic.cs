@@ -7,16 +7,9 @@ using DT_Tools.Core;
 
 namespace DT_Tools.Automation.AutoPickCharacter
 {
-    /// 业务逻辑：运行时从 Managers.Data.CharacterDic 读取角色目录（含梅德琳），
-    /// 供发包前的校验与 WebUI 下拉；展示名为中文（英文），中文从 TextDic 查。
-    ///
-    /// 梅德琳（DataId=101）的防御处理：
-    /// 不同版本的角色表里 101 的 Name 可能是 "Madeline" 或 "Medelin"（拼写不一致），
-    /// 而文本表只有 "Madeline" 这个 key。因此 101 一律以 ID 识别，英文名固定为 Madeline，
-    /// 中文名按 [表内 Name, Madeline, Medelin] 依次尝试。其余角色照常按 Name 读取。
-    ///
-    /// 文本一律直接查 TextDic 而不调用 Managers.GetText：
-    /// GetText 缺 key 时会 Debug.LogError，而下拉数据会被 WebUI 轮询，会刷屏。
+    /// 运行时从 Managers.Data.CharacterDic 读取角色目录（含梅德琳），供发包前校验与 WebUI 下拉；展示名为中文（英文），中文从 TextDic 查。
+    /// 梅德琳（DataId=101）：不同版本角色表里 101 的 Name 可能是 "Madeline" 或 "Medelin"，而文本表只有 "Madeline" 这个 key。因此 101 一律以 ID 识别，英文名固定为 Madeline，中文名按 [表内 Name, Madeline, Medelin] 依次尝试；其余角色照常按 Name 读取。
+    /// 文本一律直接查 TextDic，不调用 Managers.GetText：GetText 缺 key 时会 Debug.LogError，而下拉数据会被 WebUI 轮询，会刷屏。
     internal static class AutoPickCharacterLogic
     {
         public const int RandomId = -2;

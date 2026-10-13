@@ -10,19 +10,9 @@ using System.Threading;
 namespace DT_Tools.WebConsole
 {
     /// WebSocket 实时流的自管 TCP 通道。
-    ///
-    /// 背景：Unity(Mono) 的 HttpListener.AcceptWebSocketAsync 未实现（运行时探测见
-    /// LogStreamApi._wsCapability），HTTP 端口上的 WebSocket 升级永远 501，前端只能
-    /// 降级轮询。本类在独立端口（WebConsoleOptions.WsPort，0=禁用）用 TcpListener
-    /// 自行完成 RFC6455 握手（101 + Sec-WebSocket-Accept），随后交给
-    /// WebSocket.CreateFromStream（netstandard2.1 纯托管帧实现，isServer:true 要求
-    /// 调用方先行完成握手）——握手后的注册/重放/心跳/慢消费保护与 HTTP 路径共用
-    /// LogStreamApi 的同一套客户端逻辑。前端经 GET /api/meta 发现端口后直连本通道。
-    ///
-    /// 线程模型与 HttpServer 一致：监听线程只接受连接，每连接派发线程池并阻塞到
-    /// 连接结束；鉴权语义与 HTTP 相同（密码非空时凭 dt_token cookie 或 ?token= 查询
-    /// 串，Auth.CheckToken 常量时间比较）。运行时若连 CreateFromStream 也不可用
-    /// （更老的 Mono），逐连接失败静默关闭，前端按既有逻辑降级轮询——不劣化现状。
+    /// 背景：Unity(Mono) 的 HttpListener.AcceptWebSocketAsync 未实现（运行时探测见 LogStreamApi._wsCapability），HTTP 端口上的 WebSocket 升级恒为 501，前端降级轮询。
+    /// 本类在独立端口（WebConsoleOptions.WsPort，0=禁用）用 TcpListener 自行完成 RFC6455 握手（101 + Sec-WebSocket-Accept），再交给 WebSocket.CreateFromStream（netstandard2.1 纯托管帧实现，isServer:true 要求调用方先完成握手）。握手后的注册、重放、心跳、慢消费保护与 HTTP 路径共用 LogStreamApi 的客户端逻辑。前端经 GET /api/meta 发现端口。
+    /// 线程模型同 HttpServer：监听线程只接受连接，每连接派发线程池并阻塞到结束。鉴权与 HTTP 相同（密码非空时凭 dt_token cookie 或 ?token=，Auth.CheckToken 常量时间比较）。CreateFromStream 不可用时（更老的 Mono）逐连接静默关闭，前端按既有逻辑降级，不劣化现状。
     internal static class WsServer
     {
         private const int HeadLimit = 16 * 1024;      // 握手请求头上限（正常约 1KB）

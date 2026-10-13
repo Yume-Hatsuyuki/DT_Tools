@@ -7,16 +7,8 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.HostTransfer
 {
     /// 房主局内转让：客户端侧配合 transferhost 命令的房主标记同步。
-    ///
-    /// 原版客户端 PacketHandler.Handle_S_SET_HOST 只在 Lobby 阶段更新房主标记
-    /// （BroadcastSceneEvent(SetHost) + SetPlayerLobbyState(Host)，
-    /// 0.1.16a PacketHandler.cs:332-340）；局内转让时服务端广播的 S_SET_HOST
-    /// 会被客户端忽略，UI 上的房主标记不会变化。
-    /// 本补丁在原版处理之后补执行同样的标记更新（仅非 Lobby，避免重复），
-    /// 让大厅与局内转让都能在客户端正确显示新房主。
-    /// 服务端转让逻辑在 Commands/TransferHost（transferhost 命令），与本补丁解耦：
-    /// 关闭本功能时服务端权限转让仍生效，只是局内房主标记不更新。
-    /// PacketHandler 为 internal 类，采用字符串类型名反射打点（同 SpectatorJoin）。
+    /// 原版 PacketHandler.Handle_S_SET_HOST 只在 Lobby 阶段更新房主标记（BroadcastSceneEvent(SetHost) + SetPlayerLobbyState(Host)，0.1.16a PacketHandler.cs:332-340）；局内转让时服务端广播的 S_SET_HOST 被客户端忽略，UI 房主标记不变。
+    /// 本补丁在原版处理之后补执行同样的标记更新（仅非 Lobby，避免重复），让大厅与局内转让都能正确显示新房主。服务端转让逻辑在 Commands/TransferHost，与本补丁解耦：关闭本功能时服务端权限转让仍生效，只是局内房主标记不更新。PacketHandler 为 internal，采用字符串类型名反射打点（同 SpectatorJoin）。
     [HarmonyPatch]
     [PatchFeature(
         "房主局内转让：房主可通过 /transferhost #<playerId> 将房主身份转给其他玩家（大厅/局内均可），本功能让局内客户端同步更新房主标记。",

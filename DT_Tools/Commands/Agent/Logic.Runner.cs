@@ -6,19 +6,10 @@ using UnityEngine;
 
 namespace DT_Tools.Commands.Agent
 {
-    /// Unity MonoBehaviour：每 tick 执行 Planner 给出的步骤（对应旧 AgentRunner.cs）。
-    /// 日志全部经启动命令的 CommandContext（ctx.Reply/Warn）输出，不直接使用 Log 门面。
-    ///
-    /// 参数依据（已核实 Server / Server.Game 源码，2026-09 复核）：
-    /// · 全服务端代码中，JobSerializer.Push→Flush 是无限容量 FIFO，同步立即执行；
-    /// Replicator.All/Broadcast 同步立即发送；HostPacketGate 仅拦截"未绑定玩家会话"的包，
-    /// 与包频率无关。未发现任何针对 C_INTERACT_*/C_HANDLE_* 的限频、去重或冷却判定。
-    /// 故 TickInterval 下探到 0.25s 不会触发服务端限流。
-    /// · Mineral.HandleEvent 服务端零冷却，每次收到 C_HANDLE_MINERAL{IsSuccess=true}
-    /// 即无条件 CreateAndDropItem + Broadcast(S_SPAWN_DEVICE)（0.1.17a Server.Game/Mineral.cs:43/43）；
-    /// MineralMineCooldown 纯粹是客户端侧"等网络回包 + Cache 刷新"的自保护，与服务器无关。
-    /// · MaxIdleTicks / MaxTicks 随 TickInterval 变化按时长等效换算，
-    /// 以保持"空闲多久停止"和"最多运行多久"的实际秒数不变。
+    /// Unity MonoBehaviour：每 tick 执行 Planner 给出的步骤（对应旧 AgentRunner.cs）。日志经启动命令的 CommandContext（ctx.Reply/Warn）输出，不直接用 Log 门面。
+    /// 参数依据（2026-09 复核服务端源码）：JobSerializer.Push→Flush 为无限容量 FIFO 同步执行，Replicator 同步发送，HostPacketGate 只拦截未绑定会话的包，与频率无关；未发现针对 C_INTERACT_*/C_HANDLE_* 的限频、去重或冷却。故 TickInterval 可低至 0.25s 而不触发限流。
+    /// Mineral.HandleEvent 服务端零冷却，每收到 C_HANDLE_MINERAL{IsSuccess=true} 即 CreateAndDropItem + Broadcast(S_SPAWN_DEVICE)（0.1.17a Server.Game/Mineral.cs:43）；MineralMineCooldown 只是客户端“等回包 + 刷新 Cache”的自保护。
+    /// MaxIdleTicks / MaxTicks 随 TickInterval 按时长等效换算，保持“空闲多久停止”“最多运行多久”的实际秒数不变。
     internal sealed class AgentRunner : MonoBehaviour
     {
         public const float TickInterval = 0.25f;   // 原 0.6f；服务端无限频证据见上
@@ -147,17 +138,10 @@ namespace DT_Tools.Commands.Agent
                 Finish();
         }
 
-        /// 单 tick 内批量执行：
-        /// · ChangesHand==false 的步骤（状态机推进/无道具直清）互不干扰，全部执行；
-        /// · ChangesHand==true 的步骤（进/出/替换 Hand）仅在 <see cref="_handOpCooldown"/>
-        /// 归零时才执行，且本 tick 最多执行 1 个，执行后重新进入
-        /// <see cref="HandOpCooldownTicks"/> tick 冷却——
-        /// 依据 1：Server.Game/ItemManager.cs InsertInven（0.1.16b:101）在 Hand 非空时会强制
-        /// DropItem 踢落已持物品（:105-108），同 tick 连发两个改 Hand 包会导致先发的被踢落地；
-        /// 依据 2：HandItemId 的刷新依赖服务端回包（异步），冷却期给回包留出时间，
-        /// 避免本地状态未及时刷新导致 Planner 对同一目标重复发送改 Hand 请求。
-        /// batch 已按 Priority 升序排列，故第一个遇到的改 Hand 步骤即为优先级最高者。
-        /// 返回值：本 tick 是否至少执行了一个步骤（供 idle 计数使用）。
+        /// 单 tick 内批量执行：ChangesHand==false 的步骤（状态机推进 / 无道具直清）互不干扰，全部执行；
+        /// ChangesHand==true 的步骤（进/出/替换 Hand）仅在 <see cref="_handOpCooldown"/> 归零时执行，本 tick 最多 1 个，执行后进入 <see cref="HandOpCooldownTicks"/> tick 冷却。
+        /// 依据 1：Server.Game/ItemManager.cs InsertInven（0.1.16b:101）在 Hand 非空时会强制 DropItem 踢落已持物品（:105-108），同 tick 连发两个改 Hand 包会让先发的被踢落地。
+        /// 依据 2：HandItemId 依赖服务端异步回包刷新，冷却期给回包留时间，避免 Planner 对同一目标重复发改 Hand 请求。batch 已按 Priority 升序排列，第一个遇到的改 Hand 步骤即优先级最高者。返回值：本 tick 是否至少执行了一个步骤（供 idle 计数）。
         private bool ExecuteBatch(List<AgentStep> batch)
         {
             bool executedAny = false;

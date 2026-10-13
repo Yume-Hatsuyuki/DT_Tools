@@ -7,17 +7,9 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.LobbyDisplayCount
 {
-    /// 自定义大厅显示人数（房主权威）：对外（Steam 大厅列表）显示的人数可与房间
-    /// 真实人数不同——按偏移量或固定值伪装。对外显示走 Steam Lobby metadata
-    /// "members"（房主 UpdateMemberCountMetadata 发布，客户端 OnLobbyList 读它填
-    /// LobbyListEntry.Cur 再经 UI_RoomSubItem 渲染），改它不影响任何游戏内判定。
-    ///
-    /// 满员判定（GameRoom.HandleEnterPlayer 的 RoomMemberCountForMetadata() >= 上限
-    /// 与 ObjectUtils.HasFreeSeat()）走原版路径，本功能一概不碰——因此房间达到最大
-    /// 人数时依旧拒绝加入。配合已有功能：
-    /// - SpectatorJoin（满房观战）：其 Prefix 以 Priority.First 整替 HandleEnterPlayer，
-    /// 满房观战窗口仍按观战逻辑放行，与本功能（只改 metadata）互不干扰；
-    /// - LobbyMaxPlayers（超过人数上限）：只调 Steam Lobby 容器上限，显示值独立可配。
+    /// 自定义大厅显示人数（房主权威）：对外（Steam 大厅列表）显示的人数可与房间真实人数不同，按偏移量或固定值伪装。对外显示走 Steam Lobby metadata "members"（房主 UpdateMemberCountMetadata 发布，客户端 OnLobbyList 读它填 LobbyListEntry.Cur，再经 UI_RoomSubItem 渲染），改它不影响任何游戏内判定。
+    /// 满员判定（GameRoom.HandleEnterPlayer 的 RoomMemberCountForMetadata() >= 上限，与 ObjectUtils.HasFreeSeat()）走原版路径，本功能不碰，房间达到最大人数时依旧拒绝加入。
+    /// 配合：SpectatorJoin（满房观战）的 Prefix 以 Priority.First 整替 HandleEnterPlayer，观战窗口仍按观战逻辑放行，与本功能（只改 metadata）互不干扰；LobbyMaxPlayers（超过人数上限）只调 Steam Lobby 容器上限，显示值独立可配。
     [HarmonyPatch]
     [PatchFeature(
         "自定义大厅显示人数：对外（Steam 大厅列表）显示人数可与房间真实人数不同（偏移或固定值）。真实满员判定不变——达到最大人数依旧拒绝加入；与 SpectatorJoin（满房观战）、LobbyMaxPlayers（超上限）天然兼容。仅房主生效。",

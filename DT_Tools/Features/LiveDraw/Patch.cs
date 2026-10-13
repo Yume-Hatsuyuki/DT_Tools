@@ -12,17 +12,10 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LiveDraw
 {
-    /// 庭审画布"动态照片"补丁集合（原 DT_LiveDraw v1.0.0 移植）：
-    /// 1. Managers.Update Postfix：仅庭审讨论阶段处理按键（F9 画下一张 / F10 沸腾开关 /
-    /// F11 手动波浪；聊天框打开时不抢按键）；阶段切换自动停止动画与作废进行中的绘制；
-    /// 2. 绘制协程（CoroutineHost.Start）：ClearMine 清空自己层 → 按笔画逐点落笔
-    /// （对齐原版 64 点/包、0.09s 间隔 < 房主 12 包/秒限速）→ FlushOutbox 收尾；
-    /// 3. 动画（TickBoil/SendBoilFrame）：按配置帧率发 C_DRAW_REPLACE 变形帧（基准点正弦
-    /// 偏移 + 周期波浪），复用原笔画 StrokeId；DrawingMirror.Replace（0.1.16b
-    /// Server.Game/DrawingMirror.cs:47 静态）同步服务端镜像（房主迁移后能恢复到当前
-    /// 动画帧，非房主进程为空镜像写入无害），UpsertFromProto（DrawingManager 私有方法，
-    /// 反射调用）同步本地模型+触发重绘。
-    /// 照片→笔画管线见 Draw.cs；配置与开关见 Feature.cs（defaultEnabled:false，需手动开启）。
+    /// 庭审画布“动态照片”补丁集合（原 DT_LiveDraw v1.0.0 移植）：
+    /// 1. Managers.Update Postfix：仅庭审讨论阶段处理按键（F9 画下一张 / F10 沸腾开关 / F11 手动波浪；聊天框打开时不抢按键）；阶段切换时停止动画并作废进行中的绘制。
+    /// 2. 绘制协程（CoroutineHost.Start）：ClearMine 清空自己层 → 按笔画逐点落笔（对齐原版 64 点/包、0.09s 间隔 < 房主 12 包/秒限速）→ FlushOutbox 收尾。
+    /// 3. 动画（TickBoil / SendBoilFrame）：按配置帧率发 C_DRAW_REPLACE 变形帧（基准点正弦偏移 + 周期波浪），复用原笔画 StrokeId。DrawingMirror.Replace（0.1.16b Server.Game/DrawingMirror.cs:47 静态）同步服务端镜像（房主迁移后能恢复到当前动画帧，非房主为空镜像写入无害）；UpsertFromProto（DrawingManager 私有方法，反射调用）同步本地模型并触发重绘。照片→笔画管线见 Draw.cs；配置与开关见 Feature.cs（defaultEnabled:false，需手动开启）。
     internal static class Patch
     {
         private const float CanvasHalfW = 439.5f;

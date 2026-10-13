@@ -5,20 +5,10 @@ using Protocol;
 
 namespace DT_Tools.Commands.Chat
 {
-    /// /chat [#deviceId] &lt;text&gt; — 本机通过打字机（ChatDevice）发送全图文字。
-    ///
-    /// 三种用法：
-    /// 无参数              → 帮助 + 列出本机缓存中全部打字机 ID 与所在地区
-    /// /chat #id 文本      → 指定打字机 ID 发送
-    /// /chat 文本          → 随机选用一台空闲（优先）打字机发送
-    ///
-    /// 实现路径（对齐原版 UI_ChatDevicePopup.Send → VoiceManager.SendDeviceChatMessage）：
-    /// 1. C_INTERACT_CHATDEVICE 占机（服务端 ChatDevice.Enter，State=PlayerId）
-    /// 2. C_CHAT_MESSAGE Type=DeviceChat（服务端 RelayDeviceChat 要求 Survive + 存活 + 已占机）
-    /// 3. C_HANDLE_CHATDEVICE 释放占机
-    /// 服务端 DeviceManager.Interact 对 ChatDevice 无距离校验，可在地图任意位置发包。
-    /// 仅生存阶段生效（0.1.16b HostPacketHandler.RelayDeviceChat）。
-    /// 跟随控制台 / 客户端，非房主可用。
+    /// /chat [#deviceId] <text>：本机通过打字机（ChatDevice）发送全图文字。
+    /// 用法：无参数 → 帮助与本机缓存的打字机列表；/chat #id 文本 → 指定打字机；/chat 文本 → 随机选一台空闲打字机（优先）。
+    /// 路径（对齐原版 UI_ChatDevicePopup.Send → VoiceManager.SendDeviceChatMessage）：C_INTERACT_CHATDEVICE 占机（ChatDevice.Enter，State=PlayerId）→ C_CHAT_MESSAGE Type=DeviceChat → C_HANDLE_CHATDEVICE 释放。
+    /// 服务端 RelayDeviceChat 要求 Survive、存活、已占机（0.1.16b HostPacketHandler.RelayDeviceChat）；DeviceManager.Interact 对 ChatDevice 无距离校验，可在地图任意位置发包。跟随控制台 / 客户端，非房主可用。
     internal sealed class ChatCommand : ICommand
     {
         public string Name => "chat";

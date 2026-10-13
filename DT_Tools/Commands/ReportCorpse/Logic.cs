@@ -6,19 +6,9 @@ using Protocol;
 namespace DT_Tools.Commands.ReportCorpse
 {
     /// /report 业务：本机身份守卫 + 尸体筛选与可报警判定 + C_INTERACT_CORPSE 报警。
-    ///
-    /// 原版 Corpse.Interact（0.1.16b Server.Game/Corpse.cs:262-270（待核对））仅校验
-    /// !IsHidden && !TrickLocked && !_isReport && !DiscoverdDone，没有距离 / 颜色 /
-    /// IsAlive / IsSpectator 检查，故可在地图任意位置直接发包触发 EndSurvival 进入
-    /// Detective。尸体 DeviceId 与死者 PlayerId 相同（Server.Game/Corpse.cs:190/:227 构造函数
-    /// base.ID = playerInfo.PlayerId）。
-    ///
-    /// 客户端可见的尸体状态字段（与 Server.Game/Corpse.cs 对齐）：
-    /// StateList[3] != 0 → IsBombCorpse（炸弹尸体，客户端 UI 同样禁报）
-    /// StateList[4] != 0 → HideDeviceId != 0，IsHidden（藏在池塘/通风管等容器）
-    /// IsCorpseTrickLocked → 被致命诡计锁定
-    /// _isReport / DiscoverdDone 是服务端私有字段不可见；二者任一为 true 时
-    /// EndSurvival 已执行、GameRoom.State != Survive，报警前会被 RequireSurvive 拦截。
+    /// 原版 Corpse.Interact（0.1.16b Server.Game/Corpse.cs:262-270（待核对））只校验 !IsHidden && !TrickLocked && !_isReport && !DiscoverdDone，无距离/颜色/存活/观战检查，可在任意位置发包触发 EndSurvival 进入 Detective。尸体 DeviceId = 死者 PlayerId（Server.Game/Corpse.cs:190/:227）。
+    /// 客户端可见状态：StateList[3]!=0 → 炸弹尸体（UI 同样禁报）；StateList[4]!=0 → HideDeviceId!=0，IsHidden（藏在容器里）；IsCorpseTrickLocked → 被致命诡计锁定。
+    /// _isReport / DiscoverdDone 为服务端私有字段不可见；二者为 true 时 EndSurvival 已执行，报警会被 RequireSurvive 拦截。
     internal static class ReportCorpseLogic
     {
         /// 本机已进入对局（MyPlayer 已生成、到 Host 的网络链路存在）。身份校验统一走 Game.LocalPlayer。

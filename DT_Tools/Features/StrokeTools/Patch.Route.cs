@@ -7,20 +7,10 @@ using UnityEngine;
 
 namespace DT_Tools.Features.StrokeTools
 {
-    /// 路线解读补丁：钩住 DrawingManager.EndLocalStroke（本地玩家松笔画完时调用，0.1.17a DrawingManager.cs:390），
-    /// 与画线测速（Patch.Timer.cs）同钩，各自 Prefix 互不干扰。Prefix 在 _active 置空（DrawingManager.cs:397）前
-    /// 读取笔画；EndLocalStroke 只由本地画布（UI_DrawSurface）调用，远端笔画不经此方法。
-    ///
-    /// 坐标系换算与画线测速相同：Stroke.Points 是平板画布（对象88 MapBoundsRect）局部坐标，
-    /// 官方世界→平板比例 = MapData.MinimapScale（0.1.17a UI_TutorialTablet.cs:2157），兜底 0.094
-    /// （0.1.17a Util.cs:887 GetMinimapPosition）。世界坐标 = 局部坐标 ÷ scale。
-    ///
-    /// 房间识别（与官方一致）：格子坐标 = 世界坐标 ÷ 224 − MapData.MapOffset（0.1.16b
-    /// Server.Game/AreaManager.cs:79 GetArea；ValidPosition 同文件 :89 含边界检查），
-    /// 格子值 = Managers.Data.MapArray[x][y]（DataManager.cs:28，byte 即 ERoomType，Protocol/ERoomType.cs），
-    /// 0 为 DefaultRoom（空地）。房间名 = Managers.GetText(枚举名)（0.1.17a UI_ChatDevicePopup.cs:471）。
-    /// 沿线按 SampleStep 步长细分采样，连续同房间合并，走廊可按配置过滤。
-    /// 结果走聊天广播（Managers.Voice.SendChatMessage），全房可见。
+    /// 路线解读：钩住 DrawingManager.EndLocalStroke（0.1.17a DrawingManager.cs:390，与画线测速同钩，各自 Prefix 互不干扰）。Prefix 在 _active 置空（DrawingManager.cs:397）前读取笔画；该方法只由本地画布调用，远端笔画不经此处。
+    /// 坐标换算同测速：Stroke.Points 为平板局部坐标，世界→平板比例 = MapData.MinimapScale（0.1.17a UI_TutorialTablet.cs:2157），兜底 0.094（0.1.17a Util.cs:887）；世界坐标 = 局部坐标 ÷ scale。
+    /// 房间识别（与官方一致）：格子 = 世界坐标 ÷ 224 − MapData.MapOffset（0.1.16b Server.Game/AreaManager.cs:79 GetArea，ValidPosition :89 含边界）；格子值 = Managers.Data.MapArray[x][y]（DataManager.cs:28，byte 即 ERoomType，Protocol/ERoomType.cs），0 为 DefaultRoom。房间名 = Managers.GetText(枚举名)（0.1.17a UI_ChatDevicePopup.cs:471）。
+    /// 沿线按 SampleStep 细分采样，连续同房间合并，走廊可按配置过滤。结果经聊天广播（Managers.Voice.SendChatMessage）全房可见。
     [HarmonyPatch(typeof(DrawingManager), nameof(DrawingManager.EndLocalStroke))]
     internal static class StrokeRoutePatch
     {

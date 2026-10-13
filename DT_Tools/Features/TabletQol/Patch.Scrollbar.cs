@@ -4,20 +4,11 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.TabletQol
 {
-    /// ① 滚动条：给平板列表挂滚动条。
-    ///
-    /// **两个挂点**（都只做"确保挂上"，重复调用安全）：
-    /// 1. `Init()` 的 Postfix —— 两个 `ScrollRect` 都是在**这一个方法里**取到的
-    /// （0.1.17a 反编译转储 :51880 `_chatScroll`、:51974 `ClueSrollRect`），最早可用时机。
-    /// 2. `Section` setter 的 Postfix —— 每次切页签（含打开平板时 `Clear()` 后的
-    /// `StartSection` 走的 setter，转储 :51472-51476 / :54084）都重跑一遍。
-    /// 为什么必须补：`Init` 只跑一次，而列表内容与可滚动轴是**后来**才变的
-    /// （同一个 `ClueSrollRect` 会议阶段有条、调查阶段没条，就是时机的锅）。
-    ///
-    /// 取法：`ClueSrollRect` 是公开属性（转储 :51556）直接用；`_chatScroll` 是私有字段（:51270）⇒ Traverse。
-    ///
-    /// ⚠️ 行号口径：本机没有按文件拆分的 `0.1.17a/` 源码树，上面引的是
-    /// `.tmps/decomp/Assembly-CSharp-0.1.17a.decompiled.cs`（单文件转储）的行号；定方法以方法名为准。
+    /// ① 滚动条：给平板列表挂滚动条（重复调用安全）。两个挂点：
+    /// 1. Init() 的 Postfix：两个 ScrollRect（_chatScroll、ClueSrollRect）都在这里取到，最早可用时机（0.1.17a 反编译转储 :51880、:51974）。
+    /// 2. Section setter 的 Postfix：每次切页签（含 Clear 后的 StartSection）都重跑，因为列表内容与可滚动轴是后来才变的（同一 ClueSrollRect 会议阶段有条、调查阶段没条）（转储 :51472-51476、:54084）。
+    /// 取法：ClueSrollRect 为公开属性（转储 :51556）；_chatScroll 为私有字段（:51270），用 Traverse。
+    /// ⚠️ 行号口径：本机没有按文件拆分的 0.1.17a 源码树，上面的行号来自单文件转储 .tmps/decomp/Assembly-CSharp-0.1.17a.decompiled.cs；定方法以方法名为准。
     [HarmonyPatch(typeof(UI_GameTablet), nameof(UI_GameTablet.Init))]
     internal static class PatchTabletQolScrollbar
     {

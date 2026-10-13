@@ -4,18 +4,9 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LoginReward
 {
-    /// 发放与弹窗流程（0.1.17a）：
-    /// TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）
-    /// → SteamInventorySource.GrantFreeFromStars（:964）折算单位后 FreeCurrencyDrops.Enqueue
-    /// → 串行 SteamInventory.TriggerItemDrop；OnProgress 可能多次中间回调
-    /// → 终态：FreeDropPendingUnits 回落到请求前基线后读 LastRevealEarned → TryShowPopup。
-    ///
-    /// 终态规则：earned&gt;0 走官方动画；earned≤0 立即视为「当日已满/未发放」，
-    /// 不再死等。中间 OnProgress（单次 +10）不得提前裁决。
-    ///
-    /// 在途竞态：GrantFreeFromStars 入口把 _revealEarned 清 0（InventoryManager.cs:353），
-    /// 真终态要等 drop 回调写入（:356）。TryGrant 发请求前把 _revealEarned 置 InFlightEarned(-1)，
-    /// 同步 OnChanged 见 -1 即过滤；批次完成判定另看 FreeDropPendingUnits。
+    /// 发放与弹窗流程（0.1.17a）：TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）→ SteamInventorySource.GrantFreeFromStars（:964）→ FreeCurrencyDrops.Enqueue → 串行 SteamInventory.TriggerItemDrop。OnProgress 可能多次中间回调；终态为 FreeDropPendingUnits 回落到请求前基线后读 LastRevealEarned，再 TryShowPopup。
+    /// 终态规则：earned>0 走官方动画；earned≤0 立即视为“当日已满 / 未发放”，不死等。中间 OnProgress（单次 +10）不得提前裁决。
+    /// 在途竞态：GrantFreeFromStars 入口把 _revealEarned 清 0（InventoryManager.cs:353），真终态要等 drop 回调写入（:356）。TryGrant 发请求前把 _revealEarned 置 InFlightEarned(-1)，同步 OnChanged 见 -1 即过滤；批次完成判定另看 FreeDropPendingUnits。
     internal static class LoginRewardLogic
     {
         /// 0.1.17a InventoryManager.cs:14——公开属性 LastRevealEarned 的后备字段；

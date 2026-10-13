@@ -12,19 +12,10 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.EmoteActions
 {
-    /// 未实装动作补丁集合（原 DT_EmoteActions v1.0.0 移植）：
-    /// 1. 本地播放（Managers.Update Postfix）：本地玩家存活、可控制、非聊天/非表情界面、
-    /// 待机站立（Idle/Run）且未在播动作时，检测 HiKey / ProposalKey / SwimKey 按下，
-    /// 经 Player.PlayDeadlyTrickAnim（0.1.17a Player.cs:1346）播放对应骨骼动画
-    /// （13_Hi / 9_Proposal / 15_Swimming）；动画播完 / 玩家移动 / 状态变化时
-    /// 自动 EndDeadlyTrickAnim（0.1.17a Player.cs:1352）还原。
-    /// 2. 动作同步（SyncActions）：触发成功后经聊天通道广播一条零宽前缀指令
-    /// （如 "\u200B（挥手）"）；接收端 patch VoiceManager.EnqueueNormalChat
-    /// （0.1.16b VoiceManager.cs:1338（待核对），聊天接收入口）识别指令 → 拦截显示 +
-    /// 对对应玩家（Managers.Player.Players[playerId]）播放同样动画并在到时/移动时还原。
-    /// 没装本 mod 的玩家只会看到（挥手）等友好文本（零宽前缀不可见），房主无需开启。
-    /// 键位全部走配置（KeyCode 枚举，None=关闭）；聊天输入框聚焦时跳过（防误触），
-    /// 与游戏自身按键互不冲突（默认 H / Y / 无）。
+    /// 未实装动作（原 DT_EmoteActions v1.0.0 移植）：
+    /// 1. 本地播放（Managers.Update Postfix）：存活、可控制、非聊天/表情界面、待机（Idle/Run）且未在播动作时，按 HiKey / ProposalKey / SwimKey 经 Player.PlayDeadlyTrickAnim（0.1.17a Player.cs:1346）播放骨骼动画（13_Hi / 9_Proposal / 15_Swimming）；播完、移动或状态变化时 EndDeadlyTrickAnim（Player.cs:1352）还原。
+    /// 2. 动作同步：触发成功后经聊天通道广播零宽前缀指令（如 "\u200B（挥手）"）；接收端 patch VoiceManager.EnqueueNormalChat（0.1.16b VoiceManager.cs:1338（待核对））识别指令，拦截显示并对对应玩家播放同样动画。未装本 mod 的玩家只看到“（挥手）”等友好文本，房主无需开启。
+    /// 键位全部走配置（KeyCode，None=关闭）；聊天输入框聚焦时跳过（防误触）。默认 H / Y / 无。
     internal static class Patches
     {
 
