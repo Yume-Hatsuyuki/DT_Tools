@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>DT_Tools</AssemblyName>
     <Description>Deadly Trick Plugin</Description>
-    <Version>1.1.0.0</Version>
+    <Version>2.0.0.1</Version>
     <LangVersion>latest</LangVersion>
     <TargetName>$(AssemblyName)_$(Configuration)_$(Version)</TargetName>
     <!-- 相对 csproj 所在目录，上一级的 libs -->
@@ -130,7 +130,24 @@
 
   <!-- 可坐椅子（SitOnChairs）：岛屿地图数据（原版+11条椅子设备）内嵌进 dll，运行时注入，无需外部 data 文件夹 -->
   <ItemGroup>
-    <EmbeddedResource Include="Patches/Fun/SitOnChairs/data/**" />
+    <EmbeddedResource Include="Features/SitOnChairs/data/**" />
   </ItemGroup>
+
+  <!--
+    静默失败保护：内嵌规则匹配不到数据时编译仍会成功（2.0.0.0 就是这样悄悄少了数据）。
+    这里要求 7 个岛屿数据文件都存在，并且全部真的进入 EmbeddedResource，否则直接编译失败。
+  -->
+  <ItemGroup>
+    <_SitOnChairsRequiredData Include="MapData_Island.json;RoomData_Island.json;DeviceData_Island.json;Device_DoorData_Island.json;TileData_Island.json;MissionData_Island.json;MapByte_Island.txt" />
+  </ItemGroup>
+  <Target Name="DT_CheckSitOnChairsData" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <_SitOnChairsEmbedded Include="@(EmbeddedResource)" Condition="$([System.String]::Copy('%(Identity)').Contains('SitOnChairs'))" />
+    </ItemGroup>
+    <Error Condition="!Exists('Features/SitOnChairs/data/%(_SitOnChairsRequiredData.Identity)')"
+           Text="可坐椅子数据文件缺失：Features/SitOnChairs/data/%(_SitOnChairsRequiredData.Identity)" />
+    <Error Condition="'@(_SitOnChairsEmbedded->Count())' != '@(_SitOnChairsRequiredData->Count())'"
+           Text="可坐椅子内嵌数据未全部收录：EmbeddedResource 收录 @(_SitOnChairsEmbedded->Count()) 个，应为 @(_SitOnChairsRequiredData->Count()) 个。请检查 csproj 中 EmbeddedResource 的路径是否与数据目录一致。" />
+  </Target>
 
 </Project>

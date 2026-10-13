@@ -1,12 +1,15 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Server.Game;
 
 namespace DT_Tools.Commands.ListAlive
 {
     /// <summary>
     /// /list_alive — 列出当前仍存活的玩家，并标注阵营（黑幕 / 黑方 / 白方）与「你」。
-    /// 仅房主、仅游戏中（选角结束之后）；完整阵营数据仅在 Host 端。
     /// </summary>
+    /// <remarks>
+    /// 仅房主、仅游戏中（选角结束之后）；完整阵营数据仅在 Host 端。
+    /// </remarks>
     internal sealed class ListAliveCommand : ICommand
     {
         public string Name => "list_alive";
@@ -14,6 +17,7 @@ namespace DT_Tools.Commands.ListAlive
         public string Usage => "list_alive";
         public string Description => "列出存活玩家并标注阵营（仅游戏中、需房主）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameIntel;
 
         public bool RequireHost => true;
 

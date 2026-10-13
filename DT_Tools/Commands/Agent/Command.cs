@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using System.Collections.Generic;
 using System.Text;
 using DT_Tools.Game;
@@ -5,22 +6,12 @@ using DT_Tools.Game;
 namespace DT_Tools.Commands.Agent
 {
     /// <summary>
-    /// /agent [all|任务ID|名|#设备号|stop] — 特工：按任务链自动推进（一步做不完就跳过做下一个）。
-    /// 优先级：无等待/仓储获取物/采矿 &gt; 设备生成 &gt; 计时类 &gt; 摇酒(移动)最后。
-    /// 手空时「顺手牵羊」获取仓储/地面任务道具。
-    ///
-    /// 实现拆分（对应旧 11 文件，逻辑未改动）：
-    ///   Args.cs               — 参数/别名解析
-    ///   Logic.Types.cs        — Pri / AgentFilter / AgentStep / AddDel
-    ///   Logic.ItemHelper.cs   — 道具/矿石/花工具 + 任务链关联 + 扫描仪颜色（旧 ItemHelper+ChainHelper）
-    ///   Logic.MissionState.cs — 任务激活状态权威数据源（Host 反射 MissionManager / 客户端 MissionMirror）
-    ///   Logic.DeliveryChain.cs— 交付链（原 CollectDeliveries）
-    ///   Logic.VacuumChain.cs  — 顺手牵羊（原 CollectVacuum）
-    ///   Logic.InstantChain.cs — 无道具直清（原 CollectInstant）
-    ///   Logic.GenerateChain.cs— 生成源（原 CollectGenerate，含挖矿冷却字段）
-    ///   Logic.Planner.cs      — PlanAll/Next/Peek 调度
-    ///   Logic.Runner.cs       — MonoBehaviour tick 驱动
+    /// /agent [all|任务ID|名|#设备号|stop]：特工，按任务链自动推进（一步做不完就跳过做下一个）。
     /// </summary>
+    /// <remarks>
+    /// 优先级：无等待 / 仓储获取物 / 采矿 > 设备生成 > 计时类 > 摇酒（移动）最后。手空时“顺手牵羊”获取仓储与地面任务道具。
+    /// 实现拆分（原 11 个文件，逻辑未改）：Args（参数/别名）、Logic.Types（Pri / AgentFilter / AgentStep / AddDel）、Logic.ItemHelper（道具/矿石/花工具、任务链关联、扫描仪颜色）、Logic.MissionState（任务激活状态的权威数据源，Host 反射 MissionManager，客户端 MissionMirror）、Logic.DeliveryChain（交付链）、Logic.VacuumChain（顺手牵羊）、Logic.InstantChain（无道具直清）、Logic.GenerateChain（生成源，含挖矿冷却字段）、Logic.Planner（PlanAll/Next/Peek 调度）、Logic.Runner（MonoBehaviour tick 驱动）。
+    /// </remarks>
     internal sealed class AgentCommand : ICommand
     {
         public string Name => "agent";
@@ -31,6 +22,7 @@ namespace DT_Tools.Commands.Agent
         public string Usage => "agent [all|任务ID|名|#设备号|stop]";
         public string Description => "特工：按任务链自动推进（一步做不完就跳过做下一个）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysAutomation | FeatureTag.GameMission;
 
         public bool RequireHost => false;
 
@@ -102,7 +94,7 @@ namespace DT_Tools.Commands.Agent
                     }
                 }
             }
-            else foreach (var a in next) sb.AppendLine("  " + a);
+            else foreach (var a in next) sb.AppendLine($"  {a}");
             sb.AppendLine();
             sb.AppendLine("  /agent all | /agent <任务ID|名> | /agent #<设备号> | /agent stop");
             return sb.ToString();

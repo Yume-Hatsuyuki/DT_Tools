@@ -1,10 +1,14 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.Phase
 {
     /// <summary>
-    /// /enter_trial — 强制进入学级裁判。仅房主。
+    /// /enter_trial — 强制进入学级裁判。
     /// </summary>
+    /// <remarks>
+    /// 仅房主。
+    /// </remarks>
     internal sealed class EnterTrialCommand : ICommand
     {
         public string Name => "enter_trial";
@@ -12,6 +16,7 @@ namespace DT_Tools.Commands.Phase
         public string Usage => "enter_trial";
         public string Description => "强制进入学级裁判（调查阶段=跳过剩余调查时间；生存阶段=连调查一并跳过）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameVote | FeatureTag.GameRound;
 
         public bool RequireHost => true;
 

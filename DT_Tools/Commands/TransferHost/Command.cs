@@ -1,5 +1,6 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
 using DT_Tools.Game;
 using Protocol;
@@ -9,23 +10,14 @@ using Steamworks;
 namespace DT_Tools.Commands.TransferHost
 {
     /// <summary>
-    /// /transferhost #&lt;playerId&gt; [owner] — 将房主身份转让给指定玩家（大厅与局内均可，需房主）。
-    ///
-    /// 原版房主身份只在房主退出房间时自动转移（GameRoom.HandleLeavePlayer 内
-    /// Host = Players.FirstOrDefault()，且仅 Lobby 广播 S_SET_HOST）。
-    /// 本命令允许房主主动交出房主身份：服务端 GameRoom.Host 切换为目标玩家，
-    /// 并向全员广播 S_SET_HOST（所有阶段）。转让后：
-    ///   - 目标玩家获得房主权限（开局判定 / 踢人 / 后续再转让），经服务端
-    ///     Host 字段校验即刻生效；
-    ///   - 原房主留在房间继续游戏；客户端房主标记的局内同步由
-    ///     Patches/System/HostTransfer 补丁负责（需开启 [HostTransfer]）；
-    ///   - 原房主之后退出房间时按原版机制自动迁移给新 Host，房间不解散。
-    /// 可选参数 owner（/ owner / steam / 大厅）：同时把 Steam 大厅 owner 转让给
-    /// 目标玩家（受控转让，依赖 [HostTransfer] 的防迁移拦截，不会触发全员误迁移）。
-    /// 转让后按阶段向全员广播自定义通知：
-    ///   #原房主 <HostTransfer.TransferText 配置> #新房主 （仅房主权限/大厅owner）
-    /// 通知文本可通过配置项 TransferText 自定义（默认"将房主转让给"）。
+    /// /transferhost #&lt;playerId> [owner]：将房主身份转让给指定玩家（大厅与局内均可，需房主）。
     /// </summary>
+    /// <remarks>
+    /// 原版房主只在退出房间时自动迁移（GameRoom.HandleLeavePlayer 内 Host = Players.FirstOrDefault()，仅 Lobby 广播 S_SET_HOST）。本命令允许主动交出：服务端 GameRoom.Host 切换为目标，并向全员广播 S_SET_HOST（所有阶段）。
+    /// 转让后：目标获得房主权限（开局判定、踢人、再次转让），经服务端 Host 字段校验即刻生效；原房主留在房间继续游戏；客户端房主标记的局内同步由 Features/HostTransfer 补丁负责（需开启 [HostTransfer]）；原房主之后退出时按原版机制迁移给新房主，房间不解散。
+    /// 可选参数 owner（或 steam、大厅）：同时把 Steam 大厅 owner 转让给目标（依赖 [HostTransfer] 的防迁移拦截，不会触发全员误迁移）。
+    /// 按阶段向全员广播通知：#原房主 &lt;TransferText 配置> #新房主（仅房主权限 / 大厅 owner）；TransferText 默认“将房主转让给”。
+    /// </remarks>
     internal sealed class TransferHostCommand : ICommand
     {
         public string Name => "transferhost";
@@ -33,6 +25,7 @@ namespace DT_Tools.Commands.TransferHost
         public string Usage => "transferhost #<playerId> [owner]";
         public string Description => "将房主身份转让给指定玩家（大厅与局内均可，需房主；原房主留在房间）。加 owner 参数（owner/steam/大厅）可同时转让 Steam 大厅 owner。";
         public string Author => "合理";
+        public FeatureTag Tags => FeatureTag.SysHost;
 
         public bool RequireHost => true;
 
@@ -93,7 +86,7 @@ namespace DT_Tools.Commands.TransferHost
 
             // 客户端局内房主标记同步依赖 [HostTransfer] 功能（默认关闭），提示但不强拦：
             // 服务端权限（开局/踢人/再转让）不依赖该功能开关。
-            if (!Engine.EnabledOf(typeof(DT_Tools.Patches.System.HostTransfer.HostTransferFeature)))
+            if (!Engine.EnabledOf(typeof(DT_Tools.Features.HostTransfer.HostTransferFeature)))
                 ctx.Warn("提示: 客户端 [HostTransfer] 功能未开启，局内房主标记不会同步（服务端权限转让已生效）。");
 
             room.Host = target;
@@ -129,7 +122,7 @@ namespace DT_Tools.Commands.TransferHost
                 {
                     SteamMatchmaking.SetLobbyOwner(Managers.Network.Lobby.LobbyId, new CSteamID(steamId));
                     ctx.Reply($"Steam 大厅 owner 已转让给 {target.Name}（SteamId={steamId}）。");
-                    Log.Info<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                    Log.Info<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                         $"Steam 大厅 owner 已转让 → {target.Name} ({steamId})");
                 }
             }
@@ -155,7 +148,7 @@ namespace DT_Tools.Commands.TransferHost
                 }
                 if (republished > 0)
                 {
-                    Log.Info<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                    Log.Info<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                         $"房主转让后已向 {republished} 名观战者补发区域包");
                 }
             }
@@ -164,15 +157,19 @@ namespace DT_Tools.Commands.TransferHost
 
         /// <summary>
         /// 向全员广播自定义转让通知：
-        ///   #原房主 <TransferText 配置> #新房主 （仅房主权限/大厅owner）
+        /// #原房主 &lt;TransferText 配置> #新房主 （仅房主权限/大厅owner）
         /// PlayerId=0（系统发言，客户端不显示名字前缀，只显示文字）。
         /// </summary>
+        /// <param name="room">当前房间。</param>
+        /// <param name="oldHost">原房主。</param>
+        /// <param name="newHost">新房主。</param>
+        /// <param name="transferSteamOwner">是否同时转让了 Steam 大厅 owner，通知会相应标注。</param>
         private static void SendTransferNotice(GameRoom room, Server.Game.Player oldHost, Server.Game.Player newHost, bool transferSteamOwner)
         {
             try
             {
                 string transferText =
-                    DT_Tools.Patches.System.HostTransfer.HostTransferFeature.TransferText;
+                    DT_Tools.Features.HostTransfer.HostTransferFeature.TransferText;
                 if (string.IsNullOrWhiteSpace(transferText))
                     transferText = "将房主转让给";
                 string suffix = transferSteamOwner ? "（大厅owner）" : "（仅房主权限）";
@@ -195,7 +192,7 @@ namespace DT_Tools.Commands.TransferHost
                         targets = room.AlivePlayers;
                         break;
                     default:
-                        Log.Info<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                        Log.Info<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                             $"阶段 {room.State} 无聊天显示链路，转让通知仅房主可见");
                         return;
                 }
@@ -223,13 +220,13 @@ namespace DT_Tools.Commands.TransferHost
                     p.Session.Send(packet);
                     sentCount++;
                 }
-                Log.Info<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
+                Log.Info<DT_Tools.Features.HostTransfer.HostTransferFeature>(
                     $"房主转让通知已广播（{channel}）→ {sentCount} 名玩家: {text}");
             }
             catch (global::System.Exception ex)
             {
-                Log.Error<DT_Tools.Patches.System.HostTransfer.HostTransferFeature>(
-                    "房主转让通知广播失败: " + ex.Message);
+                Log.Error<DT_Tools.Features.HostTransfer.HostTransferFeature>(
+                    $"房主转让通知广播失败: {ex.Message}");
             }
         }
     }

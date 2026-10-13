@@ -8,8 +8,10 @@ namespace DT_Tools.Automation.AutoSpawnPoint
 {
     /// <summary>
     /// 业务逻辑：目标点解析 + 出生点目录（运行时读 MapData.StartPosList，供 WebUI 下拉）。
-    /// 出生点房间名统一走 Game/RoomLabel.FromPos（224 网格反查 MapArray，与 /beacon 同源）。
     /// </summary>
+    /// <remarks>
+    /// 出生点房间名统一走 Game/RoomLabel.FromPos（224 网格反查 MapArray，与 /beacon 同源）。
+    /// </remarks>
     internal static class AutoSpawnPointLogic
     {
         public static bool TryResolveTarget(out PosInfo target, out string label)
@@ -44,7 +46,10 @@ namespace DT_Tools.Automation.AutoSpawnPoint
             return true;
         }
 
-        /// <summary>OptionProviders 用：value 为 1-based 序号，label 为「#n  (x, y)  [房间]」。</summary>
+        /// <summary>
+        /// OptionProviders 用：value 为 1-based 序号，label 为「#n  (x, y)  [房间]」。
+        /// </summary>
+        /// <returns>下拉选项：value 为从 1 开始的序号，label 为「#n (x, y) [房间]」。</returns>
         public static IReadOnlyList<ConfigOption> SpawnOptions()
         {
             var options = new List<ConfigOption>();

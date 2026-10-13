@@ -1,17 +1,19 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
-using DT_Tools.Patches.System.BanList;
+using DT_Tools.Features.BanList;
 
 namespace DT_Tools.Commands.BanList
 {
     /// <summary>
     /// /unban — 解除封禁，让被踢的玩家能重新加入。
-    ///
-    /// 直接从 GameRoom._bannedSteamIds 移除（BanList.TryUnban）。解封后对方的下一条
-    /// C_ENTER_GAME 即可正常通过封禁校验（0.1.16b Server.Game/GameRoom.cs:1068），
-    /// 需要对方自行经房间码 / 邀请重新加入；其余进房条件（人数上限、房间状态）照原版走。
     /// </summary>
+    /// <remarks>
+    /// 直接从 GameRoom._bannedSteamIds 移除（BanList.TryUnban）。解封后对方的下一条
+    /// C_ENTER_GAME 即可正常通过封禁校验（0.1.17a Server.Game/GameRoom.cs:1037），
+    /// 需要对方自行经房间码 / 邀请重新加入；其余进房条件（人数上限、房间状态）照原版走。
+    /// </remarks>
     internal sealed class UnbanCommand : ICommand
     {
         public string Name => "unban";
@@ -19,6 +21,7 @@ namespace DT_Tools.Commands.BanList
         public string Usage => "unban <#序号|SteamId|名字|all>";
         public string Description => "解除封禁（配合 /banlist），让被踢的玩家能重新加入。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysHost;
 
         public bool RequireHost => true;
 

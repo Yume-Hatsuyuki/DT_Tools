@@ -8,8 +8,10 @@ namespace DT_Tools.WebConsole
 {
     /// <summary>
     /// 表驱动路由：登录 → 鉴权 → 路由表（方法+路径前缀）→ 静态资源 → 404。
-    /// 路由按注册顺序匹配，精确路径请注册在前缀路径之前。
     /// </summary>
+    /// <remarks>
+    /// 路由按注册顺序匹配，精确路径请注册在前缀路径之前。
+    /// </remarks>
     public sealed class Router
     {
         private sealed class Route
@@ -34,7 +36,12 @@ namespace DT_Tools.WebConsole
             _serveStaticFiles = serveStaticFiles;
         }
 
-        /// <summary>注册路由；method 用 "*" 匹配任意方法（handler 内自行校验）。</summary>
+        /// <summary>
+        /// 注册路由；method 用 "*" 匹配任意方法（handler 内自行校验）。
+        /// </summary>
+        /// <param name="method">HTTP 方法，* 表示任意方法。</param>
+        /// <param name="prefix">路由前缀。</param>
+        /// <param name="handler">处理请求的回调，方法内自行校验方法与身份。</param>
         public void Add(string method, string prefix, Action<HttpListenerContext> handler)
         {
             _routes.Add(new Route { Method = method, Prefix = prefix, Handler = handler });
@@ -113,9 +120,13 @@ namespace DT_Tools.WebConsole
 
         /// <summary>
         /// 同源校验：Origin（缺省回退 Referer）的 authority 与请求 Host 头一致才算同源。
+        /// </summary>
+        /// <remarks>
         /// 两者都没有 → 非浏览器客户端，放行；Origin 为字面量 "null"（file:// 沙箱等）
         /// 解析失败 → 拒绝。
-        /// </summary>
+        /// </remarks>
+        /// <param name="req">HTTP 请求。</param>
+        /// <returns>Origin（缺省时用 Referer）与 Host 一致时为 true。</returns>
         private static bool IsSameOrigin(HttpListenerRequest req)
         {
             string origin = req.Headers["Origin"];
@@ -134,10 +145,14 @@ namespace DT_Tools.WebConsole
 
         /// <summary>
         /// Host 头是否指向本机：回环、配置的监听地址（非通配）、本机主机名与网卡地址。
+        /// </summary>
+        /// <remarks>
         /// 全部在构造时本地枚举并缓存，绝不解析 Host 名（解析恰是 rebinding 的攻击路径）。
         /// 浏览器带 IPv6 Host 恒为方括号形式（[::1]:port），按方括号取地址；其余按最后
         /// 一个冒号去端口。
-        /// </summary>
+        /// </remarks>
+        /// <param name="req">HTTP 请求。</param>
+        /// <returns>Host 头指向本机时为 true。</returns>
         private bool IsLocalHost(HttpListenerRequest req)
         {
             string host = req.Headers["Host"];
@@ -161,7 +176,13 @@ namespace DT_Tools.WebConsole
             return _localHostWhitelist.Contains(value, StringComparer.OrdinalIgnoreCase);
         }
 
-        /// <summary>构造本机白名单。网卡枚举失败时仅退回回环三项（默认本机回环使用不受影响）。</summary>
+        /// <summary>
+        /// 构造本机白名单。
+        /// </summary>
+        /// <remarks>
+        /// 网卡枚举失败时仅退回回环三项（默认本机回环使用不受影响）。
+        /// </remarks>
+        /// <returns>本机地址白名单（回环、监听地址、本机主机名与网卡地址）。</returns>
         private string[] BuildLocalHostWhitelist()
         {
             var list = new List<string> { "127.0.0.1", "localhost", "::1" };

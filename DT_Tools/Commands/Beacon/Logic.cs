@@ -4,13 +4,17 @@ using Protocol;
 
 namespace DT_Tools.Commands.Beacon
 {
-    /// <summary>/beacon 业务：目标落点解析（查游戏数据）+ 越界预警。</summary>
+    /// <summary>
+    /// /beacon 业务：目标落点解析（查游戏数据）+ 越界预警。
+    /// </summary>
     internal static class BeaconLogic
     {
         /// <summary>
         /// 把解析好的参数解析为具体落点（拷贝 PosInfo，避免与他人 PosInfo 别名共享）。
-        /// targetPlayerId &gt; 0 表示目标来自 player #id（仅用于结果 JSON 回带）。
         /// </summary>
+        /// <remarks>
+        /// targetPlayerId &gt; 0 表示目标来自 player #id（仅用于结果 JSON 回带）。
+        /// </remarks>
         public static bool ResolveTarget(BeaconArgs args, MapData mapData, MyPlayer my,
             out PosInfo pos, out string label, out int targetPlayerId, out string error)
         {
@@ -66,7 +70,7 @@ namespace DT_Tools.Commands.Beacon
                         error = $"#{pid} 就是本机自己，当前位置即目标，无需瞬移。";
                         return false;
                     }
-                    // 0.1.16b PlayerManager.cs:42 Players——只含存活且已 Spawn 的玩家；
+                    // 0.1.16b PlayerManager.cs:42（待核对） Players——只含存活且已 Spawn 的玩家；
                     // 死亡玩家收到 S_DESPAWN 后被移出该表，旁观者不入表，本机 MyPlayer 不在表内。
                     var other = LocalPlayer.FindClientPlayer(pid);
                     if (other == null)
@@ -95,12 +99,17 @@ namespace DT_Tools.Commands.Beacon
 
         /// <summary>
         /// 越界预警（不阻断）：服务端 HandleMove 对存活玩家按 AreaManager.ValidPosition
-        /// （224 网格 + MapArray，0.1.16b Server.Game/AreaManager.cs:82）判定，越界时
-        /// <b>仅 Survive / Detective 阶段</b> fallback 到 ErrorPos（0.1.16b
+        /// （224 网格 + MapArray，0.1.17a Server.Game/AreaManager.cs:82）判定，越界时
+        /// &lt;b>仅 Survive / Detective 阶段&lt;/b> fallback 到 ErrorPos（0.1.16b
         /// Server.Game/GameRoom.cs:2349-2354）；其余阶段（Lobby/Vote/Trial 等）整包
         /// 静默丢弃——本机已本地落位，但服务端不广播 S_MOVE，他人视角仍在原地。
-        /// 这里只做粗略边界提示，不做精确可行走判定（避免依赖服务端 MapArray）。
         /// </summary>
+        /// <remarks>
+        /// 这里只做粗略边界提示，不做精确可行走判定（避免依赖服务端 MapArray）。
+        /// </remarks>
+        /// <param name="pos">目标坐标；为 null 时不做检查。</param>
+        /// <param name="mapData">地图数据；缺少边界信息时不做检查。</param>
+        /// <returns>越界时返回预警文字；在界内或无法检查时返回 null。</returns>
         public static string OutOfBoundsWarning(PosInfo pos, MapData mapData)
         {
             if (pos == null || mapData?.MapSize == null || mapData.MapOffset == null)

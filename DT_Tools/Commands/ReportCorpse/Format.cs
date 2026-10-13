@@ -5,7 +5,9 @@ using Protocol;
 
 namespace DT_Tools.Commands.ReportCorpse
 {
-    /// <summary>/report 输出格式化：尸体列表文本 + JSON 结果 DTO。</summary>
+    /// <summary>
+    /// /report 输出格式化：尸体列表文本 + JSON 结果 DTO。
+    /// </summary>
     internal static class ReportCorpseFormat
     {
         public static string ReplyList(List<DeviceBase> corpses, DeviceManager device)
@@ -27,7 +29,7 @@ namespace DT_Tools.Commands.ReportCorpse
                 string name = ReportCorpseLogic.FindPlayerName(d.ID);
                 string block = ReportCorpseLogic.GetBlockReason(device, d);
                 if (block == null) reportable++;
-                string status = block == null ? "可报警" : ("不可报警·" + block);
+                string status = block == null ? "可报警" : ($"不可报警·{block}");
                 sb.AppendLine($"  #{d.ID,-4} {name,-16}  ← {status}");
             }
 

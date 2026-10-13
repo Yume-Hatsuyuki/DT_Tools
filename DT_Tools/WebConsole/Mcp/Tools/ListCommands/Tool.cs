@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using System;
 using System.Linq;
 using DT_Tools.Commands;
@@ -5,9 +6,15 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp.Tools.ListCommands
 {
-    /// <summary>list_commands：命令总表。纯内存读（CommandRegistry 启动后恒定），不经主线程。</summary>
+    /// <summary>
+    /// list_commands：命令总表。
+    /// </summary>
+    /// <remarks>
+    /// 纯内存读（CommandRegistry 启动后恒定），不经主线程。
+    /// </remarks>
     [McpTool("list_commands",
         "列出全部 DT_Tools 命令（name/usage/description/requireHost）。行动能力（发包、操控、查询、自动化）全部经 run_command 执行这些命令；本工具是 run_command 前的查阅面。",
+        Tags = FeatureTag.SysDebug,
         Author = "梦初雪")]
     internal static class ListCommandsTool
     {
@@ -26,6 +33,7 @@ namespace DT_Tools.WebConsole.Mcp.Tools.ListCommands
                     name = c.Name,
                     usage = c.Usage,
                     description = c.Description,
+                    tags = FeatureTagCatalog.Names(c.Tags),
                     requireHost = c.RequireHost,
                     author = string.IsNullOrEmpty(c.Author) ? "佚名" : c.Author,
                 })

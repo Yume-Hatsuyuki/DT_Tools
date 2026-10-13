@@ -1,0 +1,24 @@
+using DT_Tools.Core.Attributes;
+
+namespace DT_Tools.Features.PassKnifeRange
+{
+    /// <summary>
+    /// 递刀距离：GetHandWeaponTarget 中原版硬编码 224f（0.1.17a MyPlayer.cs:2191）→ 可配置；
+    /// 仍排除 Hide / KnownBlackIds（已知的黑幕）。
+    /// </summary>
+    /// <remarks>
+    /// 最近玩家搜索与攻击距离（AttackRange）
+    /// 共用 Game/NearestTargetFinder。
+    /// </remarks>
+    [PatchFeature(
+        "递刀距离：可修改黑幕最大递交武器的距离（默认 224）。",
+        defaultEnabled: false,
+        side: FeatureSide.Client,
+        Tags = FeatureTag.GameWeapon | FeatureTag.PlayerCombat,
+        Author = "梦初雪")]
+    public sealed class PassKnifeRangeFeature
+    {
+        [Config("递交武器可触及的最大距离，游戏默认为 224。", Min = 0f)]
+        public static float Range = 224f;
+    }
+}

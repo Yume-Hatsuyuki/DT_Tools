@@ -4,8 +4,12 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>GET /api/log?since=N — 全局日志增量（兜底/首屏用；实时流走 /api/log/ws）。
-    /// 形状 = 结构化条目数组 [{seq,time,level,tag,msg,session}]（color 由前端按 level 推导）。</summary>
+    /// <summary>
+    /// GET /api/log?since=N — 全局日志增量（兜底/首屏用；实时流走 /api/log/ws）。
+    /// </summary>
+    /// <remarks>
+    /// 形状 = 结构化条目数组 [{seq,time,level,tag,msg,session}]（color 由前端按 level 推导）。
+    /// </remarks>
     public static class LogsApi
     {
         public static void Handle(HttpListenerContext ctx)
@@ -23,7 +27,9 @@ namespace DT_Tools.WebConsole.Api
             HttpServer.WriteJson(ctx.Response, payload);
         }
 
-        /// <summary>与 WebSocket 帧（LogStreamApi）同一份条目形状，前端只认一种协议。</summary>
+        /// <summary>
+        /// 与 WebSocket 帧（LogStreamApi）同一份条目形状，前端只认一种协议。
+        /// </summary>
         internal static object Shape(LogEntry e) => new
         {
             seq = e.Seq,

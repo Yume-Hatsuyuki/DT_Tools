@@ -1,13 +1,16 @@
 using System;
 using System.Linq;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.Help
 {
     /// <summary>
     /// /help — 列出全部已注册命令，或查询单条命令的用法/别名/门禁。
-    /// 数据源即 CommandRegistry 的反射注册结果，无独立状态；纯读命令，房主与普通客户端均可执行。
     /// </summary>
+    /// <remarks>
+    /// 数据源即 CommandRegistry 的反射注册结果，无独立状态；纯读命令，房主与普通客户端均可执行。
+    /// </remarks>
     internal sealed class HelpCommand : ICommand
     {
         public string Name => "help";
@@ -15,6 +18,7 @@ namespace DT_Tools.Commands.Help
         public string Usage => "help [命令名]";
         public string Description => "显示所有命令，或查询某个命令的详细用法。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysDebug;
 
         public bool RequireHost => false;
 

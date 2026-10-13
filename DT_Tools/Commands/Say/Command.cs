@@ -1,4 +1,5 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Server.Game;
 
@@ -6,13 +7,14 @@ namespace DT_Tools.Commands.Say
 {
     /// <summary>
     /// /say &lt;all|#id&gt; &lt;text&gt; — 给指定玩家或所有玩家发送文字（需房主）。
-    ///
+    /// </summary>
+    /// <remarks>
     /// 绕过原版聊天校验与冷却，直接向目标客户端下发 S_CHAT_MESSAGE，复用游戏自带的
     /// 文字显示链路。通道按当前阶段自动路由：Lobby/Trial → normal（聊天面板）、
     /// Survive → secret（密聊屏幕浮层）、其余阶段无显示链路直接拒绝。
     /// all 在生存阶段发所有存活真人（对齐 AlivePlayers）、大厅/裁判发房间全员；
     /// #id 为真·私密单发（其他黑/暗、白方、房主均收不到，不进 SecretChatLog）。
-    /// </summary>
+    /// </remarks>
     internal sealed class SayCommand : ICommand
     {
         public string Name => "say";
@@ -20,6 +22,7 @@ namespace DT_Tools.Commands.Say
         public string Usage => "say <all|#id> <text>";
         public string Description => "给指定/所有玩家发送文字：生存阶段走密聊浮层，大厅/裁判走聊天面板（房主）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.UiChat;
 
         public bool RequireHost => true;
 
@@ -46,12 +49,12 @@ namespace DT_Tools.Commands.Say
 
             if (ctx.Args.Length < 2)
             {
-                ctx.Reply("缺少文字内容。用法: " + Usage);
+                ctx.Reply($"缺少文字内容。用法: {Usage}");
                 return CommandResult.Fail("missing text");
             }
 
             // 文本经 GameRoom.SanitizeChat 过滤（去富文本、截断 100 字），与游戏聊天一致
-            // （0.1.16b Server.Game/GameRoom.cs:2524）
+            // （0.1.16b Server.Game/GameRoom.cs:2524（待核对））
             string text = room.SanitizeChat(args.Text);
             if (string.IsNullOrEmpty(text))
             {

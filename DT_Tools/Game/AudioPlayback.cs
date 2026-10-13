@@ -6,7 +6,12 @@ using UnityEngine.Networking;
 
 namespace DT_Tools.Game
 {
-    /// <summary>点播来源类型。Auto=按前缀自动识别（http(s) 在线、其余本地）。</summary>
+    /// <summary>
+    /// 点播来源类型。
+    /// </summary>
+    /// <remarks>
+    /// Auto=按前缀自动识别（http(s) 在线、其余本地）。
+    /// </remarks>
     public enum AudioPlaybackSource
     {
         Auto = 0,
@@ -40,9 +45,16 @@ namespace DT_Tools.Game
         /// <summary>
         /// 点播入口：kind 指定来源类型（Local/Online 显式指定，Auto 按前缀识别），
         /// volume 0~1（调用方决定默认值），maxSeconds &lt;=0 表示完整播放。
+        /// </summary>
+        /// <remarks>
         /// 解析失败返回 false（原因已在 ResolveSource 内告警），不打断当前播放
         /// （输错来源不应清空正在响的音乐）。
-        /// </summary>
+        /// </remarks>
+        /// <param name="rawSource">原始来源文字，路径或链接。</param>
+        /// <param name="kind">来源类型：本地、在线或自动识别。</param>
+        /// <param name="volume">音量，范围 0 到 1。</param>
+        /// <param name="maxSeconds">播放时长上限，单位秒。</param>
+        /// <returns>开始播放时为 true。</returns>
         public static bool Play(string rawSource, AudioPlaybackSource kind, float volume, float maxSeconds)
         {
             string uri = ResolveUri(rawSource, kind);
@@ -52,7 +64,9 @@ namespace DT_Tools.Game
             return true;
         }
 
-        /// <summary>停止当前点播（仅本引擎，不触碰阶段音乐与虚拟麦克风）。</summary>
+        /// <summary>
+        /// 停止当前点播（仅本引擎，不触碰阶段音乐与虚拟麦克风）。
+        /// </summary>
         public static void Stop()
         {
             _playingUri = null;
@@ -66,7 +80,12 @@ namespace DT_Tools.Game
                 _source.Stop();
         }
 
-        /// <summary>来源解析：委托 AudioMix.ResolveSource（与 /mic_music 共用一份实现）。</summary>
+        /// <summary>
+        /// 来源解析：委托 AudioMix.ResolveSource（与 /mic_music 共用一份实现）。
+        /// </summary>
+        /// <param name="raw">原始来源文字。</param>
+        /// <param name="kind">来源类型。</param>
+        /// <returns>解析后的音频地址。</returns>
         private static string ResolveUri(string raw, AudioPlaybackSource kind)
             => AudioMix.ResolveSource(raw, kind, Tag);
 
@@ -105,7 +124,7 @@ namespace DT_Tools.Game
             var clip = DownloadHandlerAudioClip.GetContent(request);
             if (clip == null)
             {
-                Log.Warn(Tag, "音频解码失败（引擎不支持该格式）: " + uri);
+                Log.Warn(Tag, $"音频解码失败（引擎不支持该格式）: {uri}");
                 yield break;
             }
             _clips[uri] = clip;
@@ -118,7 +137,9 @@ namespace DT_Tools.Game
             StartPlayback(uri, clip, _pendingVolume, _pendingMaxSeconds);
         }
 
-        /// <summary>缓存上限淘汰：超过 CacheCap 时按插入序销毁最旧片段，正在播放的挪到队尾豁免。</summary>
+        /// <summary>
+        /// 缓存上限淘汰：超过 CacheCap 时按插入序销毁最旧片段，正在播放的挪到队尾豁免。
+        /// </summary>
         private static void EvictCacheOverflow()
         {
             while (_clipOrder.Count > CacheCap)
@@ -178,7 +199,7 @@ namespace DT_Tools.Game
             UnityEngine.Object.DontDestroyOnLoad(go);
             _source = go.AddComponent<AudioSource>();
             _source.playOnAwake = false;
-            VoiceMixerHub.Route(_source, false);   // 0.1.16b VoiceMixerHub.cs:75，归入 Game 混音组
+            VoiceMixerHub.Route(_source, false);   // 0.1.16b VoiceMixerHub.cs:75（待核对），归入 Game 混音组
             return _source;
         }
     }

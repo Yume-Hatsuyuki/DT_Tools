@@ -1,0 +1,39 @@
+using DT_Tools.Core;
+using HarmonyLib;
+using UnityEngine;
+
+namespace DT_Tools.Features.NicknameLimit
+{
+    /// <summary>
+    /// OnValidateNickname 整替：保留「写 MyPlayerName + Prefs」与非法字符拦截，
+    /// 只移除权重 &gt;12 一档。
+    /// </summary>
+    /// <remarks>
+    /// 私有方法，字符串定位：0.1.16b UI_LobbyScene.cs:1772（待核对）；
+    /// 私有字段 _nicknameKey：0.1.17a UI_LobbyScene.cs:409。
+    /// </remarks>
+    [HarmonyPatch(typeof(UI_LobbyScene), "OnValidateNickname")]
+    internal static class NicknameLimitValidatePatch
+    {
+        private static bool Prefix(UI_LobbyScene __instance, string name)
+        {
+            if (!Engine.Enabled<NicknameLimitFeature>())
+                return true;
+
+            NicknameLimitLogic.LiftInputHardLimit(__instance, NicknameLimitLogic.GetNicknameField(__instance));
+
+            // 与原版一致（0.1.16b UI_LobbyScene.cs:1774（待核对）-1778（待核对）)：先写入；我们仅放宽长度，
+            // 非法名仍可被写进 Prefs，但门禁 _isNickNameValid 会挡住进房。
+            Managers.Player.MyPlayerName = name;
+            string key = Traverse.Create(__instance).Field("_nicknameKey").GetValue<string>();
+            if (key != null)
+                PlayerPrefs.SetString(key, name);
+
+            bool ok = NicknameLimitLogic.IsNameAcceptable(name, out string tip);
+            NicknameLimitLogic.ApplyValidUi(__instance, ok, tip ?? "");
+            Log.Info<NicknameLimitFeature>(
+                ok ? $"校验通过 len={name?.Length ?? 0}" : $"校验失败: {tip}");
+            return false;
+        }
+    }
+}

@@ -1,5 +1,6 @@
 using System;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Google.Protobuf;
 
@@ -7,8 +8,11 @@ namespace DT_Tools.Commands.PacketCall
 {
     /// <summary>
     /// /call_s &lt;all|#id&gt; &lt;S_*包名&gt; [json] — 服务端 → 客户端：构造 S_* 包并
-    /// Send / 全员各发一份。仅房主。
+    /// Send / 全员各发一份。
     /// </summary>
+    /// <remarks>
+    /// 仅房主。
+    /// </remarks>
     internal sealed class CallSCommand : ICommand
     {
         public string Name => "call_s";
@@ -16,6 +20,7 @@ namespace DT_Tools.Commands.PacketCall
         public string Usage => "call_s <all|#id> <S_PacketName> [json]";
         public string Description => "向玩家发送 S_* 协议包（JSON 填充，房主）。无参显示帮助与包名自检。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysNetwork | FeatureTag.SysDebug;
 
         public bool RequireHost => true;
 
@@ -25,7 +30,7 @@ namespace DT_Tools.Commands.PacketCall
 
             if (ctx.Args.Length == 0)
             {
-                ctx.Reply(PacketCallLogic.BuildHelp(serverPackets: true, "用法: " + Usage));
+                ctx.Reply(PacketCallLogic.BuildHelp(serverPackets: true, $"用法: {Usage}"));
                 return CommandResult.Success(new { mode = "help" });
             }
 
@@ -41,7 +46,7 @@ namespace DT_Tools.Commands.PacketCall
 
             if (ctx.Args.Length < 2)
             {
-                ctx.Reply("缺少包名。用法: " + Usage);
+                ctx.Reply($"缺少包名。用法: {Usage}");
                 return CommandResult.Fail("missing packet");
             }
 

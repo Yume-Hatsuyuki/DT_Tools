@@ -1,0 +1,24 @@
+using DT_Tools.Core;
+using HarmonyLib;
+
+namespace DT_Tools.Features.RemoveFog
+{
+    /// <summary>
+    /// 原版 OnGhostVisualChanged：SetRoomShadowCasters(state != 1)，整替为恒 false。
+    /// </summary>
+    /// <remarks>
+    /// 方法为 protected override，字符串定位：0.1.16b MyPlayer.cs:1889（待核对）。
+    /// </remarks>
+    [HarmonyPatch(typeof(MyPlayer), "OnGhostVisualChanged")]
+    internal static class RemoveFogPatch
+    {
+        private static bool Prefix()
+        {
+            if (!Engine.Enabled<RemoveFogFeature>())
+                return true;
+
+            Managers.Map.SetRoomShadowCasters(false);
+            return false;
+        }
+    }
+}

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Core;
 using DT_Tools.Game;
 
@@ -17,7 +18,9 @@ namespace DT_Tools.Commands
             new Dictionary<string, ICommand>(StringComparer.OrdinalIgnoreCase);
         private static readonly List<ICommand> Commands = new List<ICommand>();
 
-        /// <summary>已注册命令（注册顺序，用于 /help 列表）。</summary>
+        /// <summary>
+        /// 已注册命令（注册顺序，用于 /help 列表）。
+        /// </summary>
         public static IReadOnlyList<ICommand> All => Commands;
 
         public static bool TryGet(string name, out ICommand command) => Map.TryGetValue(name, out command);
@@ -30,6 +33,7 @@ namespace DT_Tools.Commands
             foreach (var type in types)
             {
                 var command = (ICommand)Activator.CreateInstance(type);
+                FeatureTagCatalog.Validate(command.Tags, type.FullName);
                 Commands.Add(command);
                 Claim(command.Name, command);
                 foreach (var alias in command.Aliases ?? Array.Empty<string>())
@@ -41,7 +45,7 @@ namespace DT_Tools.Commands
 
         public static CommandResult Execute(ICommand command, string[] args)
         {
-            var ctx = new CommandContext("cmd:" + command.Name, args);
+            var ctx = new CommandContext($"cmd:{command.Name}", args);
             try
             {
                 if (command.RequireHost && !HostGuard.IsHost)
@@ -54,7 +58,7 @@ namespace DT_Tools.Commands
             catch (Exception ex)
             {
                 // 错误码必须是稳定的短词：ex.Message 是给人看的诊断文本，进日志不进信封
-                Log.Exception("cmd:" + command.Name, ex);
+                Log.Exception($"cmd:{command.Name}", ex);
                 return CommandResult.Fail("command error");
             }
         }

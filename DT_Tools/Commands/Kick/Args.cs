@@ -2,7 +2,9 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Kick
 {
-    /// <summary>/kick 参数：#数字 / 纯数字。</summary>
+    /// <summary>
+    /// /kick 参数：#数字 / 纯数字。
+    /// </summary>
     internal static class KickArgs
     {
         public static bool TryParse(string raw, out int playerId, out string error)

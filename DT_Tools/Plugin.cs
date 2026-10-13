@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using BepInEx;
+using BepInEx.Configuration;
 using DT_Tools.Automation;
 using DT_Tools.Commands;
 using DT_Tools.Core;
@@ -15,19 +16,21 @@ namespace DT_Tools
     {
         private void Awake()
         {
-            // 热改只动内存；落盘仅通过显式 Save / 配置导入
-            Config.SaveOnConfigSet = false;
+            // 用户数据统一在 BepInEx/config/DT_Tools/（见 DtPaths）。基类 Config 固定在 config 根目录，故自建。
+            // 热改只动内存；落盘仅通过显式 Save / 配置导入。
+            DtPaths.EnsureRoot();
+            var config = new ConfigFile(DtPaths.Cfg, saveOnInit: false) { SaveOnConfigSet = false };
 
             // 主线程泵 + 协程宿主（常驻）：HTTP/文件监听线程投递的生命周期钩子
             // （WireLifecycle）在此安全触碰 Unity API
             CoroutineHost.EnsureCreated();
 
-            var result = Engine.Load(new Harmony(MyPluginInfo.PLUGIN_GUID), Config, Logger);
+            var result = Engine.Load(new Harmony(MyPluginInfo.PLUGIN_GUID), config, Logger);
             CommandRegistry.Load();
 
             // 关闭自动保存后，首次运行需主动落盘生成 .cfg
-            if (!File.Exists(Config.ConfigFilePath))
-                Config.Save();
+            if (!File.Exists(DtPaths.Cfg))
+                config.Save();
 
             // 自动化主线程 Tick（常驻）
             var go = new GameObject("DT_Tools");
@@ -62,15 +65,12 @@ namespace DT_Tools
             if (result.FailedCount > 0)
             {
                 Log.Warn("Plugin",
-                    $"{MyPluginInfo.PLUGIN_GUID} 加载完成：挂载成功 {result.MountedCount}，失败 {result.FailedCount}。" +
-                    "失败的功能已跳过，其余不受影响；各功能 Enabled 可在局内热切换。");
+                    $"{MyPluginInfo.PLUGIN_GUID} 加载完成：挂载成功 {result.MountedCount}，失败 {result.FailedCount}。失败的功能已跳过，其余不受影响；各功能 Enabled 可在局内热切换。");
             }
             else
             {
                 Log.Info("Plugin",
-                    $"{MyPluginInfo.PLUGIN_GUID} 加载完成：补丁功能 {result.MountedCount} 个，" +
-                    $"自动化模块 {result.ModuleCount} 个，命令 {CommandRegistry.All.Count} 条" +
-                    "（Enabled 支持局内热切换）。");
+                    $"{MyPluginInfo.PLUGIN_GUID} 加载完成：补丁功能 {result.MountedCount} 个，自动化模块 {result.ModuleCount} 个，命令 {CommandRegistry.All.Count} 条（Enabled 支持局内热切换）。");
             }
         }
     }

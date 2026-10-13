@@ -1,22 +1,16 @@
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Protocol;
 
 namespace DT_Tools.Commands.Beacon
 {
     /// <summary>
-    /// /beacon [x y | spawn &lt;#i&gt; | player &lt;#id&gt; | lobby | error] — 战略信标：瞬移到指定坐标。
-    /// 掉皮掉肉不掉队！（跟随控制台 / 客户端，非房主可用，仅作用于本机）
-    ///
-    /// 机制（按《分析MOD客户端功能数据包》第 8 节"传送"伪造路径）：服务端
-    /// GameRoom.HandleMove → Player.Move(pos) 全程无距离校验，仅拒绝 Hide/Sit/MoveLock，
-    /// 位置非法时仅在 Survive/Detective 阶段 fallback 到 MapData.ErrorPos（force respawn），
-    /// 其余阶段整包静默丢弃
-    /// （见 0.1.16b Server.Game/GameRoom.cs:2321 HandleMove、:2349-2354 越界分流、
-    /// Server.Game/Player.cs:733 Move）。
-    /// 客户端 PlayerManager.HandleMove 显式忽略本机 MyPlayer（仅同步他人，S_MOVE 不会回拉本机坐标，
-    /// 见 0.1.16b PlayerManager.cs:467 HandleMove、469 的 MyPlayer 判断），故需本地主动落位——
-    /// 统一走 Game/Teleport.TryTeleport（本地落位 + C_MOVE + 相机跟随，与官方 HandleRespawn 同款）。
+    /// /beacon [x y | spawn &lt;#i> | player &lt;#id> | lobby | error]：战略信标，瞬移到指定坐标（跟随控制台 / 客户端，非房主可用，仅作用于本机）。
     /// </summary>
+    /// <remarks>
+    /// 机制（按《分析MOD客户端功能数据包》第 8 节“传送”伪造路径）：服务端 GameRoom.HandleMove → Player.Move(pos) 无距离校验，只拒绝 Hide/Sit/MoveLock；位置非法时仅在 Survive/Detective fallback 到 MapData.ErrorPos，其余阶段整包静默丢弃（0.1.17a Server.Game/GameRoom.cs:2321、:2349-2354，Server.Game/Player.cs:733）。
+    /// 客户端 PlayerManager.HandleMove 忽略本机 MyPlayer（0.1.17a PlayerManager.cs:467、:469），S_MOVE 不会回拉本机坐标，因此需本地主动落位，统一走 Game/Teleport.TryTeleport（本地落位 + C_MOVE + 相机跟随，同官方 HandleRespawn）。
+    /// </remarks>
     internal sealed class BeaconCommand : ICommand
     {
         public string Name => "beacon";
@@ -24,6 +18,7 @@ namespace DT_Tools.Commands.Beacon
         public string Usage => "beacon [x y | spawn <#i> | player <#id> | lobby | error]";
         public string Description => "战略信标：瞬移到指定坐标。掉皮掉肉不掉队！（跟随控制台 / 客户端）";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.PlayerMove;
 
         public bool RequireHost => false;
 

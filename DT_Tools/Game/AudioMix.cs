@@ -15,8 +15,15 @@ namespace DT_Tools.Game
     {
         /// <summary>
         /// 来源解析：Local 强制本地路径、Online 强制 http(s)、Auto 按前缀识别
-        /// （http(s)=在线，其余本地）。解析失败告警并返回 null。
+        /// （http(s)=在线，其余本地）。
         /// </summary>
+        /// <remarks>
+        /// 解析失败告警并返回 null。
+        /// </remarks>
+        /// <param name="raw">原始来源文字。</param>
+        /// <param name="kind">来源类型：本地、在线或自动识别。</param>
+        /// <param name="tag">用于日志定位的标签。</param>
+        /// <returns>解析后的音频地址。</returns>
         internal static string ResolveSource(string raw, AudioPlaybackSource kind, string tag)
         {
             string trimmed = raw?.Trim() ?? "";
@@ -37,14 +44,14 @@ namespace DT_Tools.Game
                 case AudioPlaybackSource.Local:
                     if (isHttp)
                     {
-                        Log.Warn(tag, "local 指定了在线链接: " + trimmed);
+                        Log.Warn(tag, $"local 指定了在线链接: {trimmed}");
                         return null;
                     }
                     return LocalFileUri(trimmed, tag);
                 case AudioPlaybackSource.Online:
                     if (!isHttp)
                     {
-                        Log.Warn(tag, "online 需要 http(s):// 链接: " + trimmed);
+                        Log.Warn(tag, $"online 需要 http(s):// 链接: {trimmed}");
                         return null;
                     }
                     return trimmed;
@@ -53,7 +60,15 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>AudioClip → 单声道 PCM（多声道平均下混）。失败告警并返回 null。</summary>
+        /// <summary>
+        /// AudioClip → 单声道 PCM（多声道平均下混）。
+        /// </summary>
+        /// <remarks>
+        /// 失败告警并返回 null。
+        /// </remarks>
+        /// <param name="clip">要下混的音频片段。</param>
+        /// <param name="tag">用于日志定位的标签。</param>
+        /// <returns>单声道 PCM 样本；失败时为 null。</returns>
         internal static float[] ExtractMono(AudioClip clip, string tag)
         {
             try
@@ -74,18 +89,20 @@ namespace DT_Tools.Game
             }
             catch (Exception ex)
             {
-                Log.Warn(tag, "麦克风混音准备失败: " + ex.Message);
+                Log.Warn(tag, ex, "麦克风混音准备失败");
                 return null;
             }
         }
 
         /// <summary>
         /// 把一段 PCM 混入语音帧（缓冲原地改写，随每次麦克风帧调用）。
+        /// </summary>
+        /// <remarks>
         /// head 为输出侧已混样本数（顺序推进——跟随麦克风采集时钟，不用墙钟对齐：
         /// 墙钟与采集时钟漂移、主线程卡顿丢帧都会造成混入位置跳变→可闻咔哒）。
         /// 取样用线性插值重采样（44.1k→48k 等）：整数截断会产生周期性走调/颤抖。
         /// 返回会话是否仍活跃：PCM 读完（含插值右邻）返回 false，调用方据此关闭混入。
-        /// </summary>
+        /// </remarks>
         internal static bool MixInto(float[] samples, int sampleRate, float volume,
             ref int head, ArraySegment<float> buffer, int outputRate)
         {
@@ -113,6 +130,8 @@ namespace DT_Tools.Game
         /// 硬 Clamp 在峰值上产生可闻咔哒；拐点抬高到 0.85 减少大振幅低频（贝斯）常态
         /// 进入 tanh 区的谐波失真（"塑料感"），代价是溢出余量收窄。
         /// </summary>
+        /// <param name="x">待限幅的采样值。</param>
+        /// <returns>限幅后的采样值，范围 [-1, 1)。</returns>
         private static float SoftLimit(float x)
         {
             float a = x < 0f ? -x : x;
@@ -122,7 +141,15 @@ namespace DT_Tools.Game
             return x < 0f ? -y : y;
         }
 
-        /// <summary>本地音频路径 → file:/// URI。路径无效告警并返回 null。</summary>
+        /// <summary>
+        /// 本地音频路径 → file:/// URI。
+        /// </summary>
+        /// <remarks>
+        /// 路径无效告警并返回 null。
+        /// </remarks>
+        /// <param name="raw">本地音频路径。</param>
+        /// <param name="tag">用于日志定位的标签。</param>
+        /// <returns>file:/// 形式的 URI；路径无效时为 null。</returns>
         internal static string LocalFileUri(string raw, string tag)
         {
             try
@@ -130,14 +157,14 @@ namespace DT_Tools.Game
                 string full = Path.GetFullPath(raw);
                 if (!File.Exists(full))
                 {
-                    Log.Warn(tag, "本地音频不存在: " + full);
+                    Log.Warn(tag, $"本地音频不存在: {full}");
                     return null;
                 }
                 return new Uri(full).AbsoluteUri;
             }
             catch (Exception ex)
             {
-                Log.Warn(tag, "本地路径无效: " + ex.Message);
+                Log.Warn(tag, ex, "本地路径无效");
                 return null;
             }
         }

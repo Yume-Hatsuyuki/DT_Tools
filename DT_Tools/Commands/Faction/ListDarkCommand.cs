@@ -1,11 +1,15 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using Protocol;
 
 namespace DT_Tools.Commands.Faction
 {
     /// <summary>
-    /// /list_dark — 游戏中列出黑幕（EPlayerColor.Dark）。仅房主。
+    /// /list_dark — 游戏中列出黑幕（EPlayerColor.Dark）。
     /// </summary>
+    /// <remarks>
+    /// 仅房主。
+    /// </remarks>
     internal sealed class ListDarkCommand : ICommand
     {
         public string Name => "list_dark";
@@ -13,6 +17,7 @@ namespace DT_Tools.Commands.Faction
         public string Usage => "list_dark";
         public string Description => "列出当前局黑幕（仅游戏中、需房主）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameIntel;
 
         public bool RequireHost => true;
 

@@ -8,17 +8,22 @@ namespace DT_Tools.Commands.Chat
 {
     /// <summary>
     /// /chat 业务：打字机选取 + 占机/发言/释放发包序列。
-    /// 包路径对齐 0.1.16b：
-    ///   C_INTERACT_CHATDEVICE → DeviceManager.Interact → ChatDevice.Enter
-    ///   C_CHAT_MESSAGE(DeviceChat) → RelayDeviceChat（要求已占机）
-    ///   C_HANDLE_CHATDEVICE → DeviceManager.HandleEvent → ChatDevice.Exit
     /// </summary>
+    /// <remarks>
+    /// 包路径对齐 0.1.16b：
+    /// C_INTERACT_CHATDEVICE → DeviceManager.Interact → ChatDevice.Enter
+    /// C_CHAT_MESSAGE(DeviceChat) → RelayDeviceChat（要求已占机）
+    /// C_HANDLE_CHATDEVICE → DeviceManager.HandleEvent → ChatDevice.Exit
+    /// </remarks>
     internal static class ChatLogic
     {
         /// <summary>
-        /// 解析目标机台。指定 ID 时校验存在且为本机 ChatDevice；
-        /// 随机时优先空闲（DeviceState==0），否则本机已占的，再否则任意一台。
+        /// 解析目标机台。
         /// </summary>
+        /// <remarks>
+        /// 指定 ID 时校验存在且为本机 ChatDevice；
+        /// 随机时优先空闲（DeviceState==0），否则本机已占的，再否则任意一台。
+        /// </remarks>
         public static bool TryResolveDevice(ChatArgs args, int myPlayerId,
             out DeviceBase device, out string error)
         {
@@ -74,8 +79,14 @@ namespace DT_Tools.Commands.Chat
 
         /// <summary>
         /// 发送序列：占机 → DeviceChat 消息 → 释放。
-        /// 三包同帧发出，服务端 room.Push FIFO，Interact 先于 Chat 执行，占机状态可被 RelayDeviceChat 看到。
         /// </summary>
+        /// <remarks>
+        /// 三包同帧发出，服务端 room.Push FIFO，Interact 先于 Chat 执行，占机状态可被 RelayDeviceChat 看到。
+        /// </remarks>
+        /// <param name="deviceId">打字机设备 ID。</param>
+        /// <param name="text">要发送的文字。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>发送序列已发出返回 true；失败时返回 false，原因写入 error。</returns>
         public static bool TrySend(int deviceId, string text, out string error)
         {
             error = null;

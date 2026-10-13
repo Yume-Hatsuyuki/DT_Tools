@@ -8,27 +8,17 @@ using Protocol;
 namespace DT_Tools.Game
 {
     /// <summary>
-    /// Server.Game.MissionManager 反射访问器（全项目唯一，消费方：FishingPond /
-    /// LobbyMaxPlayers / GiveMission / Agent）。该类在发行程序集中是 internal
-    /// （0.1.16b Server.Game/MissionManager.cs:10），无法编译期引用，但其成员签名固定，
-    /// 反射能访问（Instance/ProgressMissionList/WaitMissionQueue/ClearMission/StartMission()
-    /// 均为 public，BroadcastMissionState/RemoveFromWaitQueue/StartMission(MissionData) 为
-    /// private——外层类不可见不妨碍反射调用）。Data.MissionData 是 public 类型，直接引用。
-    ///
-    /// 反射目标（0.1.16b，升级时全文搜索核对）：
-    ///   Type 全名 "Server.Game.MissionManager"            → MissionManager.cs:10（internal class）
-    ///   Instance（static property getter）                → :14
-    ///   ProgressMissionList（public List&lt;MissionData&gt;）    → :26
-    ///   WaitMissionQueue（public Queue&lt;MissionData&gt;）      → :28
-    ///   BroadcastMissionState()（private void）            → :124
-    ///   StartMission()（public void 重载）                 → :355
-    ///   ClearMission(ESchoolMission, Player, bool)（public）→ :437
-    ///   RemoveFromWaitQueue(int)（private bool）           → :592
-    ///   StartMission(Data.MissionData)（private void）     → :701
-    /// 定位方式：typeof(Managers).Assembly.GetType(全名)，不硬编码程序集名。
-    /// Type/PropertyInfo 进程内不变，static readonly 语义缓存一次；失败短路不重试。
-    /// 调用失败一律返回 false/null，由调用方按自己的上下文记日志。
+    /// Server.Game.MissionManager 反射访问器（全项目唯一，消费方：FishingPond / LobbyMaxPlayers / GiveMission / Agent）。
     /// </summary>
+    /// <remarks>
+    /// 该类在发行程序集中是 internal（0.1.16b Server.Game/MissionManager.cs:10（待核对）），无法编译期引用，但成员签名固定，可通过反射访问：Instance、ProgressMissionList、WaitMissionQueue、ClearMission、StartMission() 为 public；BroadcastMissionState、RemoveFromWaitQueue、StartMission(MissionData) 为 private。外层类不可见不妨碍反射。Data.MissionData 是 public，直接引用。
+    /// 反射目标（0.1.16b，升级时全文核对）：
+    /// Type 全名 "Server.Game.MissionManager" → MissionManager.cs:10；Instance（static property getter）→ :14；ProgressMissionList → :26；WaitMissionQueue → :28；
+    /// BroadcastMissionState()（private）→ :124；StartMission()（public 重载）→ :355；ClearMission(ESchoolMission, Player, bool) → :437；
+    /// RemoveFromWaitQueue(int)（private）→ :592；StartMission(Data.MissionData)（private）→ :701。
+    /// 定位：typeof(Managers).Assembly.GetType(全名)，不硬编码程序集名。Type/PropertyInfo 进程内不变，static readonly 缓存一次；失败短路不重试。
+    /// 调用失败一律返回 false/null，由调用方按自己的上下文记日志。
+    /// </remarks>
     public static class MissionAccess
     {
         private static bool _init;
@@ -76,13 +66,17 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>反射链路是否完整（类型定位与全部成员绑定成功）。</summary>
+        /// <summary>
+        /// 反射链路是否完整（类型定位与全部成员绑定成功）。
+        /// </summary>
         public static bool Available
         {
             get { EnsureInit(); return _ok; }
         }
 
-        /// <summary>Host 本地权威实例；不可用或未在局内时为 null。</summary>
+        /// <summary>
+        /// Host 本地权威实例；不可用或未在局内时为 null。
+        /// </summary>
         public static object Instance
         {
             get { EnsureInit(); return _ok ? _instance.GetValue(null) : null; }
@@ -101,7 +95,9 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>排队任务队列（Queue&lt;MissionData&gt;，以 IEnumerable 暴露）；不可用或无实例 → null。</summary>
+        /// <summary>
+        /// 排队任务队列（Queue&lt;MissionData&gt;，以 IEnumerable 暴露）；不可用或无实例 → null。
+        /// </summary>
         public static IEnumerable WaitQueue
         {
             get
@@ -111,7 +107,10 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>StartMission()：开局启动任务分配（0.1.16b MissionManager.cs:355）。</summary>
+        /// <summary>
+        /// StartMission()：开局启动任务分配（0.1.17a MissionManager.cs:355）。
+        /// </summary>
+        /// <returns>调用成功时为 true。</returns>
         public static bool StartParameterless()
         {
             object inst = Instance;
@@ -127,7 +126,11 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>StartMission(MissionData)：加入进行中列表、递归启动硬前置并激活设备（:701）。</summary>
+        /// <summary>
+        /// StartMission(MissionData)：加入进行中列表、递归启动硬前置并激活设备（:701）。
+        /// </summary>
+        /// <param name="data">要启动的任务数据。</param>
+        /// <returns>启动成功时为 true。</returns>
         public static bool StartMission(MissionData data)
         {
             object inst = Instance;
@@ -143,7 +146,13 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>ClearMission(ESchoolMission, Player, bool)：任务完成收口（:437）。</summary>
+        /// <summary>
+        /// ClearMission(ESchoolMission, Player, bool)：任务完成收口（:437）。
+        /// </summary>
+        /// <param name="mission">要完成的任务类型。</param>
+        /// <param name="completer">完成任务的玩家。</param>
+        /// <param name="isInfected">完成方式是否为感染。</param>
+        /// <returns>任务完成收口成功时为 true。</returns>
         public static bool ClearMission(ESchoolMission mission, Server.Game.Player completer, bool isInfected)
         {
             object inst = Instance;
@@ -159,7 +168,11 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>RemoveFromWaitQueue(int)：清理排队残留（:592）。</summary>
+        /// <summary>
+        /// RemoveFromWaitQueue(int)：清理排队残留（:592）。
+        /// </summary>
+        /// <param name="missionType">任务类型（ESchoolMission 底层值）。</param>
+        /// <returns>移除成功时为 true。</returns>
         public static bool RemoveFromWaitQueue(int missionType)
         {
             object inst = Instance;
@@ -174,7 +187,10 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>BroadcastMissionState()：把任务状态重新广播为 S_MISSION_STATE（:124）。</summary>
+        /// <summary>
+        /// BroadcastMissionState()：把任务状态重新广播为 S_MISSION_STATE（:124）。
+        /// </summary>
+        /// <returns>广播调用成功时为 true。</returns>
         public static bool BroadcastMissionState()
         {
             object inst = Instance;
@@ -190,7 +206,11 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>遍历队列/列表元素并按 MissionData.Type 收集（元素非 MissionData 时跳过）。</summary>
+        /// <summary>
+        /// 遍历队列/列表元素并按 MissionData.Type 收集（元素非 MissionData 时跳过）。
+        /// </summary>
+        /// <param name="items">任务队列或列表。</param>
+        /// <returns>所有任务的类型集合。</returns>
         public static HashSet<int> CollectTypes(IEnumerable items)
         {
             var types = new HashSet<int>();

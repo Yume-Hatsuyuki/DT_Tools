@@ -1,7 +1,7 @@
 using System.Linq;
 using DT_Tools.Commands;
 using DT_Tools.Game;
-using DT_Tools.Patches.System.DetectivePhaseFix;
+using DT_Tools.Features.DetectivePhaseFix;
 using Protocol;
 using Server.Game;
 
@@ -13,7 +13,11 @@ namespace DT_Tools.Commands.Phase
     /// </summary>
     internal static class PhaseLogic
     {
-        /// <summary>校验活动房间，失败返回 null 并已输出提示。</summary>
+        /// <summary>
+        /// 校验活动房间，失败返回 null 并已输出提示。
+        /// </summary>
+        /// <param name="ctx">命令上下文，失败时提示通过它输出。</param>
+        /// <returns>活动房间；失败时为 null 且已输出提示。</returns>
         private static GameRoom ValidateRoom(CommandContext ctx)
         {
             var room = GameRoom.Instance;
@@ -25,7 +29,12 @@ namespace DT_Tools.Commands.Phase
             return room;
         }
 
-        /// <summary>阶段切换屏障 / Host 迁移进行中时拒绝再次跳转（判定上浮 Game/RoomFlow.TryGuardBusy）。</summary>
+        /// <summary>
+        /// 阶段切换屏障 / Host 迁移进行中时拒绝再次跳转（判定上浮 Game/RoomFlow.TryGuardBusy）。
+        /// </summary>
+        /// <param name="room">当前房间。</param>
+        /// <param name="ctx">命令上下文，拒绝时的提示通过它输出。</param>
+        /// <returns>可以切换阶段时为 true。</returns>
         private static bool EnsureNotBusy(GameRoom room, CommandContext ctx)
         {
             if (!RoomFlow.TryGuardBusy(room, "切换阶段", out _, out string text))
@@ -37,9 +46,14 @@ namespace DT_Tools.Commands.Phase
         }
 
         /// <summary>
-        /// 强制进入调查阶段（Detective）。仅允许从生存阶段（Survive）进入；
-        /// 有未处理尸体时按原版"时间到发现尸体"流程走。
+        /// 强制进入调查阶段（Detective）。
         /// </summary>
+        /// <remarks>
+        /// 仅允许从生存阶段（Survive）进入；
+        /// 有未处理尸体时按原版"时间到发现尸体"流程走。
+        /// </remarks>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>命令执行结果；不在生存阶段时返回拒绝结果。</returns>
         public static CommandResult EnterDetective(CommandContext ctx)
         {
             var room = ValidateRoom(ctx);
@@ -82,7 +96,11 @@ namespace DT_Tools.Commands.Phase
             return CommandResult.Success(new { via = "force" });
         }
 
-        /// <summary>强制进入学级裁判（Trial）。</summary>
+        /// <summary>
+        /// 强制进入学级裁判（Trial）。
+        /// </summary>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>命令执行结果。</returns>
         public static CommandResult EnterTrial(CommandContext ctx)
         {
             var room = ValidateRoom(ctx);
@@ -111,7 +129,14 @@ namespace DT_Tools.Commands.Phase
             return CommandResult.Success(new { from = fromState.ToString() });
         }
 
-        /// <summary>强制进入投票阶段（VotePhase）。仅 Discuss 可用。</summary>
+        /// <summary>
+        /// 强制进入投票阶段（VotePhase）。
+        /// </summary>
+        /// <remarks>
+        /// 仅 Discuss 可用。
+        /// </remarks>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>命令执行结果；仅在讨论阶段可用，其他阶段返回拒绝结果。</returns>
         public static CommandResult EnterVote(CommandContext ctx)
         {
             var room = ValidateRoom(ctx);
@@ -142,7 +167,14 @@ namespace DT_Tools.Commands.Phase
             return CommandResult.Success(new { state = ETrialState.VotePhase.ToString() });
         }
 
-        /// <summary>跳过投票阶段立即开票（VoteResult）。仅 VotePhase 可用。</summary>
+        /// <summary>
+        /// 跳过投票阶段立即开票（VoteResult）。
+        /// </summary>
+        /// <remarks>
+        /// 仅 VotePhase 可用。
+        /// </remarks>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>命令执行结果；仅在投票阶段可用。</returns>
         public static CommandResult SkipVote(CommandContext ctx)
         {
             var room = ValidateRoom(ctx);
@@ -170,7 +202,12 @@ namespace DT_Tools.Commands.Phase
             return CommandResult.Success(new { state = ETrialState.VoteResult.ToString() });
         }
 
-        /// <summary>快速结束对局进入 TotalResult。</summary>
+        /// <summary>
+        /// 快速结束对局进入 TotalResult。
+        /// </summary>
+        /// <param name="ctx">命令上下文。</param>
+        /// <param name="result">结算类型。</param>
+        /// <returns>命令执行结果。</returns>
         public static CommandResult ForceEndGame(CommandContext ctx, EResultType result)
         {
             var room = ValidateRoom(ctx);

@@ -8,8 +8,10 @@ namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
     /// Steam WebAPI 代理：转发 GetNumberOfCurrentPlayers，供 WebUI 显示游戏当前在线人数。
-    /// 浏览器直连 Steam 受 CORS 限制；工作线程上同步请求，结果缓存 60s，失败 3 次重试。
     /// </summary>
+    /// <remarks>
+    /// 浏览器直连 Steam 受 CORS 限制；工作线程上同步请求，结果缓存 60s，失败 3 次重试。
+    /// </remarks>
     public static class SteamApi
     {
         private const string Endpoint =
@@ -34,7 +36,10 @@ namespace DT_Tools.WebConsole.Api
             HttpServer.WriteRaw(ctx.Response, 200, "application/json; charset=utf-8", GetCurrentPlayersJson());
         }
 
-        /// <summary>返回 {"ok":true,"appid":..,"players":N}；失败且有旧缓存时降级返回缓存。</summary>
+        /// <summary>
+        /// 返回 {"ok":true,"appid":..,"players":N}；失败且有旧缓存时降级返回缓存。
+        /// </summary>
+        /// <returns>当前在线人数的 JSON 文本；查询失败且有旧缓存时返回缓存。</returns>
         private static string GetCurrentPlayersJson()
         {
             lock (Gate)

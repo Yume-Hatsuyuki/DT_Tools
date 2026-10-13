@@ -3,7 +3,9 @@ using Protocol;
 
 namespace DT_Tools.Automation.AutoAcquireWeapon
 {
-    /// <summary>触发器：监测进入 / 离开 Survive 的时刻，维护阶段跟踪并驱动动作。</summary>
+    /// <summary>
+    /// 触发器：监测进入 / 离开 Survive 的时刻，维护阶段跟踪并驱动动作。
+    /// </summary>
     internal static class AutoAcquireWeaponTrigger
     {
         public static void Tick()

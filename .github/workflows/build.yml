@@ -1,10 +1,10 @@
 name: Build
 
-# 日常提交 / PR 编译校验，不创建 Release。
+# 日常提交 / PR 编译校验（main 与 dev-N.x 开发线），不创建 Release。
 # 正式发布请用 Release 工作流（打 tag 或手动触发）。
 on:
   push:
-    branches: [main]
+    branches: [main, 'dev-*']
     tags-ignore: ['**']
     paths-ignore:
       - '**.md'
@@ -12,7 +12,7 @@ on:
       - '.gitignore'
       - 'LICENSE'
   pull_request:
-    branches: [main]
+    branches: [main, 'dev-*']
     paths-ignore:
       - '**.md'
       - 'docs/**'

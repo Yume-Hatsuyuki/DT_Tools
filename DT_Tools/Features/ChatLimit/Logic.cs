@@ -1,0 +1,91 @@
+using TMPro;
+using UnityEngine;
+
+namespace DT_Tools.Features.ChatLimit
+{
+    /// <summary>
+    /// 输入框上限抬升与全场景扫描。
+    /// </summary>
+    /// <remarks>
+    /// 原版各聊天输入框硬编码 characterLimit = 100
+    /// （0.1.16b UI_GameTablet.cs:871（待核对）、UI_DirectChat.cs:88、UI_ChatDevicePopup.cs:95）。
+    /// 房主侧发言过滤（原 GameRoom.SanitizeChat）已拆分至 System/ChatSanitize。
+    /// </remarks>
+    internal static class ChatLimitLogic
+    {
+        /// <summary>
+        /// 原版三个聊天框的硬编码上限（抬限只认这个精确值）。
+        /// </summary>
+        public const int VanillaChatLimit = 100;
+
+        private const int MinLimit = 100;
+        private const int MaxLimit = 8000;
+
+        public static int Cap => Mathf.Clamp(ChatLimitFeature.MaxLength, MinLimit, MaxLimit);
+
+        /// <summary>
+        /// 抬限只认原版聊天框的精确值 100：不误伤 Prefab 内嵌的其他小上限
+        /// （如昵称输入框，归 NicknameLimit 管），也不覆盖更大的内嵌上限
+        /// （如 UI_BugReport 的 2000，0.1.16b UI_BugReport.cs:72（待核对））——否则全局
+        /// TmpOnEnable/TmpActivate 兜底会波及所有输入框并与 NicknameLimit 互相拉扯。
+        /// </summary>
+        /// <param name="field">原版聊天输入框。</param>
+        public static void RaiseLimit(TMP_InputField field)
+        {
+            if (field == null)
+                return;
+            if (field.characterLimit == VanillaChatLimit)
+                field.characterLimit = Cap;
+        }
+
+        /// <summary>
+        /// 热关闭时把已存在的输入框上限还原为原版（只还原被抬高到 Cap 的那些）。
+        /// </summary>
+        public static void RestoreExistingUi()
+        {
+            try
+            {
+                var fields = Object.FindObjectsByType<TMP_InputField>(FindObjectsSortMode.None);
+                int n = 0;
+                foreach (var f in fields)
+                {
+                    if (f == null || f.characterLimit != Cap)
+                    {
+                        continue;
+                    }
+                    f.characterLimit = VanillaChatLimit;
+                    n++;
+                }
+                Log.Info<ChatLimitFeature>($"已还原 {n} 个输入框上限 → {VanillaChatLimit}");
+            }
+            catch (global::System.Exception ex)
+            {
+                Log.Error<ChatLimitFeature>(ex, "还原输入框上限失败");
+            }
+        }
+
+        /// <summary>
+        /// Enabled 热开启时对当前已存在的 TMP 输入框补一次扫描。
+        /// </summary>
+        public static void ApplyToExistingUi()
+        {
+            try
+            {
+                var fields = Object.FindObjectsByType<TMP_InputField>(FindObjectsSortMode.None);
+                int n = 0;
+                foreach (var f in fields)
+                {
+                    if (f == null || f.characterLimit != VanillaChatLimit)
+                        continue;
+                    RaiseLimit(f);
+                    n++;
+                }
+                Log.Info<ChatLimitFeature>($"已抬高 {n} 个输入框上限 → {Cap}");
+            }
+            catch (global::System.Exception ex)
+            {
+                Log.Error<ChatLimitFeature>(ex, "扫描输入框失败");
+            }
+        }
+    }
+}

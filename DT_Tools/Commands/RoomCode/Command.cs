@@ -1,8 +1,11 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.RoomCode
 {
-    /// <summary>/room_code — 显示当前房间的房间号（邀请码）及玩家数。</summary>
+    /// <summary>
+    /// /room_code — 显示当前房间的房间号（邀请码）及玩家数。
+    /// </summary>
     internal sealed class RoomCodeCommand : ICommand
     {
         public string Name => "room_code";
@@ -10,6 +13,7 @@ namespace DT_Tools.Commands.RoomCode
         public string Usage => "room_code";
         public string Description => "显示当前房间的房间号（邀请码）及玩家数。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysRoom;
 
         public bool RequireHost => false;
 

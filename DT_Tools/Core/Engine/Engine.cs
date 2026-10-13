@@ -10,8 +10,10 @@ namespace DT_Tools.Core
 {
     /// <summary>
     /// 装载门面：Engine.Load 完成发现 → 绑定 → 挂载 → 生命周期接线。
-    /// 功能代码只用到三个成员：Enabled&lt;T&gt;()（门闩）、SectionOf&lt;T&gt;()（段名）、TickModules（自动化泵）。
     /// </summary>
+    /// <remarks>
+    /// 功能代码只用到三个成员：Enabled&lt;T&gt;()（门闩）、SectionOf&lt;T&gt;()（段名）、TickModules（自动化泵）。
+    /// </remarks>
     public static class Engine
     {
         public sealed class LoadResult
@@ -27,12 +29,16 @@ namespace DT_Tools.Core
             new Dictionary<Type, string>();
         private static readonly Dictionary<string, string> SectionGroups =
             new Dictionary<string, string>(StringComparer.Ordinal);
-        private static readonly Dictionary<string, string> SectionCategories =
-            new Dictionary<string, string>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, FeatureTag> SectionTags =
+            new Dictionary<string, FeatureTag>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, FeatureSide> SectionSides =
+            new Dictionary<string, FeatureSide>(StringComparer.Ordinal);
         private static readonly List<ModuleInfo> ModuleInfos =
             new List<ModuleInfo>();
 
-        /// <summary>自动化模块元数据（WebUI 卡片用；id 即段名；Tick 供 TickModules 泵调用）。</summary>
+        /// <summary>
+        /// 自动化模块元数据（WebUI 卡片用；id 即段名；Tick 供 TickModules 泵调用）。
+        /// </summary>
         public sealed class ModuleInfo
         {
             public Type Type;
@@ -41,10 +47,13 @@ namespace DT_Tools.Core
             public string Description;
             public FeatureSide Side;
             public string Author;
+            public FeatureTag Tags;
             internal Action<bool> Tick;
         }
 
-        /// <summary>Enabled 键名常量（引擎统一绑定，功能类不声明 Enabled 字段）。</summary>
+        /// <summary>
+        /// Enabled 键名常量（引擎统一绑定，功能类不声明 Enabled 字段）。
+        /// </summary>
         public const string EnabledKey = "Enabled";
 
         public static IReadOnlyList<ModuleInfo> AutomationModules => ModuleInfos;
@@ -71,6 +80,7 @@ namespace DT_Tools.Core
                     Description = m.Description,
                     Side = m.Side,
                     Author = m.Author,
+                    Tags = m.Tags,
                     Tick = m.Tick,
                 });
             }
@@ -140,13 +150,17 @@ namespace DT_Tools.Core
             return result;
         }
 
-        /// <summary>功能/模块门闩：Enabled 配置项由引擎统一绑定，功能类不声明 Enabled 字段。</summary>
+        /// <summary>
+        /// 功能/模块门闩：Enabled 配置项由引擎统一绑定，功能类不声明 Enabled 字段。
+        /// </summary>
         public static bool Enabled<T>() => EnabledOf(typeof(T));
 
         public static bool EnabledOf(Type type)
             => EnabledEntries.TryGetValue(type, out var entry) && entry.Value;
 
-        /// <summary>段名 = 类名去后缀的推导结果；未注册类型回退类名。</summary>
+        /// <summary>
+        /// 段名 = 类名去后缀的推导结果；未注册类型回退类名。
+        /// </summary>
         public static string SectionOf<T>() => SectionOf(typeof(T));
 
         public static string SectionOf(Type type)
@@ -156,17 +170,34 @@ namespace DT_Tools.Core
         /// 装载期收集的段落分组元数据（[ConfigSection(Group=…)]）；
         /// 未标注的段返回 null（配置层再按功能/模块归属兜底）。
         /// </summary>
+        /// <param name="section">段名。</param>
+        /// <returns>分组名；未标注 [ConfigSection(Group)] 的段返回 null。</returns>
         public static string GroupOfSection(string section)
             => section != null && SectionGroups.TryGetValue(section, out var group) ? group : null;
 
         /// <summary>
-        /// 装载期收集的功能分类元数据（Patches/&lt;分类&gt;/&lt;功能&gt; 目录名，FeatureLoader 推导）；
-        /// 非补丁功能段（基础设施、自动化模块）返回 null，配置协议据此下发 category 字段。
+        /// 装载期收集的功能标签（FeatureLoader 从 [PatchFeature] 读取，供配置协议下发）。
         /// </summary>
-        public static string CategoryOfSection(string section)
-            => section != null && SectionCategories.TryGetValue(section, out var category) ? category : null;
+        /// <remarks>
+        /// 基础设施段返回 FeatureTag.None，配置协议据此下发空的 tags 数组。
+        /// </remarks>
+        /// <param name="section">段名。</param>
+        /// <returns>功能标签；基础设施段返回 FeatureTag.None。</returns>
+        public static FeatureTag TagsOfSection(string section)
+            => section != null && SectionTags.TryGetValue(section, out var tags) ? tags : FeatureTag.None;
 
-        /// <summary>自动化模块泵：hostEnabled 为总开关值，由 AutomationHost 的主线程 Tick 调用。</summary>
+        /// <summary>
+        /// 段的作用面（客户端 / 服务端 / 双端）；基础设施段没有作用面，返回 null。
+        /// </summary>
+        /// <param name="section">段名。</param>
+        /// <returns>作用面；无作用面时为 null。</returns>
+        public static FeatureSide? SideOfSection(string section)
+            => section != null && SectionSides.TryGetValue(section, out var side) ? side : (FeatureSide?)null;
+
+        /// <summary>
+        /// 自动化模块泵：hostEnabled 为总开关值，由 AutomationHost 的主线程 Tick 调用。
+        /// </summary>
+        /// <param name="hostEnabled">自动化总开关的当前值。</param>
         public static void TickModules(bool hostEnabled)
         {
             foreach (var module in ModuleInfos)
@@ -187,13 +218,15 @@ namespace DT_Tools.Core
             var enabled = BindSection(
                 config, feature.Type, feature.Section,
                 feature.Description, feature.DefaultEnabled, feature.Side, feature.Author);
-            if (!string.IsNullOrEmpty(feature.Category))
-                SectionCategories[feature.Section] = feature.Category;
+            SectionTags[feature.Section] = feature.Tags;
+            SectionSides[feature.Section] = feature.Side;
             FeatureLoader.WireLifecycle(feature.Type, feature.Section, enabled);
         }
 
         private static void BindModule(ConfigFile config, FeatureLoader.ModuleDesc module)
         {
+            SectionTags[module.Section] = module.Tags;
+            SectionSides[module.Section] = module.Side;
             var enabled = BindSection(
                 config, module.Type, module.Section,
                 module.Description, defaultEnabled: false, module.Side, module.Author);

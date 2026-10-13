@@ -5,9 +5,11 @@ namespace DT_Tools.Commands
 {
     /// <summary>
     /// 命令结果信封：Newtonsoft 序列化为 {"ok":…,"error":…,"data":…}（camelCase）。
+    /// </summary>
+    /// <remarks>
     /// data 用匿名对象 / DTO（键名即想要的 JSON 形状），禁止字符串拼接。
     /// 错误码约定：小写英文短词（"host only"、"no room"、"invalid target"），与前端约定一致。
-    /// </summary>
+    /// </remarks>
     public sealed class CommandResult
     {
         public bool Ok { get; private set; }
@@ -20,8 +22,11 @@ namespace DT_Tools.Commands
 
         /// <summary>
         /// 延迟完成回调（ctx.Defer() 通道挂入）：非空表示本结果是占位、真实结果稍后经
-        /// <see cref="Complete"/> 回填。等待方（pump/RunOnMain）据此跳过立即回填。
+        /// <see cref="Complete"/> 回填。
         /// </summary>
+        /// <remarks>
+        /// 等待方（pump/RunOnMain）据此跳过立即回填。
+        /// </remarks>
         private Action<CommandResult> _deferredComplete;
 
         [JsonIgnore]
@@ -39,11 +44,18 @@ namespace DT_Tools.Commands
         public static CommandResult Fail(string error, object data = null)
             => new CommandResult(false, string.IsNullOrEmpty(error) ? "error" : error, data);
 
-        /// <summary>构造延迟占位结果：Execute 直接 return 它，真实结果稍后 Complete(final) 回填。</summary>
+        /// <summary>
+        /// 构造延迟占位结果：Execute 直接 return 它，真实结果稍后 Complete(final) 回填。
+        /// </summary>
+        /// <param name="complete">真实结果就绪时调用，由 Complete 触发。</param>
+        /// <returns>延迟占位结果，Execute 直接返回它。</returns>
         public static CommandResult Defer(Action<CommandResult> complete)
             => new CommandResult(true, null, null) { _deferredComplete = complete ?? throw new ArgumentNullException(nameof(complete)) };
 
-        /// <summary>回填真实结果（只认第一次；主线程调用）。</summary>
+        /// <summary>
+        /// 回填真实结果（只认第一次；主线程调用）。
+        /// </summary>
+        /// <param name="final">真实结果；只有第一次调用生效，后续调用被忽略。</param>
         public void Complete(CommandResult final)
         {
             var sink = _deferredComplete;

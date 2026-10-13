@@ -35,17 +35,21 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 1. `[PatchFeature]`、`[AutomationModule]` 的参数必须写全。`Author` 逐功能实名。禁止全局作者常量（§7）。
 2. 每个补丁方法的第一行，必须写开关检查（§1）。
-3. 禁止 Patches、Commands、Automation 三个域互相依赖。共享代码上浮到 `Game/`（§4）。
+3. 禁止 Features、Commands、Automation 三个域互相依赖。共享代码上浮到 `Game/`（§4）。
 4. 配置段名、键名禁止写字符串。禁止 `ConfigEntry<T>` 字段（§9 约束 5）。
-5. 引用游戏 API 之前，必须先核对游戏源码。私有成员必须带 `0.1.16b 文件:行号` 注释（§10）。
+5. 引用游戏 API 之前，必须先核对游戏源码。私有成员必须带 `0.1.17a 文件:行号` 注释（§10）。
 6. 日志只走 `Log` 门面。注释、日志、命令文案全用中文。禁止 `Debug.Log`（§11）。
 7. JSON 只走 `DT_Tools.Core.Json`。禁止手拼 JSON（§11）。
-8. 禁止修改 `0.1.16b/`、`libs/`、`DT_Tools/WebUI/`（§2、§12）。
+8. 禁止修改 `0.1.17a/`、`libs/`、`DT_Tools/WebUI/`（§2、§12）。
 9. 补丁有执行顺序依赖时，必须用 `[HarmonyPriority]`。禁止依赖挂载顺序（§5）。
 10. 多代理并行作业时，禁止运行 `dotnet build`（§3）。
 11. 禁止在仓库文件里写本机绝对路径（§3）。
-12. `Patches/System/` 下的文件，禁止裸写 `System.X`（§9 约束 3）。
+12. 每个单元必须声明 1–3 个 `Tags`，且只能用 `FeatureTag` 里的标签。新增标签只追加位，不重排（§5）。
 13. MCP 工具实现触 Unity API，必须经 `WebConsole.RunOnMain`（§13）。
+14. 用户数据路径只从 `DtPaths` 取，禁止自行拼接 `BepInEx/config` 路径（§2）。
+15. 失败日志用 `Log.Warn(tag, ex, context)` / `Log.Error(tag, ex, context)`，禁止 `"…" + ex.Message`（§11）。
+16. 字符串优先插值 `$"…"`，禁止 `+` 拼接字面量与变量（§11）。
+17. 注释只写代码读不出来的信息：依据、约束、游戏源码位置。禁止复述代码（§14）。
 
 ### 术语
 
@@ -53,8 +57,8 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 | 术语 | 含义 |
 | --- | --- |
-| 游戏源码 | `0.1.16b/` 目录。游戏的反编译源码。一切 API 的核对基准 |
-| 功能 | `Patches/` 下的一个功能目录。类上带 `[PatchFeature]` |
+| 游戏源码 | `0.1.17a/` 目录。游戏的反编译源码。一切 API 的核对基准 |
+| 功能 | `Features/` 下的一个功能目录。类上带 `[PatchFeature]` 与 `Tags` |
 | 补丁 | 一个 `[HarmonyPatch]` 类。对应一个 Harmony 补丁点 |
 | 配置段 | .cfg 里的一个 `[段名]`。由 Feature 或 Module 类推导 |
 | 开关检查 | 补丁方法第一行的 `Engine.Enabled<T>()` 判断 |
@@ -66,11 +70,11 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 这是最常见的任务。共 7 步。
 
-分类共 5 个：Dev、Experience、Fun、Shop、System。
+功能不分目录分类，只打标签（§5「标签」）。
 
-1. 新建目录 `DT_Tools/Patches/<分类>/<功能名>/`。
+1. 新建目录 `DT_Tools/Features/<功能名>/`。
 2. 在游戏源码里核对 API 的存在性、签名、行号（见 §10）。
-3. 新建 `Feature.cs`。类写成 `sealed class`，加 `[PatchFeature]`。参数写法见 §7。
+3. 新建 `Feature.cs`。类写成 `sealed class`，加 `[PatchFeature]`，并声明 `Tags`。参数写法见 §7。
 4. 新建 `Patch.cs`。类写成 `static class`，加 `[HarmonyPatch]`。
 5. 在每个补丁方法的第一行，写开关检查（写法见下）。
 6. 构建（见 §3）。
@@ -93,7 +97,22 @@ if (!Engine.Enabled<本功能Feature>()) return;
 | `DT_Tools/` | 模组项目 | 插件源码和 `DT_Tools.csproj` |
 | `webui-src/` | 前端源码工程 | Vue 3 + Vite 桌面壳 WebUI（见 §12） |
 | `libs/` | 只读 | 游戏程序集。编译时引用 |
-| `0.1.16b/` | 只读。在仓库外的工作区根部 | 游戏源码 |
+| `0.1.17a/` | 只读。在仓库外的工作区根部 | 游戏源码 |
+
+### 用户数据目录
+
+版本 2.0.0.0 起，所有用户数据统一在 `BepInEx/config/DT_Tools/`，由 `Core/DtPaths.cs` 统一给出路径：
+
+```text
+BepInEx/config/DT_Tools/
+├── DT_Tools.cfg        插件配置（DtPaths.Cfg）
+├── mp3/playlist.json   随身 MP3 歌单（DtPaths.Mp3Playlist）
+└── photos/             默认照片目录（DtPaths.DefaultPhotoFolder）
+```
+
+- `BepInEx/plugins/DT_Tools/` 只放 DLL 与 WebUI。整体替换插件目录不会丢用户数据。
+- 2.0.0.0 不兼容旧版配置。旧的 `BepInEx/config/DT_Tools.cfg` 与 `DT_Tools_Mp3Playlist.json` 不再读取。
+- 新增用户数据路径时，只能在 `DtPaths` 里加属性。禁止在功能代码里拼接。
 
 ## 3. 构建与验证
 
@@ -130,25 +149,27 @@ cd webui-src && npm run build
 
 - 游戏内运行验证，只能由用户执行。
 - 用户把 DLL 和 WebUI 复制到游戏的 `BepInEx/plugins/DT_Tools/`。
-- 首次启动时，游戏自动生成 `.cfg`。
+- 首次启动时，游戏自动生成 `BepInEx/config/DT_Tools/DT_Tools.cfg`（路径见 §2「用户数据目录」）。
 
 ### CI
 
 | 工作流 | 触发 | 行为 |
 | --- | --- | --- |
-| `build.yml` | push、PR | 必定构建 WebUI。仓库里有 `libs/` 时，才编译后端 |
+| `build.yml` | push、PR，分支为 `main` 与 `dev-*` | 必定构建 WebUI。仓库里有 `libs/` 时，才编译后端 |
 | `release.yml` | 打 tag：`vMAJOR.MINOR.PATCH[.BUILD]` | 发布 Release |
 
 打包目录名的大小写必须是 `WebUI`。Linux CI 区分大小写。
 
 ### 分支
 
-- `main` 是发布线。打 tag 发版。
-- `dev` 是开发线。PR 先合入 `dev`。验证后，再合回 `main`。
+- `main` 是发布线。打 tag 发版，tag 必须在 `main` 历史中。
+- `dev-N.x` 是开发线，按主版本分支：`dev-1.x` 维护 1.x，`dev-2.x` 开发 2.x。
+- PR 先合入对应的 `dev-N.x`。验证后，再合回 `main`。
+- 新的主版本另开 `dev-N.x` 分支，不要直接在 `main` 上开发。
 
 ### 本机工作区
 
-- 本机主工作区直接检出 `dev` 分支，`libs/` 齐全，直接按上方命令构建。
+- 本机主工作区直接检出对应的 `dev-N.x` 分支（当前为 `dev-2.x`），`libs/` 齐全，直接按上方命令构建。
 - csproj 的游戏程序集目录默认值是 `DT_Tools/` 上一级的 `libs`。
 - 缺少 `libs/` 的检出可显式指定游戏程序集目录：
 
@@ -168,21 +189,21 @@ dotnet build DT_Tools/DT_Tools.csproj -p:GameManaged="<libs 的绝对路径>"
 Plugin.cs（装配根）
   ├ Core/        内核：反射装载、配置绑定、日志、JSON。不认识任何功能
   ├ Game/        游戏行为助手。≥2 处调用才上浮；只放行为，不放类型包装
-  ├ Patches/     Harmony 补丁功能域（Dev/Experience/Fun/Shop/System）
+  ├ Features/    Harmony 补丁功能域（平铺，每个功能一个目录，用标签分类）
   ├ Commands/    命令域（主线程命令泵执行）
   ├ Automation/  自动化模块域（纯发包/只读）
   └ WebConsole/  HTTP+WebSocket 服务、路由、鉴权、API（含 Mcp/ 桥接子域）
       └ WebUI/   前端桌面壳（构建产物）
-最底层：0.1.16b 游戏程序集
+最底层：0.1.17a 游戏程序集
 ```
 
 ### 依赖规则
 
 - 依赖方向只能向下：功能域 → Game → Core → 游戏。
-- 禁止 Patches、Commands、Automation 三个域互相依赖。
+- 禁止 Features、Commands、Automation 三个域互相依赖。
 - 例外一：命令域可以读功能的公开静态状态。例：`LobbyMaxPlayersFeature.MaxMembers`。
 - 例外二：WebConsole API 层和命令域同权。例：DummyApi 读 `LobbyMaxPlayersFeature.MaxMembers`。
-- `Game/` 禁止反向引用 `Patches/`。
+- `Game/` 禁止反向引用 `Features/`。
 
 ### 上浮规则
 
@@ -201,8 +222,23 @@ Plugin.cs（装配根）
 - 挂载同命名空间下所有 `[HarmonyPatch]` 类。
 - 逐补丁 try/catch。任何一个补丁失败，整个功能就跳过。
 - 失败只影响这一个功能。
-- 分类由命名空间 `Patches/<分类>/<功能>` 自动推导。
-- 分类经 `/api/config/list` 的 `category` 字段下发。
+- 分类靠 `Tags`，目录不分类。标签的规则见下文「标签」。
+- 标签经 `/api/config/list` 的 `tags` 字段下发。
+
+### 标签
+
+标签是功能的分类方式。目录只用来放代码，不分类。一个单元可以同时属于几个领域。
+
+- 词表在 `Core/Attributes/FeatureTag.cs`（`[Flags]`，`ulong`，38 位）。
+- 字典在 `Core/Attributes/FeatureTagCatalog.cs`，给出分组、中文名、说明。
+- 四个分组：玩家、界面、玩法、系统。字典顺序即分组顺序。
+- 适用于四类单元：`[PatchFeature]`、`[AutomationModule]`、`[McpTool]`、`ICommand`（属性 `Tags`）。
+- 每个单元至少 1 个，最多 3 个。未定义的位、空标签、超过 3 个，加载时直接抛出。这和重名命名空间一样属于声明错误。
+- 新增标签：`FeatureTag` 末尾追加一位，`FeatureTagCatalog.Entries` 追加一条。两处同步。
+- 发布后的 bit 位不得重排或复用。标签会被 WebUI、清单和 API 引用。
+- 标签字典经 `/api/config/tags` 下发。WebUI 不写死任何标签文字。
+- 标签建议工具：`tools/suggest-tags`（开发期，不进插件）。它给建议和证据，不改源码。用法与指标见其 README。
+  新增单元时先跑 `--unit`，再人工确认标签。
 
 ### `[AutomationModule]`
 
@@ -259,7 +295,7 @@ Plugin.cs（装配根）
 
 ## 7. 特性元数据：一律显式声明
 
-`[PatchFeature]` 和 `[AutomationModule]` 的所有参数，必须显式写出，一个不缺。
+`[PatchFeature]` 和 `[AutomationModule]` 的所有参数，必须显式写出，一个不缺。`Tags` 也一样，必填。
 
 参数有默认值，省略也能编译。但省略会让读者分不清：是有意取默认值，还是漏写。
 
@@ -272,6 +308,7 @@ Plugin.cs（装配根）
     "一句话说明功能。",
     defaultEnabled: false,
     side: FeatureSide.Host,
+    Tags = FeatureTag.GameKill | FeatureTag.PlayerCombat,
     Author = "<你的名字>")]
 public sealed class XxxFeature { }
 ```
@@ -282,6 +319,7 @@ public sealed class XxxFeature { }
 [AutomationModule("卡片标题",
     "一句话说明功能。",
     side: FeatureSide.Client,
+    Tags = FeatureTag.SysAutomation,
     Author = "<你的名字>")]
 public sealed class XxxModule { }
 ```
@@ -294,6 +332,7 @@ public sealed class XxxModule { }
 | 2 | `defaultEnabled` | — | 默认是否启用 |
 | 3 | `side` | `side` | 作用面（规则见下） |
 | 4 | `Author` | `Author` | 功能制作者。必须实名 |
+| 5 | `Tags` | `Tags` | 功能标签，1–3 个。必填（见 §5「标签」） |
 
 未写 `Author` 时，系统按“佚名”署名。这仍然算漏写。
 
@@ -356,16 +395,15 @@ public sealed class XxxModule { }
 
 ### 约束 2：日志门面 `Log`
 
-- 游戏在全局命名空间有 `public static class Log`。位置：`0.1.16b/Log.cs`。
+- 游戏在全局命名空间有 `public static class Log`。位置：`0.1.17a/Log.cs`。
 - 本插件的日志门面也叫 `Log`。它放在 `DT_Tools` 根命名空间。
 - 不要“修复”这个布局。
 
-### 约束 3：`Patches/System/` 遮蔽全局 `System`
+### 约束 3：功能目录平铺，不再有分类层
 
-- `Patches/System/` 分类会遮蔽全局 `System`。
-- 该命名空间链上的任何文件，文件体内不能裸写 `System.X` 全限定名。裸写会解析失败。
-- 改用 `global::System.*`，或者 using + 短名。
-- 文件顶部的 `using System…;` 不受影响。
+- 功能目录是 `Features/<功能名>/`，没有分类子目录。
+- 旧版 `Patches/System/` 会遮蔽全局 `System`，2.0.0.0 起已经不存在。
+- 文件体内仍然推荐 `global::System.*`，但不再是强制要求。
 
 ### 约束 4：Feature、Module、Patch 的类型
 
@@ -413,7 +451,7 @@ public sealed class XxxModule { }
 - 引用游戏 API 之前，必须先在游戏源码里核对：存在性、可见性、签名。
 - 这条规则也管 `typeof(X)`、反射字符串、Traverse 成员名。
 - 私有成员用字符串定位（Traverse 或反射）。
-- 字符串定位处，必须加注释：`0.1.16b <文件>.cs:<行号>`。
+- 字符串定位处，必须加注释：`0.1.17a <文件>.cs:<行号>`。
 - 同名文件的注释，要带子目录前缀。
 - 能用 `nameof`，就必须用 `nameof`。
 
@@ -428,7 +466,7 @@ public sealed class XxxModule { }
 
 - `/agent` 有 4 条链。它们逐项判断服务端 StateList 的槽位。
 - 这些判断集中在 `Commands/Agent/Logic.ItemHelper.cs` 头部。
-- 位置：“设备 StateList 槽位布局表”。每行带 0.1.16b 行号。
+- 位置：“设备 StateList 槽位布局表”。每行带 0.1.17a 行号。
 - 游戏升级后，按这张表逐行复核。
 - 禁止新增没有锚点的槽位判断。
 
@@ -438,7 +476,7 @@ public sealed class XxxModule { }
 
 - 注释、配置描述、命令文案，全部用中文。
 - 注释要写机制依据：为什么能这么改。
-- 引用游戏源码时，必须带行号。
+- 引用游戏源码时，必须带行号。引用未经校验时，写成 `0.1.17a 文件:行号（待核对）`。
 - 引用本文件时，写成 `AGENTS.md §章节号`。
 
 ### 日志
@@ -446,6 +484,7 @@ public sealed class XxxModule { }
 - 唯一入口是 `Log` 门面。用泛型重载。
 - 信息和错误的写法：`Log.Info<TFeature>(msg)`、`Log.Error<TFeature>(msg)`。
 - 异常的写法：`Log.Exception<TFeature>(ex[, context])`。
+- 失败但可继续的写法：`Log.Warn<TFeature>(ex, "上下文")` 或 `Log.Warn(tag, ex, "上下文")`。消息为「上下文：ex.Message」，不记堆栈。
 - 异常在 BepInEx 里记完整堆栈。WebUI 只留单行摘要。
 - 日志 tag 是段名，自动生成。
 - 命令输出走 `ctx.Reply`、`ctx.Warn`。
@@ -465,6 +504,12 @@ public sealed class XxxModule { }
 - WebUI 控制台按会话隔离显示。
 - 前端每个控制台窗口实例持有一个会话 id。
 - 会话 id 放在 `/api/run` 的请求头 `X-DT-Session` 里上送。
+
+### 字符串
+
+- 字面量与变量拼接一律用插值：`$"用法: {Usage}"`，不用 `"用法: " + Usage`。
+- 重复出现的格式（用户数据路径、失败日志、协议包）抽成方法，不在调用处各写一份。
+- 插值字符串不是编译期常量。`const`、`case` 标签、特性参数里只能用普通拼接或字面量。
 
 ### JSON
 
@@ -558,6 +603,7 @@ public sealed class XxxModule { }
 | `/api/run` | POST | 执行命令。请求体 = 原始命令文本。请求头 `X-DT-Session: <会话id>`。响应 = CommandResult 信封 |
 | `/api/commands` | GET | 返回 `[{name, aliases, usage, description, author}]` |
 | `/api/config/list` | GET | 配置段列表（字段见下） |
+| `/api/config/tags` | GET | 功能标签字典（见下） |
 | `/api/config/update`、`save`、`reset`、`import` | POST | 修改、保存、重置、导入配置。`reset` 带 key 时，必须同时带 section |
 | `/api/config/export.cfg` | GET | 导出 cfg 文本 |
 | `/api/config/section/{段}/log` | GET / POST | 查询或清空段日志。返回 `{ok, section, seq, lines:[…]}` |
@@ -583,10 +629,10 @@ public sealed class XxxModule { }
 
 #### `/api/config/list` 的返回
 
-- 形状：`[{section, group, category, enabledKey, entries:[…]}]`。
+- 形状：`[{section, group, tags, enabledKey, entries:[…]}]`。
 - `group` 取 "automation" 或 "feature"。
-- `category` = Patches 分类目录名。由 `FeatureLoader.DeriveCategory` 推导。
-- 基础设施段没有 `category`。前端把它归入“其他”。
+- `tags` = 功能标签键数组，由 `FeatureTagCatalog.Names(Engine.TagsOfSection(section))` 给出。基础设施段为空数组。
+- `GET /api/config/tags` 返回标签字典：`[{key, group, label, description}]`。
 - `reset` 带 key 时，后端拒绝跨段的同名重置。
 
 #### 假人 API
@@ -638,7 +684,7 @@ public sealed class XxxModule { }
 | --- | --- |
 | `terminal` | Kali 终端 |
 | `console` | 旧版控制台 |
-| `config` | 配置。两级导航：分类文件夹 → 功能段。根视图搜索跨分类平铺。网格 / 列表两种视图 |
+| `config` | 配置。标签筛选（按领域分组，多选任一命中）+ 搜索。段平铺，网格 / 列表两种视图 |
 | `automation` | 自动化。同款两种视图（列表行给模块说明） |
 | `log` | 全量日志 |
 | `dummy` | 假人管理 |
@@ -647,13 +693,13 @@ public sealed class XxxModule { }
 - 跨应用共享组件在 `apps/common/`，共 6 个：`SuggestPopup`、`FolderGrid`、`LogPanel`、`EntryList`、`CropperHost`、`FileBrowser`。
 - `FileBrowser` 是本机文件选择弹窗。数据源是 `/api/fs/list`。
 
-#### 文件夹视图（`FolderGrid` 的网格 / 列表）
+#### 段视图（`FolderGrid` 的网格 / 列表）
 
 - `FolderGrid` 有两种视图，**状态是模块级单例**（`composables/useFolderView.js`，存 `dt_foldergrid_view_v1`）：
   在 DT 配置页切换，自动化页跟着变 —— 两页共用一份，不各写一套。
 - 切换按钮在**各页自己的工具栏**上（不进组件、不做浮动按钮），样式沿用 `tb-btn`。
 - 列表行的说明由**父级**经 `descOf` prop 提供，参数是 `FolderGrid` 的 **item 对象**（不是 key）：
-  DT 配置页给分类说明 / 段摘要，自动化页给模块说明。
+  DT 配置页给段摘要（行首附标签），自动化页给模块说明。
   ⚠️ 两页的实现必须都收 item —— 2026-10-07 实际踩过：自动化页写成收 key，
   `find(x => x.id === key)` 永不命中，整列说明为空。
 - 段摘要的取法：段开关键（`enabledKey`）描述的正文，用 `configUtils.splitDesc` 剥掉
@@ -752,3 +798,60 @@ MCP 服务器寄生于 WebConsole（同端口、同鉴权）。AI 客户端经 `
 - 工具名、描述全中文或 snake_case 英文名 + 中文描述。`Author` 逐工具实名。
 - 禁止在 MCP 工具里实现本可以做成命令的行动能力。命令是通用入口（聊天/WebUI/MCP 三通道），MCP 工具只是桥。
 - 协议包相关的一切以 `.github/skills/MCP/MCP.md` 为知识源；它与运行期不一致时，以 `packets` 命令的运行期真值为准并回写该文件。
+
+---
+
+## 14. 注释规范（面向 AI，兼顾 IDE）
+
+读者首先是 AI。注释只承载代码里读不出来的信息。同时，IDE 的悬停提示和参数提示要能正确显示说明，所以注释必须使用标准的 XML 文档标签。
+
+### 文档块结构
+
+每个 `///` 文档块按下列标签书写，顺序固定：
+
+```csharp
+/// <summary>
+/// 计算两个整数的和。
+/// </summary>
+/// <remarks>溢出时按 unchecked 回绕，调用方需自行检查范围。</remarks>
+/// <param name="a">第一个加数。</param>
+/// <param name="b">第二个加数。</param>
+/// <returns>两数之和，溢出时回绕。</returns>
+public int Add(int a, int b)
+```
+
+- `<summary>`：一句话，说明做什么。悬停提示只显示这一段。不复述名字或签名。
+- `<remarks>`：只放代码读不出来的信息（见下“保留”）。没有则省略。多段时用空的 `///` 分段。
+- 类型、字段、属性：只写 `<summary>` 和 `<remarks>`。
+- 方法、构造函数：每个参数都必须有 `<param>`，不能只写一部分。
+- `<param>`：写参数的业务含义，并写出签名读不出来的约束：能否为 null、取值范围、单位、哨兵值、是否修改传入对象。无额外约束时只写业务含义，例如“椅子设备 ID”。
+- `<returns>`：返回值非 `void` 时必写。说明返回值语义：`bool` 的 true/false 各代表什么，null 代表什么，失败时返回什么。
+- 正文转义：`<`、`&` 写成 `&lt;`、`&amp;`（如 `Log.Info&lt;TFeature&gt;`）。`<see cref="…"/>`、`<c>` 可直接用。不用 `<strong>` 等 HTML 标签。
+- `<see cref>` 指向的成员必须存在。否则 CS1574 报错。
+
+### 保留（写在 `<remarks>`、`<param>`、`<returns>` 中）
+
+- 游戏源码引用：`0.1.17a File.cs:行号`。未校验的标「（待核对）」。
+- 约束与不变量：“必须”“禁止”“否则”“只在…时”。
+- 依据：为什么这么写，原版怎么做，踩过什么坑。
+- 跨文件的依赖与调用时机：谁会调用、在哪个线程、什么阶段。
+- 外部格式：协议包字段、JSON 形态、配置键的语义。
+
+### 删除
+
+- `<summary>` 只复述名字或签名，例如字段 `Range` 上写“攻击距离”。
+- `<param>` 只把参数名翻译一遍，例如 `<param name="a">参数 a。</param>`。
+- 复述紧邻代码动作的行内注释，例如 `// 设置 Enabled` 后面跟着 `Enabled = true`。
+- 装饰分隔线：`// ==== 区块 ====`。
+- 作者、日期、变更历史。变更历史走 git。
+
+### 形态
+
+- `<summary>` 一句话能说清就一句。
+- `<remarks>` 只写“为什么”，“怎么做”留给代码。
+- 超过 8 行的 `<remarks>` 必须压缩。检验方法：删掉这段后，读者是否失去了判断依据。删不掉的保留。
+
+### 检验
+
+- 每条注释提问：删掉后，AI 会不会做出错误的修改？会，就保留。不会，就删。
+- 提交前用文档生成构建验证：`dotnet build -p:GenerateDocumentationFile=true`。CS1570、CS1572、CS1573、CS1574、CS1587 必须为 0。

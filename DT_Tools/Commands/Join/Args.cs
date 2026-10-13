@@ -2,7 +2,9 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Join
 {
-    /// <summary>/join 参数：房间码（清洗规则与 CustomRoomCode 写入侧一致：大写 A–Z / 0–9，≤7 位）。</summary>
+    /// <summary>
+    /// /join 参数：房间码（清洗规则与 CustomRoomCode 写入侧一致：大写 A–Z / 0–9，≤7 位）。
+    /// </summary>
     internal static class JoinArgs
     {
         public static bool TryParseCode(string raw, out string code, out string error)

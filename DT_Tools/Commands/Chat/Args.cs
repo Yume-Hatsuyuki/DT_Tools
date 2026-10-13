@@ -3,20 +3,30 @@ using System.Text;
 
 namespace DT_Tools.Commands.Chat
 {
-    /// <summary>/chat 参数：可选 #deviceId + 文本。</summary>
+    /// <summary>
+    /// /chat 参数：可选 #deviceId + 文本。
+    /// </summary>
     internal sealed class ChatArgs
     {
-        /// <summary>指定机台 ID；null 表示随机。</summary>
+        /// <summary>
+        /// 指定机台 ID；null 表示随机。
+        /// </summary>
         public int? DeviceId { get; private set; }
 
-        /// <summary>要发送的文字（已 trim，未做富文本过滤——服务端 SanitizeChat 负责）。</summary>
+        /// <summary>
+        /// 要发送的文字（已 trim，未做富文本过滤——服务端 SanitizeChat 负责）。
+        /// </summary>
         public string Text { get; private set; }
 
         /// <summary>
         /// 解析：
-        ///   #12 hello world  → DeviceId=12, Text="hello world"
-        ///   hello world      → DeviceId=null, Text="hello world"
+        /// #12 hello world  → DeviceId=12, Text="hello world"
+        /// hello world      → DeviceId=null, Text="hello world"
         /// </summary>
+        /// <param name="args">命令参数数组。</param>
+        /// <param name="result">解析结果。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>解析成功返回 true；不合法时返回 false，原因写入 error。</returns>
         public static bool TryParse(string[] args, out ChatArgs result, out string error)
         {
             result = null;

@@ -12,18 +12,24 @@ namespace DT_Tools.WebConsole
     /// <summary>
     /// 更新检测与下载服务：请求 GitHub Releases latest，与插件当前版本比较
     /// （当前版本来自 DT_Tools.csproj 的 &lt;Version&gt;，编译期注入 MyPluginInfo.PLUGIN_VERSION）。
+    /// </summary>
+    /// <remarks>
     /// 线程模型与 SteamApi 同源：全部工作在 HTTP 线程 / 专用后台线程完成，不触碰 Unity API。
     /// 检测结果缓存 3 分钟（与 WebUI 前端轮询节奏一致，多标签页共享，也压住 GitHub 匿名
     /// 60 次/时的限流）；手动检查绕过缓存。下载在专用线程进行，进度经状态轮询读取。
-    /// </summary>
+    /// </remarks>
     public static class UpdateService
     {
         private const string ReleaseApiUrl =
             "https://api.github.com/repos/Yume-Hatsuyuki/DT_Tools/releases/latest";
 
-        /// <summary>自动检测的缓存有效期：与前端 3 分钟轮询对齐，失败也推进，避免频繁打 GitHub。</summary>
+        /// <summary>
+        /// 自动检测的缓存有效期：与前端 3 分钟轮询对齐，失败也推进，避免频繁打 GitHub。
+        /// </summary>
         private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(3);
-        /// <summary>自动检测失败日志的节流窗口：离线环境下不刷屏 BepInEx。</summary>
+        /// <summary>
+        /// 自动检测失败日志的节流窗口：离线环境下不刷屏 BepInEx。
+        /// </summary>
         private static readonly TimeSpan FailLogThrottle = TimeSpan.FromMinutes(30);
         private const int RequestTimeoutMs = 8000;
         private const int DownloadChunkBytes = 256 * 1024;
@@ -36,14 +42,10 @@ namespace DT_Tools.WebConsole
             catch { /* 运行时不支持时忽略 */ }
         }
 
-        // ---- 检测状态（仅持锁读写）----
-
         private static ReleaseSnapshot _cached;   // 最近一次成功结果（null=从未成功）
         private static DateTime _checkedAt;       // 最近一次尝试时间（成功失败都推进）
         private static string _lastError;         // 最近一次失败原因（成功时清空）
         private static DateTime _lastFailLogAt;
-
-        // ---- 下载状态：不可变快照整体换引用，读侧无锁 ----
 
         private sealed class DownloadSnapshot
         {
@@ -64,16 +66,21 @@ namespace DT_Tools.WebConsole
         private static volatile DownloadSnapshot _download =
             new DownloadSnapshot(false, false, 0, 0, null, null);
 
-        /// <summary>插件当前版本（csproj &lt;Version&gt; 经 BepInEx.PluginInfoProps 生成）。</summary>
+        /// <summary>
+        /// 插件当前版本（csproj &lt;Version&gt; 经 BepInEx.PluginInfoProps 生成）。
+        /// </summary>
         public static string CurrentVersion => MyPluginInfo.PLUGIN_VERSION;
 
-        // ---- 对外接口（UpdateApi 调用）----
-
         /// <summary>
-        /// 返回状态 JSON（经 Json.To 序列化）。force=false 走缓存；force=true 绕过缓存
+        /// 返回状态 JSON（经 Json.To 序列化）。
+        /// </summary>
+        /// <remarks>
+        /// force=false 走缓存；force=true 绕过缓存
         /// 立即请求 GitHub（手动检查）。GitHub 拉取在持锁内同步进行——并发的状态轮询
         /// 会排队等结果，与 SteamApi 的锁内请求策略一致。
-        /// </summary>
+        /// </remarks>
+        /// <param name="force">为 true 时绕过缓存，立即请求 GitHub。</param>
+        /// <returns>状态 JSON 对象。</returns>
         public static object GetStatus(bool force)
         {
             lock (Gate)
@@ -107,9 +114,13 @@ namespace DT_Tools.WebConsole
         }
 
         /// <summary>
-        /// 启动新版 zip 的后台下载。必须先有检测结果（资产地址来自 Release 缓存）；
-        /// 已在进行中或没有可用资产时返回失败信封。成功受理立即返回，进度走状态轮询。
+        /// 启动新版 zip 的后台下载。
         /// </summary>
+        /// <remarks>
+        /// 必须先有检测结果（资产地址来自 Release 缓存）；
+        /// 已在进行中或没有可用资产时返回失败信封。成功受理立即返回，进度走状态轮询。
+        /// </remarks>
+        /// <returns>下载任务的状态 JSON 对象。</returns>
         public static object StartDownload()
         {
             ReleaseSnapshot release;
@@ -136,16 +147,19 @@ namespace DT_Tools.WebConsole
             return new { ok = true };
         }
 
-        /// <summary>在资源管理器中定位最近一次下载的 zip（仅 Windows；其余平台明确报错）。</summary>
+        /// <summary>
+        /// 在资源管理器中定位最近一次下载的 zip（仅 Windows；其余平台明确报错）。
+        /// </summary>
+        /// <returns>定位操作的结果文字；非 Windows 平台时为错误说明。</returns>
         public static string RevealDownload()
         {
             var snap = _download;
             if (snap.SavePath == null)
                 return "尚未下载过安装包";
             if (!File.Exists(snap.SavePath))
-                return "文件已不存在：" + snap.SavePath;
+                return $"文件已不存在：{snap.SavePath}";
             if (Environment.OSVersion.Platform != PlatformID.Win32NT)
-                return "仅支持 Windows 资源管理器定位：" + snap.SavePath;
+                return $"仅支持 Windows 资源管理器定位：{snap.SavePath}";
             try
             {
                 // explorer /select：打开所在文件夹并选中文件（比只开文件夹更直观）
@@ -158,11 +172,9 @@ namespace DT_Tools.WebConsole
             }
             catch (Exception ex)
             {
-                return "打开资源管理器失败：" + ex.Message;
+                return $"打开资源管理器失败：{ex.Message}";
             }
         }
-
-        // ---- 状态组装 ----
 
         private static object BuildStatus()
         {
@@ -205,8 +217,6 @@ namespace DT_Tools.WebConsole
 
         private static string Describe(ReleaseSnapshot r) => string.IsNullOrEmpty(r.TagName) ? "未知版本" : r.TagName;
 
-        // ---- GitHub 拉取与解析 ----
-
         private static ReleaseSnapshot FetchLatest()
         {
             var request = (HttpWebRequest)WebRequest.Create(ReleaseApiUrl);
@@ -245,7 +255,11 @@ namespace DT_Tools.WebConsole
             }
         }
 
-        /// <summary>WebException 时尽量读出 GitHub 的 {"message": …}，比裸状态码好懂（限流等）。</summary>
+        /// <summary>
+        /// WebException 时尽量读出 GitHub 的 {"message": …}，比裸状态码好懂（限流等）。
+        /// </summary>
+        /// <param name="ex">发生的异常。</param>
+        /// <returns>便于阅读的错误说明，GitHub 返回的错误消息优先。</returns>
         private static string DescribeError(Exception ex)
         {
             if (ex is WebException wex && wex.Response is HttpWebResponse resp)
@@ -265,9 +279,15 @@ namespace DT_Tools.WebConsole
             return ex.Message;
         }
 
-        // ---- 版本比较 ----
-
-        /// <summary>比较 "v1.0.8.9" 形式的版本号：逐段数字比较，缺段补 0。tag 更新返回 true。</summary>
+        /// <summary>
+        /// 比较 "v1.0.8.9" 形式的版本号：逐段数字比较，缺段补 0。
+        /// </summary>
+        /// <remarks>
+        /// tag 更新返回 true。
+        /// </remarks>
+        /// <param name="tag">远端版本标签，如 v1.0.8.9。</param>
+        /// <param name="current">当前版本号。</param>
+        /// <returns>tag 比当前版本新时为 true。</returns>
         public static bool IsNewer(string tag, string current)
         {
             int[] a = ParseVersion(tag);
@@ -303,8 +323,6 @@ namespace DT_Tools.WebConsole
             return list.ToArray();
         }
 
-        // ---- 下载 ----
-
         private sealed class DownloadJob
         {
             public string Url;
@@ -312,7 +330,11 @@ namespace DT_Tools.WebConsole
             public long Total;
         }
 
-        /// <summary>优先选 zip 资产（发布流水线产物 DT_Tools-vX.Y.Z.zip），没有则不下载。</summary>
+        /// <summary>
+        /// 优先选 zip 资产（发布流水线产物 DT_Tools-vX.Y.Z.zip），没有则不下载。
+        /// </summary>
+        /// <param name="release">发布快照。</param>
+        /// <returns>zip 资产；没有时为 null。</returns>
         private static ReleaseAsset PickZipAsset(ReleaseSnapshot release)
         {
             foreach (var a in release.Assets)
@@ -321,7 +343,11 @@ namespace DT_Tools.WebConsole
             return null;
         }
 
-        /// <summary>下载落盘目录：优先用户"下载"文件夹，不存在则退回 BepInEx 根目录。</summary>
+        /// <summary>
+        /// 下载落盘目录：优先用户"下载"文件夹，不存在则退回 BepInEx 根目录。
+        /// </summary>
+        /// <param name="assetName">资产文件名。</param>
+        /// <returns>保存文件的完整路径。</returns>
         private static string ResolveSavePath(string assetName)
         {
             string fileName = Path.GetFileName(assetName);
@@ -338,7 +364,10 @@ namespace DT_Tools.WebConsole
             return Path.Combine(Paths.BepInExRootPath, fileName);
         }
 
-        /// <summary>下载线程主体：流式拷贝，按块发布进度快照；结果（成功/失败）整体换引用。</summary>
+        /// <summary>
+        /// 下载线程主体：流式拷贝，按块发布进度快照；结果（成功/失败）整体换引用。
+        /// </summary>
+        /// <param name="state">线程池传入的状态对象。</param>
         private static void RunDownload(object state)
         {
             var job = (DownloadJob)state;
@@ -380,8 +409,6 @@ namespace DT_Tools.WebConsole
             }
         }
 
-        // ---- DTO（GitHub JSON 形状）----
-
         private sealed class GitHubRelease
         {
             [Newtonsoft.Json.JsonProperty("tag_name")] public string TagName = null;
@@ -406,8 +433,6 @@ namespace DT_Tools.WebConsole
         {
             [Newtonsoft.Json.JsonProperty("message")] public string Message = null;
         }
-
-        // ---- 对内数据快照 ----
 
         private sealed class ReleaseSnapshot
         {

@@ -2,26 +2,33 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Commands;
 using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp
 {
-    /// <summary>单个 MCP 工具的运行期定义（Schema 在加载时求值一次并缓存）。</summary>
+    /// <summary>
+    /// 单个 MCP 工具的运行期定义（Schema 在加载时求值一次并缓存）。
+    /// </summary>
     internal sealed class McpToolDef
     {
         public string Name;
         public string Description;
         public string Author;
+        public FeatureTag Tags;
         public JObject SchemaJson;
         public Func<JObject, CommandResult> Execute;
     }
 
     /// <summary>
-    /// MCP 工具注册表：反射发现本程序集全部 [McpTool] 类。与 CommandRegistry 同风格，
+    /// MCP 工具注册表：反射发现本程序集全部 [McpTool] 类。
+    /// </summary>
+    /// <remarks>
+    /// 与 CommandRegistry 同风格，
     /// 零注册代码；同名工具直接报错。工具类契约：static JObject Schema() +
     /// static CommandResult Execute(JObject args)（返回值经 Json.To 进 MCP content）。
-    /// </summary>
+    /// </remarks>
     internal static class McpToolLoader
     {
         private static Dictionary<string, McpToolDef> _tools;
@@ -42,6 +49,8 @@ namespace DT_Tools.WebConsole.Mcp
                 if (string.IsNullOrWhiteSpace(attr.Author))
                     throw new InvalidOperationException($"MCP 工具 {type.FullName} 漏写 Author（逐工具实名，禁止兜底）");
 
+                FeatureTagCatalog.Validate(attr.Tags, type.FullName);
+
                 var schemaMethod = type.GetMethod("Schema", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
                 var executeMethod = type.GetMethod("Execute", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(JObject) }, null);
                 if (schemaMethod == null || executeMethod == null)
@@ -52,6 +61,7 @@ namespace DT_Tools.WebConsole.Mcp
 
                 map[attr.Name] = new McpToolDef
                 {
+                    Tags = attr.Tags,
                     Name = attr.Name,
                     Description = attr.Description,
                     Author = attr.Author.Trim(),

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 using DT_Tools.Game;
 using Server.Game;
 
@@ -8,11 +9,12 @@ namespace DT_Tools.Commands.LunaProtect
     /// <summary>
     /// /luna_protect &lt;all|#playerId&gt; — 让指定玩家（或全体存活玩家）不可被 Black 直接刀杀，
     /// 即套用 Luna 的 Catastrophe 护盾效果（仅房主、仅生存阶段、目标须存活）。
-    ///
+    /// </summary>
+    /// <remarks>
     /// 限制（与原版 Luna 技能完全一致）：停电期间护盾无效，电力恢复后自动生效；
     /// 不防致命诡计（Deadly Trick）；护盾是纯客户端输入门控（服务端 UseWeapon 无校验）；
     /// 效果持续到本局结束 / 玩家重连，命令之后新加入的玩家需重新施加。
-    /// </summary>
+    /// </remarks>
     internal sealed class LunaProtectCommand : ICommand
     {
         public string Name => "luna_protect";
@@ -20,6 +22,7 @@ namespace DT_Tools.Commands.LunaProtect
         public string Usage => "luna_protect <all|#playerId>";
         public string Description => "给指定/全体存活玩家套用 Luna 护盾（亮灯时不可被 Black 刀杀，需房主·生存阶段）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameBuff | FeatureTag.GameKill;
 
         public bool RequireHost => true;
 

@@ -9,9 +9,11 @@ namespace DT_Tools.WebConsole.Api
 {
     /// <summary>
     /// /api/automation/* — 总开关、模块列表、模块日志。
+    /// </summary>
+    /// <remarks>
     /// 模块元数据来自 Engine.AutomationModules（id 即配置段名）；
     /// 开关统一写 BepInEx 配置项（引擎的 [Config] 绑定会实时回写字段）。
-    /// </summary>
+    /// </remarks>
     public static class AutomationApi
     {
         public static void HandleStatus(HttpListenerContext ctx)
@@ -37,7 +39,10 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>POST /api/automation/host {enabled} — 自动化总开关。</summary>
+        /// <summary>
+        /// POST /api/automation/host {enabled} — 自动化总开关。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleHost(HttpListenerContext ctx)
         {
             var body = ApiUtil.ParseBody(ctx);
@@ -65,7 +70,10 @@ namespace DT_Tools.WebConsole.Api
             HttpServer.WriteJson(ctx.Response, new { ok = true, hostEnabled = enabled.Value });
         }
 
-        /// <summary>/api/automation/modules/{id}/log — 模块日志（GET 读取；POST /log/clear 或 DELETE 清空）。</summary>
+        /// <summary>
+        /// /api/automation/modules/{id}/log — 模块日志（GET 读取；POST /log/clear 或 DELETE 清空）。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleModule(HttpListenerContext ctx)
         {
             const string prefix = "/api/automation/modules/";
@@ -105,8 +113,6 @@ namespace DT_Tools.WebConsole.Api
 
             HttpServer.WriteJson(ctx.Response, new { ok = false, error = "unknown module endpoint" });
         }
-
-        // ---- 内部 ----
 
         private static object EntryDto(ConfigService.EntryDto e) => new
         {

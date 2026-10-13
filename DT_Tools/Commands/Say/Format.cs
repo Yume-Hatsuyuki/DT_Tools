@@ -3,7 +3,9 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Say
 {
-    /// <summary>/say 输出格式化：帮助文本、通道标签、人类回复 + JSON 结果 DTO。</summary>
+    /// <summary>
+    /// /say 输出格式化：帮助文本、通道标签、人类回复 + JSON 结果 DTO。
+    /// </summary>
     internal static class SayFormat
     {
         public const string HelpText =

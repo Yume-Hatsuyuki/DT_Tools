@@ -1,14 +1,16 @@
 using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.RoomList
 {
     /// <summary>
     /// /room_list — 列出当前所有公开房间（Steam Lobby 异步查询）。
-    ///
+    /// </summary>
+    /// <remarks>
     /// 注意：查询是异步回调，命令立即返回；人类文本经 ctx.Reply 在回调中输出。
     /// 旧 /api/run 的 SetResult 回写机制对异步命令需要由集成者在 WebConsole 阶段
     /// 单独处理（见集成注意事项）。
-    /// </summary>
+    /// </remarks>
     internal sealed class RoomListCommand : ICommand
     {
         public string Name => "room_list";
@@ -16,6 +18,7 @@ namespace DT_Tools.Commands.RoomList
         public string Usage => "room_list";
         public string Description => "列出当前所有公开房间（异步；日志 + JSON 回调）。";
         public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.SysRoom | FeatureTag.SysNetwork;
 
         public bool RequireHost => false;
 

@@ -13,8 +13,11 @@ namespace DT_Tools.Commands.PacketCall
 {
     /// <summary>
     /// /call_s、/call_c 共用业务（对应旧 PacketCallHelper）：反射枚举 Protocol 包、
-    /// protobuf JSON 填充、发送/注入。房主门禁由框架 RequireHost 统一执行。
+    /// protobuf JSON 填充、发送/注入。
     /// </summary>
+    /// <remarks>
+    /// 房主门禁由框架 RequireHost 统一执行。
+    /// </remarks>
     internal static class PacketCallLogic
     {
         private const int HelpSampleCount = 10;
@@ -83,7 +86,7 @@ namespace DT_Tools.Commands.PacketCall
             else
             {
                 foreach (var name in map.Keys.OrderBy(n => n, StringComparer.Ordinal).Take(HelpSampleCount))
-                    sb.AppendLine("  " + name);
+                    sb.AppendLine($"  {name}");
                 if (map.Count > HelpSampleCount)
                     sb.AppendLine($"  … 其余 {map.Count - HelpSampleCount} 个已省略（共 {map.Count} 个）");
                 else
@@ -175,9 +178,17 @@ namespace DT_Tools.Commands.PacketCall
         }
 
         /// <summary>
-        /// 解析目标：all | #id。成功返回 true；targetAll / targetId 有效。
-        /// 复用 Game/TargetSpec（全项目唯一实现，随其语义同时接受纯数字 ID）。
+        /// 解析目标：all | #id。
         /// </summary>
+        /// <remarks>
+        /// 成功返回 true；targetAll / targetId 有效。
+        /// 复用 Game/TargetSpec（全项目唯一实现，随其语义同时接受纯数字 ID）。
+        /// </remarks>
+        /// <param name="token">目标文字，all 或 #id。</param>
+        /// <param name="targetAll">是否为全体目标。</param>
+        /// <param name="targetId">目标玩家 ID；全体时无效。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>解析成功返回 true；targetAll 与 targetId 有效。</returns>
         public static bool TryParseTarget(string token, out bool targetAll, out int targetId, out string error)
         {
             targetAll = false;
@@ -197,7 +208,14 @@ namespace DT_Tools.Commands.PacketCall
             return false;
         }
 
-        /// <summary>校验活动房间（有玩家的 GameRoom）。失败返回 null 并已回复。</summary>
+        /// <summary>
+        /// 校验活动房间（有玩家的 GameRoom）。
+        /// </summary>
+        /// <remarks>
+        /// 失败返回 null 并已回复。
+        /// </remarks>
+        /// <param name="ctx">命令上下文，失败时提示通过它输出。</param>
+        /// <returns>活动房间（有玩家的 GameRoom）；失败时为 null 且已回复。</returns>
         public static GameRoom RequireRoom(CommandContext ctx)
         {
             var room = GameRoom.Instance;
@@ -212,17 +230,19 @@ namespace DT_Tools.Commands.PacketCall
         /// <summary>
         /// PacketManager 是否注册了该 Protocol 的处理器（仅 /call_c 注入路径需要）：
         /// HandlePacket 对未注册的 Protocol 静默丢弃、不做任何处理
-        /// （0.1.16b PacketManager.cs:84-91，:87 _handler.TryGetValue 未命中即无操作）。
-        /// _handler 是私有字典（0.1.16b PacketManager.cs:14），经反射读取；
+        /// （0.1.17a PacketManager.cs:84-91，:87 _handler.TryGetValue 未命中即无操作）。
+        /// _handler 是私有字典（0.1.17a PacketManager.cs:14），经反射读取；
         /// Instance 未就绪 / 反射失败时返回 true（无法判定则不断言，保持原回复语义）。
         /// </summary>
+        /// <param name="protocol">Protocol 编号。</param>
+        /// <returns>PacketManager 已注册该 Protocol 的处理器时为 true。</returns>
         public static bool IsProtocolRegistered(ushort protocol)
         {
             if (_handlerField == null)
                 _handlerField = typeof(PacketManager).GetField(
                     "_handler", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            var instance = PacketManager.Instance;   // 0.1.16b PacketManager.cs:16
+            var instance = PacketManager.Instance;   // 0.1.17a PacketManager.cs:16
             if (_handlerField == null || instance == null)
                 return true;
 
@@ -240,14 +260,25 @@ namespace DT_Tools.Commands.PacketCall
 
         private static FieldInfo _handlerField;
 
-        /// <summary>包名之后的所有参数拼成 JSON（允许 JSON 内空格）。</summary>
+        /// <summary>
+        /// 包名之后的所有参数拼成 JSON（允许 JSON 内空格）。
+        /// </summary>
+        /// <param name="args">命令参数数组。</param>
+        /// <param name="startIndex">开始拼接的参数下标，即包名之后的第一个参数。</param>
+        /// <returns>拼接后的 JSON 文本。</returns>
         public static string JoinJson(string[] args, int startIndex)
         {
             if (startIndex >= args.Length) return null;
             return string.Join(" ", args.Skip(startIndex));
         }
 
-        /// <summary>包名 → PacketID 枚举底层值（call_c 注入 HandlePacket 时需要）。</summary>
+        /// <summary>
+        /// 包名 → PacketID 枚举底层值（call_c 注入 HandlePacket 时需要）。
+        /// </summary>
+        /// <param name="packetName">包名。</param>
+        /// <param name="protocol">对应的 PacketID 底层值。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>找到包名时返回 true；否则返回 false，原因写入 error。</returns>
         public static bool TryGetPacketId(string packetName, out ushort protocol, out string error)
         {
             protocol = 0;

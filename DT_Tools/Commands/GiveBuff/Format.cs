@@ -2,7 +2,9 @@ using Protocol;
 
 namespace DT_Tools.Commands.GiveBuff
 {
-    /// <summary>/givebuff 输出格式化：可用 BUFF 列表 + 人类回复 + JSON 结果 DTO。</summary>
+    /// <summary>
+    /// /givebuff 输出格式化：可用 BUFF 列表 + 人类回复 + JSON 结果 DTO。
+    /// </summary>
     internal static class GiveBuffFormat
     {
         public const string BuffList =

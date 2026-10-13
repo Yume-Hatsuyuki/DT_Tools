@@ -4,13 +4,18 @@ using Protocol;
 
 namespace DT_Tools.Commands.Agent
 {
-    /// <summary>/agent 参数解析：all / 任务ID / 任务别名 / #设备号 / stop（对应旧 AgentCommand 内联解析）。</summary>
+    /// <summary>
+    /// /agent 参数解析：all / 任务ID / 任务别名 / #设备号 / stop（对应旧 AgentCommand 内联解析）。
+    /// </summary>
     internal sealed class AgentArgs
     {
         /// <summary>
-        /// 任务名/中文别名 → ESchoolMission 底层值。全部用枚举成员引用（编译期校验），
-        /// 枚举值变化时此处编译报错而非静默失配（0.1.16b Protocol/ESchoolMission.cs）。
+        /// 任务名/中文别名 → ESchoolMission 底层值。
         /// </summary>
+        /// <remarks>
+        /// 全部用枚举成员引用（编译期校验），
+        /// 枚举值变化时此处编译报错而非静默失配（0.1.16b Protocol/ESchoolMission.cs）。
+        /// </remarks>
         private static readonly Dictionary<string, int> AliasMap =
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
             {
@@ -55,6 +60,10 @@ namespace DT_Tools.Commands.Agent
         /// 解析首个参数：null/空 = 无过滤（预览/全清），stop = 停止，
         /// all/全部/全清 = 全清，其余按 任务ID/别名/#设备号 解析。
         /// </summary>
+        /// <param name="args">命令的参数数组；为 null 或空时表示无过滤。</param>
+        /// <param name="parsed">解析结果。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>参数合法时返回 true；不合法时返回 false，原因写入 error。</returns>
         public static bool TryParse(string[] args, out AgentArgs parsed, out string error)
         {
             parsed = new AgentArgs();

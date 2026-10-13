@@ -5,7 +5,9 @@ using Protocol;
 
 namespace DT_Tools.Commands.ListAlive
 {
-    /// <summary>/list_alive 输出格式化：阵营标注列表 + JSON 结果 DTO。</summary>
+    /// <summary>
+    /// /list_alive 输出格式化：阵营标注列表 + JSON 结果 DTO。
+    /// </summary>
     internal static class ListAliveFormat
     {
         public static string FactionLabel(EPlayerColor color)

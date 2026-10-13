@@ -1,21 +1,26 @@
 using DummyClient;
 using DT_Tools.Core;
 using DT_Tools.Game;
-using DT_Tools.Patches.System.LobbyMaxPlayers;
+using DT_Tools.Features.LobbyMaxPlayers;
 using Server.Game;
 using Steamworks;
 
 namespace DT_Tools.Commands.RoomCode
 {
-    /// <summary>/room_code 业务：房间号、人数与上限读取（房主/客户端数据源不同）。</summary>
+    /// <summary>
+    /// /room_code 业务：房间号、人数与上限读取（房主/客户端数据源不同）。
+    /// </summary>
     internal static class RoomCodeLogic
     {
         /// <summary>
-        /// 读取房间号 / 人数 / 上限。失败返回 false（提示与错误码已给出）。
+        /// 读取房间号 / 人数 / 上限。
+        /// </summary>
+        /// <remarks>
+        /// 失败返回 false（提示与错误码已给出）。
         /// max：LobbyMaxPlayers 开启时用其生效进房上限（命令域引用功能公开状态，
         /// AGENTS.md §4 例外一），否则原版常量 SteamLobbyManager.MaxMembers（0.1.16b
         /// DummyClient/SteamLobbyManager.cs:10，值为 8）。
-        /// </summary>
+        /// </remarks>
         public static bool TryRead(
             out string code,
             out bool isHost,
@@ -38,7 +43,7 @@ namespace DT_Tools.Commands.RoomCode
                 return false;
             }
 
-            code = Managers.Network.RoomCode;   // 0.1.16b NetworkManager.cs:138
+            code = Managers.Network.RoomCode;   // 0.1.17a NetworkManager.cs:138
             if (string.IsNullOrEmpty(code))
             {
                 errCode = "not in room";
@@ -59,7 +64,12 @@ namespace DT_Tools.Commands.RoomCode
             return true;
         }
 
-        /// <summary>人数读取：房主走 GameRoom.Players（服务器权威），客户端走 Steam Lobby 成员数。</summary>
+        /// <summary>
+        /// 人数读取：房主走 GameRoom.Players（服务器权威），客户端走 Steam Lobby 成员数。
+        /// </summary>
+        /// <param name="isHost">本机是否为房主。</param>
+        /// <param name="lobby">Steam 大厅管理器。</param>
+        /// <returns>当前人数。</returns>
         public static int CurrentCount(bool isHost, SteamLobbyManager lobby)
         {
             if (isHost)
@@ -71,6 +81,8 @@ namespace DT_Tools.Commands.RoomCode
         /// Steam 容器上限（进房人数仍按 max 校验）；不在 Lobby 时返回 0
         /// （Steamworks SteamMatchmaking.GetLobbyMemberLimit）。
         /// </summary>
+        /// <param name="lobby">Steam 大厅管理器。</param>
+        /// <returns>Steam 容器上限；不在大厅时为 0。</returns>
         public static int TryGetSteamLimit(SteamLobbyManager lobby)
         {
             if (lobby == null || !lobby.InLobby)

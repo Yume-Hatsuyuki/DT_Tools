@@ -11,24 +11,46 @@ namespace DT_Tools.Core
 {
     /// <summary>
     /// 配置枚举与读写（内存优先；Save / overwrite 才落盘）。
-    /// 导入解析用 Newtonsoft（JToken），禁止手写逐字符扫描。
     /// </summary>
+    /// <remarks>
+    /// 导入解析用 Newtonsoft（JToken），禁止手写逐字符扫描。
+    /// </remarks>
     public static class ConfigService
     {
         public sealed class SectionDto
         {
             public string Section;
 
-            /// <summary>段落分组："automation"（自动化总开关+各模块，AUTOMATION 页）| "feature"（其余，CONFIG 页）。前端据此分流，不认识任何段名。</summary>
+            /// <summary>
+            /// 段落分组："automation"（自动化总开关+各模块，AUTOMATION 页）| "feature"（其余，CONFIG 页）。
+            /// </summary>
+            /// <remarks>
+            /// 前端据此分流，不认识任何段名。
+            /// </remarks>
             public string Group;
 
             /// <summary>
-            /// 段所属分类（Patches/&lt;分类&gt;/&lt;功能&gt; 的分类目录名，Engine.CategoryOfSection）。
-            /// 非补丁功能段（WebConsole 等基础设施）为 null（序列化时省略），前端归入「其他」文件夹。
+            /// 段的功能标签（键名，见 FeatureTagCatalog）。
             /// </summary>
-            public string Category;
+            /// <remarks>
+            /// 基础设施段为空数组。
+            /// </remarks>
+            public string[] Tags;
 
-            /// <summary>本段的开关键名（引擎统一 Engine.EnabledKey）。前端经协议读取，不硬编码 'Enabled'。</summary>
+            /// <summary>
+            /// 段的作用面键：client（客户端）| host（服务端）| both（双端）；无作用面时为 null。
+            /// </summary>
+            /// <remarks>
+            /// 前端据此做作用面过滤，键名与 FeatureSide 一一对应。
+            /// </remarks>
+            public string Side;
+
+            /// <summary>
+            /// 本段的开关键名（引擎统一 Engine.EnabledKey）。
+            /// </summary>
+            /// <remarks>
+            /// 前端经协议读取，不硬编码 'Enabled'。
+            /// </remarks>
             public string EnabledKey = Engine.EnabledKey;
 
             public List<EntryDto> Entries = new List<EntryDto>();
@@ -54,8 +76,6 @@ namespace DT_Tools.Core
                 new List<(string, string, string)>();
         }
 
-        // ---- 枚举 ----
-
         public static List<SectionDto> List(ConfigFile config)
         {
             var bySection = new Dictionary<string, SectionDto>(StringComparer.Ordinal);
@@ -72,7 +92,8 @@ namespace DT_Tools.Core
                     {
                         Section = def.Section,
                         Group = ClassifyGroup(def.Section),
-                        Category = Engine.CategoryOfSection(def.Section),
+                        Tags = FeatureTagCatalog.Names(Engine.TagsOfSection(def.Section)),
+                        Side = SideKeyOf(Engine.SideOfSection(def.Section)),
                     };
                     bySection[def.Section] = sec;
                 }
@@ -97,8 +118,12 @@ namespace DT_Tools.Core
         /// 段落分组：全组判定零段名字符串——基础设施段查装载期收集的
         /// [ConfigSection(Group=…)] 元数据（Engine.GroupOfSection），自动化模块段查
         /// Engine.AutomationModules 元数据，其余（补丁功能 / WebConsole 基础设施）→ "feature"。
-        /// 前端按此分流显示，禁止硬编码段名。
         /// </summary>
+        /// <remarks>
+        /// 前端按此分流显示，禁止硬编码段名。
+        /// </remarks>
+        /// <param name="section">段名。</param>
+        /// <returns>分组名。自动化模块段返回 ConfigSectionAttribute.GroupAutomation；未标注分组的功能段返回 "feature"。</returns>
         private static string ClassifyGroup(string section)
         {
             string group = Engine.GroupOfSection(section);
@@ -111,8 +136,6 @@ namespace DT_Tools.Core
             }
             return "feature";
         }
-
-        // ---- 更新 / 保存 / 重置 ----
 
         public static (bool ok, string error, object value) Update(
             ConfigFile config, string section, string key, string rawValue)
@@ -143,7 +166,7 @@ namespace DT_Tools.Core
             }
             catch (Exception ex)
             {
-                return (false, "type mismatch: " + ex.Message, null);
+                return (false, $"type mismatch: {ex.Message}", null);
             }
         }
 
@@ -182,8 +205,6 @@ namespace DT_Tools.Core
             }
             return n;
         }
-
-        // ---- 导出 / 导入 ----
 
         public static string ExportCfg(ConfigFile config)
         {
@@ -245,8 +266,8 @@ namespace DT_Tools.Core
 
         /// <summary>
         /// 导入 JSON 兼容两种形状（Newtonsoft 解析）：
-        ///   [{ "section":…, "entries":[{ "key":…, "value":… }]}]  —— 配置列表导出格式
-        ///   [{ "section":…, "key":…, "value":… }]                 —— 扁平对
+        /// [{ "section":…, "entries":[{ "key":…, "value":… }]}]  —— 配置列表导出格式
+        /// [{ "section":…, "key":…, "value":… }]                 —— 扁平对
         /// </summary>
         private static IEnumerable<(string Section, string Key, string Value)> ParseImportPairs(string json)
         {
@@ -296,7 +317,11 @@ namespace DT_Tools.Core
             [JsonProperty("value")] public object Value = null;
         }
 
-        /// <summary>JSON 反序列化出的 object 值 → 配置更新用的原始字符串（与导出格式互逆）。</summary>
+        /// <summary>
+        /// JSON 反序列化出的 object 值 → 配置更新用的原始字符串（与导出格式互逆）。
+        /// </summary>
+        /// <param name="value">JSON 反序列化得到的值。</param>
+        /// <returns>写回配置用的字符串，格式与导出时一致。</returns>
         private static string NormalizeRaw(object value)
         {
             switch (value)
@@ -330,7 +355,22 @@ namespace DT_Tools.Core
             }
         }
 
-        // ---- DTO / 解析 ----
+        /// <summary>
+        /// 作用面枚举 → 协议键（client / host / both）；无作用面返回 null。
+        /// </summary>
+        /// <param name="side">功能或模块声明的作用面。</param>
+        /// <returns>协议键；无作用面时为 null。</returns>
+        private static string SideKeyOf(FeatureSide? side)
+        {
+            if (side == null) return null;
+            switch (side.Value)
+            {
+                case FeatureSide.Client: return "client";
+                case FeatureSide.Host: return "host";
+                case FeatureSide.Both: return "both";
+                default: return null;
+            }
+        }
 
         private static EntryDto ToDto(ConfigDefinition def, ConfigEntryBase entry)
         {
@@ -350,16 +390,21 @@ namespace DT_Tools.Core
         /// 枚举值序列化为成员名（accepts.options 用的就是名称；裸 BoxedValue 会被
         /// JSON 写成数字，前端下拉匹配不上，出现「0 (未在列表中)」）。
         /// </summary>
+        /// <param name="value">待导出的配置值，枚举会被转为成员名。</param>
+        /// <returns>导出用的值；枚举为成员名字符串。</returns>
         private static object DisplayValue(object value)
             => value is Enum e ? Enum.GetName(e.GetType(), e) ?? e.ToString() : value;
 
         /// <summary>
         /// 把三种"可选值来源"归一成同一份结构，前端只需认这一种协议：
-        ///   options : [{value,label}]  —— 下拉（label 给人看，value 写回配置）
-        ///   values  : [string]         —— options 的纯值列表（兼容旧前端）
-        ///   min/max : 数值范围
+        /// options : [{value,label}]  —— 下拉（label 给人看，value 写回配置）
+        /// values  : [string]         —— options 的纯值列表（兼容旧前端）
+        /// min/max : 数值范围
         /// 来源优先级：OptionProviders（动态） > 枚举 > AcceptableValueList/Range。
         /// </summary>
+        /// <param name="def">配置项定义，提供段名与键名。</param>
+        /// <param name="entry">配置项的 BepInEx 条目，提供值类型等信息。</param>
+        /// <returns>归一后的 accepts 对象，前端据此渲染下拉或输入框。</returns>
         private static object ExtractAccepts(ConfigDefinition def, ConfigEntryBase entry)
         {
             // 1) 显式声明的动态选项（角色表、出生点等运行时才知道的数据）

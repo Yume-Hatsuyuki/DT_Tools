@@ -3,7 +3,9 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveDrink
 {
-    /// <summary>/givedrink 输出格式化：可用道具列表 + 人类回复 + JSON 结果 DTO。</summary>
+    /// <summary>
+    /// /givedrink 输出格式化：可用道具列表 + 人类回复 + JSON 结果 DTO。
+    /// </summary>
     internal static class GiveDrinkFormat
     {
         /// <summary>

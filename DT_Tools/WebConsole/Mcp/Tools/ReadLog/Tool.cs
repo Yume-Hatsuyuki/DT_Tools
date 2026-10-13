@@ -1,3 +1,4 @@
+using DT_Tools.Core.Attributes;
 using System;
 using System.Linq;
 using DT_Tools.Commands;
@@ -6,9 +7,15 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp.Tools.ReadLog
 {
-    /// <summary>read_log：全局日志尾部。RingBuffer 自带锁，HTTP 线程可直接读（同 /api/log）。</summary>
+    /// <summary>
+    /// read_log：全局日志尾部。
+    /// </summary>
+    /// <remarks>
+    /// RingBuffer 自带锁，HTTP 线程可直接读（同 /api/log）。
+    /// </remarks>
     [McpTool("read_log",
         "读取全局日志尾部（环形缓冲 2000 条）：命令输出、警告、异常都在这里。run_command 之后建议先 read_log 核对命令的人类可读输出，再决定下一步。",
+        Tags = FeatureTag.SysDebug,
         Author = "梦初雪")]
     internal static class ReadLogTool
     {

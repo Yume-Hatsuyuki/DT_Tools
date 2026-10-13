@@ -7,7 +7,9 @@ using DT_Tools.Core;
 
 namespace DT_Tools.Commands.Help
 {
-    /// <summary>/help 输出格式化：列表/详情的人类文本 + JSON 结果 DTO。</summary>
+    /// <summary>
+    /// /help 输出格式化：列表/详情的人类文本 + JSON 结果 DTO。
+    /// </summary>
     internal static class HelpFormat
     {
         public static string ListText(IReadOnlyList<ICommand> commands)
@@ -19,7 +21,7 @@ namespace DT_Tools.Commands.Help
                 text.AppendLine($"/{c.Usage}");
                 text.AppendLine(c.RequireHost ? $"      【房主】{c.Description}" : $"      {c.Description}");
                 if (c.Aliases is { Length: > 0 })
-                    text.AppendLine($"      短命令: {string.Join(", ", c.Aliases.Select(a => "/" + a))}");
+                    text.AppendLine($"      短命令: {string.Join(", ", c.Aliases.Select(a => $"/{a}"))}");
                 text.AppendLine($"      功能制作者：[{(string.IsNullOrEmpty(c.Author) ? "佚名" : c.Author)}]");
             }
             text.Append("提示: /help <命令名> 查看详情");
@@ -40,7 +42,7 @@ namespace DT_Tools.Commands.Help
             if (c.RequireHost)
                 text.AppendLine("门禁: 仅房主可用");
             if (c.Aliases is { Length: > 0 })
-                text.AppendLine($"短命令: {string.Join(", ", c.Aliases.Select(a => "/" + a))}");
+                text.AppendLine($"短命令: {string.Join(", ", c.Aliases.Select(a => $"/{a}"))}");
             text.Append($"功能制作者: {(string.IsNullOrEmpty(c.Author) ? "佚名" : c.Author)}");
             return text.ToString();
         }
@@ -52,6 +54,7 @@ namespace DT_Tools.Commands.Help
             name = c.Name,
             usage = c.Usage,
             description = c.Description,
+            tags = Core.Attributes.FeatureTagCatalog.Names(c.Tags),
             aliases = c.Aliases ?? Array.Empty<string>(),
             require_host = c.RequireHost,
             author = string.IsNullOrEmpty(c.Author) ? "佚名" : c.Author,

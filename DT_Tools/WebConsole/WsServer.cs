@@ -11,20 +11,12 @@ namespace DT_Tools.WebConsole
 {
     /// <summary>
     /// WebSocket 实时流的自管 TCP 通道。
-    ///
-    /// 背景：Unity(Mono) 的 HttpListener.AcceptWebSocketAsync 未实现（运行时探测见
-    /// LogStreamApi._wsCapability），HTTP 端口上的 WebSocket 升级永远 501，前端只能
-    /// 降级轮询。本类在独立端口（WebConsoleOptions.WsPort，0=禁用）用 TcpListener
-    /// 自行完成 RFC6455 握手（101 + Sec-WebSocket-Accept），随后交给
-    /// WebSocket.CreateFromStream（netstandard2.1 纯托管帧实现，isServer:true 要求
-    /// 调用方先行完成握手）——握手后的注册/重放/心跳/慢消费保护与 HTTP 路径共用
-    /// LogStreamApi 的同一套客户端逻辑。前端经 GET /api/meta 发现端口后直连本通道。
-    ///
-    /// 线程模型与 HttpServer 一致：监听线程只接受连接，每连接派发线程池并阻塞到
-    /// 连接结束；鉴权语义与 HTTP 相同（密码非空时凭 dt_token cookie 或 ?token= 查询
-    /// 串，Auth.CheckToken 常量时间比较）。运行时若连 CreateFromStream 也不可用
-    /// （更老的 Mono），逐连接失败静默关闭，前端按既有逻辑降级轮询——不劣化现状。
     /// </summary>
+    /// <remarks>
+    /// 背景：Unity(Mono) 的 HttpListener.AcceptWebSocketAsync 未实现（运行时探测见 LogStreamApi._wsCapability），HTTP 端口上的 WebSocket 升级恒为 501，前端降级轮询。
+    /// 本类在独立端口（WebConsoleOptions.WsPort，0=禁用）用 TcpListener 自行完成 RFC6455 握手（101 + Sec-WebSocket-Accept），再交给 WebSocket.CreateFromStream（netstandard2.1 纯托管帧实现，isServer:true 要求调用方先完成握手）。握手后的注册、重放、心跳、慢消费保护与 HTTP 路径共用 LogStreamApi 的客户端逻辑。前端经 GET /api/meta 发现端口。
+    /// 线程模型同 HttpServer：监听线程只接受连接，每连接派发线程池并阻塞到结束。鉴权与 HTTP 相同（密码非空时凭 dt_token cookie 或 ?token=，Auth.CheckToken 常量时间比较）。CreateFromStream 不可用时（更老的 Mono）逐连接静默关闭，前端按既有逻辑降级，不劣化现状。
+    /// </remarks>
     internal static class WsServer
     {
         private const int HeadLimit = 16 * 1024;      // 握手请求头上限（正常约 1KB）
@@ -38,7 +30,12 @@ namespace DT_Tools.WebConsole
         private static readonly ConcurrentDictionary<TcpClient, byte> Connections =
             new ConcurrentDictionary<TcpClient, byte>();
 
-        /// <summary>WebConsole.Init 调用；port≤0 表示配置禁用。</summary>
+        /// <summary>
+        /// WebConsole.Init 调用；port≤0 表示配置禁用。
+        /// </summary>
+        /// <param name="listenIp">监听地址。</param>
+        /// <param name="port">监听端口；小于等于 0 表示禁用。</param>
+        /// <param name="auth">鉴权对象。</param>
         public static void Start(string listenIp, int port, Auth auth)
         {
             if (port <= 0)
@@ -59,7 +56,9 @@ namespace DT_Tools.WebConsole
             }
         }
 
-        /// <summary>WebConsole.OnDestroy：停止接受并断开全部连接（客户端注册表由 LogStreamApi.ShutdownAll 统一收尾）。</summary>
+        /// <summary>
+        /// WebConsole.OnDestroy：停止接受并断开全部连接（客户端注册表由 LogStreamApi.ShutdownAll 统一收尾）。
+        /// </summary>
         public static void Stop()
         {
             _running = false;
@@ -165,7 +164,12 @@ namespace DT_Tools.WebConsole
             }
         }
 
-        /// <summary>读取握手请求头（直到空行）；超时/断开/超限返回 false。</summary>
+        /// <summary>
+        /// 读取握手请求头（直到空行）；超时/断开/超限返回 false。
+        /// </summary>
+        /// <param name="stream">已建立连接的网络流。</param>
+        /// <param name="head">读取到的握手请求头。</param>
+        /// <returns>读到完整请求头时为 true；超时、断开或超限时为 false。</returns>
         private static bool TryReadHead(NetworkStream stream, out string head)
         {
             head = null;
@@ -194,8 +198,6 @@ namespace DT_Tools.WebConsole
             stream.Write(bytes, 0, bytes.Length);
             stream.Flush();
         }
-
-        // ---- 握手请求解析（仅本通道使用的最小子集）----
 
         private sealed class WsRequest
         {
@@ -267,7 +269,11 @@ namespace DT_Tools.WebConsole
             return "";
         }
 
-        /// <summary>RFC6455 握手接受键：Base64(SHA1(key + GUID))。</summary>
+        /// <summary>
+        /// RFC6455 握手接受键：Base64(SHA1(key + GUID))。
+        /// </summary>
+        /// <param name="key">客户端发送的 Sec-WebSocket-Key。</param>
+        /// <returns>Sec-WebSocket-Accept 的值。</returns>
         private static string ComputeAcceptKey(string key)
         {
             using (var sha = SHA1.Create())
@@ -278,6 +284,8 @@ namespace DT_Tools.WebConsole
         /// 监听地址解析：解释口径统一走 HttpServer.NormalizeIp（唯一权威，消除两份同构归一化），
         /// 这里只做字符串 → 套接字地址的转换（"*"/localhost 特判、IPv6 去方括号）。
         /// </summary>
+        /// <param name="raw">配置中的原始监听地址。</param>
+        /// <returns>解析后的 IP 地址。</returns>
         private static IPAddress ResolveIp(string raw)
         {
             string ip = HttpServer.NormalizeIp(raw);

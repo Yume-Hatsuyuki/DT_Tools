@@ -3,10 +3,13 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.WebConsole.Mcp
 {
     /// <summary>
-    /// MCP 桥接配置（段名自动推导为 "Mcp"）。独立监听，与 WebConsole 互不依赖。
+    /// MCP 桥接配置（段名自动推导为 "Mcp"）。
+    /// </summary>
+    /// <remarks>
+    /// 独立监听，与 WebConsole 互不依赖。
     /// 两处配置同一份：WebUI 的 MCP 挂件与「DT 配置」页都经 ConfigService 读写本段，天然同步。
     /// Port/ListenIp/Password 热改不重绑监听（与 WebConsole 同口径），重启游戏生效。
-    /// </summary>
+    /// </remarks>
     [ConfigSection("MCP 桥接服务器（独立监听）。任何支持 MCP Streamable HTTP 的客户端经 http://<ListenIp>:<Port>/mcp 连接，协议包语义见 .github/skills/MCP/。")]
     public sealed class McpOptions
     {
