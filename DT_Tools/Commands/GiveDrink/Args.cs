@@ -3,17 +3,21 @@ using System.Collections.Generic;
 
 namespace DT_Tools.Commands.GiveDrink
 {
+    /// <summary>
     /// /givedrink 参数：&lt;all|#id&gt; [item]。目标缺省 all，道具缺省 can01；
     /// 第一参不是 all / #id 时视为道具名（即 "/givedrink knife" = 全体发匕首）。
+    /// </summary>
     internal sealed class GiveDrinkArgs
     {
         public bool All { get; private set; }
         public int PlayerId { get; private set; }
         public int ItemId { get; private set; }
 
+        /// <summary>
         /// 道具定义条目：唯一数据源——别名解析（TryParseItem）与无参道具列表
         /// （GiveDrinkFormat.ItemList）都由它生成，消除双份表口径漂移
         /// （历史上出现过 shaker 1039 双名、icewater 1028 热水/冰水两种写法）。
+        /// </summary>
         internal sealed class ItemDef
         {
             public string[] Aliases;   // 首个为主别名（列表展示用），其余为等价别名
@@ -92,7 +96,9 @@ namespace DT_Tools.Commands.GiveDrink
             new ItemDef { Aliases = new[]{ "question_flower", "questionflower" }, Id = Define.ITEM_ID_QUESTION_FLOWER, Label = "问号花", Group = "特殊" },
         };
 
+        /// <summary>
         /// 清空语义（0=清空手持物），不进列表主体、由列表脚注展示。
+        /// </summary>
         private static readonly Dictionary<string, int> ClearAliases = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             { "none", 0 }, { "clear", 0 }, { "empty", 0 },

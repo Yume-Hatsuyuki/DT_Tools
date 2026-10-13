@@ -4,8 +4,10 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveBuff
 {
-    /// /givebuff <all|#id> <buff|clear> [seconds|clear|0]：给所有 / 指定玩家添加或清除 BUFF。不带参数时打印可用 BUFF 列表，不执行添加。
+    /// <summary>
+    /// /givebuff &lt;all|#id> &lt;buff|clear> [seconds|clear|0]：给所有 / 指定玩家添加或清除 BUFF。不带参数时打印可用 BUFF 列表，不执行添加。
     /// 添加走 BuffComponent.AddBuff（先 RemoveBuffForce 再添加以刷新时长）；时长上限 3600 秒（与原版 Raasrush / DetailCheck / MindControl 等被动技能一致），超出自动钳制。原版 Flush 只遍历 AlivePlayers，大厅列表为空不会自动到期，因此添加后额外 PushAfter 兜底移除。清除走 RemoveBuffForce / Clear（isBroadcast: true），不依赖 AlivePlayers，大厅也可用。
+    /// </summary>
     internal sealed class GiveBuffCommand : ICommand
     {
         public string Name => "givebuff";

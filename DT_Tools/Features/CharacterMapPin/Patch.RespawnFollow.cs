@@ -4,6 +4,7 @@ using Protocol;
 
 namespace DT_Tools.Features.CharacterMapPin
 {
+    /// <summary>
     /// 保留 pin 的位置跟随（KeepDeadPin 配套）：后置 PlayerManager.HandleRespawn，把保留 pin 平滑推到服务器广播的强制位移目标点。
     /// 语义复刻原版 Kaho（ComplyRules）对被追踪者的推送：服务器对被追踪者每次接受的移动都向追踪者发 S_PIN_MOVE（普通与强制都推，0.1.17a Server.Game/Player.cs:30-36）；
     /// 客户端 Handle_S_PIN_MOVE（0.1.17a PacketHandler.cs:231-237）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.17a UI_GameScene.cs:901-904）。
@@ -11,6 +12,7 @@ namespace DT_Tools.Features.CharacterMapPin
     /// 保留 pin 的玩家已 Despawn，逐帧刷新不再覆盖它（0.1.16b UI_GameScene.cs:825（待核对）-830（待核对），只遍历 Players），所以 S_RESPAWN 是唯一可达的位置源。
     /// 坐标换算与逐帧刷新同源（Util.GetMinimapPosition，0.1.16b Util.cs:887（待核对）-892（待核对））。
     /// 平滑补间由 DOTween 驱动：pin 同帧被 Despawn、平板关闭时都照常走完（原版对关闭中的平板 pin 照样 DOLocalMove，0.1.16b PacketHandler.cs:236（待核对））。
+    /// </summary>
     [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.HandleRespawn))]
     internal static class CharacterMapPinKeepDeadPinFollowPatch
     {
@@ -35,6 +37,7 @@ namespace DT_Tools.Features.CharacterMapPin
         }
     }
 
+    /// <summary>
     /// 保留 id 集合收紧：玩家重新 Spawn（S_SPAWN——出柜恢复可见、幽灵视角重建）时从
     /// KeptPinIds 移除，集合语义收敛为「当前不可见的保留者」；对照原版 Kaho：被追踪者
     /// 复生时经 OnRespawnEvent 重推并恢复跟踪（0.1.17a Server.Game/SkillComponent.cs:393-399）。
@@ -42,6 +45,7 @@ namespace DT_Tools.Features.CharacterMapPin
     /// 在同帧内先保后清，pin 对象不动、照常恢复逐帧跟踪，语义不变。
     /// Spawn 有三个重载，必须显式指定 PublicPlayerInfo 重载
     /// （0.1.16b PlayerManager.cs:423（待核对）；其余两个在 242/291）。
+    /// </summary>
     [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.Spawn), new[] { typeof(PublicPlayerInfo) })]
     internal static class CharacterMapPinKeepDeadPinSpawnCleanupPatch
     {

@@ -3,12 +3,14 @@ using UnityEngine;
 
 namespace DT_Tools.Features.EmoteActions
 {
+    /// <summary>
     /// 未实装动作播放（原 DT_EmoteActions 插件整合版）：游戏里做了动画但一直没开放的三个动作。
     /// 打招呼（13_Hi，挥手）、求婚（9_Proposal）、游泳彩蛋（15_Swimming）。
     /// 需待机站立时按键触发，动画结束或被移动打断会自动切回；
     /// 默认仅自己可见（身体动作没有网络同步，与坐姿同一限制），
     /// 开启 SyncActions 后通过聊天通道广播，全房装本 mod 的玩家同步看到动作。
     /// 按键全部可在配置中修改，设为 None 即关闭对应动作。
+    /// </summary>
     [PatchFeature(
         "未实装动作：打招呼（挥手）、求婚、游泳彩蛋。待机站立时按键播放，动一下自动切回；默认仅自己可见，可开启动作同步让全房装 mod 玩家看到。按键可在配置中改，None=关闭。",
         defaultEnabled: false,

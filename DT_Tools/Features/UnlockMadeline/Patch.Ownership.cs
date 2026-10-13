@@ -3,9 +3,11 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.UnlockMadeline
 {
+    /// <summary>
     /// SteamInventorySource.IsCharacterOwned：原版对 101(Madeline) 恒 false
     /// （public，可用 nameof）：0.1.16b SteamInventorySource.cs:688（待核对）。
     /// 仅 101 整替为 true，其余走原版（与 UnlockCharacters 互补）。
+    /// </summary>
     [HarmonyPatch(typeof(SteamInventorySource), nameof(SteamInventorySource.IsCharacterOwned))]
     internal static class UnlockMadelineSteamOwnedPatch
     {
@@ -22,9 +24,11 @@ namespace DT_Tools.Features.UnlockMadeline
         }
     }
 
+    /// <summary>
     /// SteamInventorySource.OwnedCharacterIds getter（public，可用 nameof）：
     /// 0.1.16b SteamInventorySource.cs:145（待核对）。后缀追加 101（不覆盖原结果，
     /// 可与 UnlockCharacters 的 OwnedCharacterIds 全解锁 Prefix 叠加）。
+    /// </summary>
     [HarmonyPatch(typeof(SteamInventorySource), nameof(SteamInventorySource.OwnedCharacterIds),
         MethodType.Getter)]
     internal static class UnlockMadelineSteamOwnedIdsPatch

@@ -8,27 +8,39 @@ using UnityEngine;
 
 namespace DT_Tools.Commands.Fusebox
 {
+    /// <summary>
     /// 修电 / 拆电共用业务（校验与协程发包；设备查询已上浮 Game/Devices.cs）。
     /// 原版：同一个 C_INTERACT_FUSEBOX 经 DeviceManager.Interact → Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16），按 StateList[0] 分流：0 → DisconnetCable（拉闸，:114），9999 → ConnetCable（修电，:97）。
     /// DisconnetCable 仅校验 MissionType==-1（开局 StartFuseboxSabotage 武装的 3 个电闸），无颜色、距离、谜题校验（好人也能拉闸）；ConnetCable 无身份或读条校验。
     /// 服务端 DeviceManager.Interact 有 500ms InteractLock（Player.InteractLock setter 内 PushAfter(500)），连续发包需间隔 >0.5s。
+    /// </summary>
     internal static class FuseboxLogic
     {
+        /// <summary>
         /// 服务端 InteractLock 冷却 500ms，发包间隔取 600ms 以确保不被吞包。
+        /// </summary>
         public const float PacketInterval = 0.6f;
 
+        /// <summary>
         /// 电闸损坏状态值（StateList[0]==9999 表示已被拉断；数值唯一来源为 Game/Devices 常量）。
+        /// </summary>
         public const int StateBroken = Devices.FuseboxStateBroken;
 
+        /// <summary>
         /// 电闸完好状态值（StateList[0]==0 表示正常/可被拉断）。
+        /// </summary>
         public const int StateIntact = Devices.FuseboxStateIntact;
 
+        /// <summary>
         /// 破坏任务武装标记（MissionType==-1 表示该电闸已被选为破坏目标）。
+        /// </summary>
         public const int MissionArmed = Devices.FuseboxMissionArmed;
 
+        /// <summary>
         /// 校验本机已进入对局 + 已连上 Host + 处于生存阶段。
         /// 失败时输出提示并经 code 返回对应错误码（沿用旧实现）。
         /// 修电/拆电都只在 Survive 阶段生效。
+        /// </summary>
         public static bool ValidateClient(CommandContext ctx, out string code)
         {
             if (!LocalPlayer.TryGetPlayer(out _, out string localError))
@@ -53,8 +65,10 @@ namespace DT_Tools.Commands.Fusebox
             return true;
         }
 
+        /// <summary>
         /// 收集已损坏电闸（StateList[0]==9999），可用于修电。
         /// （已武装完好的电闸查询走 Game/Devices.ArmedIntactFuseboxes()）
+        /// </summary>
         public static List<DeviceBase> CollectBroken()
         {
             return Devices.AllOf(EDeviceType.Fusebox)
@@ -65,7 +79,9 @@ namespace DT_Tools.Commands.Fusebox
                 .ToList();
         }
 
+        /// <summary>
         /// 按 ID 查找电闸。返回 (设备, 错误信息)；不存在时设备为 null。
+        /// </summary>
         public static DeviceBase FindFusebox(int id, out string error)
         {
             if (Managers.Device.Cache.TryGetValue(id, out var dev))
@@ -82,7 +98,9 @@ namespace DT_Tools.Commands.Fusebox
             return null;
         }
 
+        /// <summary>
         /// 获取电闸状态中文标签。
+        /// </summary>
         public static string GetStateLabel(DeviceBase fusebox)
         {
             var info = fusebox?.Info;
@@ -95,7 +113,9 @@ namespace DT_Tools.Commands.Fusebox
             return $"状态{state}";
         }
 
+        /// <summary>
         /// 发送 C_INTERACT_FUSEBOX 到指定电闸 ID（StateList[0] 决定服务端分流方向）。
+        /// </summary>
         public static void SendInteract(int fuseboxId)
         {
             Managers.Network.GameServer.Send(new C_INTERACT_FUSEBOX
@@ -104,9 +124,11 @@ namespace DT_Tools.Commands.Fusebox
             });
         }
 
+        /// <summary>
         /// all 模式协程：逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。
         /// 每次发包前校验网络链路和游戏阶段，对局结束 / 断线时中止。
         /// action 描述用于日志（"修电"/"拆电"）。
+        /// </summary>
         public static IEnumerator SendPackets(List<int> ids, string action, CommandContext ctx)
         {
             int sent = 0;
@@ -133,7 +155,9 @@ namespace DT_Tools.Commands.Fusebox
             ctx.Reply($"【{action}】全部完成：已发送 {sent}/{ids.Count} 个 C_INTERACT_FUSEBOX。");
         }
 
+        /// <summary>
         /// all 模式启动协程（挂到 Core 常驻协程宿主，不依赖 WebConsole 组件存活）。
+        /// </summary>
         public static bool StartPacketsCoroutine(List<int> ids, string action, CommandContext ctx)
         {
             Core.CoroutineHost.Start(SendPackets(ids, action, ctx));

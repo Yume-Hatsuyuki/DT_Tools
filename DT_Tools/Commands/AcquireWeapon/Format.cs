@@ -6,7 +6,9 @@ using Protocol;
 
 namespace DT_Tools.Commands.AcquireWeapon
 {
+    /// <summary>
     /// /acquire_weapon 输出格式化：人类回复文本 + JSON 结果 DTO（键名沿用旧 JSON）。
+    /// </summary>
     internal static class AcquireWeaponFormat
     {
         public static string ListReply(List<DeviceBase> armories, List<DeviceBase> open)
@@ -67,7 +69,9 @@ namespace DT_Tools.Commands.AcquireWeapon
             };
         }
 
+        /// <summary>
         /// 开放架 JSON：附真伪判定（pickable = real/conditional/unknown）。
+        /// </summary>
         private static object OpenDto(DeviceBase a)
         {
             var (loc, raw) = RoomLabel.FromDevice(a);
@@ -107,7 +111,9 @@ namespace DT_Tools.Commands.AcquireWeapon
             }
         }
 
+        /// <summary>
         /// 单个刀架 JSON（键名沿用旧实现：id/state/room/roomName/x/y/remainSeconds）。
+        /// </summary>
         private static object ToDto(this DeviceBase a)
         {
             var (loc, raw) = RoomLabel.FromDevice(a);

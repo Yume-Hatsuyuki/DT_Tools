@@ -5,10 +5,12 @@ using Protocol;
 
 namespace DT_Tools.Commands.Chat
 {
-    /// /chat [#deviceId] <text>：本机通过打字机（ChatDevice）发送全图文字。
+    /// <summary>
+    /// /chat [#deviceId] &lt;text>：本机通过打字机（ChatDevice）发送全图文字。
     /// 用法：无参数 → 帮助与本机缓存的打字机列表；/chat #id 文本 → 指定打字机；/chat 文本 → 随机选一台空闲打字机（优先）。
     /// 路径（对齐原版 UI_ChatDevicePopup.Send → VoiceManager.SendDeviceChatMessage）：C_INTERACT_CHATDEVICE 占机（ChatDevice.Enter，State=PlayerId）→ C_CHAT_MESSAGE Type=DeviceChat → C_HANDLE_CHATDEVICE 释放。
     /// 服务端 RelayDeviceChat 要求 Survive、存活、已占机（0.1.16b HostPacketHandler.RelayDeviceChat）；DeviceManager.Interact 对 ChatDevice 无距离校验，可在地图任意位置发包。跟随控制台 / 客户端，非房主可用。
+    /// </summary>
     internal sealed class ChatCommand : ICommand
     {
         public string Name => "chat";

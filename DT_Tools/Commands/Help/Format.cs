@@ -7,7 +7,9 @@ using DT_Tools.Core;
 
 namespace DT_Tools.Commands.Help
 {
+    /// <summary>
     /// /help 输出格式化：列表/详情的人类文本 + JSON 结果 DTO。
+    /// </summary>
     internal static class HelpFormat
     {
         public static string ListText(IReadOnlyList<ICommand> commands)

@@ -2,7 +2,9 @@ using UnityEngine;
 
 namespace DT_Tools.Features.IgnoreDarkness
 {
+    /// <summary>
     /// 开关热切换时按当前 Darkness 重算灯光（走被补丁的 ApplyDarkness）。
+    /// </summary>
     internal static class IgnoreDarknessLogic
     {
         public static void ApplyLights()
@@ -20,8 +22,10 @@ namespace DT_Tools.Features.IgnoreDarkness
             }
         }
 
+        /// <summary>
         /// 强制「有光」表现：关玩家点光源、开摄像机全局光。
         /// 对齐 ApplyDarkness 在 flag=false 时的分支（0.1.17a GameManagerEX.cs:260-267）。
+        /// </summary>
         public static void ForceLit()
         {
             DeviceBase cameraTarget = Managers.Game.CameraTarget;

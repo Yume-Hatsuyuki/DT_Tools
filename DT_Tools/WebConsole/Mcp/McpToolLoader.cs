@@ -8,7 +8,9 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp
 {
+    /// <summary>
     /// 单个 MCP 工具的运行期定义（Schema 在加载时求值一次并缓存）。
+    /// </summary>
     internal sealed class McpToolDef
     {
         public string Name;
@@ -19,9 +21,11 @@ namespace DT_Tools.WebConsole.Mcp
         public Func<JObject, CommandResult> Execute;
     }
 
+    /// <summary>
     /// MCP 工具注册表：反射发现本程序集全部 [McpTool] 类。与 CommandRegistry 同风格，
     /// 零注册代码；同名工具直接报错。工具类契约：static JObject Schema() +
     /// static CommandResult Execute(JObject args)（返回值经 Json.To 进 MCP content）。
+    /// </summary>
     internal static class McpToolLoader
     {
         private static Dictionary<string, McpToolDef> _tools;

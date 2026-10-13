@@ -5,8 +5,10 @@ using Protocol;
 
 namespace DT_Tools.Commands.WorldExecute
 {
+    /// <summary>
     /// /world.execute 业务：参数门禁 → 身份/阶段/持刀校验 → C_KILL_PLAYER 自瞄。
     /// 服务端裁决以 UseWeapon 为准；本机只做可提前拦截的条件并给出中文说明。
+    /// </summary>
     internal static class WorldExecuteLogic
     {
         public static CommandResult Execute(CommandContext ctx)

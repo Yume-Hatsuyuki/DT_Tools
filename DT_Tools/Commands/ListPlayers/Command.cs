@@ -4,7 +4,9 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.ListPlayers
 {
+    /// <summary>
     /// /list_players — 列出房间内所有玩家的 PlayerId / SteamId / Steam 昵称 / 游戏昵称 / P2P IP，并标注房主。
+    /// </summary>
     internal sealed class ListPlayersCommand : ICommand
     {
         public string Name => "list_players";

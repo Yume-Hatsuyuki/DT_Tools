@@ -8,10 +8,12 @@ using Google.Protobuf.Reflection;
 
 namespace DT_Tools.Commands.PacketCall
 {
+    /// <summary>
     /// /packets [C|S|包名|子串] — 运行期协议自省：反射枚举 C_*/S_* 包，经 protobuf
     /// Descriptor 输出字段（名/JSON名/类型/序号/枚举取值）。供手工构造 JSON 与
     /// .github/skills/MCP/MCP.md 协议目录交叉核对（防游戏版本漂移）；未收录的包按同目录
     /// SKILL.md 维护协议补录后再发。
+    /// </summary>
     internal sealed class PacketsCommand : ICommand
     {
         public string Name => "packets";
@@ -87,7 +89,9 @@ namespace DT_Tools.Commands.PacketCall
                 ? keys.ToList()
                 : keys.Where(n => n.IndexOf(substring, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 
+        /// <summary>
         /// protobuf Descriptor → 字段表。枚举展开取值（AI 构造 JSON 时直接可抄）。
+        /// </summary>
         private static (string Name, List<string> Lines, List<object> Fields) Describe(Type type, bool serverPacket)
         {
             var message = (IMessage)Activator.CreateInstance(type);

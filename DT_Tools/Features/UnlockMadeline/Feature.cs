@@ -2,12 +2,14 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.UnlockMadeline
 {
+    /// <summary>
     /// 解锁 Madeline(101) 并补齐缺失资源/UI：
     /// - 所有权：SteamInventorySource / SaveManager 对 101 恒 true，OwnedCharacterIds 追加 101
     /// - 商店/选人 UI：列表重建、排序、介绍文案、技能信息立绘
     /// - 档案/审判：立绘位置表、过场表情图
     /// - 资源：ResourceManager 就绪后注入裁切出的缺失贴图（Ui.cs）
     /// 与 UnlockCharacters / UnlockEmotes 互补，可叠加。
+    /// </summary>
     [PatchFeature(
         "梅德琳解锁：解锁梅德琳并修复缺失资源。",
         defaultEnabled: false,

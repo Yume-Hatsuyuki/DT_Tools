@@ -10,11 +10,13 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.DestroyEvidenceCooldownServer
 {
+    /// <summary>
     /// 破坏线索冷却（房主侧）：调整“多久可以破坏一次线索”（服务端判定频率），与客户端「DestroyEvidence」（单次破坏读条秒数）是两回事。客户端倒计时由服务端 S_COOLTIME_DESTROY_EVIDENCE 包值驱动（0.1.17a PacketHandler.cs:776），自动跟随。
     /// 冷却常量 30 在两条执行路径各一份，必须同值：
     /// - 黑方/黑幕路径：Device.DestroyEvidence（Server.Game/Device.cs:224 记账 / :225 恢复任务 / :231 下发包）。
     /// - 白方路径：「WhiteSabotageClue」的放行前缀整段复刻了原方法（Logic.cs:28/29/35），白方销毁不走原方法，只改原方法管不住白方，故两条路径一并替换。
     /// 迁移快照剩余时长（Server.Game/SnapshotCodec.cs:99 用 EndTick-surviveTime 反推）自动跟随。Transpiler 是装载期 IL 改写，无法按调用门闩：自管 Harmony（存在 SelfHarmony 字段时引擎跳过自动挂载），Enabled 热切换时挂/卸，关闭即全部恢复原版 30 秒。配置热改实时生效（ldsfld 每次执行都读当前值）。
+    /// </summary>
     [HarmonyPatch]
     [PatchFeature(
         "破坏线索冷却（房主）：调整多久可以破坏一次线索（原版 30 秒，0=无冷却），黑方/黑幕/白方路径一并生效，客户端倒计时自动跟随。单次破坏读条时长见客户端功能「DestroyEvidence」。",
@@ -27,12 +29,16 @@ namespace DT_Tools.Features.DestroyEvidenceCooldownServer
         [Config("破坏线索冷却间隔（秒）：多久可以再次破坏线索（服务端判定）。0=无冷却。原版 30。单次破坏的读条时长是客户端功能「DestroyEvidence」，两者独立。")]
         public static int Interval = 30;
 
+        /// <summary>
         /// 存在本字段时引擎跳过本命名空间自动挂载，Transpiler 由本类按 Enabled 自管挂卸。
+        /// </summary>
         internal static Harmony SelfHarmony;
 
         private static bool _patched;
 
+        /// <summary>
         /// 挂载流程完成后：按当前 Enabled 决定是否挂上 Transpiler。
+        /// </summary>
         private static void OnPatched()
         {
             SelfHarmony ??= new Harmony("DT_Tools.DestroyEvidenceCooldownServer");

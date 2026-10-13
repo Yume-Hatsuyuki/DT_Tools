@@ -4,14 +4,18 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GameState
 {
+    /// <summary>
     /// /game_state 业务：读取游戏主状态机。房主与客户端数据来源不同：
     /// 房主走 GameRoom.Instance.State（服务器权威）+ TrialManager.Instance.State，
     /// 并附带 IsTransitioning / IsMigrating 屏障标志；客户端走 Managers.Game.State
     /// （由 S_CHANGE_GAME_STATE 同步）+ TrialMirror（由 S_TRIAL_STATE 镜像，
     /// 0.1.16b Server.Game/TrialMirror.cs:14-22（待核对）、PacketHandler.cs:1022-1028）。
+    /// </summary>
     internal static class GameStateLogic
     {
+        /// <summary>
         /// 读取结果（供 Format 输出）。
+        /// </summary>
         public sealed class ReadResult
         {
             public bool IsHost;

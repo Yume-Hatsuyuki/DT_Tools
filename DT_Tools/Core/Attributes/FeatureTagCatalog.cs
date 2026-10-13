@@ -4,11 +4,15 @@ using System.Linq;
 
 namespace DT_Tools.Core.Attributes
 {
+    /// <summary>
     /// 功能标签字典：分组、中文名、说明。枚举值只在 FeatureTag 定义，这里只做展示与校验。
     /// 新增标签时两处同步：FeatureTag 追加一位，这里追加一条。
+    /// </summary>
     public static class FeatureTagCatalog
     {
+        /// <summary>
         /// 单个单元允许的最多标签数。
+        /// </summary>
         public const int MaxPerUnit = 3;
 
         public sealed class Entry
@@ -62,11 +66,15 @@ namespace DT_Tools.Core.Attributes
                 new Entry { Tag = FeatureTag.SysDebug, Key = "SysDebug", Group = "系统", Label = "开发调试", Description = "测试模式、协议自检、截图、日志、帮助" },
         };
 
+        /// <summary>
         /// 所有已定义标签的并集。
+        /// </summary>
         public static readonly ulong AllBits = Entries.Aggregate(0UL, (acc, e) => acc | (ulong)e.Tag);
 
+        /// <summary>
         /// 校验单元的标签：至少 1 个、最多 MaxPerUnit 个、只含已定义的标签。
         /// 不合格直接抛出——与命名空间重复一样属于声明错误，禁止兜底。
+        /// </summary>
         public static void Validate(FeatureTag tags, string owner)
         {
             ulong bits = (ulong)tags;
@@ -80,7 +88,9 @@ namespace DT_Tools.Core.Attributes
                 throw new InvalidOperationException($"{owner} 的 Tags 有 {count} 个，上限 {MaxPerUnit} 个。请只保留最主要的领域。");
         }
 
+        /// <summary>
         /// 标签 → 键名数组（按字典顺序），供 JSON 与 WebUI 使用。
+        /// </summary>
         public static string[] Names(FeatureTag tags)
         {
             if (tags == FeatureTag.None) return new string[0];

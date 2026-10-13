@@ -4,7 +4,9 @@ using Protocol;
 
 namespace DT_Tools.Commands.Agent
 {
+    /// <summary>
     /// 无道具直清 / 状态机推进（对应旧 AgentInstantChain.cs，原 CollectInstant）。
+    /// </summary>
     internal static class AgentInstantChain
     {
         // ═══════════════════════════════════════════════════
@@ -17,9 +19,11 @@ namespace DT_Tools.Commands.Agent
         // ═══════════════════════════════════════════════════
         private static readonly int[] FallbackCandleDeviceIds = { 10121, 10122, 10123, 10124, 10125, 10126 };
 
+        /// <summary>
         /// 解析本局蜡烛设备 ID 列表：优先从本次规划用的设备快照（与其它链同一数据源，
         /// 均出自 Managers.Device.Cache）按类型+子类型筛选并 OrderBy(ID)；查询为空
         /// （设备缓存未就绪/地图数据异常）时退回硬编码表。
+        /// </summary>
         private static List<int> ResolveCandleDeviceIds(List<DeviceBase> devices)
         {
             var ids = devices

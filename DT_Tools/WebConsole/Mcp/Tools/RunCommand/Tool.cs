@@ -4,7 +4,9 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp.Tools.RunCommand
 {
+    /// <summary>
     /// run_command：一切行动能力的入口。命令在 Unity 主线程执行（经 RunOnMain，5s 超时）。
+    /// </summary>
     [McpTool("run_command",
         "执行一条 DT_Tools 命令并返回结果信封 {ok,error,data}。先 list_commands 查可用命令。"
         + "发包：call_me <C_包名> [json]（本机身份）、call_c #id <C_包名> [json] 与 call_s all|#id <S_包名> [json]（仅房主）——"

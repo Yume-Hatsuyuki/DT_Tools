@@ -5,12 +5,14 @@ using Protocol;
 
 namespace DT_Tools.Commands.ReportCorpse
 {
+    /// <summary>
     /// /report [#corpseId] — 客户端报警：无参列出场上尸体与可报警状态；带 #id 对尸体
     /// 直接发 C_INTERACT_CORPSE 强制全员开会（服务端 EndSurvival → Detective）。
     /// 无视距离 / 身份 / 存活状态（跟随控制台，非房主可用，只需本机已进入对局）。
     /// x 是死者 PlayerId（尸体 DeviceId 与死者 PlayerId 相同）。
     /// ⚠ 多人局警示：观战者也能强制全员开庭，服务端无存活校验、事后无法区分是否命令
     /// 所为，会打断正常对局流程，慎用。
+    /// </summary>
     internal sealed class ReportCorpseCommand : ICommand
     {
         public string Name => "report";

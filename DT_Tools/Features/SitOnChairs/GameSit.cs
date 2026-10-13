@@ -5,8 +5,10 @@ using UnityEngine;
 
 namespace DT_Tools.Features.SitOnChairs
 {
+    /// <summary>
     /// 对局内（非 Lobby）椅子坐姿状态机，复刻游戏原生坐姿机制：坐下 = 玩家模型隐藏（MyPlayer.HidePlayer(true)）+ 椅子 Spine 换成“角色坐在椅子上的形象”（Chair.ChangeCharacter(角色ID) 加载角色骨架并播 14_Sitting 入座动画）；起身 = 玩家模型显示 + 椅子形象还原（ChangeCharacter(0)，Spine 转透明）。
     /// 原版 Chair.Interact 只发 C_INTERACT_CHAIR 等服务端（房主）响应，房主未装本 mod 或服务端没有这把椅子时永久无响应（表现为“按 E 没反应”）。本状态机在按 E 时本地立即执行同样的坐姿表现，同时照发原版网络包（房主装了则全房同步，没装也不影响本地坐姿）。起身同理本地还原。
+    /// </summary>
     internal static class GameSit
     {
         private static Chair _chair;
@@ -83,7 +85,9 @@ namespace DT_Tools.Features.SitOnChairs
             }
         }
 
+        /// <summary>
         /// 坐着期间每帧调用：离开调查/生存阶段或死亡时立即起身还原。
+        /// </summary>
         internal static void Hold()
         {
             if (_chair == null)
@@ -111,7 +115,9 @@ namespace DT_Tools.Features.SitOnChairs
             return Managers.Player != null ? Managers.Player.MyPlayer : null;
         }
 
+        /// <summary>
         /// 自己角色的 ID（PublicInfo.CharacterId，椅子的 ChangeCharacter 需要这个 ID）。
+        /// </summary>
         private static int FindMyCharacterId(MyPlayer my)
         {
             try
@@ -128,7 +134,9 @@ namespace DT_Tools.Features.SitOnChairs
             return 0;
         }
 
+        /// <summary>
         /// 广播坐下：零宽前缀指令，房主当作普通聊天原样转发全房，装本 mod 的客户端解析。
+        /// </summary>
         private static void BroadcastSit(Chair chair, int charId)
         {
             if (!SitOnChairsFeature.SyncSitting)
@@ -145,7 +153,9 @@ namespace DT_Tools.Features.SitOnChairs
             }
         }
 
+        /// <summary>
         /// 广播起身：装本 mod 的客户端据此还原椅子形象并显示该玩家模型。
+        /// </summary>
         private static void BroadcastRise(Chair chair)
         {
             if (!SitOnChairsFeature.SyncSitting)

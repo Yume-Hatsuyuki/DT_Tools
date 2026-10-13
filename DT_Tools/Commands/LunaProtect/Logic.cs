@@ -5,6 +5,7 @@ using Server.Game;
 
 namespace DT_Tools.Commands.LunaProtect
 {
+    /// <summary>
     /// /luna_protect 业务：阶段守卫 + S_NOTIFY_LUNA_ABILITY 广播。
     ///
     /// Luna 护盾不是 BUFF，而是客户端 MyPlayer.HasLunaShield 判定：亮灯时，Luna 本人或
@@ -12,9 +13,12 @@ namespace DT_Tools.Commands.LunaProtect
     /// 不发送 C_KILL_PLAYER）。名单的原版同步方式是 Soi 用 RuleBreaker 偷到 Luna 技能后
     /// 服务端广播 S_NOTIFY_LUNA_ABILITY，本命令发送同一个包；该包每包只携带一个
     /// PlayerId，all 时对每名玩家各广播一包（room.Broadcast 走全体客户端含房主自身）。
+    /// </summary>
     internal static class LunaProtectLogic
     {
+        /// <summary>
         /// 房间守卫：切换中 / 迁移中 / 非生存阶段拒绝（屏障判定上浮 Game/RoomFlow.TryGuardBusy）。
+        /// </summary>
         public static bool TryGuard(GameRoom room, out string code, out string text)
         {
             if (!RoomFlow.TryGuardBusy(room, "施加护盾", out code, out text))
@@ -28,7 +32,9 @@ namespace DT_Tools.Commands.LunaProtect
             return true;
         }
 
+        /// <summary>
         /// 对名单内玩家逐个广播护盾包（每个 PlayerId 一包）。
+        /// </summary>
         public static void Apply(GameRoom room, IEnumerable<Server.Game.Player> targets)
         {
             foreach (var player in targets)
@@ -40,7 +46,9 @@ namespace DT_Tools.Commands.LunaProtect
             }
         }
 
+        /// <summary>
         /// 单目标护盾校验：观战者 / 已死亡无意义。
+        /// </summary>
         public static bool IsTargetProtectable(Server.Game.Player target, int targetId, out string code, out string text)
         {
             if (target.IsSpectator)

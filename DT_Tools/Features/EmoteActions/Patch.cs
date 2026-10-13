@@ -12,10 +12,12 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.EmoteActions
 {
+    /// <summary>
     /// 未实装动作（原 DT_EmoteActions v1.0.0 移植）：
     /// 1. 本地播放（Managers.Update Postfix）：存活、可控制、非聊天/表情界面、待机（Idle/Run）且未在播动作时，按 HiKey / ProposalKey / SwimKey 经 Player.PlayDeadlyTrickAnim（0.1.17a Player.cs:1346）播放骨骼动画（13_Hi / 9_Proposal / 15_Swimming）；播完、移动或状态变化时 EndDeadlyTrickAnim（Player.cs:1352）还原。
     /// 2. 动作同步：触发成功后经聊天通道广播零宽前缀指令（如 "\u200B（挥手）"）；接收端 patch VoiceManager.EnqueueNormalChat（0.1.16b VoiceManager.cs:1338（待核对））识别指令，拦截显示并对对应玩家播放同样动画。未装本 mod 的玩家只看到“（挥手）”等友好文本，房主无需开启。
     /// 键位全部走配置（KeyCode，None=关闭）；聊天输入框聚焦时跳过（防误触）。默认 H / Y / 无。
+    /// </summary>
     internal static class Patches
     {
 
@@ -26,15 +28,21 @@ namespace DT_Tools.Features.EmoteActions
         private static bool _warnedProposal;
         private static bool _warnedSwim;
 
+        /// <summary>
         /// 指令前缀：零宽字符 + 全角左括号，对没装 mod 的玩家不可见。
+        /// </summary>
         private const string CmdPrefix = "\u200B（";
 
         private const string CmdSuffix = "）";
 
+        /// <summary>
         /// 远端玩家正在播放的动作：playerId → 结束时间（unscaledTime）。
+        /// </summary>
         private static readonly Dictionary<int, float> RemoteEndTimes = new Dictionary<int, float>();
 
+        /// <summary>
         /// 远端玩家播放时的警告去重。
+        /// </summary>
         private static readonly Dictionary<int, bool> RemoteWarned = new Dictionary<int, bool>();
 
         [HarmonyPatch(typeof(Managers), "Update")]
@@ -99,7 +107,9 @@ namespace DT_Tools.Features.EmoteActions
             }
         }
 
+        /// <summary>
         /// 本地播放：骨骼里没有该动画时只警告一次并跳过；成功后按 SyncActions 广播。
+        /// </summary>
         private static void TryPlay(Player p, string animName, string friendlyName, ref bool warned)
         {
             SkeletonAnimation skeletonAnim = p.SkeletonAnim;
@@ -131,7 +141,9 @@ namespace DT_Tools.Features.EmoteActions
             }
         }
 
+        /// <summary>
         /// 本地动作收尾：对象失效 / 到时 / 玩家离开待机态（移动、切状态）即结束并还原。
+        /// </summary>
         private static void TickEnd()
         {
             bool finish = false;
@@ -160,7 +172,9 @@ namespace DT_Tools.Features.EmoteActions
             }
         }
 
+        /// <summary>
         /// 广播动作指令：零宽前缀 + 友好文本，房主原生转发全房。
+        /// </summary>
         private static void BroadcastAction(string friendlyName)
         {
             try
@@ -173,7 +187,9 @@ namespace DT_Tools.Features.EmoteActions
             }
         }
 
+        /// <summary>
         /// 接收端：聊天接收入口识别动作指令 → 拦截显示 + 播放对应玩家动画。
+        /// </summary>
         [HarmonyPatch(typeof(VoiceManager), "EnqueueNormalChat")]
         internal static class EmoteActionsReceivePatch
         {
@@ -216,7 +232,9 @@ namespace DT_Tools.Features.EmoteActions
             }
         }
 
+        /// <summary>
         /// 友好文本 → 动画名。
+        /// </summary>
         private static string MapFriendlyToAnim(string friendlyName)
         {
             switch (friendlyName)
@@ -228,7 +246,9 @@ namespace DT_Tools.Features.EmoteActions
             }
         }
 
+        /// <summary>
         /// 对远端玩家播放动作（不显示在聊天区）。
+        /// </summary>
         private static void PlayRemote(int playerId, string animName)
         {
             Player p = null;
@@ -263,7 +283,9 @@ namespace DT_Tools.Features.EmoteActions
             Log.Info<EmoteActionsFeature>("同步播放 " + playerId + $" 的 {animName}");
         }
 
+        /// <summary>
         /// 远端动作收尾：到时 / 玩家移动 / 切状态 / 对象失效即还原并清理。
+        /// </summary>
         private static void TickRemoteEnd()
         {
             if (RemoteEndTimes.Count == 0)
@@ -308,7 +330,9 @@ namespace DT_Tools.Features.EmoteActions
             }
         }
 
+        /// <summary>
         /// 聊天输入框等 UI 输入聚焦时不触发（防误触）。
+        /// </summary>
         private static bool BlockedByInputField()
         {
             EventSystem current = EventSystem.current;

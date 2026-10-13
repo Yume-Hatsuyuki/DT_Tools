@@ -7,8 +7,10 @@ using UnityEngine;
 
 namespace DT_Tools.Features.BenjaminWatch
 {
+    /// <summary>
     /// 宿主创建入口：UI_GameScene 对局内常驻每帧 Update，Postfix 确保观察窗宿主存在
     /// （场景切换宿主销毁后自动重建）。
+    /// </summary>
     [HarmonyPatch(typeof(UI_GameScene), "Update")]
     internal static class BenjaminWatchHostPatch
     {
@@ -23,7 +25,9 @@ namespace DT_Tools.Features.BenjaminWatch
         }
     }
 
+    /// <summary>
     /// 本杰明观察窗宿主：OnGUI 画常驻小窗，按节流周期刷新检测数据。
+    /// </summary>
     internal sealed class BenjaminWatchHost : MonoBehaviour
     {
         public static BenjaminWatchHost Instance;
@@ -55,7 +59,9 @@ namespace DT_Tools.Features.BenjaminWatch
             DrawWindow();
         }
 
+        /// <summary>
         /// 仅本机玩家为 Rin 时显示（ECharacterType.Rin）。
+        /// </summary>
         private static bool IsRin()
         {
             if (Managers.Player == null || Managers.Player.MyPlayer == null)
@@ -64,7 +70,9 @@ namespace DT_Tools.Features.BenjaminWatch
                 && Managers.Player.MyPlayer.CharData.Type == ECharacterType.Rin;
         }
 
+        /// <summary>
         /// 仅对局内（生存/侦探/庭审）显示；大厅、选人、结算不显示。
+        /// </summary>
         private static bool IsInGame()
         {
             if (Managers.Game == null)

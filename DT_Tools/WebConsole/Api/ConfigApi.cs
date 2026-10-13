@@ -7,14 +7,18 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.WebConsole.Api
 {
+    /// <summary>
     /// /api/config/* — 配置列表/更新/保存/重置/导入/导出 + 功能段日志。
     /// 数据源统一走 ConfigService（与 WebUI 同一协议）；API 层不认识任何具体功能。
+    /// </summary>
     public static class ConfigApi
     {
         public static void HandleList(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, ConfigService.List(Engine.Config));
 
+        /// <summary>
         /// 功能标签字典（分组、键、中文名、说明）。WebUI 据此渲染标签筛选，标签文字不在前端写死。
+        /// </summary>
         public static void HandleTags(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, FeatureTagCatalog.Entries.Select(e => new
             {
@@ -129,7 +133,9 @@ namespace DT_Tools.WebConsole.Api
             resp.OutputStream.Close();
         }
 
+        /// <summary>
         /// /api/config/section/{段名}/log — 功能段日志（GET 读取；POST /log/clear 或 DELETE 清空）。
+        /// </summary>
         public static void HandleSectionLog(HttpListenerContext ctx)
         {
             const string prefix = "/api/config/section/";

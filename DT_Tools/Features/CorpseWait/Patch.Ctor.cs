@@ -5,8 +5,10 @@ using Server.Game;
 
 namespace DT_Tools.Features.CorpseWait
 {
+    /// <summary>
     /// 尸体构造（Server.Game.Corpse，签名 (Player, PublicPlayerInfo)，0.1.17a Server.Game/Corpse.cs:188；全局命名空间另有客户端 Corpse : DeviceBase，故用全名）。原版为“首具尸体”排程时 WaitDetectiveSecond = Util.GetRandomNumber(50, 71)（0.1.17a Server.Game/Corpse.cs:218），并在 StateList[5] 记录触发时间，PushSurvivalJob 挂 EndSurvival。
     /// Prefix 记录改写窗口并掷出本次等待秒数，Postfix 统一改写三处，保证一致。Finalizer 兜底：原版 ctor 中途抛异常时 Postfix 不会执行，RewritePush 窗口会滞留为 true，令后续无关的 PushSurvivalJob 也被错误改写。Finalizer 在异常与正常两条路径都运行，保证窗口必关；返回 __exception 维持原异常继续传播（不吞）。
+    /// </summary>
     [HarmonyPatch(typeof(Server.Game.Corpse), MethodType.Constructor,
         new[] { typeof(Server.Game.Player), typeof(PublicPlayerInfo) })]
     internal static class CorpseWaitCtorPatch

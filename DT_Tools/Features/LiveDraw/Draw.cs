@@ -4,7 +4,9 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LiveDraw
 {
+    /// <summary>
     /// 单条笔画的基准数据（动画永远从基准点偏移，不累计漂移）。
+    /// </summary>
     internal sealed class LiveStroke
     {
         public int Id;                 // 实际落笔后从 DrawingManager 拿到的 StrokeId（动画 REPLACE 复用同一 id）
@@ -13,17 +15,21 @@ namespace DT_Tools.Features.LiveDraw
         public List<Vector2> Base = new List<Vector2>();
     }
 
+    /// <summary>
     /// 照片 → 笔画管线（原 DT_LiveDraw v1.0.0 移植，逻辑不变）：
     /// 缩放 → 灰度 → 盒式模糊×3 → 多阈值 marching squares → Douglas-Peucker 简化 →
     /// 最小点距 2 → 预算裁剪（笔画/点数上限走配置），绘制顺序按从上往下像真人作画。
     /// 画布几何 879×696（X±439.5 / Y±348），输出点始终落在画布范围内。
+    /// </summary>
     internal static class DrawConverter
     {
         private const float CanvasHalfW = 439.5f;
         private const float CanvasHalfH = 348f;
         private const float Margin = 32f;
 
+        /// <summary>
         /// 把照片字节解析为线稿笔画计划；失败/无内容返回 null。
+        /// </summary>
         public static List<LiveStroke> BuildPlan(byte[] bytes)
         {
             var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);

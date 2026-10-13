@@ -5,7 +5,9 @@ using UnityEngine;
 
 namespace DT_Tools.Automation.AutoSpawnPoint
 {
+    /// <summary>
     /// 动作：按配置解析目标点并执行本机瞬移（延迟等待、状态拦截、失败后隔一个延迟周期重试）。
+    /// </summary>
     internal static class AutoSpawnPointAction
     {
         public static void Run()

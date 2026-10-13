@@ -4,10 +4,12 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.DoorLockServer
 {
+    /// <summary>
     /// 锁门服务端：原版 Door.HandleEvent 只允许黑幕锁门（0.1.17a Server.Game/Door.cs:66）。本功能按 LockDoorMode 额外放行黑方/白方/所有身份，并调整冷却间隔。
     /// 锁门不留线索（白方留痕试验已移除：门的 RoomID 为 0，写入线索会让平板重建报 "0 is not exist room"，原版锁门本就无证据）。
     /// 冷却双落点必须同值：原方法三处 40（Door.cs:69/70/76，经 Transpiler 替换）与放行复刻序列（Patch.cs 逐句镜像原版，读 Interval）。放行身份走复刻、未放行身份走原方法，两路不同值会出现同人不同 CD。迁移快照剩余时长（Server.Game/SnapshotCodec.cs:98）与客户端 S_COOLTIME_SABOTAGE 倒计时自动跟随。
     /// Transpiler 是装载期 IL 改写，无法按调用门闩：自管 Harmony（存在 SelfHarmony 字段时引擎跳过自动挂载），Enabled 热切换时按需挂/卸整个补丁类，关闭即恢复原版。客户端按钮显示由「SabotageButtonUnlock」负责；能否锁门取决于房主是否启用本功能（判定在房主机）。
+    /// </summary>
     [PatchFeature(
         "锁门服务端：LockDoorMode 选额外放行谁（Dark=默认原版仅黑幕；Black=黑幕+黑方；White=黑幕+白方；All=全部）；锁门冷却间隔 Interval 可调（原版 40s，0=无冷却）。\n进别人房间时取决于房主是否启用本功能；客户端按钮显示见「SabotageButtonUnlock」。",
         defaultEnabled: false,
@@ -22,12 +24,16 @@ namespace DT_Tools.Features.DoorLockServer
         [Config("锁门冷却间隔（秒）：多久可以再次锁门（服务端判定，客户端倒计时自动跟随）。0=无冷却。原版 40。")]
         public static int Interval = 40;
 
+        /// <summary>
         /// 存在本字段时引擎跳过本命名空间自动挂载，前缀+Transpiler 由本类按 Enabled 自管挂卸。
+        /// </summary>
         internal static Harmony SelfHarmony;
 
         private static bool _patched;
 
+        /// <summary>
         /// 挂载流程完成后：按当前 Enabled 决定是否挂上补丁。
+        /// </summary>
         private static void OnPatched()
         {
             SelfHarmony ??= new Harmony("DT_Tools.DoorLockServer");

@@ -5,17 +5,23 @@ using UnityEngine;
 
 namespace DT_Tools.Features.StrokeTools
 {
+    /// <summary>
     /// 画线测速补丁：钩住 DrawingManager.EndLocalStroke（0.1.17a DrawingManager.cs:390），在 _active 置空（DrawingManager.cs:397）前用 Prefix 读取笔画。
     /// 该方法只由本地画布（UI_DrawSurface）调用，远端笔画走网络通道，天然只测自己画的线。与路线解读（Patch.Route.cs）同钩同方法，各自 Prefix 互不干扰。
     /// 坐标换算：Stroke.Points 是平板画布（对象88 MapBoundsRect）的局部坐标（0.1.17a UI_DrawSurface.cs:43）。官方世界→平板比例 = MapData.MinimapScale（每图配置，0.1.17a UI_TutorialTablet.cs:2157 _mapScale），兜底 0.094（0.1.17a Util.cs:887、UI_GameTablet.cs:1189 世界×0.094）。
     /// 因此世界线长 = Σ|相邻点局部差| ÷ scale，平移（pivot/原点）不影响长度。速度基准：活人走路 560、奔跑 560×1.3=728（0.1.16b BuffComponent.cs:171（待核对）-180（待核对）），840 是幽灵速度。结果经聊天广播（Managers.Voice.SendChatMessage）全房可见。
+    /// </summary>
     [HarmonyPatch(typeof(DrawingManager), nameof(DrawingManager.EndLocalStroke))]
     internal static class StrokeTimerPatch
     {
+        /// <summary>
         /// 官方世界→小地图比例兜底（0.1.16b Util.cs:887（待核对） / UI_GameTablet.cs:1189）。
+        /// </summary>
         private const float FallbackRatio = 0.094f;
 
+        /// <summary>
         /// UI_Base.GetObject(int) protected：0.1.17a UI_Base.cs:93（平板画布 GetObject(88) 取 RectTransform）。
+        /// </summary>
         private static readonly Func<UI_Base, int, GameObject> TabletGetObject =
             Reflect.Bind<Func<UI_Base, int, GameObject>>(typeof(UI_Base), "GetObject", new[] { typeof(int) });
 
@@ -68,20 +74,24 @@ namespace DT_Tools.Features.StrokeTools
             Managers.Voice?.SendChatMessage(message);
         }
 
+        /// <summary>
         /// 移动时间估算（按实测校准的"跑走各半"节奏）：
         /// 实测反馈线长 3843 单位跑约 6 秒 → 实际平均速度 ≈ 640 ≈ (奔跑 728 + 走路 560) / 2 = 644。
         /// 玩家日常不会全程紧贴耐力极限（不会真的"满耐纯跑 5 秒"再卡恢复），实际节奏接近跑走各半，
         /// 故全程按均速估算；短距离冲刺会略偏保守，整体贴合日常实测。
         /// 耐力参数佐证：奔跑消耗 0.2/秒（0.1.16b UI_Stamina.cs:122（待核对））、未耗尽走路恢复 1/7（UI_Stamina.cs:98），
         /// 理论卡恢复极限均速 630 也贴近实测，均速模型在此区间内。
+        /// </summary>
         private static float EstimateWithStamina(float length, float runSpeed, float walkSpeed)
         {
             float avgSpeed = (runSpeed + walkSpeed) / 2f;
             return length / avgSpeed;
         }
 
+        /// <summary>
         /// 取平板地图画布 RectTransform（0.1.17a UI_GameTablet.cs:442-451 MapBoundsRect → GetObject(88)）。
         /// 平板未打开时 Managers.Tablet.Tablet 为空，跳过本次测速。
+        /// </summary>
         private static RectTransform GetMapBoundsRect()
         {
             UI_GameTablet tablet = Managers.Tablet?.Tablet;

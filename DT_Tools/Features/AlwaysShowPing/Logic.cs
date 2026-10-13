@@ -7,22 +7,32 @@ using UnityEngine;
 
 namespace DT_Tools.Features.AlwaysShowPing
 {
+    /// <summary>
     /// 延迟常显逻辑：保证 UI_PingIndicator 在任意阶段可见并按间隔刷新。
     /// 私有字段定位见 0.1.17a UI_GameScene.cs。
+    /// </summary>
     internal static class AlwaysShowPingLogic
     {
+        /// <summary>
         /// _pingIndicator：0.1.17a UI_GameScene.cs:337。
+        /// </summary>
         private static readonly FieldInfo PingIndicatorField =
             AccessTools.Field(typeof(UI_GameScene), "_pingIndicator");
 
+        /// <summary>
         /// _nextPingRefreshAt：0.1.17a UI_GameScene.cs:339。
+        /// </summary>
         private static readonly FieldInfo NextRefreshField =
             AccessTools.Field(typeof(UI_GameScene), "_nextPingRefreshAt");
 
+        /// <summary>
         /// 原版父节点，关闭功能时还原。
+        /// </summary>
         private static Transform _originalParent;
 
+        /// <summary>
         /// 是否已将指示器挂到 UI_GameScene 根。
+        /// </summary>
         private static bool _reparented;
 
         public static void Tick(UI_GameScene scene)
@@ -54,8 +64,10 @@ namespace DT_Tools.Features.AlwaysShowPing
             indicator.SetPing(ms);
         }
 
+        /// <summary>
         /// 保证指示器节点处于激活层级。若父链被 Lobby 面板关掉，则挂到
         /// UI_GameScene 根节点（避免随 Lobby/Common 面板切换被关掉）。
+        /// </summary>
         private static void EnsureVisible(UI_GameScene scene, UI_PingIndicator indicator)
         {
             GameObject go = indicator.gameObject;
@@ -96,7 +108,9 @@ namespace DT_Tools.Features.AlwaysShowPing
             Log.Info("AlwaysShowPing", "PingIndicator 已挂到 UI_GameScene 根节点，离开大厅后仍可见。");
         }
 
+        /// <summary>
         /// 功能关闭时还原父节点。
+        /// </summary>
         public static void RestoreParent()
         {
             if (!_reparented || _originalParent == null)

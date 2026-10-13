@@ -4,7 +4,9 @@ using Protocol;
 
 namespace DT_Tools.Commands.Faction
 {
+    /// <summary>
     /// /list_white — 游戏中列出所有白方（EPlayerColor.White）。仅房主。
+    /// </summary>
     internal sealed class ListWhiteCommand : ICommand
     {
         public string Name => "list_white";

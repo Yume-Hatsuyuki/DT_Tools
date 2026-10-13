@@ -9,6 +9,7 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.PhotoTools
 {
+    /// <summary>
     /// 拍照工具补丁集合（基于 0.1.16b PhotoManager）：
     /// 1. EncodeAdaptive Prefix：Filter 非 None 时在 JPEG 编码前对截图像素应用滤镜，
     /// 发送给全房的照片即为处理后的效果（接收方无需装 mod）；
@@ -16,12 +17,17 @@ namespace DT_Tools.Features.PhotoTools
     /// 其余条件保持原版一致（阶段限制与原版一致：仅调查阶段可拍）；
     /// 3. CanEnterPhotoMode Postfix：幽灵放行（跳过待机态检查）。
     /// 胶卷次数/上限、阶段限制均与原版一致，不做任何放宽。
+    /// </summary>
     internal static class Patches
     {
+        /// <summary>
         /// 拍立得边框宽度（像素，基于 800x600 截图）。
+        /// </summary>
         private const int PolaroidBorder = 22;
 
+        /// <summary>
         /// 暗角强度：1=边缘完全变黑，0.4=轻微。
+        /// </summary>
         private const float VignetteStrength = 0.55f;
 
         [HarmonyPatch(typeof(PhotoManager), "EncodeAdaptive")]
@@ -47,9 +53,11 @@ namespace DT_Tools.Features.PhotoTools
             }
         }
 
+        /// <summary>
         /// CanStayInPhotoMode（0.1.17a PhotoManager.cs:224）Postfix：原版要求存活。
         /// GhostCamera 开启时死亡（幽灵视角）按原版其余条件（可控制/非聊天/非表情/
         /// 非加载/非平板）重新判定放行；阶段限制保持原版（仅调查阶段）。
+        /// </summary>
         [HarmonyPatch(typeof(PhotoManager), "CanStayInPhotoMode")]
         internal static class PhotoGhostStayPatch
         {
@@ -90,8 +98,10 @@ namespace DT_Tools.Features.PhotoTools
             }
         }
 
+        /// <summary>
         /// CanEnterPhotoMode（0.1.17a PhotoManager.cs:195）Postfix：幽灵死亡态下
         /// State 不是待机/移动/交互会被原版挡掉，GhostCamera 开启时跳过该检查。
+        /// </summary>
         [HarmonyPatch(typeof(PhotoManager), "CanEnterPhotoMode")]
         internal static class PhotoGhostEnterPatch
         {
@@ -126,7 +136,9 @@ namespace DT_Tools.Features.PhotoTools
             }
         }
 
+        /// <summary>
         /// 对截图应用滤镜（就地修改像素）。
+        /// </summary>
         private static void ApplyFilter(Texture2D tex, PhotoFilterType filter)
         {
             Color32[] pixels = tex.GetPixels32();
@@ -206,16 +218,24 @@ namespace DT_Tools.Features.PhotoTools
             tex.Apply(false, false);
         }
 
+        /// <summary>
         /// 水印底条高度（像素）。
+        /// </summary>
         private const int StampBarHeight = 26;
 
+        /// <summary>
         /// 水印字体大小（像素）。
+        /// </summary>
         private const int StampFontSize = 18;
 
+        /// <summary>
         /// 缓存的水印字体（跨拍照复用，避免每张重建）。
+        /// </summary>
         private static Font _stampFont;
 
+        /// <summary>
         /// 在截图左下角叠加「谁拍的 · 时间 · 房间」证物水印。
+        /// </summary>
         private static void ApplyEvidenceStamp(Texture2D tex)
         {
             string text = BuildStampText();
@@ -364,7 +384,9 @@ namespace DT_Tools.Features.PhotoTools
             tex.Apply(false, false);
         }
 
+        /// <summary>
         /// 生成水印文本：谁拍的 · 游戏内时间 · 所在房间。
+        /// </summary>
         private static string BuildStampText()
         {
             try

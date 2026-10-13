@@ -3,6 +3,7 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.TypewriterFloat
 {
+    /// <summary>
     /// 打字机（对讲机）消息浮文化触发：
     /// - EnqueueDeviceChat 后缀（public，0.1.17a VoiceManager.cs:1353）——对讲机公开频道
     /// （DeviceChat）消息改用秘密通话浮文样式匿名显示；秘密通话（isSecret=true）由
@@ -10,6 +11,7 @@ namespace DT_Tools.Features.TypewriterFloat
     /// - SendDeviceChatMessage 前缀（public，:1298）——记录本机发送的文本与时刻，
     /// 用于识别服务器回显的自己的公开消息（浮文只显示其他人的消息）。
     /// 消息只在对局生存阶段出现（服务端 RelayDeviceChat 仅 Survive 中继且发给存活玩家）。
+    /// </summary>
     [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.EnqueueDeviceChat))]
     internal static class TypewriterFloatDeviceChatPatch
     {

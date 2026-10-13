@@ -9,35 +9,49 @@ using Steamworks;
 
 namespace DT_Tools.Commands.ListPlayers
 {
+    /// <summary>
     /// /list_players 业务：本机玩家表收集 + 房主 PlayerId 识别 + P2P 远端地址。
+    /// </summary>
     internal static class ListPlayersLogic
     {
+        /// <summary>
         /// 玩家条目（本机客户端玩家表）。
+        /// </summary>
         public sealed class Entry
         {
             public int Pid;
             public string Name;
             public ulong SteamId;
 
+            /// <summary>
             /// Steam 账号昵称（persona name），数据未就绪/不可查为 null。
+            /// </summary>
             public string SteamName;
             public bool IsHost;
             public bool IsSelf;
 
+            /// <summary>
             /// P2P 连接远端描述：直连时为 IP:port；SDR 中继时为 sdr:POP 或中继地址。
             /// 无本机→该玩家的 P2P 句柄时为 null（客机通常只有到房主的连接）。
+            /// </summary>
             public string RemoteIp;
 
+            /// <summary>
             /// 连接是否走中继（SDR）。null = 未知/无连接。
+            /// </summary>
             public bool? Relayed;
 
+            /// <summary>
             /// 实时 ping（ms），&lt;0 表示不可用。
+            /// </summary>
             public int PingMs = -1;
         }
 
+        /// <summary>
         /// 房主 PlayerId：Host 端直接取 GameRoom.Host；客户端用 Steam Lobby 的 HostSteamId
         /// 在 Roster 里反查。识别失败返回 0
         /// （0.1.17a DummyClient/SteamLobbyManager.cs:90 HostSteamId / :104 InLobby）。
+        /// </summary>
         public static int ResolveHostPlayerId()
         {
             if (HostGuard.IsHost)
@@ -70,7 +84,9 @@ namespace DT_Tools.Commands.ListPlayers
             return 0;
         }
 
+        /// <summary>
         /// 按 PlayerId 升序整理玩家条目。
+        /// </summary>
         public static List<Entry> Collect(int hostId, int myId)
         {
             return Managers.Player.GetAllPlayers()
@@ -96,9 +112,11 @@ namespace DT_Tools.Commands.ListPlayers
                 .ToList();
         }
 
+        /// <summary>
         /// 通过 P2PSessionManager → SteamP2PSession.Connection → GetConnectionInfo 取远端地址 / 是否中继 / ping。
         /// 路径对齐 0.1.17a DummyClient/SteamP2PSession.cs:39 GetConnectionInfo、DummyClient/P2PSessionManager.cs:39 TryGet。
         /// 拓扑：游戏是星型，客机只与房主建连，客机之间没有 P2P 句柄，故客机执行本命令时除房主外均为无连接（ip_src=—）。SDR 下 m_addrRemote 常为空，此时用 m_idPOPRelay 显示 sdr:POP。
+        /// </summary>
         public static void TryResolveConnection(ulong steamId, out string remoteIp, out bool? relayed, out int pingMs)
         {
             remoteIp = null;
@@ -155,8 +173,10 @@ namespace DT_Tools.Commands.ListPlayers
             }
         }
 
+        /// <summary>
         /// SteamNetworkingPOPID → 四字符 POP 名（如 hkg）。
         /// 对齐 0.1.17a DummyClient/SteamP2PSession.cs:64 DecodePop。
+        /// </summary>
         static string DecodePop(SteamNetworkingPOPID popId)
         {
             uint pop = (uint)popId;
@@ -174,8 +194,10 @@ namespace DT_Tools.Commands.ListPlayers
             return s.Length > 0 ? s : null;
         }
 
+        /// <summary>
         /// SteamNetworkingIPAddr → "a.b.c.d:port" 或 "[v6]:port"。
         /// Steamworks.NET 签名：void ToString(out string buf, bool bWithPort)。
+        /// </summary>
         static string FormatIpAddr(ref SteamNetworkingIPAddr addr)
         {
             try
@@ -213,10 +235,12 @@ namespace DT_Tools.Commands.ListPlayers
             return null;
         }
 
+        /// <summary>
         /// Steam 账号昵称（persona name）：同房间/同大厅玩家无需好友关系即可查
         /// （查询模式对齐 0.1.17a GameHistoryStorage.cs:472 GetSteamName；
         /// 清洗对齐同文件 CleanName——去控制字符、NeutralizeRichText、截断 32）。
         /// Steam 未初始化 / 数据未就绪（空、"[unknown]"）返回 null。
+        /// </summary>
         public static string SteamNameOf(ulong steamId)
         {
             if (steamId == 0 || Managers.Steam == null || !Managers.Steam.IsInitialized)

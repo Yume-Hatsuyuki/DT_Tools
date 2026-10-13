@@ -11,8 +11,10 @@ using Server.Game;
 
 namespace DT_Tools.Commands.PacketCall
 {
+    /// <summary>
     /// /call_s、/call_c 共用业务（对应旧 PacketCallHelper）：反射枚举 Protocol 包、
     /// protobuf JSON 填充、发送/注入。房主门禁由框架 RequireHost 统一执行。
+    /// </summary>
     internal static class PacketCallLogic
     {
         private const int HelpSampleCount = 10;
@@ -172,8 +174,10 @@ namespace DT_Tools.Commands.PacketCall
             }
         }
 
+        /// <summary>
         /// 解析目标：all | #id。成功返回 true；targetAll / targetId 有效。
         /// 复用 Game/TargetSpec（全项目唯一实现，随其语义同时接受纯数字 ID）。
+        /// </summary>
         public static bool TryParseTarget(string token, out bool targetAll, out int targetId, out string error)
         {
             targetAll = false;
@@ -193,7 +197,9 @@ namespace DT_Tools.Commands.PacketCall
             return false;
         }
 
+        /// <summary>
         /// 校验活动房间（有玩家的 GameRoom）。失败返回 null 并已回复。
+        /// </summary>
         public static GameRoom RequireRoom(CommandContext ctx)
         {
             var room = GameRoom.Instance;
@@ -205,11 +211,13 @@ namespace DT_Tools.Commands.PacketCall
             return room;
         }
 
+        /// <summary>
         /// PacketManager 是否注册了该 Protocol 的处理器（仅 /call_c 注入路径需要）：
         /// HandlePacket 对未注册的 Protocol 静默丢弃、不做任何处理
         /// （0.1.17a PacketManager.cs:84-91，:87 _handler.TryGetValue 未命中即无操作）。
         /// _handler 是私有字典（0.1.17a PacketManager.cs:14），经反射读取；
         /// Instance 未就绪 / 反射失败时返回 true（无法判定则不断言，保持原回复语义）。
+        /// </summary>
         public static bool IsProtocolRegistered(ushort protocol)
         {
             if (_handlerField == null)
@@ -234,14 +242,18 @@ namespace DT_Tools.Commands.PacketCall
 
         private static FieldInfo _handlerField;
 
+        /// <summary>
         /// 包名之后的所有参数拼成 JSON（允许 JSON 内空格）。
+        /// </summary>
         public static string JoinJson(string[] args, int startIndex)
         {
             if (startIndex >= args.Length) return null;
             return string.Join(" ", args.Skip(startIndex));
         }
 
+        /// <summary>
         /// 包名 → PacketID 枚举底层值（call_c 注入 HandlePacket 时需要）。
+        /// </summary>
         public static bool TryGetPacketId(string packetName, out ushort protocol, out string error)
         {
             protocol = 0;

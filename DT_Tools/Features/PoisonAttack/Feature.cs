@@ -11,6 +11,7 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.PoisonAttack
 {
+    /// <summary>
     /// 毒杀（服务端权威，房主开启后全员可用）。黑方持刀时按毒杀键，对近距离目标下毒。
     /// 判定距离、存活、阶段与原版刀人（Player.UseWeapon）一致，但允许对柜中（EPlayerState.Hide）目标下毒，毒发时先强制出柜。
     /// 时序（服务端 GameRoom 队列）：
@@ -24,6 +25,7 @@ namespace DT_Tools.Features.PoisonAttack
     /// - 对局在毒发前结束则毒发失效，目标不死，警告与脚印一并取消。
     /// 指令：毒杀键发 C_ATTACK{TargetId, Item=手持刀}（原版攻击通道，不走聊天）；无准星目标时 TargetId=-1，服务端选黑方身边最近的存活玩家。
     /// 刀人键走 C_KILL_PLAYER，服务端据此区分刀人与毒杀。
+    /// </summary>
     [HarmonyPatch]
     [PatchFeature(
         "毒杀：黑方持刀时按毒杀键（默认 K，刀人 Q 不变）对近距离目标下毒，30 秒后毒发死亡；毒发前 5 秒目标弹屏警告；毒杀冷却 31 秒；死亡时在柜中先强制出柜、不触发 Deadly Trick。服务端实现，房主开启后全员可用。",
@@ -48,10 +50,14 @@ namespace DT_Tools.Features.PoisonAttack
         [Config("毒杀判定距离（像素，默认 672 = 原版刀人距离）。", Min = 0)]
         public static int PoisonRange = 672;
 
+        /// <summary>
         /// 毒杀脚印模式：目标 PlayerId 集合（死亡前 3 秒的脚印按反向收集）。
+        /// </summary>
         private static readonly HashSet<int> _poisonFootprintMode = new HashSet<int>();
 
+        /// <summary>
         /// 毒杀脚印独立收集：目标 PlayerId → 脚印列表（毒发后写入其尸体）。
+        /// </summary>
         private static readonly Dictionary<int, List<FootstepInfo>> _poisonFootprints =
             new Dictionary<int, List<FootstepInfo>>();
 
@@ -321,8 +327,10 @@ namespace DT_Tools.Features.PoisonAttack
                 $"剩余次数={attacker.RemainKill} cd={cd}s 毒发={DelayValue}s 警告={WarnValue}s");
         }
 
+        /// <summary>
         /// 毒发前 3 秒触发：给被毒死者附加 3 秒 Footprint 足迹 buff（死亡前 3 秒留脚印），
         /// 并置为毒杀脚印模式 —— GameRoom.FillFootstep 对该玩家按反向角度独立收集脚印。
+        /// </summary>
         private static void StartPoisonFootprint(Server.Game.GameRoom room, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))
@@ -338,8 +346,10 @@ namespace DT_Tools.Features.PoisonAttack
                 $"毒杀脚印开始 target={target.PublicInfo.PlayerId}（死亡前3秒，反向）");
         }
 
+        /// <summary>
         /// 毒杀脚印模式下的服务端脚印记录：方向为真实移动方向相反（+180°，同原版随机偏移），
         /// 独立收集到 _poisonFootprints（毒发后写入被毒死者的尸体，尸体被发现时随 S_REPLAY_FOOTSTEP 广播）。
+        /// </summary>
         [HarmonyPatch(typeof(Server.Game.GameRoom), nameof(Server.Game.GameRoom.FillFootstep))]
         [HarmonyPrefix]
         private static bool FillFootstepPrefix(Server.Game.GameRoom __instance, GamePlayer player, int loopId)
@@ -382,7 +392,9 @@ namespace DT_Tools.Features.PoisonAttack
             }
         }
 
+        /// <summary>
         /// 取毒杀脚印收集列表（不存在则创建）。
+        /// </summary>
         private static List<FootstepInfo> GetPoisonFootprints(int playerId)
         {
             if (!_poisonFootprints.TryGetValue(playerId, out var steps))
@@ -393,7 +405,9 @@ namespace DT_Tools.Features.PoisonAttack
             return steps;
         }
 
+        /// <summary>
         /// 取消武器再装填任务（原版 ConsumeKillAndRearm 用尽分支的同款清理）。
+        /// </summary>
         private static void TryKillWeaponRearmJob(GamePlayer attacker, string section)
         {
             try
@@ -412,9 +426,11 @@ namespace DT_Tools.Features.PoisonAttack
             }
         }
 
+        /// <summary>
         /// 毒发前警告：SecretChat 弹屏（原版 UI_SecretChatOverlay 原生渲染，全员客户端可见）。
         /// 文本为“您将于N秒后死亡”，N = 警告提前量配置（默认 5，随配置动态变化）。
         /// 仅在 Survive 阶段弹——若游戏已结束（结束前不足毒发时长下毒），不弹警告、不死亡。
+        /// </summary>
         private static void WarnDeath(Server.Game.GameRoom room, GamePlayer attacker, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))
@@ -439,11 +455,13 @@ namespace DT_Tools.Features.PoisonAttack
                 $"毒发警告 target={target.PublicInfo.PlayerId} 文本=您将于{WarnValue}秒后死亡");
         }
 
+        /// <summary>
         /// 毒发：先处理柜中状态（强制出柜）再走原版刀人死亡链路；
         /// 不触发 Deadly Trick（毒发仅 OnDead，不发 S_DEADLY_TRICK）。
         /// 若游戏已结束（Survive 阶段结束，含"结束前不足 30 秒下毒"的场景），毒发不生效，
         /// 被毒杀者不会死亡。
         /// 死亡后把死亡前 3 秒收集的反向脚印写入其尸体（尸体未被发现时原版不广播脚印）。
+        /// </summary>
         private static void ExecutePoisonDeath(Server.Game.GameRoom room, GamePlayer attacker, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))

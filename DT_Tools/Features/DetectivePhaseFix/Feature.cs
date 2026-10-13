@@ -9,11 +9,13 @@ using Server.Game;
 
 namespace DT_Tools.Features.DetectivePhaseFix
 {
+    /// <summary>
     /// StartDetective 开头 black.IsAlive 在 Black==null 时 NRE（0.1.17a GameRoom.cs:2037，
     /// 2041 行触发——同一方法内 SyncAllPlayer 回调对 black 判空，可证原版即为潜在缺陷）。
     /// 将 get_IsAlive 换为 null 安全调用。Transpiler 使用独立 Harmony 实例，
     /// Enabled 热切换时 Patch/Unpatch，关闭即可恢复原 IL，无需重启。
     /// 自管 Harmony：Feature 声明 static Harmony 字段后，引擎跳过本命名空间的自动 PatchAll。
+    /// </summary>
     [HarmonyPatch]
     [PatchFeature(
         "调查阶段补丁：修复无凶手时 StartDetective 空引用；/enter_detective 依赖此补丁。关闭时会卸载 Transpiler，无需重启。",
@@ -23,14 +25,18 @@ namespace DT_Tools.Features.DetectivePhaseFix
         Author = "梦初雪")]
     public sealed class DetectivePhaseFixFeature
     {
+        /// <summary>
         /// 存在本字段时引擎跳过自动挂载，由本类自行管理 Transpiler 的挂载与卸载。
+        /// </summary>
         internal static Harmony SelfHarmony;
 
         public static bool IsApplied { get; private set; }
 
         private static bool _patched;
 
+        /// <summary>
         /// 挂载流程完成后：按当前 Enabled 决定是否挂上 Transpiler。
+        /// </summary>
         private static void OnPatched()
         {
             SelfHarmony ??= new Harmony("DT_Tools.DetectivePhaseFix");

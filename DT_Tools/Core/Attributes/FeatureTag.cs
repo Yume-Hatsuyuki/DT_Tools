@@ -2,8 +2,10 @@ using System;
 
 namespace DT_Tools.Core.Attributes
 {
+    /// <summary>
     /// 功能标签（多选，每个单元 1–3 个）。bit 位一经发布不得重排或复用，新增只能追加到末尾。
     /// 分组、中文名与说明见 FeatureTagCatalog。
+    /// </summary>
     [Flags]
     public enum FeatureTag : ulong
     {

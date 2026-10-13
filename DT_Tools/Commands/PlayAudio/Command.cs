@@ -1,8 +1,10 @@
 using DT_Tools.Core.Attributes;
 namespace DT_Tools.Commands.PlayAudio
 {
-    /// /play_audio <url|路径> [volume 0.8] [seconds 120] [local|online]：控制台点播（仅本地播放，参数顺序任意，路径放最前即可）。来源可显式指定（local=本地文件 / online=在线链接），缺省按前缀自动识别。
+    /// <summary>
+    /// /play_audio &lt;url|路径> [volume 0.8] [seconds 120] [local|online]：控制台点播（仅本地播放，参数顺序任意，路径放最前即可）。来源可显式指定（local=本地文件 / online=在线链接），缺省按前缀自动识别。
     /// 参数解析复用共享核心 AudioSourceArgs（带空格路径可整体加引号，非强制；与数字参数歧义时用 volume / seconds 关键字）。与「StageMusic」的阶段配置完全解耦：默认完整播放、响度 1，显式传参可覆盖；引擎在 Game/AudioPlayback，点播与阶段音乐互不抢占，结束时也不恢复阶段音乐；/stop_music 停止点播。对全房间广播（虚拟麦克风）见 /mic_music。
+    /// </summary>
     internal sealed class PlayAudioCommand : ICommand
     {
         public string Name => "play_audio";

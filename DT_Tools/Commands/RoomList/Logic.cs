@@ -4,10 +4,14 @@ using DummyClient;
 
 namespace DT_Tools.Commands.RoomList
 {
+    /// <summary>
     /// /room_list 业务：公开房间列表的异步查询（Steam Lobby）。
+    /// </summary>
     internal static class RoomListLogic
     {
+        /// <summary>
         /// 网络与 Lobby 管理器就绪校验。
+        /// </summary>
         public static bool TryGetLobby(out SteamLobbyManager lobby, out string code, out string text)
         {
             lobby = Managers.Network?.Lobby;
@@ -22,8 +26,10 @@ namespace DT_Tools.Commands.RoomList
             return true;
         }
 
+        /// <summary>
         /// 发起异步查询（0.1.16b DummyClient/SteamLobbyManager.cs:140（待核对）
         /// RequestLobbyList(Action&lt;List&lt;LobbyListEntry&gt;&gt;)，结果经 Steam 回调送达）。
+        /// </summary>
         public static void Request(SteamLobbyManager lobby, Action<List<LobbyListEntry>> onResult)
             => lobby.RequestLobbyList(onResult);
     }

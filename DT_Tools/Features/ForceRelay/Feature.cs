@@ -4,9 +4,11 @@ using Steamworks;
 
 namespace DT_Tools.Features.ForceRelay
 {
+    /// <summary>
     /// 隐私保护：强制 P2P 走 Steam SDR 中继，关闭 ICE 直连，避免交换真实公网 / 内网候选地址。
     /// 原版 SteamP2PTransport.ConfigureTransportSelection（0.1.17a DummyClient/SteamP2PTransport.cs:182）设置 ICE_Enable=-1（用户默认）、ICE_Penalty=0、SDR_Penalty=1000。本功能覆盖为 ICE_Enable=0 + SDR_Penalty=0，两端各自生效（side=Both）。
     /// OnPatched 时 Steam 可能尚未就绪，故全部 try/catch；真正生效依赖 ConfigureTransportSelection 的 Postfix（进房 Init 时必跑）。
+    /// </summary>
     [PatchFeature(
         "隐私保护强制中继：关闭 ICE 直连，P2P 仅走 Steam SDR 中继，避免暴露真实 IP（两端各自生效）。",
         defaultEnabled: false,
@@ -25,7 +27,9 @@ namespace DT_Tools.Features.ForceRelay
         const int ForceIcePenalty = 100000;
         const int ForceSdrPenalty = 0;
 
+        /// <summary>
         /// 补丁挂载后：若 cfg 已启用则尝试覆盖（Steam 未就绪时静默跳过，见 AGENTS.md §8）。
+        /// </summary>
         public static void OnPatched()
         {
             try
@@ -58,7 +62,9 @@ namespace DT_Tools.Features.ForceRelay
             }
         }
 
+        /// <summary>
         /// 强制中继：禁用 ICE，抬高 ICE 惩罚，SDR 无额外惩罚。
+        /// </summary>
         internal static void ApplyForceRelay(bool log = false)
         {
             // Steam 未初始化时 SetConfigValue 可能抛或返回 false
@@ -91,7 +97,9 @@ namespace DT_Tools.Features.ForceRelay
             }
         }
 
+        /// <summary>
         /// 恢复原版 ICE=user-default / ICE penalty=0 / SDR penalty=1000。
+        /// </summary>
         internal static void RestoreVanilla()
         {
             if (Managers.Steam == null || !Managers.Steam.IsInitialized)
@@ -113,8 +121,10 @@ namespace DT_Tools.Features.ForceRelay
                 Log.Warn(Engine.SectionOf(typeof(ForceRelayFeature)), "恢复原版传输选择失败");
         }
 
+        /// <summary>
         /// 与游戏 SteamP2PTransport.SetGlobalInt32 同实现
         /// （0.1.17a DummyClient/SteamP2PTransport.cs:269）。
+        /// </summary>
         static bool SetGlobalInt32(ESteamNetworkingConfigValue key, int value)
         {
             global::System.IntPtr ptr = global::System.Runtime.InteropServices.Marshal.AllocHGlobal(4);

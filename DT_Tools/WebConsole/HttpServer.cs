@@ -7,8 +7,10 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole
 {
+    /// <summary>
     /// HTTP 传输层：HttpListener 监听 + 监听线程 + 每请求 ThreadPool 派发 + 响应写出工具。
     /// 线程模型沿旧版：/api/run 在工作线程同步等待主线程结果，不能堵住监听线程。
+    /// </summary>
     public sealed class HttpServer
     {
         private readonly Router _router;
@@ -58,7 +60,9 @@ namespace DT_Tools.WebConsole
                 Log.Info("WebConsole", $"已启动 → {companion}（IPv6 前缀未生效）");
         }
 
+        /// <summary>
         /// 按序注册前缀并启动监听线程；失败时清理 listener 并带出异常。
+        /// </summary>
         private bool TryStart(string[] prefixes, out Exception error)
         {
             error = null;
@@ -86,11 +90,13 @@ namespace DT_Tools.WebConsole
             }
         }
 
+        /// <summary>
         /// 归一化监听地址："0.0.0.0"/"any"/"*" → "*"（IPv4 全网卡）；"::" → "[::]"（IPv6 全网卡，
         /// 通常双栈同时收 v4）；具体地址按 IPAddress 校验——IPv6 必须加方括号才是合法的
         /// HttpListener 前缀（如 http://[::1]:19450/）；localhost 原样；非法值回退 127.0.0.1 并告警。
         /// Unity(Mono) 的 HttpListener 不做 Windows URL ACL 校验，任意前缀可直接监听。
         /// 监听地址解释的唯一权威：WsServer.ResolveIp 亦经本方法（避免两份口径漂移）。
+        /// </summary>
         public static string NormalizeIp(string raw)
         {
             string ip = (raw ?? "").Trim();

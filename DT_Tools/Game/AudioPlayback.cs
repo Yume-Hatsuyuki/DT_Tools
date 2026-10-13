@@ -6,7 +6,9 @@ using UnityEngine.Networking;
 
 namespace DT_Tools.Game
 {
+    /// <summary>
     /// 点播来源类型。Auto=按前缀自动识别（http(s) 在线、其余本地）。
+    /// </summary>
     public enum AudioPlaybackSource
     {
         Auto = 0,
@@ -14,10 +16,12 @@ namespace DT_Tools.Game
         Online = 2,
     }
 
+    /// <summary>
     /// 控制台点播引擎（/play_audio、/stop_music 专用，Game 层公共能力）：
     /// 与 StageMusic 补丁功能完全解耦——独立的播放槽状态，无状态部分共用 Game/AudioMix
     /// （见其头注释）。加载期间的新点播会取代旧加载（修复旧实现"加载中点播被静默丢弃"）。
     /// 仅本地播放；对全房广播走独立命令 /mic_music（Game/MicBroadcast）。
+    /// </summary>
     public static class AudioPlayback
     {
         private const string Tag = "AudioPlayback";
@@ -35,10 +39,12 @@ namespace DT_Tools.Game
         private static float _pendingMaxSeconds = -1f;
         private static long _pendingGeneration;
 
+        /// <summary>
         /// 点播入口：kind 指定来源类型（Local/Online 显式指定，Auto 按前缀识别），
         /// volume 0~1（调用方决定默认值），maxSeconds &lt;=0 表示完整播放。
         /// 解析失败返回 false（原因已在 ResolveSource 内告警），不打断当前播放
         /// （输错来源不应清空正在响的音乐）。
+        /// </summary>
         public static bool Play(string rawSource, AudioPlaybackSource kind, float volume, float maxSeconds)
         {
             string uri = ResolveUri(rawSource, kind);
@@ -48,7 +54,9 @@ namespace DT_Tools.Game
             return true;
         }
 
+        /// <summary>
         /// 停止当前点播（仅本引擎，不触碰阶段音乐与虚拟麦克风）。
+        /// </summary>
         public static void Stop()
         {
             _playingUri = null;
@@ -62,7 +70,9 @@ namespace DT_Tools.Game
                 _source.Stop();
         }
 
+        /// <summary>
         /// 来源解析：委托 AudioMix.ResolveSource（与 /mic_music 共用一份实现）。
+        /// </summary>
         private static string ResolveUri(string raw, AudioPlaybackSource kind)
             => AudioMix.ResolveSource(raw, kind, Tag);
 
@@ -114,7 +124,9 @@ namespace DT_Tools.Game
             StartPlayback(uri, clip, _pendingVolume, _pendingMaxSeconds);
         }
 
+        /// <summary>
         /// 缓存上限淘汰：超过 CacheCap 时按插入序销毁最旧片段，正在播放的挪到队尾豁免。
+        /// </summary>
         private static void EvictCacheOverflow()
         {
             while (_clipOrder.Count > CacheCap)

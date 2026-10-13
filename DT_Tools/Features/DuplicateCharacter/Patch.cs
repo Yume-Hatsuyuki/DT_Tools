@@ -9,9 +9,11 @@ using Server.Game;
 
 namespace DT_Tools.Features.DuplicateCharacter
 {
+    /// <summary>
     /// GameRoom.PickCharacter 整替（0.1.17a GameRoom.cs:1717）：去掉角色唯一性闸门，
     /// 其余与原版一致；确认包只回选择者本人（原版为全员广播——对端收不到确认包
     /// 就不会把格子置灰/标记 Selected，也就不会在本地拦截后续的重复选择请求）。
+    /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.PickCharacter))]
     internal static class DuplicateCharacterPickCharacterPatch
     {
@@ -96,8 +98,10 @@ namespace DT_Tools.Features.DuplicateCharacter
         }
     }
 
+    /// <summary>
     /// 超时补选 / 进房随机分配（原版 private static int PickRandomOwnedCharacter(Player, HashSet&lt;int&gt;)，
     /// 0.1.16b GameRoom.cs:1669（待核对）)：不排除已被占用的角色。
+    /// </summary>
     [HarmonyPatch(typeof(GameRoom), "PickRandomOwnedCharacter")]
     internal static class DuplicateCharacterRandomPickPatch
     {

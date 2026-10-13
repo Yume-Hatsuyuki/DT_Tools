@@ -3,10 +3,12 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LiveDraw
 {
+    /// <summary>
     /// 庭审画布“动态照片”（原 DT_LiveDraw v1.0.0 移植）：庭审讨论（作画）阶段按 F9，把照片目录里的下一张照片转成单色线稿画上画布（带“画入场”动画），画完后整幅画持续“沸腾”（手绘抖动），每隔几秒来一次波浪扭动。
     /// 走原版 DrawingManager 通道（预算与限速合规），其他玩家无需装本 mod 即可看到动画。
     /// 协议层硬限制：画布颜色为画图者专属色，照片只能单色线稿；仅庭审讨论阶段可画（房主权威校验 CanRelayDrawing）；死亡状态下画的内容只广播给观战者；画布 879×696（X±439.5 / Y±348），笔宽 2–16，每人 256 笔 / 8000 点。
     /// 与照片发送器（PhotoSend）共用照片目录（默认 BepInEx/config/DT_Tools/photos/）。阶段判断用客户端 TrialManager 单例（0.1.17a Server.Game/TrialManager.cs:41 s_instance；State 是独立字段，不依赖 GameRoom，非房主进程同样安全），不用服务端 GameRoom.Instance——原版插件用服务端判断导致非房主画不了，此处改为任何玩家可用。
+    /// </summary>
     [PatchFeature(
         "庭审画布动态照片：庭审讨论阶段按 F9 把 photos 目录里的照片转成单色线稿画上画布（带画入场动画），" +
         "画完持续沸腾抖动+周期波浪，其他玩家无需装本 mod 即可看到动画。F10 沸腾开关 / F11 手动波浪。",

@@ -3,10 +3,12 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.AcquireWeapon
 {
+    /// <summary>
     /// /acquire_weapon [#armoryId] — 天匠：本机玩家无视距离从当前开放的武器架取得凶器
     /// （客户端发包，跟随控制台，非房主可用）。
     /// 无参数 → 列出全部武器架（只读，不发包）；带参数 → 从指定武器架拔刀。
     /// 机制、颜色分流与服务端门禁依据统一见 AcquireWeaponLogic（Logic.cs 头注释）。
+    /// </summary>
     internal sealed class AcquireWeaponCommand : ICommand
     {
         public string Name => "acquire_weapon";

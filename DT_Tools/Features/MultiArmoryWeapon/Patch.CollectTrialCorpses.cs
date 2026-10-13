@@ -5,12 +5,14 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.MultiArmoryWeapon
 {
+    /// <summary>
     /// CollectTrialCorpses 前缀（0.1.17a Server.Game/GameRoom.cs:1951-1967）：
     /// 原版只把「与本庭绑定凶手同 BlackId」的未发现尸体编入庭审；多刀下多名黑方各自杀人时，
     /// 其他凶手的尸体会被过滤掉 → 不会走 MarkDiscoveredForTrial，DiscoverdDone/DiscoverTime 一直为假/0。
     /// 随后 Corpse.GetDisplayTime（:315-345）在 DiscoverTime==0 时落到估算分支，扫尸体显示 00:00，
     /// 尽管 CorpseMeta.DeadTime 在构造时已正确写入 SurviveTime。
     /// 开启多刀后放宽为：所有未发现、非炸弹、非隐藏、非 TrickLocked 的尸体均可编入（不再按 BlackId 过滤）。
+    /// </summary>
     [HarmonyPatch(typeof(Server.Game.GameRoom), nameof(Server.Game.GameRoom.CollectTrialCorpses))]
     internal static class MultiArmoryWeaponCollectTrialCorpsesPatch
     {

@@ -6,14 +6,18 @@ using Protocol;
 
 namespace DT_Tools.Features.SupplyShelfRefill
 {
+    /// <summary>
     /// 必出与补货逻辑。
     /// 兜底道具集中于此（FallbackItems）：BELL(3009) / AIRHORN(3008)，与原版 InitStorage
     /// 的内建投放池一致（0.1.16b Server.Game/DeviceManager.cs:353（待核对））；Define 常量：Define.cs:738 / :744。
     /// 补货池经 Game/ItemPools.ShelfPoolProvider 只读（由 SupplyShelf 装载时发布，含其
     /// Enabled/Mode 判定）；货架读取走 Game.Devices——无 Features 间横向依赖（AGENTS.md §4）。
+    /// </summary>
     internal static class SupplyShelfRefillLogic
     {
+        /// <summary>
         /// 兜底道具池：货架随机道具功能未开启时，补货只从这两样里选。
+        /// </summary>
         public static readonly int[] FallbackItems =
         {
             Define.ITEM_ID_BELL,
@@ -157,7 +161,9 @@ namespace DT_Tools.Features.SupplyShelfRefill
                 $"scheduled storage={storageId} slot={slot} itemId={refillId} after={interval}s");
         }
 
+        /// <summary>
         /// 补货池：货架随机道具开启时沿用其扩展池（经 ItemPools.ShelfPoolProvider），否则兜底 BELL/AIRHORN。
+        /// </summary>
         private static int PickRefillItemId()
         {
             int[] pool = ItemPools.ShelfPoolProvider?.Invoke() ?? FallbackItems;

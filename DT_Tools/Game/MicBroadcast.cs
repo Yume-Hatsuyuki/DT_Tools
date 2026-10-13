@@ -16,6 +16,7 @@ using UnityEngine.Networking;
 
 namespace DT_Tools.Game
 {
+    /// <summary>
     /// 虚拟麦克风广播引擎（/mic_music、/stop_music 与随身MP3 共用，Game 层公共能力）。
     /// 运行期把 Dissonance 采集管线的采集器（CapturePipelineManager._microphone）临时替换为包装器 MusicMicCapture：真实麦克风帧先混入音乐 PCM，再转发 WebRTC 预处理与 Opus 编码，全房间可闻。
     /// 混流点在预处理与 VAD 上游，音乐自己触发语音激活，无需说话。真实麦克风不被接替，播放结束或 /stop_music 时还原原采集器与订阅拓扑。
@@ -23,6 +24,7 @@ namespace DT_Tools.Game
     /// 挂载前提：游戏内麦克风未静音。Comms.IsMuted=true 时 CapturePipelineManager.Update 会退订编码器（DissonanceVoip-Decompile/CapturePipelineManager.cs:174），虚拟麦克风同样被门控，此处不绕过游戏语义。
     /// 音质（2026-10-03 实测）：WebRTC 降噪与 AEC 对音乐破坏严重，广播期间经 VoiceSettings 临时全部关停并归一增益，结束自动还原；混入重采样用线性插值（44.1k→48k 整数截断会走调）。残余的变声器感是 Opus 32kbps 编码天花板。
     /// 时序：管线重启（帧跳/换设备/Pause→Resume）会重新订阅 preprocessor（RestartTransmissionPipeline，cs:243），包装器幂等重绑；重进房间时 DissonanceComms 重建，旧包装器随旧管线消亡，卸载时检测到字段已非自身包装器即跳过还原。
+    /// </summary>
     public static class MicBroadcast
     {
         private const string Tag = "MicBroadcast";
@@ -51,7 +53,9 @@ namespace DT_Tools.Game
         private static float[] _pendingMono;   // 加载期提取的单声道 PCM，混入启动时交给 Mix 状态
         private static float _pendingStart;    // 起始偏移（秒）：恢复暂停书签/连播跳转用
         private static bool _localMuted;       // 本地喇叭静音偏好（mute 而非 Stop：保留播放时钟与混入头同步）
+        /// <summary>
         /// 自然播完回调（随身MP3 自动连播）；Stop() 清空，时长上限到点不触发。
+        /// </summary>
         public static Action TrackFinished;
 
         // 当前挂载状态（_wrapper 为 null = 未挂载；包装器持有的真实采集器随其 Real 携带）
@@ -107,13 +111,17 @@ namespace DT_Tools.Game
         private static bool _opusAudioApplied;
         private static FieldInfo _encPipelineField, _lockedEncField, _nativeEncField;
 
+        /// <summary>
         /// 当前是否在虚拟麦克风广播（含音频加载中）。
+        /// </summary>
         public static bool Playing => _wrapper != null || _loading;
 
+        /// <summary>
         /// 广播入口：kind 指定来源类型（Local/Online 显式指定，Auto 按前缀识别），
         /// volume 0~1 同时控制本地响度与混入响度，maxSeconds &lt;=0 表示完整播放后卸载。
         /// 新点播取代进行中的广播（先还原再加载）。解析失败返回 false（原因已在
         /// ResolveSource 内告警），不改动进行中的广播。
+        /// </summary>
         public static bool Play(string rawSource, AudioPlaybackSource kind, float volume, float maxSeconds)
         {
             string uri = AudioMix.ResolveSource(rawSource, kind, Tag);
@@ -123,10 +131,12 @@ namespace DT_Tools.Game
             return true;
         }
 
+        /// <summary>
         /// 随身MP3 播放入口：完整播放（自然播完触发 <see cref="TrackFinished"/>），
         /// micMix=false 时不挂包装器、不应用广播档案（纯本地播放，语音未连接也可用），
         /// 混入随后可经 <see cref="SetMicMix"/> 随时开启。startSeconds=起始偏移（恢复暂停
         /// 书签时从原进度重建）。取代语义与 Play 一致。
+        /// </summary>
         public static bool PlayTrack(string rawSource, float volume, bool micMix, float startSeconds = 0f)
         {
             string uri = AudioMix.ResolveSource(rawSource, AudioPlaybackSource.Auto, Tag);
@@ -144,8 +154,10 @@ namespace DT_Tools.Game
             return true;
         }
 
+        /// <summary>
         /// 广播入口（URI 已解析）：localPlayback=false 时只混流、不启动本地播放
         /// （阶段音乐复用——本地由 StageMusic 播放器负责，避免双 AudioSource 同曲齐响）。
+        /// </summary>
         public static void PlayResolved(string uri, float volume, float maxSeconds, bool localPlayback)
         {
             if (string.IsNullOrEmpty(uri))
@@ -160,7 +172,9 @@ namespace DT_Tools.Game
             _loadCo = CoroutineHost.Start(CoLoadAndBroadcast(uri));
         }
 
+        /// <summary>
         /// 停止广播：还原采集管线、停本地播放、作废在途加载。幂等。
+        /// </summary>
         public static void Stop()
         {
             _loadGeneration++;
@@ -189,7 +203,9 @@ namespace DT_Tools.Game
         // 暂停/恢复在 Mp3Api 层实现（暂停=记书签+Stop 销毁会话、恢复=PlayTrack 重建+起始偏移），
         // 引擎只有 播放中/加载中/空闲 三态，不存在挂起的僵尸会话。
 
+        /// <summary>
         /// 跳转（秒，自动夹紧到曲目范围）：本地播放位置与混入头一起拉到同一位置。
+        /// </summary>
         public static bool Seek(float seconds)
         {
             if (_clip == null || _loading)
@@ -202,7 +218,9 @@ namespace DT_Tools.Game
             return true;
         }
 
+        /// <summary>
         /// 响度：会话中实时生效（本地源与混入一起），无会话时存为下次播放初值。
+        /// </summary>
         public static bool SetVolume(float volume)
         {
             float v = Mathf.Clamp01(volume);
@@ -213,7 +231,9 @@ namespace DT_Tools.Game
             return true;
         }
 
+        /// <summary>
         /// 本地喇叭出声开关（mute 而非 Stop：保留播放时钟与混入头同步）。无会话时仅记录偏好，加载时应用。
+        /// </summary>
         public static bool SetLocalAudible(bool audible)
         {
             _localMuted = !audible;
@@ -222,9 +242,11 @@ namespace DT_Tools.Game
             return true;
         }
 
+        /// <summary>
         /// 麦克风混入开关（会话中切换）：开=挂包装器+应用广播档案（样本缺失时按需提取）；
         /// 关=卸载还原（语音管线与音频设置即时恢复原状），本地播放与会话不中断。
         /// 头位置对齐当前播放位置——混入关闭期间本地源照常推进，旧头位置已过期。
+        /// </summary>
         public static bool SetMicMix(bool enabled)
         {
             if (_clip == null || _loading)
@@ -258,7 +280,9 @@ namespace DT_Tools.Game
             return true;
         }
 
+        /// <summary>
         /// 会话快照（随身MP3 状态轮询）：phase = idle | loading | playing | paused。
+        /// </summary>
         public sealed class TransportState
         {
             public string Phase;
@@ -402,8 +426,10 @@ namespace DT_Tools.Game
             _stopCo = CoroutineHost.Start(CoTrackClock(_pendingMaxSeconds));
         }
 
+        /// <summary>
         /// 挂载虚拟麦克风（会话加载路径与随身MP3 SetMicMix(true) 共用）：校验采集在录 →
         /// 顶替 _microphone → 应用广播音频档案。失败已告警返回 false。
+        /// </summary>
         private static bool TryMountMic(IMicrophoneCapture real)
         {
             var pipeline = ReadPipeline();
@@ -419,9 +445,11 @@ namespace DT_Tools.Game
             return true;
         }
 
+        /// <summary>
         /// 曲目时钟（逐帧）：自然播完（本地源播完 / 混入头走完 PCM）触发
         /// <see cref="TrackFinished"/>；时长上限到点（墙钟，/mic_music 语义）直接 Stop 不触发。
         /// 纯混流模式（StageMusic，localPlayback=false）以混入头/上限为完成依据。
+        /// </summary>
         private static IEnumerator CoTrackClock(float capSeconds)
         {
             float elapsed = 0f;
@@ -456,7 +484,9 @@ namespace DT_Tools.Game
             return _source;
         }
 
+        /// <summary>
         /// 卸载：还原订阅拓扑与 _microphone 字段。语音会话已重建（字段非本包装器）时跳过还原。
+        /// </summary>
         private static void Unmount()
         {
             if (_wrapper == null)
@@ -530,8 +560,10 @@ namespace DT_Tools.Game
         // VoiceSettings 属性 setter 触发 PropertyChanged → WebRtcPreprocessor.Bind 实时重配
         // native（WebRtcPreprocessingPipeline.cs:167-183），广播期临时关停、结束还原，用户无感。
 
+        /// <summary>
         /// 记录并应用广播音频档案：关停 RNNoise / WebRTC 降噪 / AEC、捕获增益归一、Opus 码率提到 96k。
         /// 必须在挂载包装器之后调用（其中的编码器重建会经 RestartTransmissionPipeline 重绑包装器）。
+        /// </summary>
         private static void ApplyBroadcastAudioProfile()
         {
             try
@@ -564,7 +596,9 @@ namespace DT_Tools.Game
             }
         }
 
+        /// <summary>
         /// 还原广播前的音频设置与 Opus 码率（码率还原后同样重建编码器）。幂等；异常打断也会经 Stop() 走到这里。
+        /// </summary>
         private static void RestoreBroadcastAudioProfile()
         {
             if (!_profileTouched)
@@ -591,8 +625,10 @@ namespace DT_Tools.Game
             }
         }
 
+        /// <summary>
         /// 广播期每帧校验：编码器句柄变了（管线重启重建，构造硬编码回 VOIP）或尚未切换时，
         /// 经 native CTL 把 application 切到 Audio。同一句柄只尝试一次，失败降级 96k VOIP（现状）。
+        /// </summary>
         internal static void EnsureOpusAudioApplication()
         {
             if (!_opusAudioWanted)
@@ -611,10 +647,12 @@ namespace DT_Tools.Game
                 Log.Warn(Tag, $"Opus 编码模式切换失败（读回 {readBack}），降级 96k VOIP 继续广播");
         }
 
+        /// <summary>
         /// 反射穿透四层私有字段取 native opus 编码器句柄（基准锚点：DissonanceVoip-Decompile，
         /// CapturePipelineManager.cs:33 / EncoderPipeline._encoder / OpusEncoder.cs:19 / OpusNative.cs:106）。
         /// 实机 DissonanceVoip 被厂商魔改、结构与基准有出入——每层记录实际类型名，探测失败时
         /// 整条链一次性输出（供按实机结构修正），随后永久降级 96k VOIP 防刷屏。
+        /// </summary>
         private static bool TryGetNativeOpusHandle(out IntPtr handle)
         {
             handle = IntPtr.Zero;
@@ -666,7 +704,9 @@ namespace DT_Tools.Game
             }
         }
 
+        /// <summary>
         /// 反射链结构性断裂：一次性输出实机每层真实类型名，永久降级 96k VOIP 防刷屏。
+        /// </summary>
         private static bool ProbeBroken(List<string> chain, string reason)
         {
             _handleProbeBroken = true;
@@ -675,11 +715,13 @@ namespace DT_Tools.Game
             return false;
         }
 
+        /// <summary>
         /// 虚拟麦克风包装器：对外是 IMicrophoneCapture（顶替管线上的采集器），对内以
         /// IMicrophoneSubscriber 订阅真实采集器——真实帧先到包装器、混入音乐、再转发原下游
         /// （WebRTC 预处理管线）。订阅侧"吞掉"管线对 preprocessor 的直连；管线重启会重新
         /// Subscribe 新 preprocessor，这里先摘旧再挂新（幂等）。同时实现 IMicrophoneDeviceList
         /// 防止任何 cast 使用点踩空（BasicMicrophoneCapture 实现了该接口）。全链路 Unity 主线程。
+        /// </summary>
         private sealed class MusicMicCapture : IMicrophoneCapture, IMicrophoneSubscriber, IMicrophoneDeviceList
         {
             internal readonly IMicrophoneCapture Real;
@@ -714,7 +756,9 @@ namespace DT_Tools.Game
                 return Real.Unsubscribe(this);           // 摘的是自己
             }
 
+            /// <summary>
             /// 卸载准备：摘下转发关系并返回原下游（还原时由引擎把下游直连回真实采集器）。
+            /// </summary>
             internal IMicrophoneSubscriber TakeForward()
             {
                 var f = _forward;

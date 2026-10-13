@@ -4,17 +4,23 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Fusebox
 {
+    /// <summary>
     /// /sabotage_fuse、/repair_fuse 列表文本格式化（设备查询结果 → 人类可读行）。
+    /// </summary>
     internal static class FuseboxFormat
     {
+        /// <summary>
         /// 格式化电闸一行：#ID  房间  状态。
+        /// </summary>
         public static string FormatLine(DeviceBase fusebox)
         {
             var (localized, _) = RoomLabel.FromDevice(fusebox);
             return $"  #{fusebox.ID}  房间: {localized}  状态: {FuseboxLogic.GetStateLabel(fusebox)}";
         }
 
+        /// <summary>
         /// 无参 /sabotage_fuse 的已武装电闸列表。
+        /// </summary>
         public static string ArmedListReply(List<DeviceBase> armed)
         {
             var sb = new StringBuilder();
@@ -25,7 +31,9 @@ namespace DT_Tools.Commands.Fusebox
             return sb.ToString();
         }
 
+        /// <summary>
         /// 无参 /repair_fuse 的损坏电闸列表。
+        /// </summary>
         public static string BrokenListReply(List<DeviceBase> broken)
         {
             var sb = new StringBuilder();

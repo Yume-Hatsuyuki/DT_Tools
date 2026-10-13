@@ -6,13 +6,17 @@ using UnityEngine;
 
 namespace DT_Tools.Features.MultiArmoryWeapon
 {
+    /// <summary>
     /// 多刀编排：刷刀后开放多架、到期随机转移；同步 CurrentArmory 等权威指针以兼容
     /// 原版取刀断言（SendWeapon 要求 ID == CurrentArmory.ID：0.1.17a Server.Game/Armory.cs:134）与任务箭头。
     /// DeviceManager 私有成员定位（0.1.16b Server.Game/DeviceManager.cs）：_armories:28、_lastArmory:14、
     /// CurrentArmory:42（private set 属性）、ArmoryPos:44（private set 属性）。
+    /// </summary>
     internal static class MultiArmoryWeaponLogic
     {
+        /// <summary>
         /// 私有字段 _armories（0.1.17a Server.Game/DeviceManager.cs:28）。
+        /// </summary>
         private static List<Server.Game.Armory> GetArmories(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_armories").GetValue<List<Server.Game.Armory>>();
 
@@ -23,6 +27,7 @@ namespace DT_Tools.Features.MultiArmoryWeapon
             return Mathf.Clamp(want, 1, Mathf.Max(1, total));
         }
 
+        /// <summary>
         /// 「投票任意黑方胜利」命中判定：庭审最高票（唯一）是任意活着的黑方（非本庭绑定凶手、非主谋）时为 true。
         /// 不能复用原版 MostVotedPlayerId 当「最高票玩家」：它的返回值语义是「原版处决目标」——
         /// 只有最高票为绑定凶手（TrialManager.cs:856-859）或主谋（:861-864）才返回对应 id，
@@ -30,6 +35,7 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         /// 因此这里自读 _candidates（0.1.17a Server.Game/TrialManager.cs:47，私有）统计唯一最高票：
         /// 无票（:835-838）、平票（:840-853）、绑定凶手（原版已判白胜 :787-791）、主谋（独立出局语义 :801-816）
         /// 一律交还原版；其余仅当目标是活着的黑方才接管——死后被票出不算（原版 Trial Survive 豁免也仅限绑定凶手）。
+        /// </summary>
         internal static bool TryGetAnyBlackCatch(Server.Game.TrialManager trial, out int catchId, out string skipReason)
         {
             catchId = -1;
@@ -114,7 +120,9 @@ namespace DT_Tools.Features.MultiArmoryWeapon
             return true;
         }
 
+        /// <summary>
         /// 刷刀后：按数量开放多架，并让 CurrentArmory 指向其中之一以兼容原版逻辑。
+        /// </summary>
         public static void OpenAfterSpawn(Server.Game.DeviceManager dm, bool isInit)
         {
             Server.Game.GameRoom room = Server.Game.GameRoom.Instance;
@@ -186,11 +194,13 @@ namespace DT_Tools.Features.MultiArmoryWeapon
             armory.RefreshState(EArmoryState.EmptyArmory);
         }
 
+        /// <summary>
         /// 重置本架转移 CD 并续 TickArmory 逐秒链。不能走 RefreshState(OpenArmory)：
         /// 原版仅在状态变化时才重置 StateList[2]/[3] 并续链（0.1.17a Server.Game/Armory.cs:56-74 的
         /// `if (state2 != (int)state)` 门），而到期转移时本架必已是 OpenArmory，该调用是 no-op。
         /// 这里绕过它直写状态，对齐 Server.Game/Armory.cs:62-67 的 OpenArmory 分支语义；
         /// TickArmory 为私有（0.1.17a Server.Game/Armory.cs:154），经 Traverse 续约下一跳（会再进补丁前缀）。
+        /// </summary>
         private static void RearmTransfer(Server.Game.Armory armory, Server.Game.GameRoom room)
         {
             armory.DeviceInfo.StateList[2] = room.WeaponMoveSecond;
@@ -200,7 +210,9 @@ namespace DT_Tools.Features.MultiArmoryWeapon
                 Traverse.Create(armory).Method("TickArmory").GetValue());
         }
 
+        /// <summary>
         /// 到期转移：随机选一个空架，关闭本架、打开目标架。
+        /// </summary>
         public static void TransferWeaponRandom(
             Server.Game.Armory from, Server.Game.DeviceManager dm, Server.Game.GameRoom room)
         {
@@ -256,9 +268,11 @@ namespace DT_Tools.Features.MultiArmoryWeapon
             Log.Info<MultiArmoryWeaponFeature>($"武器转移 {from.ID} → {to.ID}");
         }
 
+        /// <summary>
         /// 多刀取证：除 CurrentArmory 外，把所有已拔刀（WeaponTime&gt;0）的架一并 SendScanInfo。
         /// 原版 SendForensics 只扫 CurrentArmory（0.1.17a Server.Game/GameRoom.cs:2161），
         /// 多刀下其余架的拔刀时间不会自动进平板，扫到也会因权威指针被挪走而变成 00:00。
+        /// </summary>
         public static void SendExtraWeaponForensics(Server.Game.DeviceManager dm, Server.Game.Player player)
         {
             if (dm == null || player == null)

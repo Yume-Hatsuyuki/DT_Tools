@@ -11,10 +11,12 @@ using Object = UnityEngine.Object;
 
 namespace DT_Tools.WebConsole
 {
+    /// <summary>
     /// 内嵌 WebUI 控制台组件：装配（Auth/Router/HttpServer）+ 命令主线程队列。
     /// 线程模型：/api/run 工作线程入队并同步等待（≤5s），Update() 在主线程消费执行，
     /// 命令因此可以安全访问 Unity API 与游戏单例。API 层的主线程投递统一走
     /// Core/CoroutineHost.Post（本类不再自建第二套动作泵）。
+    /// </summary>
     public sealed class WebConsole : MonoBehaviour
     {
         public static WebConsole Instance { get; private set; }
@@ -25,18 +27,22 @@ namespace DT_Tools.WebConsole
         private readonly object _pendLock = new object();
         private HttpServer _server;
 
+        /// <summary>
         /// 供 API 层（HTTP 线程）把需要 Unity API 的动作投递到主线程执行，
         /// 泵由 Core/CoroutineHost 承载（与命令队列各自独立，互不阻塞）。
+        /// </summary>
         public static void Post(Action action)
         {
             if (Instance == null || action == null) return;
             CoroutineHost.Post(action);
         }
 
+        /// <summary>
         /// 供 API 层在 HTTP 线程同步执行一段需要主线程的工作并取回结果（复用 /api/run 的
         /// 队列 + 超时保护）。成功返回 work 的结果；主线程停摆超时 / WebConsole 未装配时
         /// 返回 Fail。注意：超时后 work 仍会在主线程稍后执行（结果被丢弃），work 必须
         /// 可重入无害；延迟执行发生时会显式告警，不再静默生效。
+        /// </summary>
         public static CommandResult RunOnMain(Func<CommandResult> work, int timeoutMs = RunTimeoutMs)
         {
             if (work == null) return CommandResult.Fail("empty action");
@@ -85,7 +91,9 @@ namespace DT_Tools.WebConsole
             return result ?? CommandResult.Fail("action error");
         }
 
+        /// <summary>
         /// 由 Plugin 在启用 WebConsole 时调用（读取 WebConsoleOptions 已由引擎绑定）。
+        /// </summary>
         public void Init(ManualLogSource log)
         {
             if (Instance != null)
@@ -110,9 +118,11 @@ namespace DT_Tools.WebConsole
             ApplyRuntimeToggles();
         }
 
+        /// <summary>
         /// 远程/后台使用的前置条件：游戏窗口失焦时 Unity 默认可能暂停主线程（玩家循环停摆），
         /// 队列泵随之停转——表现为所有 /api/run 统一 5 秒超时。按配置强制开启后台运行。
         /// 非回环监听 + 空密码时给出暴露面警告。
+        /// </summary>
         private void ApplyRuntimeToggles()
         {
             if (WebConsoleOptions.RunInBackground && !Application.runInBackground)
@@ -270,8 +280,10 @@ namespace DT_Tools.WebConsole
             }
         }
 
+        /// <summary>
         /// 命令文本执行核心：剥前缀 → 引号感知分词 → 查表 → 执行。只在主线程调用；
         /// 供本类命令队列泵与 MCP 的 run_command 工具共用（单一实现，行为不漂移）。
+        /// </summary>
         internal static CommandResult ExecuteCommandText(string raw)
         {
             if (raw.StartsWith("/") || raw.StartsWith("!"))

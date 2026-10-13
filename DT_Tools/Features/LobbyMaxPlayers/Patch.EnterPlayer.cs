@@ -11,6 +11,7 @@ using Steamworks;
 
 namespace DT_Tools.Features.LobbyMaxPlayers
 {
+    /// <summary>
     /// HandleEnterPlayer 整替（0.1.17a GameRoom.cs:1037-1210）：
     /// 唯一差异为进房上限 RoomMemberCountForMetadata() &gt;= 8 改为 &gt;= MaxMembers
     /// （原版判断在 0.1.16b GameRoom.cs:1078（待核对）)，其余逐行对应原版。
@@ -18,6 +19,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
     /// _bannedSteamIds:79 / _score_board_pkt:87 / _pendingBootstrapPlayers:89 /
     /// HasSameAccountRemnant:981 / CheckDuplicationName:1025 / EnterSpectator:1212 /
     /// SanitizeOwnedCharacters:1321 / AssignLobbyCharacter:1687 / EnterPlayer:2771。
+    /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.HandleEnterPlayer))]
     internal static class LobbyMaxPlayersEnterPlayerPatch
     {

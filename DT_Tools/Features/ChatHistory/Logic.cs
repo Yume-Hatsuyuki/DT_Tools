@@ -6,7 +6,9 @@ using UnityEngine;
 
 namespace DT_Tools.Features.ChatHistory
 {
+    /// <summary>
     /// 导航组件挂载来源：决定查哪个子开关（AGENTS.md §9 约束 5，键名=字段名）。
+    /// </summary>
     internal enum ChatHistorySource
     {
         ChatBar,
@@ -14,9 +16,11 @@ namespace DT_Tools.Features.ChatHistory
         Interphone
     }
 
+    /// <summary>
     /// 历史频道：全局聊天（快捷条与平板同一 EChatType.NormalChat 频道，共用一份历史）；
     /// 打字机公开（EChatType.DeviceChat）与秘密（EChatType.SecretChat）各自独立，
     /// 秘密频道消息翻出重发不至泄进公开频道。
+    /// </summary>
     internal enum ChatHistoryChannel
     {
         GlobalChat,
@@ -24,9 +28,11 @@ namespace DT_Tools.Features.ChatHistory
         InterphoneSecret
     }
 
+    /// <summary>
     /// 本机聊天历史（各频道分池）：全局聊天统一从 VoiceManager.SendChatMessage 发出
     /// （0.1.17a VoiceManager.cs:1298），打字机两频道分别走 SendDeviceChatMessage（:1298）
     /// 与 SendSecretChatMessage（:1303），在各自发送点记录，保证历史与实际发出一致。
+    /// </summary>
     internal static class ChatHistoryStore
     {
         private static readonly List<string> Global = new List<string>();
@@ -37,7 +43,9 @@ namespace DT_Tools.Features.ChatHistory
 
         public static string At(ChatHistoryChannel channel, int index) => Pool(channel)[index];
 
+        /// <summary>
         /// 记录一条已发送消息。相邻重复不记录（连发同一条后 ↑ 翻到的还是它，无法继续上翻）。
+        /// </summary>
         public static void Record(ChatHistoryChannel channel, string message)
         {
             if (string.IsNullOrEmpty(message))
@@ -62,15 +70,19 @@ namespace DT_Tools.Features.ChatHistory
         }
     }
 
+    /// <summary>
     /// 兜底挂载器：跨场景常驻宿主，节流扫描三类聊天 UI，未挂导航器的实例补挂。
     /// 存在原因：Init 补丁依赖对象 Awake 晚于补丁挂载——大厅为启动场景，部分 UI 的
     /// Awake 早于 BepInEx Chainloader，Init 补丁永远错过；反射绑定失败同理。
     /// 兜底扫描与 Init 补丁双保险，保证最终一致（对讲机频道按当前 _isSecret 同步）。
+    /// </summary>
     internal static class ChatHistoryMounter
     {
         private static ChatHistoryHost _host;
 
+        /// <summary>
         /// OnPatched 与热开启路径调用（AGENTS.md §8：启动读档不走 OnEnabled，须在 OnPatched 补挂）。
+        /// </summary>
         public static void EnsureHost()
         {
             if (_host != null)
@@ -80,7 +92,9 @@ namespace DT_Tools.Features.ChatHistory
             _host = go.AddComponent<ChatHistoryHost>();
         }
 
+        /// <summary>
         /// OnDisabled 清理：销毁宿主并移除已挂导航器；热重开由宿主重建后重新扫描挂载。
+        /// </summary>
         public static void Shutdown()
         {
             if (_host != null)
@@ -129,7 +143,9 @@ namespace DT_Tools.Features.ChatHistory
             navigator.Channel = channel;    // 对讲机模式随 Open 变化，兜底每轮按当前模式同步
         }
 
+        /// <summary>
         /// 宿主本体：DontDestroyOnLoad，跨场景节流扫描（0.5 秒一次，开销可忽略）。
+        /// </summary>
         private sealed class ChatHistoryHost : MonoBehaviour
         {
             private float _nextScanAt;
@@ -146,10 +162,12 @@ namespace DT_Tools.Features.ChatHistory
         }
     }
 
+    /// <summary>
     /// 聊天历史导航器：挂在聊天输入框 GameObject 上（Util.GetOrAddComponent，0.1.17a Util.cs:262），
     /// 输入框聚焦期间轮询 ↑/↓ 键翻看历史并回填。游戏聊天框均为单行 TMP_InputField，
     /// 单行模式下 ↑/↓ 无原版行为（TMP 仅在 MultiLineNewline 处理），不产生键位冲突。
     /// 回填后光标移到文本末尾，便于继续编辑或直接回车发送。
+    /// </summary>
     internal sealed class ChatHistoryNavigator : MonoBehaviour
     {
         private TMP_InputField _input;
@@ -159,10 +177,14 @@ namespace DT_Tools.Features.ChatHistory
         private int _index;
         private string _draft = "";
 
+        /// <summary>
         /// 当前历史频道；打字机在 Open 时按公开/秘密切换（见 Patch.Mount.cs 的模式补丁）。
+        /// </summary>
         public ChatHistoryChannel Channel { set => _channel = value; }
 
+        /// <summary>
         /// 绑定输入框与挂载来源，由挂载补丁调用（私有字段锚点见 Patch.Mount.cs）。
+        /// </summary>
         public void Bind(TMP_InputField input, ChatHistorySource source)
         {
             _input = input;

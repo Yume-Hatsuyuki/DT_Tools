@@ -2,7 +2,9 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.RemoveFog
 {
+    /// <summary>
     /// 移除迷雾：关闭房间阴影投射物。
+    /// </summary>
     // 注意：功能类声明为 sealed class（而非 static class）——Engine.Enabled<T> 需要它作类型参数；
     // 成员全部 static。
     [PatchFeature(

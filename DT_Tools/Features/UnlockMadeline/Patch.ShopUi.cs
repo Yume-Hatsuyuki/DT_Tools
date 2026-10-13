@@ -8,9 +8,11 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.UnlockMadeline
 {
+    /// <summary>
     /// UI_Shop_Skin.OrderedOwnedIds 整替（私有方法，字符串定位）：
     /// 0.1.17a UI_Shop_Skin.cs:46。原版过滤 id != 101 且依赖 OwnedCharacterIds；
     /// 改为直接取 Inventory.OwnedCharacterIds（含本功能追加的 101），排序逻辑不变。
+    /// </summary>
     [HarmonyPatch(typeof(UI_Shop_Skin), "OrderedOwnedIds")]
     internal static class UnlockMadelineShopOrderedIdsPatch
     {
@@ -42,10 +44,12 @@ namespace DT_Tools.Features.UnlockMadeline
         }
     }
 
+    /// <summary>
     /// CharacterSortOrder.FillChineseOrder 后缀（私有静态方法，字符串定位）：
     /// 0.1.16b CharacterSortOrder.cs:16（待核对）。原版填 12 人中文序（101 不在其中；非中文
     /// 分支也显式排除 101，见 :57-63）——后缀仅追加 101 置末位，不复制原版 12 人序，
     /// 游戏改序时零漂移。
+    /// </summary>
     [HarmonyPatch(typeof(CharacterSortOrder), "FillChineseOrder")]
     internal static class UnlockMadelineChineseOrderPatch
     {
@@ -59,8 +63,10 @@ namespace DT_Tools.Features.UnlockMadeline
         }
     }
 
+    /// <summary>
     /// Managers.GetText 文本重定向（public static，可用 nameof）：
     /// 0.1.16b Managers.cs:223（待核对）。Madeline 的宣言句文本键无数据，重定向到线索宣言。
+    /// </summary>
     [HarmonyPatch(typeof(Managers), nameof(Managers.GetText))]
     internal static class UnlockMadelineGetTextPatch
     {
@@ -74,9 +80,11 @@ namespace DT_Tools.Features.UnlockMadeline
         }
     }
 
+    /// <summary>
     /// UI_InfoSkillSubItem.SetInfo(ESkillType, bool, bool) 后缀（public 重载，
     /// 可用 nameof）：0.1.16b UI_InfoSkillSubItem.cs:92（待核对）。
     /// 己方 SuperRazer 技能条目为 Madeline 时替换头像与名字（原版无其资源）。
+    /// </summary>
     [HarmonyPatch(typeof(UI_InfoSkillSubItem), nameof(UI_InfoSkillSubItem.SetInfo),
         new global::System.Type[] { typeof(ESkillType), typeof(bool), typeof(bool) })]
     internal static class UnlockMadelineSkillInfoPatch

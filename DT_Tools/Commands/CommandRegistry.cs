@@ -8,15 +8,19 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands
 {
+    /// <summary>
     /// 命令注册表：反射发现全部 ICommand 实现，主名+别名入大小写不敏感字典；
     /// 统一执行入口负责房主门禁与异常兜底（命令内禁止重复实现）。
+    /// </summary>
     public static class CommandRegistry
     {
         private static readonly Dictionary<string, ICommand> Map =
             new Dictionary<string, ICommand>(StringComparer.OrdinalIgnoreCase);
         private static readonly List<ICommand> Commands = new List<ICommand>();
 
+        /// <summary>
         /// 已注册命令（注册顺序，用于 /help 列表）。
+        /// </summary>
         public static IReadOnlyList<ICommand> All => Commands;
 
         public static bool TryGet(string name, out ICommand command) => Map.TryGetValue(name, out command);

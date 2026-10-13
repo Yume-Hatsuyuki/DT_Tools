@@ -3,8 +3,10 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.CharacterMapPin
 {
+    /// <summary>
     /// 平板 RefreshPlayerPin 后置：换上角色头像。私有方法，字符串定位：
     /// 0.1.16b UI_GameTablet.cs:1211（待核对）。
+    /// </summary>
     [HarmonyPatch(typeof(UI_GameTablet), "RefreshPlayerPin")]
     internal static class CharacterMapPinTabletPinPatch
     {

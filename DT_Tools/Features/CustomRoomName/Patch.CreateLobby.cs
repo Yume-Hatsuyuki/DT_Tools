@@ -4,8 +4,10 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.CustomRoomName
 {
+    /// <summary>
     /// 建房：把 roomName 入参替换为配置的自定义名。
     /// CreateLobby 为公开方法：0.1.17a DummyClient/SteamLobbyManager.cs:128。
+    /// </summary>
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]
     internal static class CustomRoomNameCreateLobbyPatch
     {

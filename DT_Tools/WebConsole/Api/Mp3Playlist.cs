@@ -6,11 +6,13 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Api
 {
+    /// <summary>
     /// 随身MP3 歌单与播放偏好持久化：路径见 DtPaths.Mp3Playlist。
     /// 数据不是配置（无段/键结构，AGENTS.md §9 约束 5 的零字符串约定只约束 [Config] 体系），
     /// 走独立 JSON 文件（Core.Json，Newtonsoft）。所有读写只在 Unity 主线程
     /// （Mp3Api 全部端点经 RunOnMain），无需加锁；每次变更即落盘（文件很小）。
     /// 播放即入歌单（按路径去重）；文件损坏/缺失即重建空歌单。
+    /// </summary>
     internal static class Mp3Playlist
     {
         internal sealed class Item
@@ -25,7 +27,9 @@ namespace DT_Tools.WebConsole.Api
             public bool Mic = true;
             public bool Local = true;
 
+            /// <summary>
             /// 播放方式：list=列表循环（默认）| single=单曲循环（重播当前）| random=随机播放。
+            /// </summary>
             public string Mode = "list";
 
             public List<Item> Items = new List<Item>();
@@ -34,7 +38,9 @@ namespace DT_Tools.WebConsole.Api
         private static Store _store;
         private static string FullPath => DtPaths.Mp3Playlist;
 
+        /// <summary>
         /// 惰性加载（首次访问读盘）；损坏/缺失回退默认值，不抛出。
+        /// </summary>
         internal static Store Get()
         {
             if (_store != null)
@@ -61,7 +67,9 @@ namespace DT_Tools.WebConsole.Api
             return _store;
         }
 
+        /// <summary>
         /// 变更后落盘；失败只告警（内存态仍有效，下次变更再试）。
+        /// </summary>
         internal static void Save()
         {
             try
@@ -75,7 +83,9 @@ namespace DT_Tools.WebConsole.Api
             }
         }
 
+        /// <summary>
         /// 按路径去重入歌单，返回命中的下标（已存在则返回原位置）。
+        /// </summary>
         internal static int Ensure(string path)
         {
             var store = Get();

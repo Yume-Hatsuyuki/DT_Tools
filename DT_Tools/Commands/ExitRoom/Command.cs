@@ -4,11 +4,13 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.ExitRoom
 {
+    /// <summary>
     /// /exit_room — 立即离开当前房间并返回大厅（任何阶段可用，含死亡观战）。
     ///
     /// 与原版退出确认 OnClickExitYes / 观战退出 OnClickSpectateExitYes 同路径
     /// （0.1.17a UI_GameScene.cs:2305-2311、2340-2348）：Network.Leave + LoadScene(LobbyScene)。
     /// 若自己是房主，房间按原版规则移交或解散。
+    /// </summary>
     internal sealed class ExitRoomCommand : ICommand
     {
         public string Name => "exit_room";

@@ -6,9 +6,11 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Mcp
 {
+    /// <summary>
     /// MCP 状态/开关/配置端点（WebUI 挂件用，也注册在 MCP 独立监听上）。
     /// /mcp 被停用或监听未拉起时这两条仍可用——挂件靠它读状态并重新打开。
     /// 挂件与「DT 配置」页都经 ConfigService 读写 Mcp 段，两处天然同步。
+    /// </summary>
     internal static class McpStatusApi
     {
         public static void HandleStatus(HttpListenerContext ctx)
@@ -56,9 +58,11 @@ namespace DT_Tools.WebConsole.Mcp
             HttpServer.WriteJson(ctx.Response, new { ok = true, enabled = McpOptions.Enabled, value });
         }
 
+        /// <summary>
         /// 端点展示地址（挂件复制配置用）：回环/未配置 → 127.0.0.1；通配监听 → 本机主要
         /// IPv4（局域网客户端按此接入，如 192.168.x.x）；具体 IP 原样（IPv6 已带方括号时
         /// 原样拼入）。枚举失败回退回环，只影响展示不影响监听。
+        /// </summary>
         private static string EndpointUrl()
         {
             string ip = (McpOptions.ListenIp ?? "").Trim();

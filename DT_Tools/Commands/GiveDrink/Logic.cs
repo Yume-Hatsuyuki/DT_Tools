@@ -3,14 +3,18 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveDrink
 {
+    /// <summary>
     /// /givedrink 业务：手持道具发放（走原生 ItemManager 链路）。
+    /// </summary>
     internal static class GiveDrinkLogic
     {
-        /// itemId <= 0 → 清空手持物；武器发放前先移除已有武器，避免 InsertWeapon 内 Assert 失败；其余走原生链路：创建真实 Item → 写入 Hand/Weapon → 发 S_ADD_ITEM → 同步。
+        /// <summary>
+        /// itemId &lt;= 0 → 清空手持物；武器发放前先移除已有武器，避免 InsertWeapon 内 Assert 失败；其余走原生链路：创建真实 Item → 写入 Hand/Weapon → 发 S_ADD_ITEM → 同步。
         /// （0.1.17a Server.Game/Player.cs:1626 RemoveHand / :1643 RemoveWeapon / :150 Weapon；Server.Game/ItemManager.cs:17 CreateAndInsertInven）
         /// 调用前提：命令入口已校验 DataId 存在于 Managers.Data.ItemDic（否则 Item 构造得到 Data=null 的脏 Item，见 ItemManager.cs:17-22 先 Add 后解引用）。
         ///
         /// 假人补差：InsertWeapon/InsertInven 只写服务端槽位，“手持显示”靠真人客户端收到 S_ADD_ITEM 后回发 C_MODIFY_PLAYER(ChangeHandItem) 才落 PublicInfo.HandItemId 并广播。假人没有客户端，因此补一次服务端 HandItemObjectId 赋值（setter 写 PublicInfo.HandItemId 并广播，Player.cs:374-402）。否则其他客户端看不到假人手持道具，攻击判定（AttackPlayer 读 PublicInfo.HandItemId，GameRoom.cs:2396）也取不到道具数据。清空路径无需补：RemoveHand/RemoveWeapon 内部已走 HandItemObjectId=-1（Player.cs:1631/:1649），setter 同样广播。
+        /// </summary>
         public static void SendHandItem(Server.Game.Player player, int itemId)
         {
             if (itemId <= 0)

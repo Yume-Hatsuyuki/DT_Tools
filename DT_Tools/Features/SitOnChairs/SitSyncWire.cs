@@ -2,8 +2,10 @@ using System;
 
 namespace DT_Tools.Features.SitOnChairs
 {
+    /// <summary>
     /// 坐姿同步报文的编解码（经语音聊天通道广播）。格式：前缀 + "SIT|椅子ID|角色ID" 或 "RISE|椅子ID" + 后缀。
     /// 前缀含零宽字符，与表情动作同步的前缀区分开。编码与解析只在这里定义一次。
+    /// </summary>
     internal static class SitSyncWire
     {
         private const string Prefix = "\u200B[";
@@ -13,11 +15,15 @@ namespace DT_Tools.Features.SitOnChairs
 
         internal static string Rise(int chairId) => $"{Prefix}RISE|{chairId}{Suffix}";
 
+        /// <summary>
         /// 是否为坐姿同步报文（只看前后缀，不校验内容）。
+        /// </summary>
         internal static bool IsWire(string message)
             => !string.IsNullOrEmpty(message) && message.StartsWith(Prefix) && message.EndsWith(Suffix);
 
+        /// <summary>
         /// 解析报文。内容不合法时返回 false（调用方仍应按同步报文处理，只是不生效）。
+        /// </summary>
         internal static bool TryParse(string message, out SitSyncMessage result)
         {
             result = null;
@@ -45,7 +51,9 @@ namespace DT_Tools.Features.SitOnChairs
         }
     }
 
+    /// <summary>
     /// 解析后的坐姿同步动作。Sit=true 为坐下（带角色 ID），false 为起身。
+    /// </summary>
     internal sealed class SitSyncMessage
     {
         public bool Sit;

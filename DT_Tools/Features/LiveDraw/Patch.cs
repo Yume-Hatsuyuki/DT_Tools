@@ -12,10 +12,12 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LiveDraw
 {
+    /// <summary>
     /// 庭审画布“动态照片”补丁集合（原 DT_LiveDraw v1.0.0 移植）：
     /// 1. Managers.Update Postfix：仅庭审讨论阶段处理按键（F9 画下一张 / F10 沸腾开关 / F11 手动波浪；聊天框打开时不抢按键）；阶段切换时停止动画并作废进行中的绘制。
-    /// 2. 绘制协程（CoroutineHost.Start）：ClearMine 清空自己层 → 按笔画逐点落笔（对齐原版 64 点/包、0.09s 间隔 < 房主 12 包/秒限速）→ FlushOutbox 收尾。
+    /// 2. 绘制协程（CoroutineHost.Start）：ClearMine 清空自己层 → 按笔画逐点落笔（对齐原版 64 点/包、0.09s 间隔 &lt; 房主 12 包/秒限速）→ FlushOutbox 收尾。
     /// 3. 动画（TickBoil / SendBoilFrame）：按配置帧率发 C_DRAW_REPLACE 变形帧（基准点正弦偏移 + 周期波浪），复用原笔画 StrokeId。DrawingMirror.Replace（0.1.16b Server.Game/DrawingMirror.cs:47 静态）同步服务端镜像（房主迁移后能恢复到当前动画帧，非房主为空镜像写入无害）；UpsertFromProto（DrawingManager 私有方法，反射调用）同步本地模型并触发重绘。照片→笔画管线见 Draw.cs；配置与开关见 Feature.cs（defaultEnabled:false，需手动开启）。
+    /// </summary>
     internal static class Patch
     {
         private const float CanvasHalfW = 439.5f;
@@ -179,7 +181,9 @@ namespace DT_Tools.Features.LiveDraw
             catch (Exception e) { Log.Error<LiveDrawFeature>($"扫描照片目录失败: {e.Message}"); }
         }
 
+        /// <summary>
         /// 照片目录：配置了 PhotoFolder 用配置路径，否则用默认目录（BepInEx/config/DT_Tools/photos/，与照片发送器共用）。
+        /// </summary>
         private static string PhotoDirectory => DtPaths.ResolvePhotoFolder(LiveDrawFeature.PhotoFolder);
 
         private static IEnumerator DrawRoutine(List<LiveStroke> plan)
@@ -272,7 +276,9 @@ namespace DT_Tools.Features.LiveDraw
             _fxDissolveOrder = null;
         }
 
+        /// <summary>
         /// 当前特效的单次时长；Float 为持续效果返回 -1（不自动结束）。
+        /// </summary>
         private static float FxDuration()
         {
             switch (_fx)
@@ -435,9 +441,11 @@ namespace DT_Tools.Features.LiveDraw
             }
         }
 
+        /// <summary>
         /// 客户端阶段判断：庭审且处于讨论（作画）阶段。用客户端 Managers.Game.State +
         /// 静态单例 TrialManager.Instance.State（0.1.16b trial.cs:41（待核对） s_instance，State 为独立
         /// 字段不依赖 GameRoom），任何玩家（含非房主）都能画；房主进程同样有效。
+        /// </summary>
         private static bool InDrawPhase()
         {
             var game = Managers.Game;

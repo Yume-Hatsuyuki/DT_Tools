@@ -6,18 +6,26 @@ using Steamworks;
 
 namespace DT_Tools.Features.CustomRoomCode
 {
+    /// <summary>
     /// 房间码清洗与写入 Steam Lobby 的业务逻辑（配置热改与建房补丁共用；骨架见 Game/RoomLobbyData）。
+    /// </summary>
     internal static class CustomRoomCodeLogic
     {
+        /// <summary>
         /// 原版随机码长度（0.1.17a Util.cs:185 GenerateRandomRoomCode 生成 7 位）。
+        /// </summary>
         private const int MaxCodeLength = 7;
 
+        /// <summary>
         /// 订阅 RoomCode 配置项变更（订阅骨架在 Game/RoomLobbyData）。变更即尝试写入当前房间，WebUI 改配置后无需额外特判即可生效。
+        /// </summary>
         public static void WireRoomCodeChanged()
             => RoomLobbyData.WireChanged<CustomRoomCodeFeature>(
                 nameof(CustomRoomCodeFeature.RoomCode), reason => TryApplyRoomCode(reason));
 
+        /// <summary>
         /// 把配置中的房间码清洗后写入当前 Steam Lobby 与本地显示（需房主）。
+        /// </summary>
         public static bool TryApplyRoomCode(string reason)
         {
             if (!Engine.Enabled<CustomRoomCodeFeature>())
@@ -36,9 +44,11 @@ namespace DT_Tools.Features.CustomRoomCode
                 onSet: () => Managers.Network.SetInfo(code));   // public：0.1.17a NetworkManager.cs:1116
         }
 
+        /// <summary>
         /// 房间码清洗的唯一实现：trim → 大写 → 仅保留 A–Z / 0–9（与原版输入校验
         /// OnValidateRoomCodeChar 一致，0.1.17a UI_LobbyScene.cs:1732）→ 7 位截断
         /// （原版随机码长度，Util.cs:185）。清洗后为空 = 放行原版随机码。
+        /// </summary>
         internal static string SanitizeCode()
         {
             string code = CustomRoomCodeFeature.RoomCode?.Trim().ToUpperInvariant() ?? "";

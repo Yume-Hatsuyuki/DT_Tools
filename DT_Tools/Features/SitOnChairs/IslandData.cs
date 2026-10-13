@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace DT_Tools.Features.SitOnChairs
 {
+    /// <summary>
     /// 岛屿地图数据（原 IslandMap/data 内嵌版）：把 7 份岛屿数据 JSON/文本
     /// （与原版主图数据逐字段一致，仅 DeviceData 追加 11 条椅子设备）以
     /// EmbeddedResource 方式编译进 DT_Tools.dll，运行时读出为 TextAsset 并
@@ -15,9 +16,12 @@ namespace DT_Tools.Features.SitOnChairs
     /// 反射写入），键名带 _Island 后缀，与 DataManager.MapKey（DataManager.cs:56）
     /// 拼接规则一致；随后把 LoadMapSet 的地图类型重定向为 Island 即可让游戏
     /// 加载这套数据。功能关闭时不注入，保持完全原版。
+    /// </summary>
     internal static class IslandData
     {
+        /// <summary>
         /// 文件名 → 内嵌资源文件名（带命名空间前缀）
+        /// </summary>
         private static readonly Dictionary<string, string> Files = new Dictionary<string, string>
         {
             { "MapData",       "MapData_Island.json" },
@@ -33,7 +37,9 @@ namespace DT_Tools.Features.SitOnChairs
 
         private static readonly Dictionary<string, TextAsset> Cache = new Dictionary<string, TextAsset>();
 
+        /// <summary>
         /// 把 7 份岛屿数据注入 ResourceManager._resources，成功返回 true。
+        /// </summary>
         internal static bool Inject()
         {
             if (_resourcesField == null)

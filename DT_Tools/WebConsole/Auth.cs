@@ -5,9 +5,11 @@ using System.Text;
 
 namespace DT_Tools.WebConsole
 {
+    /// <summary>
     /// 访问鉴权。密码为空 → 完全放行（本机回环使用场景）；
     /// 非空 → 登录校验密码后发放会话 token（HttpOnly cookie），
     /// 后续请求凭 cookie dt_token 或 ?token= 校验【token】而非明文密码。
+    /// </summary>
     public sealed class Auth
     {
         private readonly string _password;
@@ -20,7 +22,9 @@ namespace DT_Tools.WebConsole
 
         private bool Disabled => _password.Length == 0;
 
+        /// <summary>
         /// POST /login：校验密码（query token 或 body），成功则发放会话 cookie。
+        /// </summary>
         public void HandleLogin(HttpListenerContext ctx)
         {
             var resp = ctx.Response;
@@ -44,7 +48,9 @@ namespace DT_Tools.WebConsole
             HttpServer.WriteText(resp, 200, "ok");
         }
 
+        /// <summary>
         /// 请求鉴权检查；未通过时由 Router 回 401 + 登录页。
+        /// </summary>
         public bool Check(HttpListenerContext ctx)
         {
             if (Disabled)
@@ -58,8 +64,10 @@ namespace DT_Tools.WebConsole
             return CheckToken(req.Cookies["dt_token"]?.Value ?? "", req.QueryString["token"] ?? "");
         }
 
+        /// <summary>
         /// 裸凭据校验：WebSocket 独立通道（WsServer）没有 HttpListenerContext，
         /// 由它从原始握手头解析出 cookie/token 后调用，语义与 Check 完全一致。
+        /// </summary>
         public bool CheckToken(string cookieToken, string queryToken)
         {
             if (Disabled)
@@ -67,8 +75,10 @@ namespace DT_Tools.WebConsole
             return FixedTimeEquals(queryToken, _token) || FixedTimeEquals(cookieToken, _token);
         }
 
+        /// <summary>
         /// 常量时间字符串比较（netstandard2.1 CryptographicOperations），
         /// 避免逐字符短路比较泄漏密码/token 前缀长度信息。
+        /// </summary>
         private static bool FixedTimeEquals(string a, string b)
         {
             byte[] ba = Encoding.UTF8.GetBytes(a ?? "");

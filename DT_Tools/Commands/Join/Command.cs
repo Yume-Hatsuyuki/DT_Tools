@@ -5,11 +5,13 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Join
 {
+    /// <summary>
     /// /join &lt;房间码&gt; — 按房间码进入其他房间（任何阶段可用）。
     ///
     /// 在房内时先走原版退出路径（Network.Leave + 回大厅场景；若自己是房主，
     /// 房间按原版规则移交/解散），等大厅 UI 就绪后按码搜索并复用原版进房编排。
     /// 目标房间正在对局 → 以观战进入。加入结果经 [Join] 段日志与游戏内提示反馈。
+    /// </summary>
     internal sealed class JoinCommand : ICommand
     {
         public string Name => "join";

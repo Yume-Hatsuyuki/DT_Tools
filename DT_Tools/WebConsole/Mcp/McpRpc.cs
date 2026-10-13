@@ -2,7 +2,9 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp
 {
+    /// <summary>
     /// JSON-RPC 2.0 信封（MCP 的载体）。响应体一律用 JObject 构建，禁止手拼字符串。
+    /// </summary>
     internal static class McpRpc
     {
         public const int ParseError = -32700;

@@ -3,7 +3,9 @@ using Protocol;
 
 namespace DT_Tools.Commands.Agent
 {
+    /// <summary>
     /// 交付链：手持道具 → 对应设备（对应旧 AgentDeliveryChain.cs，原 AgentCommand.Planner.CollectDeliveries）。
+    /// </summary>
     internal static class AgentDeliveryChain
     {
         public static void Collect(int hand, List<DeviceBase> devices, AddDel Add)

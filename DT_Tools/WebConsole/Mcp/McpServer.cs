@@ -9,12 +9,14 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp
 {
+    /// <summary>
     /// MCP 桥接服务器：寄生于 WebConsole 的 HttpListener（同端口、同鉴权），新增 /mcp 路由。
     /// 传输 = MCP Streamable HTTP（无状态）：POST /mcp 收 JSON-RPC，application/json 回包；
     /// 通知回 202 空包；GET/DELETE → 405（无服务端主动推送，不开 SSE 通道）。
     /// 协议基准 2025-06-18，initialize 兼容协商 2024-11-05 / 2025-03-26。
     /// 线程模型：本类只做协议解析（HTTP 线程可安全执行）；工具实现触 Unity API 的
     /// 必须自走 WebConsole.RunOnMain（见 AGENTS.md §13）。
+    /// </summary>
     internal static class McpServer
     {
         private const string LatestProtocol = "2025-06-18";
@@ -30,7 +32,9 @@ namespace DT_Tools.WebConsole.Mcp
         private static readonly object _callLogLock = new object();
         private static readonly List<object> _callLog = new List<object>();
 
+        /// <summary>
         /// 追加一条调用记录（供 /api/mcp/status 与挂件滚动日志）。
+        /// </summary>
         private static void PushCallLog(string time, string name, string args, bool ok, string error, long ms)
         {
             lock (_callLogLock)
@@ -41,7 +45,9 @@ namespace DT_Tools.WebConsole.Mcp
             }
         }
 
+        /// <summary>
         /// 调用日志快照（新→旧）。元素为匿名对象，由 Newtonsoft 序列化。
+        /// </summary>
         internal static List<object> SnapshotCallLog()
         {
             lock (_callLogLock)
@@ -50,8 +56,10 @@ namespace DT_Tools.WebConsole.Mcp
 
         private static bool _announced;
 
+        /// <summary>
         /// 注册到一条路由面（可多次调用、不同 Router 实例）：MCP 独立监听与 WebConsole 路由
         /// 各挂一份，共用同一套静态处理器——MCP 客户端走哪个门都等价。就绪日志只打一次。
+        /// </summary>
         public static void RegisterRoutes(Router router)
         {
             McpToolLoader.Load();
@@ -116,7 +124,9 @@ namespace DT_Tools.WebConsole.Mcp
         private static void WriteEmpty(HttpListenerResponse resp)
             => HttpServer.WriteRaw(resp, 202, "application/json", "");
 
+        /// <summary>
         /// 处理一条 JSON-RPC 消息。通知（无 id）处理后返回 null（不回包）。
+        /// </summary>
         private static JObject ProcessMessage(JObject msg)
         {
             if (msg == null || msg["method"] == null)
@@ -238,7 +248,9 @@ namespace DT_Tools.WebConsole.Mcp
             });
         }
 
+        /// <summary>
         /// 参数摘要（key=value，超长截断）：进全局日志与挂件最近调用，不落全量 JSON。
+        /// </summary>
         private static string SummarizeArgs(JObject args)
         {
             if (args == null || !args.HasValues)

@@ -4,8 +4,10 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.CustomRoomName
 {
+    /// <summary>
     /// Steam 回调写完默认 name 后，再用配置覆盖一次，避免时序丢配置。
     /// OnLobbyCreated 为私有回调（LobbyCreated_t）：0.1.17a DummyClient/SteamLobbyManager.cs:255。
+    /// </summary>
     [HarmonyPatch(typeof(SteamLobbyManager), "OnLobbyCreated")]
     internal static class CustomRoomNameOnLobbyCreatedPatch
     {

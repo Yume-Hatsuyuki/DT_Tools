@@ -15,11 +15,13 @@ using DT_Tools.Features.LobbyMaxPlayers;
 
 namespace DT_Tools.Features.SpectatorJoin
 {
+    /// <summary>
     /// 满房观战：等待中（大厅）与进行中（Survive/Detective/允许观战的审判）的满房房间均可加入观战。
     /// 等待中加入者在房间（Lobby）内保持存活、可见并可自由移动，不占房间人数；
     /// 游戏开始（PickCharacter → Survive）后由服务端切换为幽灵观战模式；
     /// 进行中加入则直接进入幽灵观战模式。均不影响局内其他人的对局体验
     /// （不占人数、不参与角色/黑方分配、不参与开局判定）。
+    /// </summary>
     [HarmonyPatch]
     [PatchFeature(
         "满房观战：等待中（大厅）与进行中（Survive/Detective/允许观战的审判）的满房房间均可加入观战，观战者不占人数、不影响他人对局。",
@@ -44,11 +46,15 @@ namespace DT_Tools.Features.SpectatorJoin
         internal static int SpectatorCount(GameRoom room) =>
             room.Players.Count(p => p.IsSpectator);
 
+        /// <summary>
         /// 最后准备顺序（PlayerId 按准备时间升序；转观战时取倒序 = 最后准备者优先）。
+        /// </summary>
         private static readonly List<int> _readyOrder = new List<int>();
 
+        /// <summary>
         /// 记录准备顺序：每次有人点准备（isReady=true）即移到列表末尾（=最后准备），
         /// 取消准备（isReady=false）则移除。开局前由转观战逻辑按倒序选取"最后准备者"。
+        /// </summary>
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.HandleReady))]
         [HarmonyPostfix]
         private static void PostfixHandleReady(GameRoom __instance, GamePlayer player, bool isReady)
@@ -74,9 +80,11 @@ namespace DT_Tools.Features.SpectatorJoin
                 p.PublicInfo.PlayerId == pid2 && !p.IsSpectator));
         }
 
+        /// <summary>
         /// 超员转观战：真实玩家数超过开局参与上限时，按"最后准备倒序"（房主除外）
         /// 将多余玩家转为观战者，并置脏 roster 同步全员。此逻辑在房主点开始
         /// （全员已准备）时执行，使"谁当观战者"由准备顺序而非进房顺序决定。
+        /// </summary>
         private static void ConvertExcessToSpectators(GameRoom room)
         {
             int cap = PlayMaxPlayersValue;

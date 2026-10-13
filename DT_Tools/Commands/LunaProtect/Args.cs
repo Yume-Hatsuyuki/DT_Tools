@@ -2,7 +2,9 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.LunaProtect
 {
+    /// <summary>
     /// /luna_protect 参数：all / (#数字 / 纯数字)。
+    /// </summary>
     internal sealed class LunaProtectArgs
     {
         public bool All { get; private set; }

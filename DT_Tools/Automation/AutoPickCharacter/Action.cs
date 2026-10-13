@@ -5,10 +5,12 @@ using UnityEngine;
 
 namespace DT_Tools.Automation.AutoPickCharacter
 {
+    /// <summary>
     /// 动作：选角阶段延迟后按间隔重发 C_PICK_CHARACTER（服务端 StartPick 的 SyncAllPlayer 回调前
     /// _pickReady=false，过早的包会被静默忽略；达到 MaxAttempts 停止，服务端对已选玩家幂等）；
     /// 大厅按需发 C_MODIFY_PLAYER ChangeCharacter 同步模型——失败/未生效同样按间隔重试，
     /// 但尝试次数与选角阶段共用 MaxAttempts 上限，达到即停止并告警（避免无限刷包）。
+    /// </summary>
     internal static class AutoPickCharacterAction
     {
         public static void AutoPick()

@@ -8,16 +8,22 @@ using UnityEngine;
 
 namespace DT_Tools.Features.BlackKillNotify
 {
+    /// <summary>
     /// 击杀通报编排（客户端 / 房主两半共用）。
     /// 客户端半：记录击杀目标（KnifeAttack / DeadlyTrick 两个前缀喂入，覆盖式只认最近一次）→ RemainKill 下降检测（Modify 后缀）→ 挑空闲打字机 → 模拟触碰三连包（占用 → SendSecretChatMessage → 释放）。
     /// 房主半：OnDeadMurder 后缀直发，组文后经 S_CHAT_MESSAGE(SecretChat)、RecordSecretChat 与 Replicator.Secrets 广播黑方频道，不做占用或冷却校验。
     /// RemainKill 局内只减不增（0.1.17a Server.Game/Player.cs:331-345，只在 ConsumeKillAndRearm 递减；GameStart 归零的发包由 5 秒新鲜度门滤除），下降即本机击杀被主机接受。
+    /// </summary>
     internal static class BlackKillNotifyLogic
     {
+        /// <summary>
         /// 击杀目标记录的有效期：超过即视为过期（开局归零包等陈旧触发不通报）。
+        /// </summary>
         private const float TargetFreshSeconds = 5f;
 
+        /// <summary>
         /// 打字机空闲态：StateList[0]==0（占用时为占据者 PlayerId，0.1.17a Server.Game/ChatDevice.cs:52-59）。
+        /// </summary>
         private const int ChatDeviceFreeState = 0;
 
         private static bool _hasRemain;
@@ -28,14 +34,18 @@ namespace DT_Tools.Features.BlackKillNotify
 
         private static float _killTargetRealtime = float.NegativeInfinity;
 
+        /// <summary>
         /// 攻击发送前缀喂入：记录本次击杀候选目标。
+        /// </summary>
         public static void RecordKillTarget(int targetPid)
         {
             _killTargetPid = targetPid;
             _killTargetRealtime = Time.unscaledTime;
         }
 
+        /// <summary>
         /// MyPlayer.Modify 后缀：仅 RemainKill 类型包进入；下降即击杀成立（客户端半）。
+        /// </summary>
         public static void OnRemainKillApplied()
         {
             int remain = Managers.Game != null ? Managers.Game.RemainKill : 0;
@@ -101,9 +111,11 @@ namespace DT_Tools.Features.BlackKillNotify
             }
         }
 
+        /// <summary>
         /// 房主半入口：Server.Game.Player.OnDeadMurder 后缀调用。异常整体吞掉——
         /// Postfix 抛出会打断宿主 OnDead 剩余流程（ExitPlayer 等）。主机侧代码仅在
         /// 房主进程执行，无需额外 IsHost 判定。
+        /// </summary>
         public static void NotifyFromHost(Server.Game.Player victim, Server.Game.Player killer)
         {
             try
@@ -147,13 +159,17 @@ namespace DT_Tools.Features.BlackKillNotify
             }
         }
 
+        /// <summary>
         /// 战报文案（客户端/房主两半唯一实现，格式改动只改这里）。
+        /// </summary>
         private static string Compose(int surviveTime, string room, string character, int remain)
             => $"{Util.FormatTimeSentence(surviveTime)}"
                + $"\n黑方在【{room}】处击杀了【{character}】，剩余【{remain}】攻击次数。";
 
+        /// <summary>
         /// 角色名（客户端半）：受害者角色（CharacterData.Name，与文案「击杀了【角色】」对应），
         /// 缺失回退玩家显示名。
+        /// </summary>
         private static string ResolveCharacter(int pid, out PosInfo pos)
         {
             pos = null;
@@ -170,8 +186,10 @@ namespace DT_Tools.Features.BlackKillNotify
             return string.IsNullOrEmpty(victim.DisplayName) ? "未知角色" : victim.DisplayName;
         }
 
+        /// <summary>
         /// 地名（房主半）：受害者所在区域的 ERoomType 本地化名（与线索句式同源，
         /// Util.cs:814）；受害者无区域时回退凶手区域。
+        /// </summary>
         private static string ResolveRoomName(Server.Game.Player victim, Server.Game.Player killer)
         {
             var area = victim.CurrentArea ?? killer.CurrentArea;
@@ -180,7 +198,9 @@ namespace DT_Tools.Features.BlackKillNotify
             return Managers.GetText(Enum.GetName(typeof(ERoomType), area.Data.Type));
         }
 
+        /// <summary>
         /// 角色名（房主半）：受害者角色（CharacterData.Name），缺失回退玩家名。
+        /// </summary>
         private static string ResolveCharacterName(Server.Game.Player victim)
         {
             string name = victim.Data?.Name;
@@ -189,7 +209,9 @@ namespace DT_Tools.Features.BlackKillNotify
             return string.IsNullOrEmpty(name) ? "未知角色" : name;
         }
 
+        /// <summary>
         /// 离受害者最近的打字机（房主半）：找不到设备时填 0（面板署名留空，浮文不受影响）。
+        /// </summary>
         private static int NearestChatDeviceTo(Server.Game.Player victim)
         {
             // 客户端全局也有 DeviceManager，必须用 Server.Game 全名（范本 TwoRoundVoteFeature）
@@ -219,7 +241,9 @@ namespace DT_Tools.Features.BlackKillNotify
             return best?.ID ?? 0;
         }
 
+        /// <summary>
         /// 离自己最近的空闲打字机（客户端半）：设备状态经 S_MODIFY_DEVICE 全员实时广播。
+        /// </summary>
         private static DeviceBase PickFreeChatDevice(MyPlayer me)
         {
             Vector3 myPos = me.transform.position;

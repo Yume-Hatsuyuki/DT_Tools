@@ -3,9 +3,11 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.ForceRinPick
 {
+    /// <summary>
     /// 选角拦截（0.1.16b GameRoom.PickCharacter(Player, int)，服务端）：被标记玩家选角时
     /// 把 CharacterId 参数改写为目标角色 DataId（仅本次，标记即取即删）。
     /// 注意：若目标角色已被其他玩家选走，服务端角色去重校验会拒绝，本次强制静默无效。
+    /// </summary>
     [HarmonyPatch(typeof(Server.Game.GameRoom), "PickCharacter")]
     internal static class ForceRinPickPatch
     {

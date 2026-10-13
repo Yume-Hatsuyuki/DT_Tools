@@ -9,10 +9,12 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.TabletQol
 {
+    /// <summary>
     /// ② 「提交线索」二次确认栏。
     /// 提交动作走原版：确认后调用 UI_ClueSubItem.OnClickPropositionButton（私有，转储 :86488），判据、发包、置标记、关平板都由原版负责，不自己拼发包逻辑。
-    /// 确认栏外观全部来自原版：底板借卡片自己的框 tablet_clue_popup_frame.sprite（不透明度 PanelAlpha 可配）；主体是一张原版线索卡片（Managers.UI.MakeSubItem<UI_ClueSubItem> → SetInfo → InitPopupClue，照抄游戏用法，转储 :52838-52840），只作展示，关掉它自己的提交按钮；两个按钮克隆原版 PropositionButton（GetObject(3)），并显式设回正常态（clue_submit_normal.sprite + 白色，否则克隆会带上悬停时的 clue_submit_hover 米黄，转储 :86285-86293）。
+    /// 确认栏外观全部来自原版：底板借卡片自己的框 tablet_clue_popup_frame.sprite（不透明度 PanelAlpha 可配）；主体是一张原版线索卡片（Managers.UI.MakeSubItem&lt;UI_ClueSubItem> → SetInfo → InitPopupClue，照抄游戏用法，转储 :52838-52840），只作展示，关掉它自己的提交按钮；两个按钮克隆原版 PropositionButton（GetObject(3)），并显式设回正常态（clue_submit_normal.sprite + 白色，否则克隆会带上悬停时的 clue_submit_hover 米黄，转储 :86285-86293）。
     /// 尺寸跟随内容：先量卡片实际尺寸再算面板，过宽时等比缩放到平板宽 80% 内。挂在平板 transform 下，平板关闭时确认栏一并消失。
+    /// </summary>
     internal static class TabletQolConfirm
     {
         private const string RootName = "DT_ClueSubmitConfirm";
@@ -22,7 +24,9 @@ namespace DT_Tools.Features.TabletQol
         private const float Gap = 16f;
         private const float MinPanelW = 420f;
 
+        /// <summary>
         /// 为 true 时放行原方法（确认后重入用），避免递归弹框。
+        /// </summary>
         public static bool Suppress;
 
         private static GameObject _root;
@@ -120,7 +124,9 @@ namespace DT_Tools.Features.TabletQol
             MakeCloneButton(card, panelRt, "取消", new Vector2(btnW * 0.58f, Padding), new Vector2(btnW, btnH), Hide);
         }
 
+        /// <summary>
         /// 确认栏挂到平板自己的 transform 下（平板一关就跟着消失）；取不到就退回卡片根节点。
+        /// </summary>
         private static Transform TabletRoot(UI_ClueSubItem card)
         {
             try
@@ -135,7 +141,9 @@ namespace DT_Tools.Features.TabletQol
             return card.transform.root;
         }
 
+        /// <summary>
         /// 把原版卡片嵌进来量尺寸（只作展示 ⇒ 关掉它自己的提交按钮）。
+        /// </summary>
         private static UI_ClueSubItem EmbedCard(UI_ClueSubItem source, RectTransform parent, float maxW, out Vector2 size)
         {
             size = Vector2.zero;
@@ -173,7 +181,9 @@ namespace DT_Tools.Features.TabletQol
             }
         }
 
+        /// <summary>
         /// 平板那种细亮边：四条 2px 细边贴在面板四边（不用 sprite，颜色/粗细都确定）。
+        /// </summary>
         private static void AddBorder(RectTransform parent, Color color)
         {
             const float t = 2f;
@@ -219,7 +229,9 @@ namespace DT_Tools.Features.TabletQol
             t.raycastTarget = false;
         }
 
+        /// <summary>
         /// 克隆卡片上的原版按钮（`GetObject(3)`），换标签、设回正常态、绑自己的动作。
+        /// </summary>
         private static void MakeCloneButton(UI_ClueSubItem source, Transform parent, string label,
             Vector2 pos, Vector2 size, Action onClick)
         {
@@ -259,11 +271,13 @@ namespace DT_Tools.Features.TabletQol
             UI_Base.BindEvent(clone, _ => onClick());
         }
 
+        /// <summary>
         /// 确认：关掉确认栏，然后调用**原版**提交函数。
         ///
         /// 用 `AccessTools.Method` + `Invoke` 而不是 `Traverse.Method(name, args)`：后者按"参数个数 + 值"
         /// 挑重载，传 `null`（`PointerEventData` 用不到）时可能静默匹配不上。
         /// `Suppress` 期间放行 Prefix，避免"确认 → 又弹一次框"。
+        /// </summary>
         private static void ConfirmAndSubmit(UI_ClueSubItem card)
         {
             Hide();
