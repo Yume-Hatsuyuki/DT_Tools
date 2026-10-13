@@ -65,6 +65,9 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// 按序注册前缀并启动监听线程；失败时清理 listener 并带出异常。
         /// </summary>
+        /// <param name="prefixes">要监听的 URL 前缀列表。</param>
+        /// <param name="error">启动失败时的异常。</param>
+        /// <returns>启动成功时为 true。</returns>
         private bool TryStart(string[] prefixes, out Exception error)
         {
             error = null;
@@ -101,6 +104,8 @@ namespace DT_Tools.WebConsole
         /// Unity(Mono) 的 HttpListener 不做 Windows URL ACL 校验，任意前缀可直接监听。
         /// 监听地址解释的唯一权威：WsServer.ResolveIp 亦经本方法（避免两份口径漂移）。
         /// </remarks>
+        /// <param name="raw">配置中的原始监听地址。</param>
+        /// <returns>归一化后的监听地址，如 * 或 [::]。</returns>
         public static string NormalizeIp(string raw)
         {
             string ip = (raw ?? "").Trim();

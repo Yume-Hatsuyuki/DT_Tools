@@ -51,6 +51,10 @@ namespace DT_Tools.Commands.GiveMission
         /// <summary>
         /// 阶段守卫：切换中 / 迁移中拒绝派发（判定上浮 Game/RoomFlow.TryGuardBusy）。
         /// </summary>
+        /// <param name="room">当前房间。</param>
+        /// <param name="code">拒绝时的错误码。</param>
+        /// <param name="text">拒绝时的提示文字。</param>
+        /// <returns>可以派发时为 true；切换中或迁移中为 false。</returns>
         public static bool TryGuardBusy(GameRoom room, out string code, out string text)
             => RoomFlow.TryGuardBusy(room, "切换阶段", out code, out text);
 
@@ -61,6 +65,8 @@ namespace DT_Tools.Commands.GiveMission
         /// 反射链路一旦初始化失败会永久短路（见 MissionAccess.EnsureInit），此时提示
         /// 与旧"成员定位失败"文案等价的诊断。
         /// </remarks>
+        /// <param name="text">不可用时的提示文字。</param>
+        /// <returns>MissionManager 访问器可用时为 true。</returns>
         public static bool EnsureMissionAccess(out string text)
         {
             if (MissionAccess.Available)
@@ -78,6 +84,11 @@ namespace DT_Tools.Commands.GiveMission
         /// <remarks>
         /// 失败返回 false（错误码与提示已给出）。
         /// </remarks>
+        /// <param name="missionType">要派发的任务类型。</param>
+        /// <param name="outcome">派发结果。</param>
+        /// <param name="code">失败时的错误码。</param>
+        /// <param name="text">失败时的提示文字。</param>
+        /// <returns>派发成功返回 true；失败返回 false，原因写入 code 与 text。</returns>
         public static bool TryDispatch(ESchoolMission missionType, out Outcome outcome, out string code, out string text)
         {
             outcome = null;
@@ -173,6 +184,8 @@ namespace DT_Tools.Commands.GiveMission
         /// <remarks>
         /// 例如派发 ScShakerDrink(22): 22←16←15，返回 [15, 16]。
         /// </remarks>
+        /// <param name="type">任务类型（ESchoolMission 底层值）。</param>
+        /// <returns>软前置任务类型，按链头到链尾排列。</returns>
         private static List<int> CollectSoftPrerequisites(int type)
         {
             EnsureReverseNextMapBuilt();
@@ -236,6 +249,9 @@ namespace DT_Tools.Commands.GiveMission
         /// <summary>
         /// 检查 ProgressMissionList 中是否已包含某 Type 的任务。
         /// </summary>
+        /// <param name="progressList">进行中的任务列表（ProgressMissionList）。</param>
+        /// <param name="type">要查找的任务类型（ESchoolMission 底层值）。</param>
+        /// <returns>列表中已有该类型的任务时为 true。</returns>
         private static bool ContainsMissionType(System.Collections.IList progressList, int type)
         {
             foreach (var item in progressList)

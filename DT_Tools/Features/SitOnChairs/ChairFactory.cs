@@ -106,6 +106,7 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 把椅子上的坐姿人物 MeshRenderer 固定到 260 层级并启用。
         /// </summary>
+        /// <param name="chair">椅子组件。</param>
         internal static void ApplyCharacterSorting(Component chair)
         {
             if (chair == null)
@@ -131,6 +132,7 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 把椅子设备整体移到 数据坐标 + 坐姿偏移（人跟着椅子动）。
         /// </summary>
+        /// <param name="chair">要移动的椅子设备。</param>
         internal static void ApplySeatOffset(Chair chair)
         {
             if (chair == null)
@@ -157,6 +159,7 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 初始化椅子的 SkeletonAnimation（防空引用；骨架数据取任意已加载角色骨骼）。
         /// </summary>
+        /// <param name="anim">椅子的骨骼动画组件。</param>
         internal static void EnsureSkeleton(SkeletonAnimation anim)
         {
             if (anim == null)
@@ -277,6 +280,9 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 找离指定位置最近的椅子（500 世界单位内）。
         /// </summary>
+        /// <param name="dm">设备管理器。</param>
+        /// <param name="pos">查找的中心位置。</param>
+        /// <returns>500 世界单位内最近的椅子；范围内没有时为 null。</returns>
         internal static Chair NearestChair(DeviceManager dm, Vector3 pos)
         {
             if (dm == null || dm.Cache == null)

@@ -103,6 +103,8 @@ namespace DT_Tools.Commands.Agent
         /// <summary>
         /// 矿点 SubType → 掉落 DataId（与 Server Mineral.HandleEvent 一致，0.1.17a Server.Game/Mineral.cs:26/43）。
         /// </summary>
+        /// <param name="subType">矿点的 SubType。</param>
+        /// <returns>掉落物的 DataId。</returns>
         public static int MineralDataId(int subType)
         {
             switch ((EMineralType)subType)
@@ -140,6 +142,9 @@ namespace DT_Tools.Commands.Agent
         /// <remarks>
         /// State[1+type]=需求次数；State[4..6]==type 为已交。
         /// </remarks>
+        /// <param name="st">收集柜的 State 数组。</param>
+        /// <param name="type">颜色类型，与 State 的下标约定一致。</param>
+        /// <returns>该颜色仍需交付的次数。</returns>
         public static int CollectorRemain(IList<int> st, int type)
         {
             if (st == null || type < 0 || type > 2 || st.Count < 7) return 0;
@@ -164,6 +169,8 @@ namespace DT_Tools.Commands.Agent
         /// 用显式枚举匹配而非线性公式，避免枚举顺序/起始值变化导致的偏移错误
         /// （原 "1021+subType" 假设与真实枚举不符，曾导致花色映射全部错位、Pink 越界返回 0）。
         /// </remarks>
+        /// <param name="subType">花盆的 SubType，对应 Protocol.EFlowerType。</param>
+        /// <returns>采摘产出的花道具 DataId。</returns>
         public static int FlowerItemId(int subType)
         {
             switch ((EFlowerType)subType)
@@ -236,6 +243,8 @@ namespace DT_Tools.Commands.Agent
         /// <summary>
         /// 道具 DataId 对应的候选任务ID集合；不是任务道具则返回空数组。
         /// </summary>
+        /// <param name="itemId">道具 DataId。</param>
+        /// <returns>候选任务 ID 集合；不是任务道具时为空数组。</returns>
         public static int[] MissionsOfItem(int itemId)
         {
             if (s_itemMissions.TryGetValue(itemId, out var m)) return m;
@@ -256,6 +265,8 @@ namespace DT_Tools.Commands.Agent
         /// AgentMissionState 未就绪时保守返回 true（不误丢/误拒），避免游戏刚加载、
         /// 任务状态还没同步到时把所有道具当作无效。
         /// </remarks>
+        /// <param name="itemId">道具 DataId。</param>
+        /// <returns>候选任务中至少有一个当前激活时为 true。</returns>
         public static bool IsItemMissionActive(int itemId)
         {
             var missions = MissionsOfItem(itemId);
@@ -295,6 +306,9 @@ namespace DT_Tools.Commands.Agent
         /// 5. 任务仍激活，但当前没有任何设备表现出精确的空槽需求（如喷雾台两个槽暂时
         /// 都满、矿工/传送/Bio 都不缺电池）→ 保留，等待槽位空出，不贸然丢弃。
         /// </summary>
+        /// <param name="hand">手持道具的 DataId。</param>
+        /// <param name="devices">当前设备快照，用于判断是否存在精确交付目标。</param>
+        /// <returns>应丢弃时为 true，应保留时为 false。</returns>
         public static bool ShouldDropHand(int hand, List<DeviceBase> devices)
         {
             if (hand <= 0) return false;
@@ -354,6 +368,8 @@ namespace DT_Tools.Commands.Agent
         /// 依据 Server.Game/Drink.cs InteractTable：
         /// Drink SubType=0，State[2]/[3]=目标花 DataId，State[4]/[5]=对应已放槽（0=空）。
         /// </remarks>
+        /// <param name="devices">当前设备快照。</param>
+        /// <returns>仍需要的花道具 DataId 集合；无缺口时为空集合。</returns>
         public static HashSet<int> BuildNeededFlowerIds(List<DeviceBase> devices)
         {
             var needed = new HashSet<int>();
@@ -392,6 +408,8 @@ namespace DT_Tools.Commands.Agent
         /// 依据：工艺台所需矿见槽位布局表 Craft 行（Craft.cs:86-89）；
         /// 收集柜需求/已交槽见 Collector 行（Collector.cs:88-104）。
         /// </remarks>
+        /// <param name="devices">当前设备快照。</param>
+        /// <returns>仍需要的矿物道具 DataId 集合；无缺口时为空集合。</returns>
         public static HashSet<int> BuildNeededMineralIds(List<DeviceBase> devices)
         {
             var needed = new HashSet<int>();
@@ -430,6 +448,9 @@ namespace DT_Tools.Commands.Agent
         /// <summary>
         /// 同一条任务链上的步骤互认（按 ESchoolMission 底层值）。
         /// </summary>
+        /// <param name="filterMission">过滤条件中的任务类型（ESchoolMission 底层值）。</param>
+        /// <param name="stepMission">步骤所属的任务类型（ESchoolMission 底层值）。</param>
+        /// <returns>两者属于同一条任务链时为 true。</returns>
         public static bool RelatedTo(int filterMission, int stepMission)
         {
             int[][] chains =
@@ -456,6 +477,8 @@ namespace DT_Tools.Commands.Agent
         /// <remarks>
         /// State[1]/[2]=目标色，State[3]/[4]=已放，State[5]=完成。
         /// </remarks>
+        /// <param name="devices">当前设备快照。</param>
+        /// <returns>下一个需要的颜色：1 红、2 绿、3 蓝、4 黄；0 表示任务未开或已放齐。</returns>
         public static int ScannerNextNeededColor(List<DeviceBase> devices)
         {
             foreach (var d in devices)

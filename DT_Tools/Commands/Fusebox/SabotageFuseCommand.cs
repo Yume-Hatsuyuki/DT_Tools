@@ -68,6 +68,10 @@ namespace DT_Tools.Commands.Fusebox
         /// 单个电闸拉断：校验目标确实已武装且完好后发包，
         /// 避免对已损坏电闸误发触发 ConnetCable 反而修好电闸。
         /// </summary>
+        /// <param name="fuseboxId">要拉断的电闸 ID。</param>
+        /// <param name="armed">当前已武装的电闸列表，用于校验目标完好。</param>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>命令执行结果。</returns>
         private static CommandResult SabotageOne(int fuseboxId, List<DeviceBase> armed, CommandContext ctx)
         {
             DeviceBase target = armed.Find(f => f.ID == fuseboxId);
@@ -114,6 +118,9 @@ namespace DT_Tools.Commands.Fusebox
         /// <remarks>
         /// 第 2 个电闸拉断时会触发全场停电 + ClearFuseboxSabotage，第 3 个包将被服务端拒绝。
         /// </remarks>
+        /// <param name="armed">当前已武装的电闸列表。</param>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>命令执行结果。</returns>
         private static CommandResult SabotageAll(List<DeviceBase> armed, CommandContext ctx)
         {
             if (armed.Count == 0)

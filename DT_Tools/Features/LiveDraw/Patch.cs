@@ -279,6 +279,7 @@ namespace DT_Tools.Features.LiveDraw
         /// <summary>
         /// 当前特效的单次时长；Float 为持续效果返回 -1（不自动结束）。
         /// </summary>
+        /// <returns>特效单次时长，单位秒；持续效果返回 -1，不自动结束。</returns>
         private static float FxDuration()
         {
             switch (_fx)
@@ -449,6 +450,7 @@ namespace DT_Tools.Features.LiveDraw
         /// 静态单例 TrialManager.Instance.State（0.1.16b trial.cs:41（待核对） s_instance，State 为独立
         /// 字段不依赖 GameRoom），任何玩家（含非房主）都能画；房主进程同样有效。
         /// </remarks>
+        /// <returns>处于庭审讨论（作画）阶段时为 true。</returns>
         private static bool InDrawPhase()
         {
             var game = Managers.Game;

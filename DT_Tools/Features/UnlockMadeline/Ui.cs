@@ -81,6 +81,8 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// ResourceManager 缓存字典（私有字段 _resources：0.1.17a ResourceManager.cs:11）。
         /// </summary>
+        /// <param name="rm">资源管理器。</param>
+        /// <returns>资源管理器的缓存字典。</returns>
         private static Dictionary<string, Object> ResourcesDict(ResourceManager rm)
             => AccessTools.Field(typeof(ResourceManager), "_resources")?.GetValue(rm)
                as Dictionary<string, Object>;
@@ -99,6 +101,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// 已注入短路：两个入口可能重复触发（如场景重载再次置 IsInit），反复执行会
         /// 重复创建裁切纹理滞留显存，故一个开启周期只注入一次（Cleanup 复位标记）。
         /// </remarks>
+        /// <param name="rm">资源管理器。</param>
         public static void InjectAll(ResourceManager rm)
         {
             if (UnlockMadelineState.Injected)
@@ -223,6 +226,8 @@ namespace DT_Tools.Features.UnlockMadeline
         /// 官方 Map_Black / Map_White 主要差边框色（粉/绿），脸本身亮度一致，
         /// 故 Black/White 共用同一张裁切，不再压暗。
         /// </remarks>
+        /// <param name="dict">要写入的资源字典。</param>
+        /// <param name="orig">Madeline 的立绘纹理。</param>
         private static void InjectMapSpritesFromStanding(Dictionary<string, Object> dict, Texture2D orig)
         {
             if (dict.TryGetValue("Madeline_Map_White.sprite", out var existW) && existW is Sprite
@@ -256,6 +261,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 立绘不可用时的兜底：Someone_Map_*。
         /// </summary>
+        /// <param name="dict">要写入的资源字典。</param>
         private static void InjectMapSpritesFallback(Dictionary<string, Object> dict)
         {
             Object black = null;
@@ -281,6 +287,8 @@ namespace DT_Tools.Features.UnlockMadeline
         /// 从 Mastermind_SD 生成技能图标：不裁切，整只 SD 等比缩进黑底方画布
         /// （textureRect 兼容图集；Unity 纹理 Y 向上）。
         /// </summary>
+        /// <param name="dict">要写入的资源字典。</param>
+        /// <param name="sdSprite">Mastermind 的 SD 图。</param>
         private static void InjectSkillFromMastermindSd(Dictionary<string, Object> dict, Sprite sdSprite)
         {
             if (sdSprite == null)
@@ -303,6 +311,11 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 将 sprite 的 textureRect 等比缩放到 outSize*(1-2*margin) 内，居中贴到黑底方图。
         /// </summary>
+        /// <param name="src">源图。</param>
+        /// <param name="outSize">输出方图的边长，单位像素。</param>
+        /// <param name="margin">四周留白比例，取值 0 到 0.5。</param>
+        /// <param name="dst">生成的纹理，供调用方回收。</param>
+        /// <returns>贴到黑底方画布上的 Sprite。</returns>
         private static Sprite FitSpriteOnBlack(Sprite src, int outSize, float margin, out Texture2D dst)
         {
             Texture2D tex = src.texture;
@@ -332,6 +345,9 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 从图集纹理裁一个区域生成 Sprite（记录进 Created 以便清理）。
         /// </summary>
+        /// <param name="tex">图集纹理。</param>
+        /// <param name="rect">要裁剪的区域，单位像素。</param>
+        /// <returns>新建的 Sprite；创建记录会保存以便清理。</returns>
         private static Sprite CreateSprite(Texture2D tex, Rect rect)
             => UnlockMadelineState.Track(
                 Sprite.Create(tex, rect, new Vector2(0.5f, 0.5f)));
@@ -377,6 +393,10 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 整图经临时 RT 缩放到 nw×nh 并读回为纹理（Discord 小头像用）。
         /// </summary>
+        /// <param name="src">源纹理。</param>
+        /// <param name="nw">新宽度，单位像素。</param>
+        /// <param name="nh">新高度，单位像素。</param>
+        /// <returns>缩放后的新纹理。</returns>
         private static Texture2D BlitToTexture(Texture2D src, int nw, int nh)
         {
             RenderTexture rt = RenderTexture.GetTemporary(nw, nh, 0, RenderTextureFormat.ARGB32);
@@ -396,18 +416,27 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// UI_Base.GetImage 为 protected：0.1.17a UI_Base.cs:113。
         /// </summary>
+        /// <param name="ui">UI 组件。</param>
+        /// <param name="idx">绑定器中的图片槽索引。</param>
+        /// <returns>对应槽位的 Image 组件。</returns>
         internal static Image GetImage(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetImage")?.Invoke(ui, new object[] { idx }) as Image;
 
         /// <summary>
         /// UI_Base.GetObject 为 protected：0.1.17a UI_Base.cs:93。
         /// </summary>
+        /// <param name="ui">UI 组件。</param>
+        /// <param name="idx">绑定器中的对象槽索引。</param>
+        /// <returns>对应槽位的 GameObject。</returns>
         internal static GameObject GetObject(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetObject")?.Invoke(ui, new object[] { idx }) as GameObject;
 
         /// <summary>
         /// UI_Base.GetText 为 protected：0.1.17a UI_Base.cs:103。
         /// </summary>
+        /// <param name="ui">UI 组件。</param>
+        /// <param name="idx">绑定器中的文本槽索引。</param>
+        /// <returns>对应槽位的 TMP_Text 组件。</returns>
         internal static TMP_Text GetText(Component ui, int idx)
             => AccessTools.Method(typeof(UI_Base), "GetText")?.Invoke(ui, new object[] { idx }) as TMP_Text;
 
@@ -416,6 +445,8 @@ namespace DT_Tools.Features.UnlockMadeline
         /// 0.1.16b UI_PickPopup.cs:428（待核对）)：原版 switch 未覆盖 Madeline，图区恒空，
         /// 此处创建/复用一个常驻 Image 并挂到容器上。
         /// </summary>
+        /// <param name="container">选人面板的立绘容器。</param>
+        /// <returns>立绘用的 Image 组件，不存在时创建。</returns>
         internal static Image EnsureMadelineStandingImage(Transform container)
         {
             var cached = UnlockMadelineState.MadelineStandingImage;
@@ -448,6 +479,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 选人立绘应用：加载 Madeline_standing.sprite 并显示（失败保持空白并记日志）。
         /// </summary>
+        /// <param name="container">选人面板的立绘容器。</param>
         internal static void ApplyStandingImage(Transform container)
         {
             Image image = EnsureMadelineStandingImage(container);
@@ -466,6 +498,9 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 审判过场表情层替换（UI_Base 绑定器索引 7 / 9）。
         /// </summary>
+        /// <param name="trial">审判过场界面。</param>
+        /// <param name="imageIndex">表情层在绑定器中的索引，取 7 或 9。</param>
+        /// <param name="sprite">要替换的表情图。</param>
         internal static void SetExpLayer(UI_TrialEvent trial, int imageIndex, Sprite sprite)
         {
             Image img = GetImage(trial, imageIndex);

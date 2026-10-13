@@ -24,6 +24,7 @@ namespace DT_Tools.WebConsole.Api
         /// <remarks>
         /// WebUI 据此渲染标签筛选，标签文字不在前端写死。
         /// </remarks>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleTags(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, FeatureTagCatalog.Entries.Select(e => new
             {
@@ -141,6 +142,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// /api/config/section/{段名}/log — 功能段日志（GET 读取；POST /log/clear 或 DELETE 清空）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleSectionLog(HttpListenerContext ctx)
         {
             const string prefix = "/api/config/section/";

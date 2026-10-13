@@ -33,6 +33,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// GET /api/mp3/state — 引擎会话快照 + 暂停书签合并 + 歌单 + 当前曲目下标。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleState(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -81,6 +82,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/play {path} — 播放（本地路径或 http(s)），自动入歌单去重。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlay(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -100,6 +102,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/index {index} — 播放歌单第 index 首。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleIndex(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -116,6 +119,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/next {delta} — 跳转 ±1（默认 +1），歌单循环。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleNext(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -141,6 +145,7 @@ namespace DT_Tools.WebConsole.Api
         /// <remarks>
         /// 幂等：已暂停返回成功。
         /// </remarks>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePause(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -163,6 +168,7 @@ namespace DT_Tools.WebConsole.Api
         /// <remarks>
         /// 幂等：已在播放返回成功。
         /// </remarks>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleResume(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -182,6 +188,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/seek {position} — 跳转（秒）：播放中走引擎；暂停中更新书签。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleSeek(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -202,6 +209,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/volume {volume} — 响度 0~1（实时生效并持久化）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleVolume(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -218,6 +226,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/mic {enabled} — 麦克风混入开关（会话中即时挂/卸；持久化）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleMic(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -251,6 +260,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/local {enabled} — 本地喇叭出声开关（mute 实现，持久化）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleLocal(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -276,6 +286,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/mode {mode} — 播放方式：list=列表循环 | single=单曲循环 | random=随机播放。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleMode(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -296,6 +307,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/stop — 停止会话并清除暂停书签。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleStop(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -308,6 +320,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/playlist/add {path} — 添加（按路径去重）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlaylistAdd(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -327,6 +340,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/playlist/remove {index} — 移除（当前播放中的曲目也可移除，播放不受影响）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlaylistRemove(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -345,6 +359,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/playlist/move {from,to} — 调序。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlaylistMove(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -366,6 +381,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/mp3/playlist/clear — 清空歌单（不停止当前播放）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlaylistClear(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -380,6 +396,10 @@ namespace DT_Tools.WebConsole.Api
         /// <remarks>
         /// 任何新播放都使暂停书签作废；startSeconds&gt;0 时从该位置重建（恢复暂停）。
         /// </remarks>
+        /// <param name="path">曲目路径或链接。</param>
+        /// <param name="index">曲目在歌单中的下标。</param>
+        /// <param name="startSeconds">起播位置，单位秒。</param>
+        /// <returns>命令执行结果。</returns>
         private static CommandResult PlayInternal(string path, int index, float startSeconds = 0f)
         {
             var store = Mp3Playlist.Get();
@@ -432,6 +452,8 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 按路径查歌单下标（无会话守卫——连播回调时引擎已 Stop，只认路径）。
         /// </summary>
+        /// <param name="path">曲目路径。</param>
+        /// <returns>歌单中的下标；不在歌单时为 -1。</returns>
         private static int IndexOfPath(string path)
         {
             if (string.IsNullOrEmpty(path))
@@ -443,6 +465,9 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 随机挑一首（避免与当前重复；单曲目时只能原地）。
         /// </summary>
+        /// <param name="count">歌单曲目数量。</param>
+        /// <param name="exclude">要避开的下标。</param>
+        /// <returns>随机选中的下标；只有一首时返回原下标。</returns>
         private static int PickRandom(int count, int exclude)
         {
             if (count <= 1)
@@ -456,6 +481,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 当前曲目在歌单中的下标（会话空闲或路径不在歌单时 -1）。
         /// </summary>
+        /// <returns>当前曲目在歌单中的下标；会话空闲或不在歌单时为 -1。</returns>
         private static int CurrentIndex()
         {
             if (MicBroadcast.Snapshot().Phase == "idle")
@@ -466,6 +492,8 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 统一执行壳：RunOnMain 包裹（结果信封原样回写）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
+        /// <param name="work">要在主线程执行的命令逻辑。</param>
         private static void WriteMain(HttpListenerContext ctx, Func<CommandResult> work)
             => HttpServer.WriteJson(ctx.Response, WebConsole.RunOnMain(work));
 
@@ -488,6 +516,9 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 解析 JSON 请求体；缺失/非法直接回 "invalid body"（统一解析在 ApiUtil）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
+        /// <param name="body">解析出的请求体；失败时为 null。</param>
+        /// <returns>解析成功时为 true；失败时为 false。</returns>
         private static bool ParseBody(HttpListenerContext ctx, out JObject body)
         {
             body = ApiUtil.ParseBody(ctx);

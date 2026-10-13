@@ -15,6 +15,8 @@ namespace DT_Tools.Game
         /// <remarks>
         /// Faction/ListAlive 两域逐字相同的判定上浮于此。
         /// </remarks>
+        /// <param name="state">游戏阶段。</param>
+        /// <returns>处于选角结束后的进行中阶段时为 true。</returns>
         public static bool IsInGame(EGameState state)
             => state != EGameState.Lobby
                && state != EGameState.NoneState

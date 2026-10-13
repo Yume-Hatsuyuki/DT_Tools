@@ -37,6 +37,8 @@ namespace DT_Tools.Features.TabletQol
         /// 这里**只查这一条**：原版自己还有 `IsValid(Clue.Info)`（命题完整）那道门（:86490），
         /// 由原版负责判断 —— 确认栏不该去猜它的结论。
         /// </remarks>
+        /// <param name="card">线索卡片。</param>
+        /// <returns>当前可以提交时为 true。</returns>
         private static bool CanSubmit(UI_ClueSubItem card)
         {
             try

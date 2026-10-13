@@ -30,6 +30,7 @@ namespace DT_Tools.Features.HostScreenSms
         /// <remarks>
         /// 拷贝本身是 SecretChat，不会再命中本 Postfix，无递归。
         /// </remarks>
+        /// <param name="packet">收到的消息包。</param>
         [HarmonyPatch(typeof(Replicator), nameof(Replicator.AliveReal))]
         [HarmonyPostfix]
         private static void PostfixAliveReal(IMessage packet)

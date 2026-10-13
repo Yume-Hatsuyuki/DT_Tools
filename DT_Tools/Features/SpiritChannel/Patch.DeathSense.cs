@@ -24,6 +24,8 @@ namespace DT_Tools.Features.SpiritChannel
         /// <remarks>
         /// 修改已有设备走 Modify 分支，不触发感知。
         /// </remarks>
+        /// <param name="packet">收到的设备同步包。</param>
+        /// <param name="__state">是否为新尸体，传给 Postfix 使用。</param>
         private static void Prefix(Packet packet, ref bool __state)
         {
             __state = false;

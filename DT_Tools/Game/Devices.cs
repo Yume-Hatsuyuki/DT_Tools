@@ -31,6 +31,7 @@ namespace DT_Tools.Game
         /// <summary>
         /// 当前处于 OpenArmory（可拔刀）的武器架。
         /// </summary>
+        /// <returns>当前可拔刀的武器架列表。</returns>
         public static List<DeviceBase> OpenArmories()
             => AllOf(EDeviceType.Armory)
                 .Where(d => d.DeviceState == (int)EArmoryState.OpenArmory)
@@ -45,6 +46,7 @@ namespace DT_Tools.Game
         /// <summary>
         /// 已武装且完好的电闸（开局 StartFuseboxSabotage 随机武装 3 个）。
         /// </summary>
+        /// <returns>已武装且完好的电闸列表。</returns>
         public static List<DeviceBase> ArmedIntactFuseboxes()
             => AllOf(EDeviceType.Fusebox)
                 .Where(f => f.Info != null
@@ -60,6 +62,8 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 房主侧功能用。
         /// </remarks>
+        /// <param name="dm">服务端设备管理器。</param>
+        /// <returns>全部货架列表。</returns>
         public static List<Server.Game.Storage> GetStorages(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_storages").GetValue<List<Server.Game.Storage>>();
     }

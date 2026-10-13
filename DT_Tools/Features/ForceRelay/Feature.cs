@@ -67,6 +67,7 @@ namespace DT_Tools.Features.ForceRelay
         /// <summary>
         /// 强制中继：禁用 ICE，抬高 ICE 惩罚，SDR 无额外惩罚。
         /// </summary>
+        /// <param name="log">是否把设置结果输出到日志，默认不输出。</param>
         internal static void ApplyForceRelay(bool log = false)
         {
             // Steam 未初始化时 SetConfigValue 可能抛或返回 false
@@ -127,6 +128,9 @@ namespace DT_Tools.Features.ForceRelay
         /// 与游戏 SteamP2PTransport.SetGlobalInt32 同实现
         /// （0.1.17a DummyClient/SteamP2PTransport.cs:269）。
         /// </summary>
+        /// <param name="key">要设置的 Steam 网络配置项。</param>
+        /// <param name="value">配置值。</param>
+        /// <returns>设置成功时为 true。</returns>
         static bool SetGlobalInt32(ESteamNetworkingConfigValue key, int value)
         {
             global::System.IntPtr ptr = global::System.Runtime.InteropServices.Marshal.AllocHGlobal(4);

@@ -81,6 +81,8 @@ namespace DT_Tools.Commands.Chat
         /// <summary>
         /// DeviceState：0=空闲，非 0=占用者 PlayerId。
         /// </summary>
+        /// <param name="state">设备状态值：0 表示空闲，非 0 为占用者的 PlayerId。</param>
+        /// <returns>占用状态的显示文字。</returns>
         private static string OccupancyLabel(int state)
         {
             if (state == 0) return "空闲";

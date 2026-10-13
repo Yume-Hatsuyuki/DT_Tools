@@ -47,12 +47,15 @@ namespace DT_Tools.Commands
         /// <summary>
         /// 构造延迟占位结果：Execute 直接 return 它，真实结果稍后 Complete(final) 回填。
         /// </summary>
+        /// <param name="complete">真实结果就绪时调用，由 Complete 触发。</param>
+        /// <returns>延迟占位结果，Execute 直接返回它。</returns>
         public static CommandResult Defer(Action<CommandResult> complete)
             => new CommandResult(true, null, null) { _deferredComplete = complete ?? throw new ArgumentNullException(nameof(complete)) };
 
         /// <summary>
         /// 回填真实结果（只认第一次；主线程调用）。
         /// </summary>
+        /// <param name="final">真实结果；只有第一次调用生效，后续调用被忽略。</param>
         public void Complete(CommandResult final)
         {
             var sink = _deferredComplete;

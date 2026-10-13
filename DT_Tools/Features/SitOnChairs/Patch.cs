@@ -558,6 +558,9 @@ namespace DT_Tools.Features.SitOnChairs
             /// <summary>
             /// 远端玩家坐下：隐藏其模型 + 把椅子 Spine 换成该角色坐姿形象。
             /// </summary>
+            /// <param name="playerId">远端玩家的 PlayerId。</param>
+            /// <param name="chairId">椅子设备 ID。</param>
+            /// <param name="charId">角色 ID。</param>
             private static void ApplyRemoteSit(int playerId, int chairId, int charId)
             {
                 Chair chair = FindChair(chairId);
@@ -575,6 +578,8 @@ namespace DT_Tools.Features.SitOnChairs
             /// <summary>
             /// 远端玩家起身：显示其模型 + 椅子形象还原（Spine 转透明）。
             /// </summary>
+            /// <param name="playerId">远端玩家的 PlayerId。</param>
+            /// <param name="chairId">椅子设备 ID。</param>
             private static void ApplyRemoteRise(int playerId, int chairId)
             {
                 Chair chair = FindChair(chairId);
@@ -592,6 +597,8 @@ namespace DT_Tools.Features.SitOnChairs
             /// <summary>
             /// 按设备 ID 找对局内的椅子（装本 mod 的客户端注入同一份椅子数据，DeviceId 一致）。
             /// </summary>
+            /// <param name="chairId">椅子设备 ID。</param>
+            /// <returns>对局内的椅子；找不到时为 null。</returns>
             private static Chair FindChair(int chairId)
             {
                 if (Managers.Device?.Cache == null)
@@ -620,6 +627,8 @@ namespace DT_Tools.Features.SitOnChairs
             /// <summary>
             /// 远端玩家模型隐藏/显示：PlayerStealth 把模型 Spine/Sprite 全部变透明（原版 Sit 状态的同款表现）。
             /// </summary>
+            /// <param name="p">远端玩家。</param>
+            /// <param name="stealth">为 true 时隐藏模型，为 false 时显示。</param>
             private static void SetPlayerStealth(Player p, bool stealth)
             {
                 try

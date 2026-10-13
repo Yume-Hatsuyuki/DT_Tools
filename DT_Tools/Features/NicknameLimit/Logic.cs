@@ -87,6 +87,8 @@ namespace DT_Tools.Features.NicknameLimit
         /// <summary>
         /// 昵称输入框 = GetInputField(1)（原版 :502-505 的使用处）。
         /// </summary>
+        /// <param name="scene">大厅界面。</param>
+        /// <returns>昵称输入框。</returns>
         public static TMP_InputField GetNicknameField(UI_LobbyScene scene)
         {
             try
@@ -154,6 +156,9 @@ namespace DT_Tools.Features.NicknameLimit
         /// <summary>
         /// 原版三档校验（0.1.16b UI_LobbyScene.cs:1772（待核对）-1814（待核对）)，仅供 OnDisabled 还原使用。
         /// </summary>
+        /// <param name="name">要校验的昵称。</param>
+        /// <param name="failTip">校验失败时的提示文字。</param>
+        /// <returns>昵称通过校验时为 true。</returns>
         private static bool VanillaIsAcceptable(string name, out string failTip)
         {
             failTip = null;
@@ -182,6 +187,9 @@ namespace DT_Tools.Features.NicknameLimit
         /// <summary>
         /// 写门禁字段并直接清/写提示，避免仍显示「昵称太长了」。
         /// </summary>
+        /// <param name="scene">大厅界面。</param>
+        /// <param name="valid">昵称是否通过校验。</param>
+        /// <param name="tip">校验失败时要显示的提示文字。</param>
         public static void ApplyValidUi(UI_LobbyScene scene, bool valid, string tip)
         {
             var t = Traverse(scene);

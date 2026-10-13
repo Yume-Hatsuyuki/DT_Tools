@@ -109,6 +109,7 @@ namespace DT_Tools.Automation.AutoAcquireWeapon
         /// <summary>
         /// 安排下一次重试时刻并计入一次尝试（与旧实现一致：失败也消耗尝试次数）。
         /// </summary>
+        /// <param name="overrideInterval">覆盖本次重试的等待秒数；为 null 时沿用默认重试间隔。</param>
         private static void ScheduleRetry(float? overrideInterval = null)
         {
             float interval = overrideInterval

@@ -73,6 +73,10 @@ namespace DT_Tools.Commands.GiveBuff
         /// （0.1.17a Server.Game/BuffComponent.cs:93 AddBuff / :118 RemoveBuffForce，
         /// Server.Game/JobSerializer.cs:98 PushAfter）。
         /// </remarks>
+        /// <param name="room">所在房间。</param>
+        /// <param name="player">目标玩家。</param>
+        /// <param name="buffType">要添加的 BUFF 类型。</param>
+        /// <param name="durationMs">持续时间，单位毫秒。</param>
         public static void AddBuffWithRefresh(GameRoom room, Server.Game.Player player, EBuffType buffType, int durationMs)
         {
             if (player.BuffComponent.HasBuff(buffType))

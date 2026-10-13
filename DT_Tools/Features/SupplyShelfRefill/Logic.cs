@@ -166,6 +166,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
         /// <summary>
         /// 补货池：货架随机道具开启时沿用其扩展池（经 ItemPools.ShelfPoolProvider），否则兜底 BELL/AIRHORN。
         /// </summary>
+        /// <returns>随机抽取的补货道具 DataId。</returns>
         private static int PickRefillItemId()
         {
             int[] pool = ItemPools.ShelfPoolProvider?.Invoke() ?? FallbackItems;

@@ -26,6 +26,8 @@ namespace DT_Tools.Commands.AcquireWeapon
         /// <remarks>
         /// 仅 OpenArmory 有意义；无法取用时返回 null。
         /// </remarks>
+        /// <param name="armory">武器架设备，仅 OpenArmory 状态有意义。</param>
+        /// <returns>剩余秒数；无法取用时为 null。</returns>
         public static int? TryGetMoveRemainSeconds(DeviceBase armory)
         {
             var states = armory?.Info?.StateList;
@@ -37,6 +39,8 @@ namespace DT_Tools.Commands.AcquireWeapon
         /// <summary>
         /// 无参数：列出全部武器架信息（只读，不发包），开放架带真伪可拔判定。
         /// </summary>
+        /// <param name="ctx">命令上下文，用于输出结果。</param>
+        /// <returns>命令执行结果；只读，不发送任何网络包。</returns>
         public static CommandResult ListArmories(CommandContext ctx)
         {
             var armories = Devices.AllOf(EDeviceType.Armory);
@@ -59,6 +63,8 @@ namespace DT_Tools.Commands.AcquireWeapon
         /// <remarks>
         /// 非房主执行时无服务端数据，返回未知。
         /// </remarks>
+        /// <param name="armory">要判定的武器架。</param>
+        /// <returns>人可读的判定文字：非房主返回“未知”；当前凶器架返回“真可拔”；其它情况取决于房主的「武器架多刀」设置。</returns>
         public static string JudgeArmory(DeviceBase armory)
         {
             if (!HostGuard.IsHost)
@@ -74,6 +80,8 @@ namespace DT_Tools.Commands.AcquireWeapon
         /// <summary>
         /// 机器可读判定（JSON 用）：real / conditional / unknown。
         /// </summary>
+        /// <param name="armory">要判定的武器架。</param>
+        /// <returns>机器可读判定：real、conditional 或 unknown。</returns>
         public static string PickableKind(DeviceBase armory)
         {
             if (!HostGuard.IsHost)
@@ -89,6 +97,8 @@ namespace DT_Tools.Commands.AcquireWeapon
         /// <summary>
         /// 该架是否为服务端当前凶器架（仅房主可判，用于 ◄ 标记）。
         /// </summary>
+        /// <param name="armory">要判断的武器架。</param>
+        /// <returns>是服务端当前凶器架时为 true；只有房主能判定，非房主端的结果不可靠。</returns>
         public static bool IsServerCurrentArmory(DeviceBase armory)
             => HostGuard.IsHost
                && Server.Game.DeviceManager.Instance?.CurrentArmory?.ID == armory.ID;
@@ -96,6 +106,9 @@ namespace DT_Tools.Commands.AcquireWeapon
         /// <summary>
         /// 带参数：从指定武器架拔刀（无视距离）。
         /// </summary>
+        /// <param name="ctx">命令上下文。</param>
+        /// <param name="rawId">武器架 ID 的原始输入文本，未解析。</param>
+        /// <returns>命令执行结果。</returns>
         public static CommandResult Acquire(CommandContext ctx, string rawId)
         {
             if (!LocalPlayer.TryGetPlayer(out var my, out string localError))

@@ -19,6 +19,9 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 失败时 error 给出对应提示文案，调用方回复后统一返回 "not in game"。
         /// </remarks>
+        /// <param name="my">本机玩家；失败时为 null。</param>
+        /// <param name="error">失败的中文原因。</param>
+        /// <returns>本机已进入对局时为 true。</returns>
         public static bool TryGetPlayer(out MyPlayer my, out string error)
         {
             my = Managers.Player?.MyPlayer;
@@ -58,6 +61,8 @@ namespace DT_Tools.Game
         /// 返回客户端 Player（全局命名空间，0.1.17a Player.cs:294 Name/292 PublicInfo/294 TargetPos），
         /// 与 Server.Game.Player 同名，调用方如需服务端玩家请写全名。
         /// </remarks>
+        /// <param name="playerId">玩家 PlayerId。</param>
+        /// <returns>客户端玩家对象；只包含存活且已生成的玩家，找不到时为 null。</returns>
         public static Player FindClientPlayer(int playerId)
         {
             var dict = Managers.Player?.Players;

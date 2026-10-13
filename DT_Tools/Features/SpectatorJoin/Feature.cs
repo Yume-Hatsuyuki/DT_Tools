@@ -60,6 +60,9 @@ namespace DT_Tools.Features.SpectatorJoin
         /// <remarks>
         /// 开局前由转观战逻辑按倒序选取"最后准备者"。
         /// </remarks>
+        /// <param name="__instance">被拦截的房间实例。</param>
+        /// <param name="player">操作准备状态的玩家。</param>
+        /// <param name="isReady">玩家是否已准备。</param>
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.HandleReady))]
         [HarmonyPostfix]
         private static void PostfixHandleReady(GameRoom __instance, GamePlayer player, bool isReady)
@@ -93,6 +96,7 @@ namespace DT_Tools.Features.SpectatorJoin
         /// 此逻辑在房主点开始
         /// （全员已准备）时执行，使"谁当观战者"由准备顺序而非进房顺序决定。
         /// </remarks>
+        /// <param name="room">所在房间。</param>
         private static void ConvertExcessToSpectators(GameRoom room)
         {
             int cap = PlayMaxPlayersValue;

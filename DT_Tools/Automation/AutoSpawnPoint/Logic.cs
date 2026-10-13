@@ -49,6 +49,7 @@ namespace DT_Tools.Automation.AutoSpawnPoint
         /// <summary>
         /// OptionProviders 用：value 为 1-based 序号，label 为「#n  (x, y)  [房间]」。
         /// </summary>
+        /// <returns>下拉选项：value 为从 1 开始的序号，label 为「#n (x, y) [房间]」。</returns>
         public static IReadOnlyList<ConfigOption> SpawnOptions()
         {
             var options = new List<ConfigOption>();

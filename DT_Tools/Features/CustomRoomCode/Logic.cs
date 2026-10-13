@@ -29,6 +29,8 @@ namespace DT_Tools.Features.CustomRoomCode
         /// <summary>
         /// 把配置中的房间码清洗后写入当前 Steam Lobby 与本地显示（需房主）。
         /// </summary>
+        /// <param name="reason">触发原因，用于日志。</param>
+        /// <returns>写入成功时为 true。</returns>
         public static bool TryApplyRoomCode(string reason)
         {
             if (!Engine.Enabled<CustomRoomCodeFeature>())
@@ -55,6 +57,7 @@ namespace DT_Tools.Features.CustomRoomCode
         /// <remarks>
         /// 清洗后为空 = 放行原版随机码。
         /// </remarks>
+        /// <returns>清洗后的房间码：去首尾空白、转大写，仅保留 A–Z 与 0–9。</returns>
         internal static string SanitizeCode()
         {
             string code = CustomRoomCodeFeature.RoomCode?.Trim().ToUpperInvariant() ?? "";

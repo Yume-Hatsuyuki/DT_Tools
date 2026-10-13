@@ -28,6 +28,11 @@ namespace DT_Tools.Game
         /// <paramref name="migratingAction"/> 拼接迁移中文案的动作词（如「切换阶段」「执行处决」），
         /// 保持各域原有提示不变。
         /// </remarks>
+        /// <param name="room">当前房间。</param>
+        /// <param name="migratingAction">要执行的动作名，用于拒绝时的提示。</param>
+        /// <param name="code">拒绝时的错误码。</param>
+        /// <param name="text">拒绝时的提示文字。</param>
+        /// <returns>可以继续时为 true；切换或迁移中为 false。</returns>
         public static bool TryGuardBusy(GameRoom room, string migratingAction, out string code, out string text)
         {
             if (room.IsTransitioning)

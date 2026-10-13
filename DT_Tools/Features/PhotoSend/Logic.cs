@@ -47,6 +47,8 @@ namespace DT_Tools.Features.PhotoSend
         /// <summary>
         /// 聊天报错：走聊天广播，让发送者在房间内直接看到失败原因（与本功能既有行为一致）。
         /// </summary>
+        /// <param name="chat">语音聊天管理器。</param>
+        /// <param name="text">要报告的失败原因。</param>
         internal static void ReportChatError(VoiceManager chat, string text)
         {
             try
@@ -65,6 +67,10 @@ namespace DT_Tools.Features.PhotoSend
         /// <remarks>
         /// 主线程调用。
         /// </remarks>
+        /// <param name="chat">语音聊天管理器。</param>
+        /// <param name="alt">图片的文字说明，可为空。</param>
+        /// <param name="argument">图片路径或链接。</param>
+        /// <returns>执行结果的提示文字。</returns>
         public static string Execute(VoiceManager chat, string alt, string argument)
         {
             try
@@ -108,6 +114,8 @@ namespace DT_Tools.Features.PhotoSend
         /// <remarks>
         /// SendingCaption 闸期间发送，防止文字被自己的补丁再次解析成指令。
         /// </remarks>
+        /// <param name="chat">语音聊天管理器。</param>
+        /// <param name="alt">文字说明。</param>
         private static void SendCaption(VoiceManager chat, string alt)
         {
             if (string.IsNullOrEmpty(alt))
@@ -133,6 +141,11 @@ namespace DT_Tools.Features.PhotoSend
         /// 解析图片来源：http(s) 链接 → url；本地绝对路径或相对图片目录的路径 → path；
         /// 目录内裸文件名按扩展名试探（.jpg/.jpeg/.png/.bmp/.gif）。
         /// </summary>
+        /// <param name="raw">markdown 中的路径原文。</param>
+        /// <param name="url">解析出的网络链接；不是链接时为 null。</param>
+        /// <param name="path">解析出的本地路径；是链接时为 null。</param>
+        /// <param name="error">解析失败时的中文原因。</param>
+        /// <returns>解析成功返回 true，否则返回 false。</returns>
         private static bool TryResolveSource(string raw, out string url, out string path, out string error)
         {
             url = null;
@@ -177,6 +190,11 @@ namespace DT_Tools.Features.PhotoSend
         /// <remarks>
         /// 须主线程。
         /// </remarks>
+        /// <param name="image">图片的原始字节。</param>
+        /// <param name="jpeg">压缩后的 JPEG 字节。</param>
+        /// <param name="outW">输出宽度，单位像素。</param>
+        /// <param name="outH">输出高度，单位像素。</param>
+        /// <returns>失败时的错误信息；成功时为 null。</returns>
         private static string CompressToJpeg(byte[] image, out byte[] jpeg, out int outW, out int outH)
         {
             jpeg = null;
@@ -273,6 +291,11 @@ namespace DT_Tools.Features.PhotoSend
         /// <remarks>
         /// 须主线程。
         /// </remarks>
+        /// <param name="jpeg">JPEG 字节。</param>
+        /// <param name="name">图片名称。</param>
+        /// <param name="outW">图片宽度，单位像素。</param>
+        /// <param name="outH">图片高度，单位像素。</param>
+        /// <returns>失败时的错误信息；成功时为 null。</returns>
         private static string SendPhoto(byte[] jpeg, string name, int outW, int outH)
         {
             var sink = Managers.Network?.GameServer;
@@ -294,6 +317,10 @@ namespace DT_Tools.Features.PhotoSend
         /// <summary>
         /// 按体积比例估算下一档 JPEG 质量（原版 EncodeAdaptive 的 0.55 次幂公式），永不低于 floor。
         /// </summary>
+        /// <param name="quality">当前的 JPEG 质量。</param>
+        /// <param name="jpegSize">当前编码后的字节数。</param>
+        /// <param name="floorQuality">质量下限。</param>
+        /// <returns>下一档 JPEG 质量，不低于 floorQuality。</returns>
         private static int NextQuality(int quality, int jpegSize, int floorQuality)
         {
             float f = (float)JpegLimitBytes / jpegSize;
@@ -314,6 +341,10 @@ namespace DT_Tools.Features.PhotoSend
         /// Unity Blit 只做单次线性采样，大比例一次缩会跳像素发糊；先 box 逐级减半到 2 倍内，
         /// 末次再 bilinear 到目标。输入纹理一律销毁，返回新纹理。须主线程。
         /// </summary>
+        /// <param name="source">源纹理。</param>
+        /// <param name="w">目标宽度，单位像素。</param>
+        /// <param name="h">目标高度，单位像素。</param>
+        /// <returns>缩放后的新纹理。</returns>
         private static Texture2D ResizeTexture(Texture2D source, int w, int h)
         {
             Texture2D current = source;
@@ -341,6 +372,10 @@ namespace DT_Tools.Features.PhotoSend
         /// <remarks>
         /// 须主线程。
         /// </remarks>
+        /// <param name="src">源纹理。</param>
+        /// <param name="w">目标宽度，单位像素。</param>
+        /// <param name="h">目标高度，单位像素。</param>
+        /// <returns>缩放后的纹理。</returns>
         private static Texture2D BlitToTexture(Texture2D src, int w, int h)
         {
             var target = new Texture2D(w, h, TextureFormat.RGBA32, false);
@@ -383,6 +418,8 @@ namespace DT_Tools.Features.PhotoSend
         /// <summary>
         /// 后台线程下载网络图片，完成后回主线程压缩发送；失败也回主线程聊天报错。
         /// </summary>
+        /// <param name="chat">语音聊天管理器。</param>
+        /// <param name="url">图片的网络链接。</param>
         private static void StartRemoteDownload(VoiceManager chat, string url)
         {
             Log.Info<PhotoSendFeature>($"开始下载远程图片：{url}");
@@ -463,6 +500,9 @@ namespace DT_Tools.Features.PhotoSend
         /// <summary>
         /// 限量读取响应流：无 ContentLength（chunked）时兜底，防超大文件撑爆内存。
         /// </summary>
+        /// <param name="stream">要读取的响应流。</param>
+        /// <param name="limit">最多读取的字节数。</param>
+        /// <returns>读取到的全部字节，不超过上限。</returns>
         private static byte[] ReadAllCapped(Stream stream, long limit)
         {
             var buffer = new byte[8192];

@@ -67,6 +67,9 @@ namespace DT_Tools.Commands.RoomCode
         /// <summary>
         /// 人数读取：房主走 GameRoom.Players（服务器权威），客户端走 Steam Lobby 成员数。
         /// </summary>
+        /// <param name="isHost">本机是否为房主。</param>
+        /// <param name="lobby">Steam 大厅管理器。</param>
+        /// <returns>当前人数。</returns>
         public static int CurrentCount(bool isHost, SteamLobbyManager lobby)
         {
             if (isHost)
@@ -78,6 +81,8 @@ namespace DT_Tools.Commands.RoomCode
         /// Steam 容器上限（进房人数仍按 max 校验）；不在 Lobby 时返回 0
         /// （Steamworks SteamMatchmaking.GetLobbyMemberLimit）。
         /// </summary>
+        /// <param name="lobby">Steam 大厅管理器。</param>
+        /// <returns>Steam 容器上限；不在大厅时为 0。</returns>
         public static int TryGetSteamLimit(SteamLobbyManager lobby)
         {
             if (lobby == null || !lobby.InLobby)

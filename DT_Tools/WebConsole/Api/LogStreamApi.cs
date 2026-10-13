@@ -40,6 +40,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// WebConsole.Init 订阅到 Log.EntryAppended：只入队，绝不阻塞发出线程。
         /// </summary>
+        /// <param name="entry">新写入的日志条目。</param>
         public static void Broadcast(LogEntry entry)
         {
             foreach (var client in Clients.Keys)
@@ -94,6 +95,8 @@ namespace DT_Tools.WebConsole.Api
         /// 与 HTTP 升级路径共享同一份客户端注册/重放/心跳逻辑。
         /// 阻塞调用线程直到连接结束（每连接占用一个线程池线程，与 HTTP 路径同构）。
         /// </summary>
+        /// <param name="ws">已完成握手的 WebSocket 连接。</param>
+        /// <param name="since">客户端已收到的最大 seq，之后的条目才会重放。</param>
         internal static void HandleSocket(WebSocket ws, long since)
             => RunClient(ws, since);
 
@@ -245,6 +248,8 @@ namespace DT_Tools.WebConsole.Api
             /// <summary>
             /// 按 seq 去重并发送一批条目；成功返回 true。
             /// </summary>
+            /// <param name="entries">待发送的日志条目。</param>
+            /// <returns>发送成功时为 true。</returns>
             private bool SendFrame(List<LogEntry> entries)
             {
                 var batch = entries

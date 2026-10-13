@@ -20,6 +20,10 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 解析失败告警并返回 null。
         /// </remarks>
+        /// <param name="raw">原始来源文字。</param>
+        /// <param name="kind">来源类型：本地、在线或自动识别。</param>
+        /// <param name="tag">用于日志定位的标签。</param>
+        /// <returns>解析后的音频地址。</returns>
         internal static string ResolveSource(string raw, AudioPlaybackSource kind, string tag)
         {
             string trimmed = raw?.Trim() ?? "";
@@ -62,6 +66,9 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 失败告警并返回 null。
         /// </remarks>
+        /// <param name="clip">要下混的音频片段。</param>
+        /// <param name="tag">用于日志定位的标签。</param>
+        /// <returns>单声道 PCM 样本；失败时为 null。</returns>
         internal static float[] ExtractMono(AudioClip clip, string tag)
         {
             try
@@ -123,6 +130,8 @@ namespace DT_Tools.Game
         /// 硬 Clamp 在峰值上产生可闻咔哒；拐点抬高到 0.85 减少大振幅低频（贝斯）常态
         /// 进入 tanh 区的谐波失真（"塑料感"），代价是溢出余量收窄。
         /// </summary>
+        /// <param name="x">待限幅的采样值。</param>
+        /// <returns>限幅后的采样值，范围 [-1, 1)。</returns>
         private static float SoftLimit(float x)
         {
             float a = x < 0f ? -x : x;
@@ -138,6 +147,9 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 路径无效告警并返回 null。
         /// </remarks>
+        /// <param name="raw">本地音频路径。</param>
+        /// <param name="tag">用于日志定位的标签。</param>
+        /// <returns>file:/// 形式的 URI；路径无效时为 null。</returns>
         internal static string LocalFileUri(string raw, string tag)
         {
             try

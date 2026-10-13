@@ -68,6 +68,7 @@ namespace DT_Tools.WebConsole.Mcp
         /// <remarks>
         /// 枚举失败回退回环，只影响展示不影响监听。
         /// </remarks>
+        /// <returns>端点展示地址：回环或未配置时为 127.0.0.1，通配监听时为本机 IPv4。</returns>
         private static string EndpointUrl()
         {
             string ip = (McpOptions.ListenIp ?? "").Trim();

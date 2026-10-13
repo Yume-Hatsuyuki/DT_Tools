@@ -84,6 +84,10 @@ namespace DT_Tools.Features.StrokeTools
         /// 耐力参数佐证：奔跑消耗 0.2/秒（0.1.16b UI_Stamina.cs:122（待核对））、未耗尽走路恢复 1/7（UI_Stamina.cs:98），
         /// 理论卡恢复极限均速 630 也贴近实测，均速模型在此区间内。
         /// </summary>
+        /// <param name="length">线长，单位世界单位。</param>
+        /// <param name="runSpeed">奔跑速度，单位世界单位每秒。</param>
+        /// <param name="walkSpeed">走路速度，单位世界单位每秒。</param>
+        /// <returns>估算的移动时间，单位秒。</returns>
         private static float EstimateWithStamina(float length, float runSpeed, float walkSpeed)
         {
             float avgSpeed = (runSpeed + walkSpeed) / 2f;
@@ -96,6 +100,7 @@ namespace DT_Tools.Features.StrokeTools
         /// <remarks>
         /// 平板未打开时 Managers.Tablet.Tablet 为空，跳过本次测速。
         /// </remarks>
+        /// <returns>平板地图画布的 RectTransform。</returns>
         private static RectTransform GetMapBoundsRect()
         {
             UI_GameTablet tablet = Managers.Tablet?.Tablet;

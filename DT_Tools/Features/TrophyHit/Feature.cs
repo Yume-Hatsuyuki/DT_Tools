@@ -39,6 +39,8 @@ namespace DT_Tools.Features.TrophyHit
         /// <summary>
         /// 是否手持奖杯（金/银/铜 1062/1063/1064）。
         /// </summary>
+        /// <param name="handItemId">手持道具的 DataId。</param>
+        /// <returns>手持奖杯时为 true。</returns>
         private static bool IsHoldingTrophy(int handItemId)
         {
             return handItemId == 1062 || handItemId == 1063 || handItemId == 1064;

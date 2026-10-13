@@ -51,6 +51,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// 0.1.17a SaveManager.cs:487；RecordGamePlayed 只对已有键自增：SaveManager.cs:470）。
         /// 新补键时 MarkDirty。
         /// </summary>
+        /// <param name="save">存档管理器。</param>
         public static void SeedPlayCount(SaveManager save)
         {
             var data = GetSaveData(save);
@@ -65,6 +66,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 档案立绘位置表（私有静态只读字典）：0.1.16b UI_InfomationPopup.cs:68（待核对）。
         /// </summary>
+        /// <returns>角色名到立绘位置的映射表。</returns>
         private static Dictionary<string, Vector2> StandingPosList()
             => AccessTools.Field(typeof(UI_InfomationPopup), "STANDING_POS_LIST")
                 ?.GetValue(null) as Dictionary<string, Vector2>;
@@ -110,6 +112,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// 选人列表排序：已拥有优先，其次中文序（或 DataId），与原版一致但不再
         /// 过滤 ECharacterType.Madeline（原版过滤见 0.1.17a UI_PickPopup.cs:142）。
         /// </summary>
+        /// <returns>排序后的角色列表：已拥有的在前，其次按中文序（或 DataId）。</returns>
         public static IEnumerable<CharacterData> OrderedPickList()
             => from d in Managers.Data.CharacterDic.Values
                orderby Managers.Inventory.IsCharacterOwned(d.DataId) descending,
@@ -124,6 +127,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// 原版取 "&lt;Name&gt;Explain" 文本键（0.1.16b
         /// UI_PickPopup.cs:517），Madeline 无对应文本数据，故本地内置。
         /// </remarks>
+        /// <returns>选人面板的角色介绍文案，按当前语言返回。</returns>
         public static string GetExplain()
         {
             switch (Managers.Language)
@@ -146,6 +150,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 从四态表情图集中随机挑一张（先确保 Addressables 预载）。
         /// </summary>
+        /// <returns>随机选中的表情图。</returns>
         public static Sprite PickRandomExp()
         {
             EnsureExpsPreloaded();

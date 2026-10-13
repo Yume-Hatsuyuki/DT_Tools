@@ -127,6 +127,8 @@ namespace DT_Tools.Features.TabletQol
         /// <summary>
         /// 确认栏挂到平板自己的 transform 下（平板一关就跟着消失）；取不到就退回卡片根节点。
         /// </summary>
+        /// <param name="card">线索卡片。</param>
+        /// <returns>确认栏应挂载的父节点；取不到时为卡片根节点。</returns>
         private static Transform TabletRoot(UI_ClueSubItem card)
         {
             try
@@ -144,6 +146,11 @@ namespace DT_Tools.Features.TabletQol
         /// <summary>
         /// 把原版卡片嵌进来量尺寸（只作展示 ⇒ 关掉它自己的提交按钮）。
         /// </summary>
+        /// <param name="source">原版线索卡片。</param>
+        /// <param name="parent">嵌入的父节点。</param>
+        /// <param name="maxW">最大宽度，单位像素。</param>
+        /// <param name="size">卡片量得的尺寸，单位像素。</param>
+        /// <returns>嵌入后的卡片展示实例。</returns>
         private static UI_ClueSubItem EmbedCard(UI_ClueSubItem source, RectTransform parent, float maxW, out Vector2 size)
         {
             size = Vector2.zero;
@@ -184,6 +191,8 @@ namespace DT_Tools.Features.TabletQol
         /// <summary>
         /// 平板那种细亮边：四条 2px 细边贴在面板四边（不用 sprite，颜色/粗细都确定）。
         /// </summary>
+        /// <param name="parent">要加边框的面板。</param>
+        /// <param name="color">边框颜色。</param>
         private static void AddBorder(RectTransform parent, Color color)
         {
             const float t = 2f;
@@ -279,6 +288,7 @@ namespace DT_Tools.Features.TabletQol
         /// 挑重载，传 `null`（`PointerEventData` 用不到）时可能静默匹配不上。
         /// `Suppress` 期间放行 Prefix，避免"确认 → 又弹一次框"。
         /// </remarks>
+        /// <param name="card">要提交线索的卡片。</param>
         private static void ConfirmAndSubmit(UI_ClueSubItem card)
         {
             Hide();

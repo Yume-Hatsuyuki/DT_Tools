@@ -23,6 +23,10 @@ namespace DT_Tools.Commands.ScanAll
         /// <remarks>
         /// 失败返回 false（提示与错误码已给出）。身份校验统一走 Game.LocalPlayer。
         /// </remarks>
+        /// <param name="device">本机设备管理器；失败时为 null。</param>
+        /// <param name="code">失败时的错误码。</param>
+        /// <param name="text">失败时的提示文字。</param>
+        /// <returns>对局已就绪且设备缓存就绪时为 true。</returns>
         public static bool TryGetLocalContext(out DeviceManager device, out string code, out string text)
         {
             device = null;
@@ -54,6 +58,8 @@ namespace DT_Tools.Commands.ScanAll
         /// <summary>
         /// 收集所有 Bubble == -1 的可扫描设备，按 ID 升序。
         /// </summary>
+        /// <param name="device">本机设备管理器。</param>
+        /// <returns>Bubble 为 -1 的可扫描设备，按 ID 升序排列。</returns>
         public static List<DeviceBase> CollectScannable(DeviceManager device)
             => device.Cache.Values
                 .Where(d => d != null && d.Info != null && d.Info.Bubble == -1)
@@ -94,6 +100,9 @@ namespace DT_Tools.Commands.ScanAll
         /// <summary>
         /// 启动发送协程（挂 Core 常驻协程宿主，不依赖命令上下文存活）。
         /// </summary>
+        /// <param name="targets">要扫描的设备列表。</param>
+        /// <param name="interval">相邻两包的间隔，单位秒；0 表示同一帧发完。</param>
+        /// <param name="ctx">命令上下文，结果通过它输出。</param>
         public static void StartPacketsCoroutine(List<DeviceBase> targets, float interval, CommandContext ctx)
         {
             Core.CoroutineHost.Start(SendPackets(targets, interval, ctx));

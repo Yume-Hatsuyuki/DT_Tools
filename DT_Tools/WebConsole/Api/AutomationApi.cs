@@ -42,6 +42,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// POST /api/automation/host {enabled} — 自动化总开关。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleHost(HttpListenerContext ctx)
         {
             var body = ApiUtil.ParseBody(ctx);
@@ -72,6 +73,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// /api/automation/modules/{id}/log — 模块日志（GET 读取；POST /log/clear 或 DELETE 清空）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleModule(HttpListenerContext ctx)
         {
             const string prefix = "/api/automation/modules/";

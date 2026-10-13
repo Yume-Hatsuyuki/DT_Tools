@@ -120,6 +120,8 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 自己角色的 ID（PublicInfo.CharacterId，椅子的 ChangeCharacter 需要这个 ID）。
         /// </summary>
+        /// <param name="my">本机玩家。</param>
+        /// <returns>本机角色的 CharacterId。</returns>
         private static int FindMyCharacterId(MyPlayer my)
         {
             try
@@ -139,6 +141,8 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 广播坐下：零宽前缀指令，房主当作普通聊天原样转发全房，装本 mod 的客户端解析。
         /// </summary>
+        /// <param name="chair">坐下的椅子。</param>
+        /// <param name="charId">坐下角色的 ID。</param>
         private static void BroadcastSit(Chair chair, int charId)
         {
             if (!SitOnChairsFeature.SyncSitting)
@@ -158,6 +162,7 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 广播起身：装本 mod 的客户端据此还原椅子形象并显示该玩家模型。
         /// </summary>
+        /// <param name="chair">起身的椅子。</param>
         private static void BroadcastRise(Chair chair)
         {
             if (!SitOnChairsFeature.SyncSitting)

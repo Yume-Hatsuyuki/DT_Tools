@@ -37,6 +37,7 @@ namespace DT_Tools.Automation.AutoSpawnPoint
         /// Trigger 会视作"新进入 Survive"，立即按 DelaySeconds 计时并触发本局传送
         /// ——与 AutoAcquireWeapon / AutoPickCharacter 共有的统一模式，属预期行为。
         /// </remarks>
+        /// <param name="hostEnabled">自动化总开关的当前值，由调用方每帧传入。</param>
         public static void Tick(bool hostEnabled)
         {
             if (!hostEnabled || !Engine.Enabled<AutoSpawnPointModule>())

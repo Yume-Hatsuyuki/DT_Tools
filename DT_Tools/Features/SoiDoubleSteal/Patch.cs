@@ -19,6 +19,7 @@ namespace DT_Tools.Features.SoiDoubleSteal
         /// <summary>
         /// UseRuleBreaker 前缀：记录本次偷技能次数。
         /// </summary>
+        /// <param name="owner">偷技能的 SOI 玩家。</param>
         public static void OnSteal(Server.Game.Player owner)
         {
             if (owner == null) return;
@@ -30,6 +31,8 @@ namespace DT_Tools.Features.SoiDoubleSteal
         /// <summary>
         /// 判断该玩家是否正在使用偷来的技能（SOI 且已偷过、当前技能不是 RuleBreaker）。
         /// </summary>
+        /// <param name="owner">要判断的玩家。</param>
+        /// <returns>正在使用偷来的技能时为 true。</returns>
         public static bool IsUsingStolenSkill(Server.Game.Player owner)
         {
             if (owner?.SkillComponent?.Data == null) return false;
@@ -41,6 +44,7 @@ namespace DT_Tools.Features.SoiDoubleSteal
         /// <summary>
         /// 偷来的技能使用后恢复 RuleBreaker（未偷满才恢复；偷满后不再恢复，整局即止）。
         /// </summary>
+        /// <param name="owner">使用偷来技能的 SOI 玩家。</param>
         public static void RestoreRuleBreaker(Server.Game.Player owner)
         {
             if (owner == null || owner.SkillComponent == null) return;

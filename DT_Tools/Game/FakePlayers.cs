@@ -58,6 +58,13 @@ namespace DT_Tools.Game
         /// capacity = 有效房间人数上限（由 API 层解析：解除上限功能开启时为其 MaxMembers，
         /// 否则原生 8——Game 层禁止反向引用 Features）；座位表 16 仍是硬顶（ObjectUtils.cs:68-73）。
         /// </remarks>
+        /// <param name="rawName">假人昵称。</param>
+        /// <param name="characterId">假人角色 ID。</param>
+        /// <param name="capacity">房间容量。</param>
+        /// <param name="created">创建成功的假人；失败时为 null。</param>
+        /// <param name="error">失败的错误码。</param>
+        /// <param name="text">失败的提示文字。</param>
+        /// <returns>创建成功时为 true；失败时为 false，原因写入 error 与 text。</returns>
         public static bool TryCreate(string rawName, int characterId, int capacity, out Server.Game.Player created, out string error, out string text)
         {
             created = null;
@@ -218,6 +225,10 @@ namespace DT_Tools.Game
         /// 走 HandleLeavePlayer 完整清理，对局中移除等价于
         /// 真实玩家掉线转假人后的离场流程，房间状态不会被搞乱。
         /// </remarks>
+        /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
+        /// <param name="error">失败的错误码。</param>
+        /// <param name="text">失败的提示文字。</param>
+        /// <returns>移除成功时为 true。</returns>
         public static bool TryRemove(string nameOrId, out string error, out string text)
         {
             error = null;
@@ -234,6 +245,7 @@ namespace DT_Tools.Game
         /// <summary>
         /// 移除本助手创建的全部假人。
         /// </summary>
+        /// <returns>被移除的假人数量。</returns>
         public static int RemoveAll()
         {
             var room = GameRoom.Instance;
@@ -260,6 +272,11 @@ namespace DT_Tools.Game
         /// <summary>
         /// 设置就绪态（大厅限定；Ready 属性 setter 会广播 S_READY，0.1.17a Player.cs:110-130）。
         /// </summary>
+        /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
+        /// <param name="ready">目标就绪状态。</param>
+        /// <param name="error">失败的错误码。</param>
+        /// <param name="text">失败的提示文字。</param>
+        /// <returns>设置成功时为 true。</returns>
         public static bool TrySetReady(string nameOrId, bool ready, out string error, out string text)
         {
             error = null;
@@ -286,6 +303,11 @@ namespace DT_Tools.Game
         /// （0.1.17a Server.Game/Player.cs:1713 方法头；ChangeCharacter 分支 :1713-1717，
         /// 要求未准备），随机先解析成具体角色。
         /// </remarks>
+        /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
+        /// <param name="characterId">要选的角色 ID，-2 表示随机。</param>
+        /// <param name="error">失败的错误码。</param>
+        /// <param name="text">失败的提示文字。</param>
+        /// <returns>选角成功时为 true。</returns>
         public static bool TryPick(string nameOrId, int characterId, out string error, out string text)
         {
             error = null;
@@ -360,6 +382,8 @@ namespace DT_Tools.Game
         /// <remarks>
         /// capacity 由 API 层解析传入（同 TryCreate 的约定）。
         /// </remarks>
+        /// <param name="capacity">房间容量，由 API 层传入。</param>
+        /// <returns>房间快照的 JSON 对象。</returns>
         public static object Snapshot(int capacity)
         {
             var room = GameRoom.Instance;
@@ -396,6 +420,8 @@ namespace DT_Tools.Game
         /// 台账清理：游戏在回大厅（StartLobby）时会自行移除所有假人
         /// （0.1.16b Server.Game/GameRoom.cs:804-832（待核对）），台账里已不在房间的条目在此剔除。
         /// </summary>
+        /// <param name="room">当前房间。</param>
+        /// <returns>被清理的台账条目数量。</returns>
         private static int Prune(GameRoom room)
         {
             return Created.RemoveAll(p => p == null || !room.Players.Contains(p));
@@ -404,6 +430,12 @@ namespace DT_Tools.Game
         /// <summary>
         /// 按昵称或 #座位ID 定位台账中的假人。
         /// </summary>
+        /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
+        /// <param name="room">找到的房间；失败时为 null。</param>
+        /// <param name="player">找到的假人；失败时为 null。</param>
+        /// <param name="error">失败的错误码。</param>
+        /// <param name="text">失败的提示文字。</param>
+        /// <returns>找到假人时为 true。</returns>
         private static bool Resolve(string nameOrId, out GameRoom room, out Server.Game.Player player, out string error, out string text)
         {
             player = null;
@@ -446,6 +478,9 @@ namespace DT_Tools.Game
         /// 从角色表挑一个未被占用的角色（对齐 PickRandomOwnedCharacter 的三级回退：
         /// 未占用非梅德琳 → 全部未占用 → 全表，0.1.16b Server.Game/GameRoom.cs:1669-1715（待核对））。
         /// </summary>
+        /// <param name="room">当前房间。</param>
+        /// <param name="self">要选角的玩家。</param>
+        /// <returns>未被占用的角色 DataId。</returns>
         private static int RandomFreeCharacter(GameRoom room, Server.Game.Player self)
         {
             var taken = new HashSet<int>();

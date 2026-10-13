@@ -51,6 +51,9 @@ namespace DT_Tools.Features.EmoteSlot16
         /// <summary>
         /// 解析配置键为 KeyCode；非法时回退。
         /// </summary>
+        /// <param name="name">配置中的键名字符串。</param>
+        /// <param name="fallback">解析失败时使用的按键。</param>
+        /// <returns>解析出的按键；非法时为 fallback。</returns>
         public static KeyCode ParseKey(string name, KeyCode fallback)
         {
             if (string.IsNullOrWhiteSpace(name))

@@ -185,6 +185,7 @@ namespace DT_Tools.Features.MotionAfterimage
         /// 无采样历史时从 PlayerCache 补全角色/坐标（幽灵视角下他人死亡也能定格）。
         /// 自己通常不走 Despawn（客户端忽略 S_DESPAWN self），见 OnLocalPlayerDead。
         /// </remarks>
+        /// <param name="playerId">退场玩家的 PlayerId。</param>
         public static void OnPlayerDespawned(int playerId)
         {
             if (!Engine.Enabled<MotionAfterimageFeature>())
@@ -218,6 +219,8 @@ namespace DT_Tools.Features.MotionAfterimage
         /// <summary>
         /// Despawn 后 Players 已移除，从 Cache 取最后坐标与角色。
         /// </summary>
+        /// <param name="playerId">玩家 PlayerId。</param>
+        /// <param name="track">要补全的残影轨迹。</param>
         private static void TryFillTrackFromCache(int playerId, AfterimageTrack track)
         {
             if (Managers.Player == null)
@@ -252,6 +255,7 @@ namespace DT_Tools.Features.MotionAfterimage
         /// <summary>
         /// 同一 track 只留一个黑色定格（先删再建）。
         /// </summary>
+        /// <param name="track">要放置定格的残影轨迹。</param>
         private static void PlaceDeathResidual(AfterimageTrack track)
         {
             if (track.DeathGhost != null)

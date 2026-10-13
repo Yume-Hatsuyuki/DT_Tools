@@ -23,12 +23,15 @@ namespace DT_Tools.Features.HasungBoost
         /// <summary>
         /// 获取玩家当前能量（无记录视为 0）。
         /// </summary>
+        /// <param name="playerId">玩家 PlayerId。</param>
+        /// <returns>当前能量；无记录时为 0。</returns>
         public static int GetEnergy(int playerId)
             => _energy.TryGetValue(playerId, out int e) ? e : 0;
 
         /// <summary>
         /// 每秒 tick：奔跑（消耗体力）累积能量，停跑衰减；结束后自动注册下一次。
         /// </summary>
+        /// <param name="owner">拥有该能力的玩家。</param>
         public static void Tick(Server.Game.Player owner)
         {
             // 循环：注册下一次 tick（玩家死亡/离开后自然停止）
@@ -70,6 +73,7 @@ namespace DT_Tools.Features.HasungBoost
         /// <summary>
         /// 确保该玩家已启动循环 tick（首次遇到时）。
         /// </summary>
+        /// <param name="owner">拥有该能力的玩家。</param>
         public static void EnsureTick(Server.Game.Player owner)
         {
             if (owner == null || owner.Data == null) return;

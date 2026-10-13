@@ -83,6 +83,10 @@ namespace DT_Tools.Commands.Chat
         /// <remarks>
         /// 三包同帧发出，服务端 room.Push FIFO，Interact 先于 Chat 执行，占机状态可被 RelayDeviceChat 看到。
         /// </remarks>
+        /// <param name="deviceId">打字机设备 ID。</param>
+        /// <param name="text">要发送的文字。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>发送序列已发出返回 true；失败时返回 false，原因写入 error。</returns>
         public static bool TrySend(int deviceId, string text, out string error)
         {
             error = null;

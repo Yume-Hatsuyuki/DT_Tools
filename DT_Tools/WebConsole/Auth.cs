@@ -28,6 +28,7 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// POST /login：校验密码（query token 或 body），成功则发放会话 cookie。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public void HandleLogin(HttpListenerContext ctx)
         {
             var resp = ctx.Response;
@@ -54,6 +55,8 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// 请求鉴权检查；未通过时由 Router 回 401 + 登录页。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
+        /// <returns>鉴权通过时为 true；未通过时由路由返回 401。</returns>
         public bool Check(HttpListenerContext ctx)
         {
             if (Disabled)
@@ -71,6 +74,9 @@ namespace DT_Tools.WebConsole
         /// 裸凭据校验：WebSocket 独立通道（WsServer）没有 HttpListenerContext，
         /// 由它从原始握手头解析出 cookie/token 后调用，语义与 Check 完全一致。
         /// </summary>
+        /// <param name="cookieToken">会话 cookie 中的凭据。</param>
+        /// <param name="queryToken">查询串中的凭据。</param>
+        /// <returns>任一凭据有效时为 true。</returns>
         public bool CheckToken(string cookieToken, string queryToken)
         {
             if (Disabled)
@@ -82,6 +88,9 @@ namespace DT_Tools.WebConsole
         /// 常量时间字符串比较（netstandard2.1 CryptographicOperations），
         /// 避免逐字符短路比较泄漏密码/token 前缀长度信息。
         /// </summary>
+        /// <param name="a">比较的第一个字符串。</param>
+        /// <param name="b">比较的第二个字符串。</param>
+        /// <returns>两个字符串相等时为 true。</returns>
         private static bool FixedTimeEquals(string a, string b)
         {
             byte[] ba = Encoding.UTF8.GetBytes(a ?? "");

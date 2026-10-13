@@ -60,6 +60,7 @@ namespace DT_Tools.Commands.ListPlayers
         /// 识别失败返回 0
         /// （0.1.17a DummyClient/SteamLobbyManager.cs:90 HostSteamId / :104 InLobby）。
         /// </remarks>
+        /// <returns>房主的 PlayerId。客户端通过 Steam Lobby 查询。</returns>
         public static int ResolveHostPlayerId()
         {
             if (HostGuard.IsHost)
@@ -95,6 +96,9 @@ namespace DT_Tools.Commands.ListPlayers
         /// <summary>
         /// 按 PlayerId 升序整理玩家条目。
         /// </summary>
+        /// <param name="hostId">房主的 PlayerId。</param>
+        /// <param name="myId">本机玩家的 PlayerId。</param>
+        /// <returns>玩家条目，按 PlayerId 升序排列。</returns>
         public static List<Entry> Collect(int hostId, int myId)
         {
             return Managers.Player.GetAllPlayers()
@@ -127,6 +131,10 @@ namespace DT_Tools.Commands.ListPlayers
         /// 路径对齐 0.1.17a DummyClient/SteamP2PSession.cs:39 GetConnectionInfo、DummyClient/P2PSessionManager.cs:39 TryGet。
         /// 拓扑：游戏是星型，客机只与房主建连，客机之间没有 P2P 句柄，故客机执行本命令时除房主外均为无连接（ip_src=—）。SDR 下 m_addrRemote 常为空，此时用 m_idPOPRelay 显示 sdr:POP。
         /// </remarks>
+        /// <param name="steamId">要查询的 Steam ID。</param>
+        /// <param name="remoteIp">远端 IP 地址文字。</param>
+        /// <param name="relayed">是否经 Steam 中继；未知时为 null。</param>
+        /// <param name="pingMs">往返延迟，单位毫秒。</param>
         public static void TryResolveConnection(ulong steamId, out string remoteIp, out bool? relayed, out int pingMs)
         {
             remoteIp = null;
@@ -189,6 +197,8 @@ namespace DT_Tools.Commands.ListPlayers
         /// <remarks>
         /// 对齐 0.1.17a DummyClient/SteamP2PSession.cs:64 DecodePop。
         /// </remarks>
+        /// <param name="popId">Steam 中继节点 ID。</param>
+        /// <returns>四字符 POP 名，如 hkg。</returns>
         static string DecodePop(SteamNetworkingPOPID popId)
         {
             uint pop = (uint)popId;
@@ -212,6 +222,8 @@ namespace DT_Tools.Commands.ListPlayers
         /// <remarks>
         /// Steamworks.NET 签名：void ToString(out string buf, bool bWithPort)。
         /// </remarks>
+        /// <param name="addr">要格式化的地址，按引用传入。</param>
+        /// <returns>IPv4 为 a.b.c.d:port，IPv6 为 [v6]:port 格式的文字。</returns>
         static string FormatIpAddr(ref SteamNetworkingIPAddr addr)
         {
             try
@@ -257,6 +269,8 @@ namespace DT_Tools.Commands.ListPlayers
         /// <remarks>
         /// Steam 未初始化 / 数据未就绪（空、"[unknown]"）返回 null。
         /// </remarks>
+        /// <param name="steamId">要查询的 Steam ID。</param>
+        /// <returns>Steam 账号的昵称（persona name）。</returns>
         public static string SteamNameOf(ulong steamId)
         {
             if (steamId == 0 || Managers.Steam == null || !Managers.Steam.IsInitialized)

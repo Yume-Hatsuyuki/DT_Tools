@@ -79,6 +79,8 @@ namespace DT_Tools.WebConsole
         /// 立即请求 GitHub（手动检查）。GitHub 拉取在持锁内同步进行——并发的状态轮询
         /// 会排队等结果，与 SteamApi 的锁内请求策略一致。
         /// </remarks>
+        /// <param name="force">为 true 时绕过缓存，立即请求 GitHub。</param>
+        /// <returns>状态 JSON 对象。</returns>
         public static object GetStatus(bool force)
         {
             lock (Gate)
@@ -118,6 +120,7 @@ namespace DT_Tools.WebConsole
         /// 必须先有检测结果（资产地址来自 Release 缓存）；
         /// 已在进行中或没有可用资产时返回失败信封。成功受理立即返回，进度走状态轮询。
         /// </remarks>
+        /// <returns>下载任务的状态 JSON 对象。</returns>
         public static object StartDownload()
         {
             ReleaseSnapshot release;
@@ -147,6 +150,7 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// 在资源管理器中定位最近一次下载的 zip（仅 Windows；其余平台明确报错）。
         /// </summary>
+        /// <returns>定位操作的结果文字；非 Windows 平台时为错误说明。</returns>
         public static string RevealDownload()
         {
             var snap = _download;
@@ -254,6 +258,8 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// WebException 时尽量读出 GitHub 的 {"message": …}，比裸状态码好懂（限流等）。
         /// </summary>
+        /// <param name="ex">发生的异常。</param>
+        /// <returns>便于阅读的错误说明，GitHub 返回的错误消息优先。</returns>
         private static string DescribeError(Exception ex)
         {
             if (ex is WebException wex && wex.Response is HttpWebResponse resp)
@@ -279,6 +285,9 @@ namespace DT_Tools.WebConsole
         /// <remarks>
         /// tag 更新返回 true。
         /// </remarks>
+        /// <param name="tag">远端版本标签，如 v1.0.8.9。</param>
+        /// <param name="current">当前版本号。</param>
+        /// <returns>tag 比当前版本新时为 true。</returns>
         public static bool IsNewer(string tag, string current)
         {
             int[] a = ParseVersion(tag);
@@ -324,6 +333,8 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// 优先选 zip 资产（发布流水线产物 DT_Tools-vX.Y.Z.zip），没有则不下载。
         /// </summary>
+        /// <param name="release">发布快照。</param>
+        /// <returns>zip 资产；没有时为 null。</returns>
         private static ReleaseAsset PickZipAsset(ReleaseSnapshot release)
         {
             foreach (var a in release.Assets)
@@ -335,6 +346,8 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// 下载落盘目录：优先用户"下载"文件夹，不存在则退回 BepInEx 根目录。
         /// </summary>
+        /// <param name="assetName">资产文件名。</param>
+        /// <returns>保存文件的完整路径。</returns>
         private static string ResolveSavePath(string assetName)
         {
             string fileName = Path.GetFileName(assetName);
@@ -354,6 +367,7 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// 下载线程主体：流式拷贝，按块发布进度快照；结果（成功/失败）整体换引用。
         /// </summary>
+        /// <param name="state">线程池传入的状态对象。</param>
         private static void RunDownload(object state)
         {
             var job = (DownloadJob)state;

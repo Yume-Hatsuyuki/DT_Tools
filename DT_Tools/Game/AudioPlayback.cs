@@ -50,6 +50,11 @@ namespace DT_Tools.Game
         /// 解析失败返回 false（原因已在 ResolveSource 内告警），不打断当前播放
         /// （输错来源不应清空正在响的音乐）。
         /// </remarks>
+        /// <param name="rawSource">原始来源文字，路径或链接。</param>
+        /// <param name="kind">来源类型：本地、在线或自动识别。</param>
+        /// <param name="volume">音量，范围 0 到 1。</param>
+        /// <param name="maxSeconds">播放时长上限，单位秒。</param>
+        /// <returns>开始播放时为 true。</returns>
         public static bool Play(string rawSource, AudioPlaybackSource kind, float volume, float maxSeconds)
         {
             string uri = ResolveUri(rawSource, kind);
@@ -78,6 +83,9 @@ namespace DT_Tools.Game
         /// <summary>
         /// 来源解析：委托 AudioMix.ResolveSource（与 /mic_music 共用一份实现）。
         /// </summary>
+        /// <param name="raw">原始来源文字。</param>
+        /// <param name="kind">来源类型。</param>
+        /// <returns>解析后的音频地址。</returns>
         private static string ResolveUri(string raw, AudioPlaybackSource kind)
             => AudioMix.ResolveSource(raw, kind, Tag);
 

@@ -38,6 +38,8 @@ namespace DT_Tools
         /// <summary>
         /// 详细诊断：进入环形缓冲（WebUI 白色），不要用它输出异常堆栈——用 <see cref="Exception"/>。
         /// </summary>
+        /// <param name="tag">日志段名。</param>
+        /// <param name="message">诊断信息。</param>
         public static void Debug(string tag, string message)
         {
             _src?.LogDebug(Format(tag, message));
@@ -65,6 +67,9 @@ namespace DT_Tools
         /// <summary>
         /// 异常：BepInEx 进完整堆栈（含内层异常），环形缓冲只留「类型: 消息」单行摘要。
         /// </summary>
+        /// <param name="tag">日志段名。</param>
+        /// <param name="ex">要记录的异常。</param>
+        /// <param name="context">可选的上下文说明，默认无。</param>
         public static void Exception(string tag, Exception ex, string context = null)
         {
             if (ex == null) return;
@@ -106,6 +111,9 @@ namespace DT_Tools
         /// <summary>
         /// BepInEx + 全局缓冲 + 段缓冲三写（Debug 走 <see cref="Debug"/>，Exception 走 <see cref="Exception"/>）。
         /// </summary>
+        /// <param name="level">日志级别。</param>
+        /// <param name="tag">日志段名。</param>
+        /// <param name="message">日志内容。</param>
         private static void Write(string level, string tag, string message)
         {
             if (string.IsNullOrEmpty(message)) return;
@@ -127,6 +135,9 @@ namespace DT_Tools
         /// <summary>
         /// 只写两处环形缓冲（已写过 BepInEx 时复用；持锁内构造条目保证 Seq 单调）。
         /// </summary>
+        /// <param name="level">日志级别。</param>
+        /// <param name="tag">日志段名。</param>
+        /// <param name="message">日志内容。</param>
         private static void Append(string level, string tag, string message)
         {
             LogEntry entry;

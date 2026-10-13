@@ -86,6 +86,9 @@ namespace DT_Tools.Commands.Beacon
         /// <summary>
         /// 无参列表的 JSON（键名沿用旧实现）：spawns=数量，list=出生点，players=在线玩家。
         /// </summary>
+        /// <param name="mapData">当前地图数据，用于读取出生点。</param>
+        /// <param name="my">本机玩家。</param>
+        /// <returns>列表 JSON：spawns 为出生点数量，list 为出生点，players 为在线玩家。</returns>
         public static object ListResult(MapData mapData, MyPlayer my)
         {
             var spawns = new List<object>();
@@ -116,6 +119,10 @@ namespace DT_Tools.Commands.Beacon
         /// <summary>
         /// 瞬移成功的 JSON（键名沿用旧实现；targetId 仅 player 目标时回带）。
         /// </summary>
+        /// <param name="pos">瞬移后的坐标。</param>
+        /// <param name="roomRaw">所在房间的原始枚举名。</param>
+        /// <param name="targetPlayerId">瞬移目标玩家的 ID；非玩家目标时不写入结果。</param>
+        /// <returns>瞬移成功的 JSON 结果。</returns>
         public static object TeleportResult(Protocol.PosInfo pos, string roomRaw, int targetPlayerId)
         {
             if (targetPlayerId > 0)

@@ -20,6 +20,9 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         /// 实例属性 DeviceBase.IsDestroyEvidenceTarget（0.1.17a DeviceBase.cs:78），
         /// 黑方原版就可用，仅当白方档开启时才为白方放行）。
         /// </summary>
+        /// <param name="device">要判定的设备。</param>
+        /// <param name="color">本地玩家的颜色。</param>
+        /// <returns>设备在当前档位下对该颜色放行时为 true。</returns>
         public static bool ColorAllowedForDevice(DeviceBase device, EPlayerColor color)
         {
             if (color == EPlayerColor.Dark)
@@ -51,6 +54,9 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         /// <remarks>
         /// IsActiveInteractSabotageKey 为 protected set（DeviceBase.cs:62），经反射写入。
         /// </remarks>
+        /// <param name="device">要显示提示的设备。</param>
+        /// <param name="index">交互动作的序号。</param>
+        /// <returns>设备的交互提示文字。</returns>
         public static string EvaluateMessage(DeviceBase device, int index)
         {
             if (!Managers.Game.IsAlive)
@@ -72,6 +78,8 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         /// 文案经 GetInteractSabotageMessageBase（显示层补丁已按档位接管：白方走
         /// EvaluateMessage、黑方走原版）——文案为空（如门已锁）时不接管，走原版行为。
         /// </remarks>
+        /// <param name="my">本机玩家。</param>
+        /// <returns>已处理（触发了放行设备的破坏）时为 true。</returns>
         public static bool TryDispatchExtended(MyPlayer my)
         {
             if (my == null || my.Color == EPlayerColor.Dark)
@@ -95,6 +103,7 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         /// 0.1.16b UI_GameScene.cs:1358（待核对）-1403（待核对）)：原版 flag 基础上按档位扩展
         /// Door/Fusebox 的放行分支，其余 UI 写入逐句保持原版。
         /// </summary>
+        /// <param name="scene">游戏场景界面。</param>
         public static void RefreshSabotagePrompt(UI_GameScene scene)
         {
             var t = HarmonyLib.Traverse.Create(scene);

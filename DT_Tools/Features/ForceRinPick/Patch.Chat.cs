@@ -20,6 +20,8 @@ namespace DT_Tools.Features.ForceRinPick
         /// <summary>
         /// 标记目标玩家：下次选角强制为指定角色（角色不存在则忽略）。
         /// </summary>
+        /// <param name="playerId">目标玩家的 PlayerId。</param>
+        /// <param name="characterDataId">要强制选择的角色 DataId；角色不存在时忽略。</param>
         public static void Mark(int playerId, int characterDataId)
         {
             if (characterDataId <= 0) return;
@@ -29,6 +31,8 @@ namespace DT_Tools.Features.ForceRinPick
         /// <summary>
         /// 选角时消费标记：返回被强制选的角色 DataId（0 表示无标记）。
         /// </summary>
+        /// <param name="playerId">选角的玩家 PlayerId。</param>
+        /// <returns>被强制选中的角色 DataId；无标记时为 0。</returns>
         public static int Consume(int playerId)
         {
             if (_forced.TryGetValue(playerId, out int dataId))
@@ -42,6 +46,8 @@ namespace DT_Tools.Features.ForceRinPick
         /// <summary>
         /// 按指令参数（玩家名或 PlayerId）在房间内解析目标玩家。
         /// </summary>
+        /// <param name="arg">玩家名或 PlayerId 文字。</param>
+        /// <returns>找到的目标玩家；找不到时为 null。</returns>
         public static Server.Game.Player ResolveTarget(string arg)
         {
             if (string.IsNullOrWhiteSpace(arg)) return null;
@@ -70,6 +76,8 @@ namespace DT_Tools.Features.ForceRinPick
         /// <summary>
         /// 按角色参数（枚举名/角色名/DataId）解析角色 DataId。
         /// </summary>
+        /// <param name="arg">角色的枚举名、角色名或 DataId 文字。</param>
+        /// <returns>解析出的角色 DataId。</returns>
         public static int ResolveCharacter(string arg)
         {
             if (string.IsNullOrWhiteSpace(arg)) return 0;

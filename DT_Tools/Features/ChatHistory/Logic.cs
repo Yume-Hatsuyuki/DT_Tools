@@ -49,6 +49,8 @@ namespace DT_Tools.Features.ChatHistory
         /// <remarks>
         /// 相邻重复不记录（连发同一条后 ↑ 翻到的还是它，无法继续上翻）。
         /// </remarks>
+        /// <param name="channel">消息所属的通道。</param>
+        /// <param name="message">已发送的消息文字。</param>
         public static void Record(ChatHistoryChannel channel, string message)
         {
             if (string.IsNullOrEmpty(message))
@@ -193,6 +195,8 @@ namespace DT_Tools.Features.ChatHistory
         /// <summary>
         /// 绑定输入框与挂载来源，由挂载补丁调用（私有字段锚点见 Patch.Mount.cs）。
         /// </summary>
+        /// <param name="input">要绑定的输入框。</param>
+        /// <param name="source">历史记录的来源。</param>
         public void Bind(TMP_InputField input, ChatHistorySource source)
         {
             _input = input;

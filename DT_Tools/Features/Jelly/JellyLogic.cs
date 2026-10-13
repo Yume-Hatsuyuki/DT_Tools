@@ -160,6 +160,7 @@ namespace DT_Tools.Features.Jelly
         /// <remarks>
         /// 返回写回成功的数量。
         /// </remarks>
+        /// <returns>写回成功的对象数量。</returns>
         public static int RestoreAll()
         {
             int restored = 0;
@@ -180,6 +181,7 @@ namespace DT_Tools.Features.Jelly
         /// <summary>
         /// 玩家退场（Despawn 后调用，Players 字典已移除）：写回后清缓存。
         /// </summary>
+        /// <param name="id">退场的玩家 PlayerId。</param>
         public static void Forget(int id)
         {
             if (States.Count == 0 || !States.TryGetValue(id, out var list))
@@ -198,6 +200,7 @@ namespace DT_Tools.Features.Jelly
         /// 设备退场（Despawn/DespawnTemporary 的 Prefix 调用：原方法会把 Cache 条目移除，
         /// 移除后就找不到了，必须赶在前面写回）。
         /// </summary>
+        /// <param name="id">退场的设备 ID。</param>
         public static void ForgetDevice(int id)
         {
             if (DeviceStates.Count == 0 || !DeviceStates.TryGetValue(id, out var list))
@@ -306,6 +309,8 @@ namespace DT_Tools.Features.Jelly
         /// 设备视觉节点启发式（见类注释）：SkeletonAnimation 优先 → 掉落物/根视觉设备缩根 →
         /// "Body" 主视觉 + 物品图标叶子；都没有返回空（跳过）。
         /// </summary>
+        /// <param name="device">要查找视觉节点的设备。</param>
+        /// <returns>设备的视觉节点列表。</returns>
         private static List<Transform> FindDeviceVisuals(DeviceBase device)
         {
             var result = new List<Transform>();
@@ -435,6 +440,11 @@ namespace DT_Tools.Features.Jelly
         /// <remarks>
         /// 返回 1=已施加。
         /// </remarks>
+        /// <param name="t">要施加果冻系数的节点。</param>
+        /// <param name="st">果冻状态。</param>
+        /// <param name="allowPosComp">是否允许同时补偿位置，默认允许。</param>
+        /// <param name="compensateCollider">是否同时补偿碰撞体，默认不补偿。</param>
+        /// <returns>1 表示已施加果冻系数。</returns>
         private static int ApplyScale(Transform t, JellyState st, bool allowPosComp = true, bool compensateCollider = false)
         {
             if (t == null)

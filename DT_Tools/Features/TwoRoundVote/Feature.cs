@@ -57,6 +57,8 @@ namespace DT_Tools.Features.TwoRoundVote
         /// Priority.First：与上游 MultiArmoryWeapon（投票任意黑方胜利，同样整替本方法）并存时，
         /// 二轮制作为更上层的流程改写优先接管第一轮结算演出；MultiArmoryWeapon 在第二轮（走原版结算）正常生效。
         /// </remarks>
+        /// <param name="__instance">被拦截的审判管理器实例。</param>
+        /// <returns>为 false 时跳过原方法；为 true 时继续执行原方法。</returns>
         [HarmonyPatch(typeof(TrialManager), "StartTrialResult")]
         [HarmonyPriority(Priority.First)]
         [HarmonyPrefix]
@@ -106,6 +108,8 @@ namespace DT_Tools.Features.TwoRoundVote
         /// Priority.First：与 MultiArmoryWeapon（任意黑方胜利判白胜）并存时，第一轮投出黑方
         /// 优先进入第二轮而非直接判胜；MultiArmoryWeapon 未命中时放行原版，二轮局第二轮亦正常生效。
         /// </remarks>
+        /// <param name="__instance">被拦截的审判管理器实例。</param>
+        /// <returns>为 false 时跳过原方法；为 true 时继续执行原方法。</returns>
         [HarmonyPatch(typeof(TrialManager), "FinalizeTrialResult")]
         [HarmonyPriority(Priority.First)]
         [HarmonyPrefix]
@@ -232,6 +236,7 @@ namespace DT_Tools.Features.TwoRoundVote
         /// GoalPoint=playerCount*15 偏大 → 任务进度百分比增长低于预期。
         /// 这里直接反射调用 private MissionAllocator(int) 并传入第二轮实际参与人数。
         /// </remarks>
+        /// <param name="playerCount">当前房间的玩家数，用于决定任务规模。</param>
         private static void ResetMissionProgress(int playerCount)
         {
             Type mmType = AccessTools.TypeByName("Server.Game.MissionManager");
@@ -302,6 +307,8 @@ namespace DT_Tools.Features.TwoRoundVote
         /// <summary>
         /// FirstBloodVictimId 为 private set，走原版 Restore 方法复位。
         /// </summary>
+        /// <param name="room">所在房间。</param>
+        /// <param name="victimId">首杀受害者的 PlayerId。</param>
         private static void TryRestoreFirstBlood(GameRoom room, int victimId)
         {
             MethodInfo m = AccessTools.Method(typeof(GameRoom), "RestoreFirstBloodVictimId");
@@ -326,6 +333,8 @@ namespace DT_Tools.Features.TwoRoundVote
         /// 客户端 DeviceBase.SetBubble 会强制把已扫描设备 Bubble 置 0 → 搬运地点提示/调查点不显示。
         /// 仅在 mod 开启时生效（房主开启后，房主客户端自动修复；同房其他装 mod 且开启的玩家同样修复）。
         /// </remarks>
+        /// <param name="__instance">游戏管理器实例。</param>
+        /// <param name="state">进入的游戏阶段。</param>
         [HarmonyPatch(typeof(GameManagerEX), "StartState")]
         [HarmonyPostfix]
         private static void PostfixStartState_Client(GameManagerEX __instance, EGameState state)
@@ -342,6 +351,7 @@ namespace DT_Tools.Features.TwoRoundVote
         /// <summary>
         /// 客户端对局清理（每局/场景卸载）：重置进入 Survive 计数（原版每局仅一次）。
         /// </summary>
+        /// <param name="__instance">游戏管理器实例。</param>
         [HarmonyPatch(typeof(GameManagerEX), "Clear")]
         [HarmonyPostfix]
         private static void PostfixClear(GameManagerEX __instance)
@@ -354,6 +364,7 @@ namespace DT_Tools.Features.TwoRoundVote
         /// <summary>
         /// 客户端游戏初始化（重连/重开）：重置进入 Survive 计数。
         /// </summary>
+        /// <param name="__instance">游戏管理器实例。</param>
         [HarmonyPatch(typeof(GameManagerEX), "InitGame")]
         [HarmonyPostfix]
         private static void PostfixInitGame(GameManagerEX __instance)
@@ -367,6 +378,7 @@ namespace DT_Tools.Features.TwoRoundVote
         /// 第二轮 Survive 开始时清空 TrialManager 残留（Corpse/Black/候选等），
         /// 避免下一场审判 Init 前的旧尸体引用影响 GetDisplayTime 等判断。
         /// </summary>
+        /// <param name="state">进入的游戏阶段。</param>
         [HarmonyPatch(typeof(GameRoom), "StartState")]
         [HarmonyPostfix]
         private static void PostfixStartState(EGameState state)

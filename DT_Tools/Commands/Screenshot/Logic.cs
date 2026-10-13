@@ -40,6 +40,8 @@ namespace DT_Tools.Commands.Screenshot
         /// 多次并发请求排队，
         /// 每帧帧末至多消化一个（单次捕获约几十毫秒，排队不堆积）。
         /// </remarks>
+        /// <param name="longEdge">最长边的上限，单位像素。</param>
+        /// <param name="onDone">完成回调，参数依次为文件路径、宽度、高度、是否纯色帧与错误信息；错误信息非空表示失败。</param>
         public static void Capture(int longEdge, Action<string, int, int, bool, string> onDone)
         {
             _queue.Enqueue(new PendingCapture
@@ -122,6 +124,12 @@ namespace DT_Tools.Commands.Screenshot
         /// <summary>
         /// 幂等收尾：看门狗与捕获竞争时只认第一个到达的。
         /// </summary>
+        /// <param name="p">待完成的捕获请求。</param>
+        /// <param name="path">保存的文件路径；失败时为 null。</param>
+        /// <param name="width">图片宽度，单位像素。</param>
+        /// <param name="height">图片高度，单位像素。</param>
+        /// <param name="blank">是否为纯色帧，只打标记，不判失败。</param>
+        /// <param name="error">失败原因；成功时为 null。</param>
         private static void Finish(PendingCapture p, string path, int width, int height, bool blank, string error)
         {
             if (p.Finished)
@@ -137,6 +145,14 @@ namespace DT_Tools.Commands.Screenshot
         /// <summary>
         /// 超长边缩到 longEdge（Blit 到临时 RT 再读回），写 PNG 落盘；毫秒级文件名防同秒覆盖。
         /// </summary>
+        /// <param name="longEdge">最长边的上限，单位像素。</param>
+        /// <param name="source">源纹理。</param>
+        /// <param name="srcW">源宽度，单位像素。</param>
+        /// <param name="srcH">源高度，单位像素。</param>
+        /// <param name="path">保存的文件路径。</param>
+        /// <param name="width">输出宽度，单位像素。</param>
+        /// <param name="height">输出高度，单位像素。</param>
+        /// <returns>PNG 文件的完整路径。</returns>
         private static string Encode(int longEdge, Texture2D source, int srcW, int srcH, out string path, out int width, out int height)
         {
             path = null;
@@ -184,6 +200,8 @@ namespace DT_Tools.Commands.Screenshot
         /// <summary>
         /// 抽样判纯色帧：通道极差极小视为无内容（全黑/纯色，多半窗口最小化）。
         /// </summary>
+        /// <param name="tex">要检查的纹理。</param>
+        /// <returns>几乎为纯色（全黑或单一颜色）时为 true。</returns>
         private static bool IsUniform(Texture2D tex)
         {
             try

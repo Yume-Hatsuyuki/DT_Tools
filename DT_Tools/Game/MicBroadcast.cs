@@ -126,6 +126,11 @@ namespace DT_Tools.Game
         /// 新点播取代进行中的广播（先还原再加载）。解析失败返回 false（原因已在
         /// ResolveSource 内告警），不改动进行中的广播。
         /// </remarks>
+        /// <param name="rawSource">原始来源文字。</param>
+        /// <param name="kind">来源类型。</param>
+        /// <param name="volume">音量，范围 0 到 1。</param>
+        /// <param name="maxSeconds">时长上限，单位秒。</param>
+        /// <returns>广播开始时为 true。</returns>
         public static bool Play(string rawSource, AudioPlaybackSource kind, float volume, float maxSeconds)
         {
             string uri = AudioMix.ResolveSource(rawSource, kind, Tag);
@@ -144,6 +149,11 @@ namespace DT_Tools.Game
         /// startSeconds=起始偏移（恢复暂停
         /// 书签时从原进度重建）。取代语义与 Play 一致。
         /// </remarks>
+        /// <param name="rawSource">原始来源文字。</param>
+        /// <param name="volume">音量，范围 0 到 1。</param>
+        /// <param name="micMix">是否混入麦克风广播；为 false 时只在本地播放。</param>
+        /// <param name="startSeconds">起播位置，单位秒，默认从头开始。</param>
+        /// <returns>开始播放时为 true。</returns>
         public static bool PlayTrack(string rawSource, float volume, bool micMix, float startSeconds = 0f)
         {
             string uri = AudioMix.ResolveSource(rawSource, AudioPlaybackSource.Auto, Tag);
@@ -165,6 +175,10 @@ namespace DT_Tools.Game
         /// 广播入口（URI 已解析）：localPlayback=false 时只混流、不启动本地播放
         /// （阶段音乐复用——本地由 StageMusic 播放器负责，避免双 AudioSource 同曲齐响）。
         /// </summary>
+        /// <param name="uri">已解析的音频地址。</param>
+        /// <param name="volume">音量，范围 0 到 1。</param>
+        /// <param name="maxSeconds">时长上限，单位秒。</param>
+        /// <param name="localPlayback">是否同时在本地播放；为 false 时只混入麦克风。</param>
         public static void PlayResolved(string uri, float volume, float maxSeconds, bool localPlayback)
         {
             if (string.IsNullOrEmpty(uri))
@@ -216,6 +230,8 @@ namespace DT_Tools.Game
         /// <summary>
         /// 跳转（秒，自动夹紧到曲目范围）：本地播放位置与混入头一起拉到同一位置。
         /// </summary>
+        /// <param name="seconds">跳转到的位置，单位秒，会自动夹紧到曲目范围。</param>
+        /// <returns>跳转成功时为 true。</returns>
         public static bool Seek(float seconds)
         {
             if (_clip == null || _loading)
@@ -231,6 +247,8 @@ namespace DT_Tools.Game
         /// <summary>
         /// 响度：会话中实时生效（本地源与混入一起），无会话时存为下次播放初值。
         /// </summary>
+        /// <param name="volume">新的音量，范围 0 到 1。</param>
+        /// <returns>设置成功时为 true。</returns>
         public static bool SetVolume(float volume)
         {
             float v = Mathf.Clamp01(volume);
@@ -247,6 +265,8 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 无会话时仅记录偏好，加载时应用。
         /// </remarks>
+        /// <param name="audible">本地是否出声。</param>
+        /// <returns>设置成功时为 true。</returns>
         public static bool SetLocalAudible(bool audible)
         {
             _localMuted = !audible;
@@ -262,6 +282,8 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 头位置对齐当前播放位置——混入关闭期间本地源照常推进，旧头位置已过期。
         /// </remarks>
+        /// <param name="enabled">是否混入麦克风。</param>
+        /// <returns>切换成功时为 true。</returns>
         public static bool SetMicMix(bool enabled)
         {
             if (_clip == null || _loading)
@@ -448,6 +470,8 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 失败已告警返回 false。
         /// </remarks>
+        /// <param name="real">游戏原本的麦克风采集器。</param>
+        /// <returns>挂载成功时为 true。</returns>
         private static bool TryMountMic(IMicrophoneCapture real)
         {
             var pipeline = ReadPipeline();
@@ -470,6 +494,8 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 纯混流模式（StageMusic，localPlayback=false）以混入头/上限为完成依据。
         /// </remarks>
+        /// <param name="capSeconds">时长上限，单位秒。</param>
+        /// <returns>逐帧推进的协程迭代器。</returns>
         private static IEnumerator CoTrackClock(float capSeconds)
         {
             float elapsed = 0f;
@@ -686,6 +712,8 @@ namespace DT_Tools.Game
         /// 实机 DissonanceVoip 被厂商魔改、结构与基准有出入——每层记录实际类型名，探测失败时
         /// 整条链一次性输出（供按实机结构修正），随后永久降级 96k VOIP 防刷屏。
         /// </remarks>
+        /// <param name="handle">取到的原生 opus 编码器句柄；失败时为默认值。</param>
+        /// <returns>取到句柄时为 true。</returns>
         private static bool TryGetNativeOpusHandle(out IntPtr handle)
         {
             handle = IntPtr.Zero;
@@ -740,6 +768,9 @@ namespace DT_Tools.Game
         /// <summary>
         /// 反射链结构性断裂：一次性输出实机每层真实类型名，永久降级 96k VOIP 防刷屏。
         /// </summary>
+        /// <param name="chain">反射路径上每层的真实类型名。</param>
+        /// <param name="reason">断裂的原因，用于日志。</param>
+        /// <returns>已判定断裂并降级时为 true。</returns>
         private static bool ProbeBroken(List<string> chain, string reason)
         {
             _handleProbeBroken = true;
@@ -795,6 +826,7 @@ namespace DT_Tools.Game
             /// <summary>
             /// 卸载准备：摘下转发关系并返回原下游（还原时由引擎把下游直连回真实采集器）。
             /// </summary>
+            /// <returns>原下游订阅者；卸载时由引擎直连回真实采集器。</returns>
             internal IMicrophoneSubscriber TakeForward()
             {
                 var f = _forward;

@@ -29,6 +29,7 @@ namespace DT_Tools.Features.ChatLimit
         /// （如 UI_BugReport 的 2000，0.1.16b UI_BugReport.cs:72（待核对））——否则全局
         /// TmpOnEnable/TmpActivate 兜底会波及所有输入框并与 NicknameLimit 互相拉扯。
         /// </summary>
+        /// <param name="field">原版聊天输入框。</param>
         public static void RaiseLimit(TMP_InputField field)
         {
             if (field == null)

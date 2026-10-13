@@ -110,6 +110,10 @@ namespace DT_Tools.Features.EmoteActions
         /// <summary>
         /// 本地播放：骨骼里没有该动画时只警告一次并跳过；成功后按 SyncActions 广播。
         /// </summary>
+        /// <param name="p">播放动画的玩家。</param>
+        /// <param name="animName">骨骼动画名。</param>
+        /// <param name="friendlyName">动作的中文友好名，如挥手。</param>
+        /// <param name="warned">是否已警告过；为 true 时不再警告。</param>
         private static void TryPlay(Player p, string animName, string friendlyName, ref bool warned)
         {
             SkeletonAnimation skeletonAnim = p.SkeletonAnim;
@@ -175,6 +179,7 @@ namespace DT_Tools.Features.EmoteActions
         /// <summary>
         /// 广播动作指令：零宽前缀 + 友好文本，房主原生转发全房。
         /// </summary>
+        /// <param name="friendlyName">动作的中文友好名，如挥手。</param>
         private static void BroadcastAction(string friendlyName)
         {
             try
@@ -235,6 +240,8 @@ namespace DT_Tools.Features.EmoteActions
         /// <summary>
         /// 友好文本 → 动画名。
         /// </summary>
+        /// <param name="friendlyName">动作的中文友好名。</param>
+        /// <returns>对应的动画名。</returns>
         private static string MapFriendlyToAnim(string friendlyName)
         {
             switch (friendlyName)
@@ -249,6 +256,8 @@ namespace DT_Tools.Features.EmoteActions
         /// <summary>
         /// 对远端玩家播放动作（不显示在聊天区）。
         /// </summary>
+        /// <param name="playerId">远端玩家的 PlayerId。</param>
+        /// <param name="animName">骨骼动画名。</param>
         private static void PlayRemote(int playerId, string animName)
         {
             Player p = null;
@@ -333,6 +342,7 @@ namespace DT_Tools.Features.EmoteActions
         /// <summary>
         /// 聊天输入框等 UI 输入聚焦时不触发（防误触）。
         /// </summary>
+        /// <returns>聊天输入框等 UI 输入聚焦时为 true，此时不触发动作。</returns>
         private static bool BlockedByInputField()
         {
             EventSystem current = EventSystem.current;

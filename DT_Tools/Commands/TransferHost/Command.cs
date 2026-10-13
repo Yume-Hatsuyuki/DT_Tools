@@ -160,6 +160,10 @@ namespace DT_Tools.Commands.TransferHost
         /// #原房主 &lt;TransferText 配置> #新房主 （仅房主权限/大厅owner）
         /// PlayerId=0（系统发言，客户端不显示名字前缀，只显示文字）。
         /// </summary>
+        /// <param name="room">当前房间。</param>
+        /// <param name="oldHost">原房主。</param>
+        /// <param name="newHost">新房主。</param>
+        /// <param name="transferSteamOwner">是否同时转让了 Steam 大厅 owner，通知会相应标注。</param>
         private static void SendTransferNotice(GameRoom room, Server.Game.Player oldHost, Server.Game.Player newHost, bool transferSteamOwner)
         {
             try

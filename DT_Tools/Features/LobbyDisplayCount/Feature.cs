@@ -33,6 +33,8 @@ namespace DT_Tools.Features.LobbyDisplayCount
         /// <summary>
         /// 对外显示人数：固定值优先，否则 真实人数 + 偏移；下限 1。
         /// </summary>
+        /// <param name="realCount">房间的真实人数。</param>
+        /// <returns>对外显示的人数：配置了固定值时直接使用，否则为真实人数加偏移，下限为 1。</returns>
         private static int DisplayCount(int realCount)
         {
             int displayed = FixedCount >= 0 ? FixedCount : realCount + Offset;
@@ -49,6 +51,9 @@ namespace DT_Tools.Features.LobbyDisplayCount
         /// 原方法体很短（LobbyId==Nil 早退 + 写字段 + SetLobbyData），此处等价复制，
         /// 仅把 count 换成显示值。
         /// </remarks>
+        /// <param name="__instance">被拦截的大厅管理器实例。</param>
+        /// <param name="count">游戏原本要写入的人数。</param>
+        /// <returns>为 false 时跳过原方法；为 true 时继续执行原方法。</returns>
         [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.UpdateMemberCountMetadata))]
         [HarmonyPrefix]
         private static bool PrefixUpdateMemberCountMetadata(SteamLobbyManager __instance, int count)

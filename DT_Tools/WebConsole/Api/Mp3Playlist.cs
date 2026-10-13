@@ -43,6 +43,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 惰性加载（首次访问读盘）；损坏/缺失回退默认值，不抛出。
         /// </summary>
+        /// <returns>歌单存储；首次访问时从磁盘加载，损坏或缺失时使用默认值。</returns>
         internal static Store Get()
         {
             if (_store != null)
@@ -88,6 +89,8 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 按路径去重入歌单，返回命中的下标（已存在则返回原位置）。
         /// </summary>
+        /// <param name="path">曲目路径或链接。</param>
+        /// <returns>歌单中该路径的下标；已存在时返回原位置。</returns>
         internal static int Ensure(string path)
         {
             var store = Get();

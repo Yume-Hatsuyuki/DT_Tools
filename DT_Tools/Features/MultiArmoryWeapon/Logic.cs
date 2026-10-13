@@ -19,6 +19,8 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         /// <summary>
         /// 私有字段 _armories（0.1.17a Server.Game/DeviceManager.cs:28）。
         /// </summary>
+        /// <param name="dm">设备管理器。</param>
+        /// <returns>服务端的武器架列表。</returns>
         private static List<Server.Game.Armory> GetArmories(Server.Game.DeviceManager dm)
             => Traverse.Create(dm).Field("_armories").GetValue<List<Server.Game.Armory>>();
 
@@ -40,6 +42,10 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         /// 无票（:835-838）、平票（:840-853）、绑定凶手（原版已判白胜 :787-791）、主谋（独立出局语义 :801-816）
         /// 一律交还原版；其余仅当目标是活着的黑方才接管——死后被票出不算（原版 Trial Survive 豁免也仅限绑定凶手）。
         /// </remarks>
+        /// <param name="trial">庭审管理器。</param>
+        /// <param name="catchId">命中时的凶手 PlayerId。</param>
+        /// <param name="skipReason">未命中时的跳过原因。</param>
+        /// <returns>命中时为 true；未命中时为 false，原因写入 skipReason。</returns>
         internal static bool TryGetAnyBlackCatch(Server.Game.TrialManager trial, out int catchId, out string skipReason)
         {
             catchId = -1;
@@ -127,6 +133,8 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         /// <summary>
         /// 刷刀后：按数量开放多架，并让 CurrentArmory 指向其中之一以兼容原版逻辑。
         /// </summary>
+        /// <param name="dm">设备管理器。</param>
+        /// <param name="isInit">是否为开局初始化。</param>
         public static void OpenAfterSpawn(Server.Game.DeviceManager dm, bool isInit)
         {
             Server.Game.GameRoom room = Server.Game.GameRoom.Instance;
@@ -205,6 +213,8 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         /// 这里绕过它直写状态，对齐 Server.Game/Armory.cs:62-67 的 OpenArmory 分支语义；
         /// TickArmory 为私有（0.1.17a Server.Game/Armory.cs:154），经 Traverse 续约下一跳（会再进补丁前缀）。
         /// </summary>
+        /// <param name="armory">要重置转移冷却的武器架。</param>
+        /// <param name="room">所在房间。</param>
         private static void RearmTransfer(Server.Game.Armory armory, Server.Game.GameRoom room)
         {
             armory.DeviceInfo.StateList[2] = room.WeaponMoveSecond;
@@ -279,6 +289,8 @@ namespace DT_Tools.Features.MultiArmoryWeapon
         /// 原版 SendForensics 只扫 CurrentArmory（0.1.17a Server.Game/GameRoom.cs:2161），
         /// 多刀下其余架的拔刀时间不会自动进平板，扫到也会因权威指针被挪走而变成 00:00。
         /// </remarks>
+        /// <param name="dm">设备管理器。</param>
+        /// <param name="player">接收取证结果的玩家。</param>
         public static void SendExtraWeaponForensics(Server.Game.DeviceManager dm, Server.Game.Player player)
         {
             if (dm == null || player == null)

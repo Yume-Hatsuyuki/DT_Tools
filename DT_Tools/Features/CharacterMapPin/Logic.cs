@@ -69,12 +69,16 @@ namespace DT_Tools.Features.CharacterMapPin
         /// <summary>
         /// HUD pin 列表原始访问（白方巡检清理 / 热关闭还原贴图用）。
         /// </summary>
+        /// <param name="scene">HUD 场景对象。</param>
+        /// <returns>HUD 上的 pin 列表。</returns>
         public static List<UI_MinimapSubItem> HudPinListOf(object scene)
             => HudPinsField?.GetValue(scene) as List<UI_MinimapSubItem>;
 
         /// <summary>
         /// 平板 pin 列表原始访问（热关闭还原贴图用）。
         /// </summary>
+        /// <param name="tablet">平板对象。</param>
+        /// <returns>平板上的 pin 列表。</returns>
         public static List<UI_MinimapSubItem> TabletPinListOf(object tablet)
             => TabletPinsField?.GetValue(tablet) as List<UI_MinimapSubItem>;
 
@@ -84,6 +88,7 @@ namespace DT_Tools.Features.CharacterMapPin
         /// 不调用 RefreshPlayerPin。开启后每帧补调 RefreshPlayerPin + ApplyPin，
         /// 并清理已死亡/离开的 pin（保留自己的 MyPlayer pin）。
         /// </summary>
+        /// <param name="scene">游戏场景界面。</param>
         public static void SweepWhitePins(UI_GameScene scene)
         {
             MyPlayer my = Managers.Player.MyPlayer;
@@ -142,6 +147,8 @@ namespace DT_Tools.Features.CharacterMapPin
         /// （0.1.16b GameRoom.cs:2164（待核对）-2166（待核对）)，此时状态已是 Trial（服务器先切 State 再广播，
         /// 0.1.16b GameRoom.cs:573（待核对）-581（待核对） + 601-610），不在 Survive/Detective 内，照常删除。
         /// </remarks>
+        /// <param name="id">pin 对应的 PlayerId。</param>
+        /// <returns>应拦下本次删除时为 true。</returns>
         public static bool CanKeepPin(int id)
         {
             MyPlayer my = Managers.Player.MyPlayer;
@@ -155,6 +162,8 @@ namespace DT_Tools.Features.CharacterMapPin
         /// <summary>
         /// HUD 删除 pin（DeletePin(int) 私有：0.1.17a UI_GameScene.cs:935；热关闭清理保留 pin 用）。
         /// </summary>
+        /// <param name="scene">游戏场景界面。</param>
+        /// <param name="id">要删除 pin 的 PlayerId。</param>
         public static void DeleteHudPin(UI_GameScene scene, int id)
             => DeletePinOf?.Invoke(scene, id);
 
@@ -164,6 +173,8 @@ namespace DT_Tools.Features.CharacterMapPin
         /// <remarks>
         /// 复刻原版 Kaho（ComplyRules）对被追踪者的位置推送语义：服务器每次接受移动都向追踪者发 S_PIN_MOVE（含强制移动，0.1.16b Server.Game/Player.cs:764-770（待核对）），客户端经 Handle_S_PIN_MOVE（0.1.17a PacketHandler.cs:231-237）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.17a UI_GameScene.cs:901-904）。本方法与其同构：HUD / 平板两份保留 pin 一起平滑推到目标点，坐标换算与逐帧刷新同源（0.1.17a Util.cs:887-892）。
         /// </remarks>
+        /// <param name="id">保留 pin 对应的 PlayerId。</param>
+        /// <param name="pos">服务器广播的强制位移目标坐标。</param>
         public static void FollowKeptPin(int id, PosInfo pos)
         {
             Vector2 target = new Vector2(pos.X, pos.Y);
@@ -178,6 +189,9 @@ namespace DT_Tools.Features.CharacterMapPin
         /// <summary>
         /// 常驻箭头是否追踪该玩家：排除自己/无角色/观战/已死，Kaho 追踪目标不重复显示。
         /// </summary>
+        /// <param name="my">本机玩家。</param>
+        /// <param name="player">要判断的玩家。</param>
+        /// <returns>应当追踪该玩家时为 true。</returns>
         public static bool ShouldTrack(MyPlayer my, Player player)
         {
             int id = player.PublicInfo.PlayerId;

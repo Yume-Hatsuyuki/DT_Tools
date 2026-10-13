@@ -141,6 +141,8 @@ namespace DT_Tools.Features.PhotoTools
         /// <summary>
         /// 对截图应用滤镜（就地修改像素）。
         /// </summary>
+        /// <param name="tex">要修改像素的截图纹理。</param>
+        /// <param name="filter">要应用的滤镜类型。</param>
         private static void ApplyFilter(Texture2D tex, PhotoFilterType filter)
         {
             Color32[] pixels = tex.GetPixels32();
@@ -238,6 +240,7 @@ namespace DT_Tools.Features.PhotoTools
         /// <summary>
         /// 在截图左下角叠加「谁拍的 · 时间 · 房间」证物水印。
         /// </summary>
+        /// <param name="tex">要叠加水印的截图纹理。</param>
         private static void ApplyEvidenceStamp(Texture2D tex)
         {
             string text = BuildStampText();
@@ -389,6 +392,7 @@ namespace DT_Tools.Features.PhotoTools
         /// <summary>
         /// 生成水印文本：谁拍的 · 游戏内时间 · 所在房间。
         /// </summary>
+        /// <returns>水印文字：拍摄者、游戏内时间与所在房间，以 · 分隔。</returns>
         private static string BuildStampText()
         {
             try

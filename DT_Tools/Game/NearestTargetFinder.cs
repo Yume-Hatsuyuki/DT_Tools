@@ -27,6 +27,10 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 复刻原版语义：Raycast 命中遮挡层（返回 true）视为不可直达，剔除该目标。
         /// </remarks>
+        /// <param name="from">起点坐标。</param>
+        /// <param name="range">搜索半径，单位世界单位。</param>
+        /// <param name="filter">额外过滤条件；返回 false 的玩家跳过，默认不过滤。</param>
+        /// <returns>最近的玩家；没有时为 null。</returns>
         public static Player Find(Vector2 from, float range, Predicate<Player> filter = null)
         {
             Player best = null;

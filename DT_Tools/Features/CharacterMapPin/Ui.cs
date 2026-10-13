@@ -64,6 +64,8 @@ namespace DT_Tools.Features.CharacterMapPin
         /// <summary>
         /// 角色 + 已识破黑幕用黑版头像，其余用白版（与 Kaho 箭头同源键）。
         /// </summary>
+        /// <param name="player">要取头像的玩家。</param>
+        /// <returns>头像缓存的键名：角色加颜色版本。</returns>
         public static string BuildKey(Player player)
             => player.CharData.Type + (IsKnownBlack(player.PublicInfo.PlayerId) ? BlackKey : WhiteKey);
 
@@ -74,6 +76,8 @@ namespace DT_Tools.Features.CharacterMapPin
         /// 顺序：key → 同色 Black（若原是 White）→ Someone 对应色。
         /// 绝不发起 Addressables 加载（Managers.Resource.Load 直查缓存，0.1.16b ResourceManager.cs:69（待核对）)。
         /// </remarks>
+        /// <param name="key">BuildKey 返回的键。</param>
+        /// <returns>预加载的头像；缓存中没有时为 null。</returns>
         public static Sprite GetSprite(string key)
         {
             Sprite sprite = Managers.Resource.Load<Sprite>(key);
@@ -282,6 +286,7 @@ namespace DT_Tools.Features.CharacterMapPin
         /// 黑幕 pin 的已识破表现是 TurnBlack 的 minimap_black.sprite（:62-67），不在 PinSpriteKey 表内，统一还原为通用玩家底图即可，下一次识破事件由原版 RefreshBlackPin 重新置黑；不调 sizeDelta（ApplyPin 替换时也没改尺寸）。
         /// ComplyRules 子物体：ApplyPin 曾强制 SetVisible(true)，还原时未识破态（AlreadyComplyRules=false，:39）按原版 SetInfo 默认隐藏（:57）；已识破态原版本就保持可见（TurnComplyRules :71-81），贴图恢复为原版所用的 &lt;角色>_Map_Black。
         /// </remarks>
+        /// <param name="pin">要还原的 pin。</param>
         private static void RestorePin(UI_MinimapSubItem pin)
         {
             if (pin == null || pin.Type != Define.EMinimapPinType.Player)

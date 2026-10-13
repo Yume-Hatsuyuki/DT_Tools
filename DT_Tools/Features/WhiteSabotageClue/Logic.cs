@@ -24,6 +24,8 @@ namespace DT_Tools.Features.WhiteSabotageClue
         /// 每次销毁都新增一条；也不发 S_LEFT_CLUE（原版没有）。OnEvidenceDestroyed 为
         /// protected virtual（Device.cs:263），经反射调用以保留子类覆写。
         /// </remarks>
+        /// <param name="device">要销毁证据的设备。</param>
+        /// <param name="player">执行销毁的白方玩家。</param>
         public static void DestroyEvidence(Device device, Server.Game.Player player)
         {
             player.CanDestroyEvidence = false;

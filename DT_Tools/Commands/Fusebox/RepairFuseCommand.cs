@@ -64,6 +64,10 @@ namespace DT_Tools.Commands.Fusebox
         /// <summary>
         /// 单个电闸修复：校验目标确实损坏后发包，避免对完好电闸误发触发 DisconnetCable。
         /// </summary>
+        /// <param name="fuseboxId">要修复的电闸 ID。</param>
+        /// <param name="broken">当前已损坏的电闸列表，用于校验目标确实损坏。</param>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>命令执行结果。</returns>
         private static CommandResult RepairOne(int fuseboxId, List<DeviceBase> broken, CommandContext ctx)
         {
             DeviceBase target = broken.Find(f => f.ID == fuseboxId);
@@ -98,6 +102,9 @@ namespace DT_Tools.Commands.Fusebox
         /// <summary>
         /// all 模式：用协程逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。
         /// </summary>
+        /// <param name="broken">当前已损坏的电闸列表。</param>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>命令执行结果。</returns>
         private static CommandResult RepairAll(List<DeviceBase> broken, CommandContext ctx)
         {
             if (broken.Count == 0)

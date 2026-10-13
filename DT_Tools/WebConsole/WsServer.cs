@@ -33,6 +33,9 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// WebConsole.Init 调用；port≤0 表示配置禁用。
         /// </summary>
+        /// <param name="listenIp">监听地址。</param>
+        /// <param name="port">监听端口；小于等于 0 表示禁用。</param>
+        /// <param name="auth">鉴权对象。</param>
         public static void Start(string listenIp, int port, Auth auth)
         {
             if (port <= 0)
@@ -164,6 +167,9 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// 读取握手请求头（直到空行）；超时/断开/超限返回 false。
         /// </summary>
+        /// <param name="stream">已建立连接的网络流。</param>
+        /// <param name="head">读取到的握手请求头。</param>
+        /// <returns>读到完整请求头时为 true；超时、断开或超限时为 false。</returns>
         private static bool TryReadHead(NetworkStream stream, out string head)
         {
             head = null;
@@ -266,6 +272,8 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// RFC6455 握手接受键：Base64(SHA1(key + GUID))。
         /// </summary>
+        /// <param name="key">客户端发送的 Sec-WebSocket-Key。</param>
+        /// <returns>Sec-WebSocket-Accept 的值。</returns>
         private static string ComputeAcceptKey(string key)
         {
             using (var sha = SHA1.Create())
@@ -276,6 +284,8 @@ namespace DT_Tools.WebConsole
         /// 监听地址解析：解释口径统一走 HttpServer.NormalizeIp（唯一权威，消除两份同构归一化），
         /// 这里只做字符串 → 套接字地址的转换（"*"/localhost 特判、IPv6 去方括号）。
         /// </summary>
+        /// <param name="raw">配置中的原始监听地址。</param>
+        /// <returns>解析后的 IP 地址。</returns>
         private static IPAddress ResolveIp(string raw)
         {
             string ip = HttpServer.NormalizeIp(raw);

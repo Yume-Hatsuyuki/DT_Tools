@@ -107,6 +107,9 @@ namespace DT_Tools.Commands.Beacon
         /// <remarks>
         /// 这里只做粗略边界提示，不做精确可行走判定（避免依赖服务端 MapArray）。
         /// </remarks>
+        /// <param name="pos">目标坐标；为 null 时不做检查。</param>
+        /// <param name="mapData">地图数据；缺少边界信息时不做检查。</param>
+        /// <returns>越界时返回预警文字；在界内或无法检查时返回 null。</returns>
         public static string OutOfBoundsWarning(PosInfo pos, MapData mapData)
         {
             if (pos == null || mapData?.MapSize == null || mapData.MapOffset == null)

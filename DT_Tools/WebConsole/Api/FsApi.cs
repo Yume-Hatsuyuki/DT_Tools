@@ -96,6 +96,8 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// Attributes 属性会按需访问文件系统（断链 reparse point 会抛异常）——读失败按可见处理。
         /// </summary>
+        /// <param name="entry">要读取属性的文件或目录。</param>
+        /// <returns>文件属性；读取失败时按可见处理。</returns>
         private static FileAttributes SafeAttributes(FileSystemInfo entry)
         {
             try { return entry.Attributes; }

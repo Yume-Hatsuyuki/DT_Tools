@@ -23,6 +23,8 @@ namespace DT_Tools.Features.CustomRoomName
         /// <summary>
         /// 把配置中的房间名清洗后写入当前 Steam Lobby（需房主）。
         /// </summary>
+        /// <param name="reason">触发原因，用于日志。</param>
+        /// <returns>写入成功时为 true。</returns>
         public static bool TryApplyRoomName(string reason)
         {
             if (!Engine.Enabled<CustomRoomNameFeature>())
@@ -53,6 +55,7 @@ namespace DT_Tools.Features.CustomRoomName
         /// 64 截断常量只在此处出现；
         /// CreateLobby 前缀等所有调用方一律复用本方法，禁止再写第二份清洗链。
         /// </remarks>
+        /// <returns>清洗后的房间名：去富文本、首尾空白，并截断到 64 个字符。</returns>
         internal static string SanitizeName()
         {
             string name = CustomRoomNameFeature.RoomName?.Trim() ?? "";

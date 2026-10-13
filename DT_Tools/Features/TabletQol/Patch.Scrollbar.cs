@@ -26,6 +26,8 @@ namespace DT_Tools.Features.TabletQol
         /// <summary>
         /// 按配置确保列表都挂上滚动条；已挂过是空操作。
         /// </summary>
+        /// <param name="tablet">平板界面。</param>
+        /// <param name="reason">触发原因，用于日志。</param>
         internal static void AttachConfigured(UI_GameTablet tablet, string reason)
         {
             if (tablet == null || !TabletQolFeature.Scrollbar)

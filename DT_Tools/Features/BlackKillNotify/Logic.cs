@@ -39,6 +39,7 @@ namespace DT_Tools.Features.BlackKillNotify
         /// <summary>
         /// 攻击发送前缀喂入：记录本次击杀候选目标。
         /// </summary>
+        /// <param name="targetPid">击杀候选目标的 PlayerId。</param>
         public static void RecordKillTarget(int targetPid)
         {
             _killTargetPid = targetPid;
@@ -121,6 +122,8 @@ namespace DT_Tools.Features.BlackKillNotify
         /// Postfix 抛出会打断宿主 OnDead 剩余流程（ExitPlayer 等）。主机侧代码仅在
         /// 房主进程执行，无需额外 IsHost 判定。
         /// </remarks>
+        /// <param name="victim">被击杀的玩家。</param>
+        /// <param name="killer">凶手。</param>
         public static void NotifyFromHost(Server.Game.Player victim, Server.Game.Player killer)
         {
             try
@@ -167,6 +170,11 @@ namespace DT_Tools.Features.BlackKillNotify
         /// <summary>
         /// 战报文案（客户端/房主两半唯一实现，格式改动只改这里）。
         /// </summary>
+        /// <param name="surviveTime">游戏内时间，用于战报第一行。</param>
+        /// <param name="room">地名。</param>
+        /// <param name="character">被击杀角色名。</param>
+        /// <param name="remain">剩余攻击次数。</param>
+        /// <returns>完整的战报文案。</returns>
         private static string Compose(int surviveTime, string room, string character, int remain)
             => $"{Util.FormatTimeSentence(surviveTime)}"
                + $"\n黑方在【{room}】处击杀了【{character}】，剩余【{remain}】攻击次数。";
@@ -175,6 +183,9 @@ namespace DT_Tools.Features.BlackKillNotify
         /// 角色名（客户端半）：受害者角色（CharacterData.Name，与文案「击杀了【角色】」对应），
         /// 缺失回退玩家显示名。
         /// </summary>
+        /// <param name="pid">被击杀玩家的 PlayerId。</param>
+        /// <param name="pos">被击杀者的位置。</param>
+        /// <returns>角色名；缺失时回退为玩家显示名。</returns>
         private static string ResolveCharacter(int pid, out PosInfo pos)
         {
             pos = null;
@@ -195,6 +206,9 @@ namespace DT_Tools.Features.BlackKillNotify
         /// 地名（房主半）：受害者所在区域的 ERoomType 本地化名（与线索句式同源，
         /// Util.cs:814）；受害者无区域时回退凶手区域。
         /// </summary>
+        /// <param name="victim">被击杀的玩家。</param>
+        /// <param name="killer">凶手。</param>
+        /// <returns>受害者所在区域的本地化房间名。</returns>
         private static string ResolveRoomName(Server.Game.Player victim, Server.Game.Player killer)
         {
             var area = victim.CurrentArea ?? killer.CurrentArea;
@@ -206,6 +220,8 @@ namespace DT_Tools.Features.BlackKillNotify
         /// <summary>
         /// 角色名（房主半）：受害者角色（CharacterData.Name），缺失回退玩家名。
         /// </summary>
+        /// <param name="victim">被击杀的玩家。</param>
+        /// <returns>角色名；缺失时回退为玩家名。</returns>
         private static string ResolveCharacterName(Server.Game.Player victim)
         {
             string name = victim.Data?.Name;
@@ -217,6 +233,8 @@ namespace DT_Tools.Features.BlackKillNotify
         /// <summary>
         /// 离受害者最近的打字机（房主半）：找不到设备时填 0（面板署名留空，浮文不受影响）。
         /// </summary>
+        /// <param name="victim">被击杀的玩家。</param>
+        /// <returns>离受害者最近的打字机 ID；找不到设备时为 0。</returns>
         private static int NearestChatDeviceTo(Server.Game.Player victim)
         {
             // 客户端全局也有 DeviceManager，必须用 Server.Game 全名（范本 TwoRoundVoteFeature）
@@ -249,6 +267,8 @@ namespace DT_Tools.Features.BlackKillNotify
         /// <summary>
         /// 离自己最近的空闲打字机（客户端半）：设备状态经 S_MODIFY_DEVICE 全员实时广播。
         /// </summary>
+        /// <param name="me">本机玩家。</param>
+        /// <returns>离本机最近的空闲打字机；没有时为 null。</returns>
         private static DeviceBase PickFreeChatDevice(MyPlayer me)
         {
             Vector3 myPos = me.transform.position;

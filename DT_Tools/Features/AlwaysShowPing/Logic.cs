@@ -73,6 +73,8 @@ namespace DT_Tools.Features.AlwaysShowPing
         /// 若父链被 Lobby 面板关掉，则挂到
         /// UI_GameScene 根节点（避免随 Lobby/Common 面板切换被关掉）。
         /// </remarks>
+        /// <param name="scene">当前的游戏场景界面。</param>
+        /// <param name="indicator">延迟指示器节点。</param>
         private static void EnsureVisible(UI_GameScene scene, UI_PingIndicator indicator)
         {
             GameObject go = indicator.gameObject;

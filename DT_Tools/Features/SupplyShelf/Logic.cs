@@ -49,6 +49,10 @@ namespace DT_Tools.Features.SupplyShelf
         /// <summary>
         /// 构造道具袋：池整体入袋；不足补 0（或按池补齐），超出随机截断。
         /// </summary>
+        /// <param name="slotCount">道具袋的格数。</param>
+        /// <param name="pool">候选道具 DataId 池。</param>
+        /// <param name="alwaysFilled">是否总是把格子填满。</param>
+        /// <returns>长度为 slotCount 的道具 DataId 列表。</returns>
         public static List<int> BuildBag(int slotCount, int[] pool, bool alwaysFilled)
         {
             var bag = new List<int>();

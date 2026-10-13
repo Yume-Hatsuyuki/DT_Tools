@@ -40,6 +40,8 @@ namespace DT_Tools.Features.StageMusic
         /// <summary>
         /// 阶段曲目配置（空 = 该阶段不播放）。
         /// </summary>
+        /// <param name="stage">音乐阶段。</param>
+        /// <returns>该阶段的曲目配置；为空表示该阶段不播放。</returns>
         private static string TrackOf(MusicStage stage)
         {
             switch (stage)
@@ -68,6 +70,8 @@ namespace DT_Tools.Features.StageMusic
         /// <summary>
         /// 阶段独立音量（0~1）。
         /// </summary>
+        /// <param name="stage">音乐阶段。</param>
+        /// <returns>该阶段的音量，范围 0 到 1。</returns>
         private static float VolumeOf(MusicStage stage)
         {
             switch (stage)
@@ -99,6 +103,8 @@ namespace DT_Tools.Features.StageMusic
         /// <remarks>
         /// -1/0 = 不限。
         /// </remarks>
+        /// <param name="stage">音乐阶段。</param>
+        /// <returns>该阶段的时长上限，单位秒；-1 或 0 表示不限。</returns>
         private static float MaxSecondsOf(MusicStage stage)
         {
             switch (stage)
@@ -127,6 +133,7 @@ namespace DT_Tools.Features.StageMusic
         /// <summary>
         /// 按阶段播放：曲目/音量/时长上限均取该阶段独立配置，来源按 TrackSource 解析。
         /// </summary>
+        /// <param name="stage">要播放的音乐阶段。</param>
         public static void Play(MusicStage stage)
         {
             string raw = TrackOf(stage)?.Trim() ?? "";
@@ -144,6 +151,9 @@ namespace DT_Tools.Features.StageMusic
         /// <summary>
         /// 播放核心（uri 已解析）：同 URI 播放中不重播，新触发停旧播新。
         /// </summary>
+        /// <param name="uri">已解析的音频地址。</param>
+        /// <param name="volume">音量，范围 0 到 1。</param>
+        /// <param name="maxSeconds">播放时长上限，单位秒。</param>
         private static void PlayInternal(string uri, float volume, float maxSeconds)
         {
             if (_playingUri == uri && _source != null && _source.isPlaying)
@@ -328,6 +338,8 @@ namespace DT_Tools.Features.StageMusic
         /// Http 要求 http(s):// 前缀；
         /// Local 转为 file:/// URI。
         /// </remarks>
+        /// <param name="raw">配置中的原始曲目文字。</param>
+        /// <returns>解析后的音频地址。</returns>
         private static string ResolveUri(string raw)
         {
             if (StageMusicFeature.Source == TrackSource.Http)

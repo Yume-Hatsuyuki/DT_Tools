@@ -43,6 +43,7 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 把 7 份岛屿数据注入 ResourceManager._resources，成功返回 true。
         /// </summary>
+        /// <returns>注入成功时为 true。</returns>
         internal static bool Inject()
         {
             if (_resourcesField == null)

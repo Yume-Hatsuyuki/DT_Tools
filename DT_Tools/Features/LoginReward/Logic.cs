@@ -28,6 +28,7 @@ namespace DT_Tools.Features.LoginReward
         /// <remarks>
         /// Init 可能多次触发（每次启动流程），按实例判重。
         /// </remarks>
+        /// <param name="inv">要订阅的库存管理器。</param>
         public static void Attach(InventoryManager inv)
         {
             if (inv == null)
@@ -239,6 +240,10 @@ namespace DT_Tools.Features.LoginReward
         /// （0.1.17a InventoryManager.cs:38，原版即硬编码 250），由调用方传入。
         /// SteamInventorySource 再按 num/10 折成 drop 单位（每单位 10）。
         /// </remarks>
+        /// <param name="amount">实验数据数量。</param>
+        /// <param name="cap">每日上限。</param>
+        /// <param name="gold">换算出的金星数量。</param>
+        /// <param name="silver">换算出的银星数量。</param>
         private static void AmountToStars(int amount, int cap, out int gold, out int silver)
         {
             int value = Mathf.Clamp(amount, 0, cap);

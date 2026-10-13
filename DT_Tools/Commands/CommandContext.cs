@@ -50,6 +50,7 @@ namespace DT_Tools.Commands
         /// <remarks>
         /// 当前通道不支持等待时返回 null，调用方应退化为只发起 + 日志查询。
         /// </remarks>
+        /// <returns>占位结果；真实结果由主线程回填，等待方随后拿到终值。</returns>
         public CommandResult Defer()
         {
             var sink = DeferredCompletion.Current;
@@ -60,6 +61,8 @@ namespace DT_Tools.Commands
         /// 同步路径上标记本来就一致，直接写；不一致则按快照恢复标记，写完还原
         /// （还原而非清空：回调若恰好插在另一命令的同步执行段中，不破坏对方的标记）。
         /// </summary>
+        /// <param name="write">实际输出的回调，可能在同步路径或延迟路径中被调用。</param>
+        /// <param name="message">要输出的文字。</param>
         private void Write(Action<string> write, string message)
         {
             if (CommandSession.Current == _session)

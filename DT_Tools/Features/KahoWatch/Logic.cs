@@ -18,6 +18,8 @@ namespace DT_Tools.Features.KahoWatch
         /// <summary>
         /// 查找正在监视 target 的 KAHO（KAHO 角色且 TracePlayers 包含 target），无则返回 null。
         /// </summary>
+        /// <param name="target">被监视的玩家。</param>
+        /// <returns>正在监视 target 的 KAHO 玩家；无则为 null。</returns>
         public static Server.Game.Player FindWatcher(Server.Game.Player target)
         {
             if (target == null) return null;
@@ -36,6 +38,10 @@ namespace DT_Tools.Features.KahoWatch
         /// <summary>
         /// 给 KAHO 发私聊提示（带冷却；Text 为具体动作描述）。
         /// </summary>
+        /// <param name="watcher">KAHO 玩家。</param>
+        /// <param name="actor">执行动作的玩家。</param>
+        /// <param name="actionType">动作类型编号。</param>
+        /// <param name="actionText">动作的具体描述文字。</param>
         public static void Notify(Server.Game.Player watcher, Server.Game.Player actor, int actionType, string actionText)
         {
             if (watcher == null || actor == null || watcher.Session == null) return;

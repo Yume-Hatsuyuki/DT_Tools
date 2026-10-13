@@ -27,6 +27,8 @@ namespace DT_Tools.Features.BackendProxy
         /// <remarks>
         /// 空串返回 null —— 补丁直通原版返回值，等同未安装本功能。
         /// </remarks>
+        /// <param name="value">原始地址文字，可为 null。</param>
+        /// <returns>去掉首尾空白和结尾斜杠后的地址；空串时为 null，此时补丁直通原版返回值。</returns>
         internal static string Normalize(string value)
         {
             string trimmed = (value ?? "").Trim().TrimEnd('/');

@@ -95,6 +95,10 @@ namespace DT_Tools.Features.PhotoSend
         /// <remarks>
         /// 文字可空（Trim 后），路径不允许为空。
         /// </remarks>
+        /// <param name="body">消息正文。</param>
+        /// <param name="alt">解析出的文字说明，可为空。</param>
+        /// <param name="argument">解析出的图片路径。</param>
+        /// <returns>解析结果，区分是否为合法的图片语法。</returns>
         private static ParseResult TryParseMarkdown(string body, out string alt, out string argument)
         {
             alt = null;

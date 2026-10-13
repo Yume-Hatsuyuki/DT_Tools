@@ -45,6 +45,9 @@ namespace DT_Tools.Commands.Fusebox
         /// 失败时输出提示并经 code 返回对应错误码（沿用旧实现）。
         /// 修电/拆电都只在 Survive 阶段生效。
         /// </remarks>
+        /// <param name="ctx">命令上下文，失败提示通过它输出。</param>
+        /// <param name="code">失败时的错误码，沿用旧实现。</param>
+        /// <returns>本机已进入对局、已连上 Host 且处于生存阶段时为 true。</returns>
         public static bool ValidateClient(CommandContext ctx, out string code)
         {
             if (!LocalPlayer.TryGetPlayer(out _, out string localError))
@@ -75,6 +78,7 @@ namespace DT_Tools.Commands.Fusebox
         /// <remarks>
         /// （已武装完好的电闸查询走 Game/Devices.ArmedIntactFuseboxes()）
         /// </remarks>
+        /// <returns>已损坏电闸（StateList[0]==9999）的列表，可用于修电。</returns>
         public static List<DeviceBase> CollectBroken()
         {
             return Devices.AllOf(EDeviceType.Fusebox)
@@ -91,6 +95,9 @@ namespace DT_Tools.Commands.Fusebox
         /// <remarks>
         /// 返回 (设备, 错误信息)；不存在时设备为 null。
         /// </remarks>
+        /// <param name="id">电闸设备 ID。</param>
+        /// <param name="error">查找失败时的错误信息。</param>
+        /// <returns>找到的电闸设备；不存在时为 null，原因写入 error。</returns>
         public static DeviceBase FindFusebox(int id, out string error)
         {
             if (Managers.Device.Cache.TryGetValue(id, out var dev))
@@ -110,6 +117,8 @@ namespace DT_Tools.Commands.Fusebox
         /// <summary>
         /// 获取电闸状态中文标签。
         /// </summary>
+        /// <param name="fusebox">要查询的电闸。</param>
+        /// <returns>状态的中文标签。</returns>
         public static string GetStateLabel(DeviceBase fusebox)
         {
             var info = fusebox?.Info;
@@ -125,6 +134,7 @@ namespace DT_Tools.Commands.Fusebox
         /// <summary>
         /// 发送 C_INTERACT_FUSEBOX 到指定电闸 ID（StateList[0] 决定服务端分流方向）。
         /// </summary>
+        /// <param name="fuseboxId">目标电闸设备 ID。</param>
         public static void SendInteract(int fuseboxId)
         {
             Managers.Network.GameServer.Send(new C_INTERACT_FUSEBOX
@@ -140,6 +150,10 @@ namespace DT_Tools.Commands.Fusebox
         /// 每次发包前校验网络链路和游戏阶段，对局结束 / 断线时中止。
         /// action 描述用于日志（"修电"/"拆电"）。
         /// </remarks>
+        /// <param name="ids">目标电闸 ID 列表。</param>
+        /// <param name="action">执行的动作，修电或拆电。</param>
+        /// <param name="ctx">命令上下文，结果写入其中。</param>
+        /// <returns>协程迭代器，由调用方交给宿主执行。</returns>
         public static IEnumerator SendPackets(List<int> ids, string action, CommandContext ctx)
         {
             int sent = 0;
@@ -169,6 +183,10 @@ namespace DT_Tools.Commands.Fusebox
         /// <summary>
         /// all 模式启动协程（挂到 Core 常驻协程宿主，不依赖 WebConsole 组件存活）。
         /// </summary>
+        /// <param name="ids">目标电闸 ID 列表。</param>
+        /// <param name="action">执行的动作，修电或拆电。</param>
+        /// <param name="ctx">命令上下文。</param>
+        /// <returns>协程成功启动时为 true。</returns>
         public static bool StartPacketsCoroutine(List<int> ids, string action, CommandContext ctx)
         {
             Core.CoroutineHost.Start(SendPackets(ids, action, ctx));

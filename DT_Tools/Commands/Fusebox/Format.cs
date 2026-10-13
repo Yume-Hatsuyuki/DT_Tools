@@ -12,6 +12,8 @@ namespace DT_Tools.Commands.Fusebox
         /// <summary>
         /// 格式化电闸一行：#ID  房间  状态。
         /// </summary>
+        /// <param name="fusebox">要格式化的电闸设备。</param>
+        /// <returns>一行文本，包含 #ID、房间与状态。</returns>
         public static string FormatLine(DeviceBase fusebox)
         {
             var (localized, _) = RoomLabel.FromDevice(fusebox);
@@ -21,6 +23,8 @@ namespace DT_Tools.Commands.Fusebox
         /// <summary>
         /// 无参 /sabotage_fuse 的已武装电闸列表。
         /// </summary>
+        /// <param name="armed">已武装的电闸列表。</param>
+        /// <returns>列表回复文本，每行格式与 FormatLine 一致。</returns>
         public static string ArmedListReply(List<DeviceBase> armed)
         {
             var sb = new StringBuilder();
@@ -34,6 +38,8 @@ namespace DT_Tools.Commands.Fusebox
         /// <summary>
         /// 无参 /repair_fuse 的损坏电闸列表。
         /// </summary>
+        /// <param name="broken">已损坏的电闸列表。</param>
+        /// <returns>列表回复文本，每行格式与 FormatLine 一致。</returns>
         public static string BrokenListReply(List<DeviceBase> broken)
         {
             var sb = new StringBuilder();

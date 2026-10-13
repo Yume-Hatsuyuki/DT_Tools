@@ -21,6 +21,8 @@ namespace DT_Tools.Features.SitOnChairs
         /// <summary>
         /// 是否为坐姿同步报文（只看前后缀，不校验内容）。
         /// </summary>
+        /// <param name="message">聊天内容，可为 null 或空字符串。</param>
+        /// <returns>前后缀均匹配时为 true。</returns>
         internal static bool IsWire(string message)
             => !string.IsNullOrEmpty(message) && message.StartsWith(Prefix) && message.EndsWith(Suffix);
 
@@ -30,6 +32,9 @@ namespace DT_Tools.Features.SitOnChairs
         /// <remarks>
         /// 内容不合法时返回 false（调用方仍应按同步报文处理，只是不生效）。
         /// </remarks>
+        /// <param name="message">待解析的聊天内容，可为 null。</param>
+        /// <param name="result">解析结果；失败时为 null。</param>
+        /// <returns>内容合法时为 true；非同步报文或内容不合法时为 false。</returns>
         internal static bool TryParse(string message, out SitSyncMessage result)
         {
             result = null;

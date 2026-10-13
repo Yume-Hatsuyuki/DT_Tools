@@ -33,6 +33,7 @@ namespace DT_Tools.WebConsole
         /// 供 API 层（HTTP 线程）把需要 Unity API 的动作投递到主线程执行，
         /// 泵由 Core/CoroutineHost 承载（与命令队列各自独立，互不阻塞）。
         /// </summary>
+        /// <param name="action">要在主线程执行的动作。</param>
         public static void Post(Action action)
         {
             if (Instance == null || action == null) return;
@@ -48,6 +49,9 @@ namespace DT_Tools.WebConsole
         /// 返回 Fail。注意：超时后 work 仍会在主线程稍后执行（结果被丢弃），work 必须
         /// 可重入无害；延迟执行发生时会显式告警，不再静默生效。
         /// </remarks>
+        /// <param name="work">要在主线程执行的工作。</param>
+        /// <param name="timeoutMs">等待结果的超时时间，单位毫秒。</param>
+        /// <returns>工作的执行结果；超时时返回超时错误。</returns>
         public static CommandResult RunOnMain(Func<CommandResult> work, int timeoutMs = RunTimeoutMs)
         {
             if (work == null) return CommandResult.Fail("empty action");
@@ -99,6 +103,7 @@ namespace DT_Tools.WebConsole
         /// <summary>
         /// 由 Plugin 在启用 WebConsole 时调用（读取 WebConsoleOptions 已由引擎绑定）。
         /// </summary>
+        /// <param name="log">BepInEx 的日志来源。</param>
         public void Init(ManualLogSource log)
         {
             if (Instance != null)
@@ -295,6 +300,8 @@ namespace DT_Tools.WebConsole
         /// 只在主线程调用；
         /// 供本类命令队列泵与 MCP 的 run_command 工具共用（单一实现，行为不漂移）。
         /// </remarks>
+        /// <param name="raw">命令原始文本，可带前缀。</param>
+        /// <returns>命令执行结果。</returns>
         internal static CommandResult ExecuteCommandText(string raw)
         {
             if (raw.StartsWith("/") || raw.StartsWith("!"))

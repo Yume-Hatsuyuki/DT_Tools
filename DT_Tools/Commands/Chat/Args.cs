@@ -23,6 +23,10 @@ namespace DT_Tools.Commands.Chat
         /// #12 hello world  → DeviceId=12, Text="hello world"
         /// hello world      → DeviceId=null, Text="hello world"
         /// </summary>
+        /// <param name="args">命令参数数组。</param>
+        /// <param name="result">解析结果。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>解析成功返回 true；不合法时返回 false，原因写入 error。</returns>
         public static bool TryParse(string[] args, out ChatArgs result, out string error)
         {
             result = null;

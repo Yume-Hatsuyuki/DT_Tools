@@ -17,6 +17,8 @@ namespace DT_Tools.Commands.GiveDrink
         ///
         /// 假人补差：InsertWeapon/InsertInven 只写服务端槽位，“手持显示”靠真人客户端收到 S_ADD_ITEM 后回发 C_MODIFY_PLAYER(ChangeHandItem) 才落 PublicInfo.HandItemId 并广播。假人没有客户端，因此补一次服务端 HandItemObjectId 赋值（setter 写 PublicInfo.HandItemId 并广播，Player.cs:374-402）。否则其他客户端看不到假人手持道具，攻击判定（AttackPlayer 读 PublicInfo.HandItemId，GameRoom.cs:2396）也取不到道具数据。清空路径无需补：RemoveHand/RemoveWeapon 内部已走 HandItemObjectId=-1（Player.cs:1631/:1649），setter 同样广播。
         /// </remarks>
+        /// <param name="player">目标玩家。</param>
+        /// <param name="itemId">道具 DataId；小于等于 0 表示清空手持物。</param>
         public static void SendHandItem(Server.Game.Player player, int itemId)
         {
             if (itemId <= 0)

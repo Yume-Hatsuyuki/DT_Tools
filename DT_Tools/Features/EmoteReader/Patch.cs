@@ -44,6 +44,8 @@ namespace DT_Tools.Features.EmoteReader
         /// <summary>
         /// emotionId → 解读台词（读配置）；未知名表情返回 null。
         /// </summary>
+        /// <param name="emotionId">表情 ID。</param>
+        /// <returns>解读台词；未知表情时为 null。</returns>
         internal static string ReadLine(int emotionId)
         {
             switch (emotionId)

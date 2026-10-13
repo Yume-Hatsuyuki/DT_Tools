@@ -237,6 +237,8 @@ namespace DT_Tools.Features.GhostInteract
         /// - StopCasting 之后仍有残留
         /// 绝不在 Update 里因 !IsAlive 直接 Destroy —— 幽灵要能把小游戏打完。
         /// </summary>
+        /// <param name="my">本机玩家。</param>
+        /// <param name="onlyIfNotPlaying">为 true 时仅在未处于挖矿中时清理。</param>
         internal static void CleanupMineralUi(MyPlayer my, bool onlyIfNotPlaying = true)
         {
             // 正在挖矿中则不动
@@ -431,6 +433,7 @@ namespace DT_Tools.Features.GhostInteract
             /// <summary>
             /// 尽量复用原版 GetTargetPlayer / ClientCanAttack 字段。
             /// </summary>
+            /// <param name="my">本机玩家。</param>
             private static void TryGhostAttackTarget(MyPlayer my)
             {
                 var getTarget = AccessTools.Method(typeof(MyPlayer), "GetTargetPlayer");
@@ -769,6 +772,7 @@ namespace DT_Tools.Features.GhostInteract
         /// <remarks>
         /// 这里统一在死后强制拉回 Survive 操作栏。
         /// </remarks>
+        /// <param name="ui">游戏场景界面。</param>
         internal static void RestoreGhostHud(UI_GameScene ui)
         {
             if (ui == null || !GhostInteractFeature.AllowShowHud)

@@ -17,6 +17,7 @@ namespace DT_Tools.Features.TypewriterFloat
         /// <summary>
         /// 本机发送对讲机消息时记录（识别服务器回显的自己的消息）。
         /// </summary>
+        /// <param name="message">本机发送的消息文字。</param>
         public static void MarkSelfSend(string message)
         {
             _lastSelfText = message ?? "";
@@ -27,6 +28,8 @@ namespace DT_Tools.Features.TypewriterFloat
         /// 公开频道消息浮文化：过滤自己的回声与过期积压、喂料面板打开时不重复显示，
         /// 其余复用秘密通话浮文组件（Spawn 路径与 UI_SecretChatOverlay.cs:80 一致）。
         /// </summary>
+        /// <param name="time">消息的服务器时间戳，用于过滤过期积压。</param>
+        /// <param name="message">消息文字。</param>
         public static void OnDeviceChat(int time, string message)
         {
             if (Time.unscaledTime - _lastSelfRealtime <= 3f && message == _lastSelfText)
@@ -50,6 +53,7 @@ namespace DT_Tools.Features.TypewriterFloat
         /// 浮文父容器：优先复用场景内现成的 UI_SecretChatOverlay（sortingOrder=1999，
         /// UI_GameScene object30）；无覆盖层时按其 Init 装配方式惰性自建（随场景销毁）。
         /// </summary>
+        /// <returns>浮文的父容器。</returns>
         private static Transform GetOverlayTransform()
         {
             var existing = UnityEngine.Object.FindFirstObjectByType<UI_SecretChatOverlay>();

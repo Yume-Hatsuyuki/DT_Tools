@@ -20,6 +20,7 @@ namespace DT_Tools.WebConsole.Api
         /// Application.Quit 必须在主线程调用（Unity API），
         /// 借 WebConsole 的主线程队列投递；游戏将走正常退出流程（OnDestroy → 保存）。
         /// </remarks>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleExit(HttpListenerContext ctx)
         {
             Log.Info("WebConsole", "WebUI 请求退出游戏，3 秒后关闭。");
@@ -47,6 +48,7 @@ namespace DT_Tools.WebConsole.Api
         /// wsPort=0 表示实时流被禁用，前端直接走轮询。仅暴露端口号，无敏感信息，
         /// 仍统一过鉴权（Router 在分发前校验）。
         /// </remarks>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleMeta(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, new { ok = true, wsPort = WebConsoleOptions.WsPort });
     }

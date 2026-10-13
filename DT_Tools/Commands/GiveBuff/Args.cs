@@ -66,6 +66,8 @@ namespace DT_Tools.Commands.GiveBuff
         /// <summary>
         /// 清除令牌（第二参=清全部；第三参=清该 BUFF）。
         /// </summary>
+        /// <param name="s">命令参数文字。</param>
+        /// <returns>是清除令牌时为 true。</returns>
         public static bool IsClearToken(string s)
             => s.Equals("clear", StringComparison.OrdinalIgnoreCase)
                || s.Equals("remove", StringComparison.OrdinalIgnoreCase)
@@ -81,6 +83,10 @@ namespace DT_Tools.Commands.GiveBuff
         /// <summary>
         /// args 非空（目标 + buff 两参必备，第三参可选）。
         /// </summary>
+        /// <param name="args">命令参数数组，目标与 BUFF 两项必备，第三项可选。</param>
+        /// <param name="parsed">解析结果。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>参数合法时返回 true；不合法时返回 false，原因写入 error。</returns>
         public static bool TryParse(string[] args, out GiveBuffArgs parsed, out string error)
         {
             parsed = new GiveBuffArgs();

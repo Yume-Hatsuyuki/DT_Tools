@@ -110,6 +110,7 @@ namespace DT_Tools.Game
         /// <summary>
         /// StartMission()：开局启动任务分配（0.1.17a MissionManager.cs:355）。
         /// </summary>
+        /// <returns>调用成功时为 true。</returns>
         public static bool StartParameterless()
         {
             object inst = Instance;
@@ -128,6 +129,8 @@ namespace DT_Tools.Game
         /// <summary>
         /// StartMission(MissionData)：加入进行中列表、递归启动硬前置并激活设备（:701）。
         /// </summary>
+        /// <param name="data">要启动的任务数据。</param>
+        /// <returns>启动成功时为 true。</returns>
         public static bool StartMission(MissionData data)
         {
             object inst = Instance;
@@ -146,6 +149,10 @@ namespace DT_Tools.Game
         /// <summary>
         /// ClearMission(ESchoolMission, Player, bool)：任务完成收口（:437）。
         /// </summary>
+        /// <param name="mission">要完成的任务类型。</param>
+        /// <param name="completer">完成任务的玩家。</param>
+        /// <param name="isInfected">完成方式是否为感染。</param>
+        /// <returns>任务完成收口成功时为 true。</returns>
         public static bool ClearMission(ESchoolMission mission, Server.Game.Player completer, bool isInfected)
         {
             object inst = Instance;
@@ -164,6 +171,8 @@ namespace DT_Tools.Game
         /// <summary>
         /// RemoveFromWaitQueue(int)：清理排队残留（:592）。
         /// </summary>
+        /// <param name="missionType">任务类型（ESchoolMission 底层值）。</param>
+        /// <returns>移除成功时为 true。</returns>
         public static bool RemoveFromWaitQueue(int missionType)
         {
             object inst = Instance;
@@ -181,6 +190,7 @@ namespace DT_Tools.Game
         /// <summary>
         /// BroadcastMissionState()：把任务状态重新广播为 S_MISSION_STATE（:124）。
         /// </summary>
+        /// <returns>广播调用成功时为 true。</returns>
         public static bool BroadcastMissionState()
         {
             object inst = Instance;
@@ -199,6 +209,8 @@ namespace DT_Tools.Game
         /// <summary>
         /// 遍历队列/列表元素并按 MissionData.Type 收集（元素非 MissionData 时跳过）。
         /// </summary>
+        /// <param name="items">任务队列或列表。</param>
+        /// <returns>所有任务的类型集合。</returns>
         public static HashSet<int> CollectTypes(IEnumerable items)
         {
             var types = new HashSet<int>();

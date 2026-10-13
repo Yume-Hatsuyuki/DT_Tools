@@ -30,6 +30,8 @@ namespace DT_Tools.Commands.ListAlive
         /// <summary>
         /// 收集存活玩家（存活、非观战、非 Dummy），按 PlayerId 升序，附 Roster SteamId。
         /// </summary>
+        /// <param name="room">当前房间。</param>
+        /// <returns>存活玩家条目，按 PlayerId 升序排列，附带 Roster SteamId。</returns>
         public static List<Entry> Collect(GameRoom room)
         {
             return PlayerQuery.AliveTargets(room)

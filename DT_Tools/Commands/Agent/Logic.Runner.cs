@@ -165,6 +165,8 @@ namespace DT_Tools.Commands.Agent
         /// 依据 1：Server.Game/ItemManager.cs InsertInven（0.1.16b:101）在 Hand 非空时会强制 DropItem 踢落已持物品（:105-108），同 tick 连发两个改 Hand 包会让先发的被踢落地。
         /// 依据 2：HandItemId 依赖服务端异步回包刷新，冷却期给回包留时间，避免 Planner 对同一目标重复发改 Hand 请求。batch 已按 Priority 升序排列，第一个遇到的改 Hand 步骤即优先级最高者。返回值：本 tick 是否至少执行了一个步骤（供 idle 计数）。
         /// </remarks>
+        /// <param name="batch">本 tick 待执行的步骤，已按 Priority 升序排列。</param>
+        /// <returns>本 tick 至少执行了一个步骤时为 true。</returns>
         private bool ExecuteBatch(List<AgentStep> batch)
         {
             bool executedAny = false;

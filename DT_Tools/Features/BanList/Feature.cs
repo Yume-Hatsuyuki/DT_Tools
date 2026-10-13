@@ -52,6 +52,8 @@ namespace DT_Tools.Features.BanList
         /// <summary>
         /// 游戏黑名单是否已含该 SteamId（Patch.Kick 后缀确认拉黑用）。
         /// </summary>
+        /// <param name="steamId">要检查的 Steam ID。</param>
+        /// <returns>游戏黑名单已包含该 ID 时为 true。</returns>
         internal static bool Contains(CSteamID steamId)
         {
             HashSet<CSteamID> set = ReadSet();
@@ -64,6 +66,8 @@ namespace DT_Tools.Features.BanList
         /// <remarks>
         /// 重复被踢覆盖旧记录。
         /// </remarks>
+        /// <param name="steamId">被踢者的 Steam ID。</param>
+        /// <param name="name">被踢时的名字。</param>
         public static void Record(ulong steamId, string name)
             => Records[steamId] = (name, DateTime.Now);
 
@@ -73,6 +77,7 @@ namespace DT_Tools.Features.BanList
         /// <remarks>
         /// 顺带清理已不在黑名单里的过期名字缓存——房间 FullReset 清空游戏集合后本表自动自愈。
         /// </remarks>
+        /// <returns>黑名单快照：有记录的按被踢时间升序，无记录的按 SteamId 升序排在后面。</returns>
         public static List<BanEntry> Snapshot()
         {
             HashSet<CSteamID> set = ReadSet();
@@ -101,6 +106,8 @@ namespace DT_Tools.Features.BanList
         /// <remarks>
         /// 返回是否确实在黑名单里。
         /// </remarks>
+        /// <param name="steamId">要解除封禁的 Steam ID。</param>
+        /// <returns>该 ID 确实在黑名单中时为 true。</returns>
         public static bool TryUnban(ulong steamId)
         {
             HashSet<CSteamID> set = ReadSet();

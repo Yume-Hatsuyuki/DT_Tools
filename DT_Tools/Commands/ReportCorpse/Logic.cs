@@ -21,6 +21,10 @@ namespace DT_Tools.Commands.ReportCorpse
         /// <remarks>
         /// 身份校验统一走 Game.LocalPlayer。
         /// </remarks>
+        /// <param name="device">本机设备管理器；失败时为 null。</param>
+        /// <param name="code">失败时的错误码。</param>
+        /// <param name="text">失败时的提示文字。</param>
+        /// <returns>本机已进入对局且设备缓存就绪时为 true。</returns>
         public static bool TryGetLocalContext(out DeviceManager device, out string code, out string text)
         {
             device = null;
@@ -39,6 +43,9 @@ namespace DT_Tools.Commands.ReportCorpse
         /// <summary>
         /// 报警只在生存阶段有意义（已开会/未开局都拒）。
         /// </summary>
+        /// <param name="code">拒绝时的错误码。</param>
+        /// <param name="text">拒绝时的提示文字。</param>
+        /// <returns>当前为生存阶段时为 true。</returns>
         public static bool RequireSurvive(out string code, out string text)
         {
             if (!LocalPlayer.IsSurvive)
@@ -55,6 +62,9 @@ namespace DT_Tools.Commands.ReportCorpse
         /// <summary>
         /// 从本机设备缓存取尸体（DeviceType==Corpse）。
         /// </summary>
+        /// <param name="device">本机设备管理器。</param>
+        /// <param name="corpseId">尸体 ID，与死者的 PlayerId 相同。</param>
+        /// <returns>尸体设备；找不到时为 null。</returns>
         public static DeviceBase FindCorpse(DeviceManager device, int corpseId)
         {
             if (device == null) return null;
@@ -69,6 +79,9 @@ namespace DT_Tools.Commands.ReportCorpse
         /// 返回 null 表示可报警；否则返回不可报警的中文原因
         /// （与服务端 Corpse.Interact 的 4 项门禁对齐，仅客户端可见的 3 项）。
         /// </summary>
+        /// <param name="device">本机设备管理器。</param>
+        /// <param name="corpse">要检查的尸体。</param>
+        /// <returns>可以报警时为 null；否则为不可报警的中文原因。</returns>
         public static string GetBlockReason(DeviceManager device, DeviceBase corpse)
         {
             var states = corpse?.Info?.StateList;
@@ -82,6 +95,8 @@ namespace DT_Tools.Commands.ReportCorpse
         /// <summary>
         /// 列出场上所有尸体（StateList 完整的），按 ID 升序。
         /// </summary>
+        /// <param name="device">本机设备管理器。</param>
+        /// <returns>场上所有尸体，按 ID 升序排列。</returns>
         public static List<DeviceBase> ListCorpses(DeviceManager device)
         {
             if (device == null) return new List<DeviceBase>();
@@ -94,6 +109,8 @@ namespace DT_Tools.Commands.ReportCorpse
         /// <summary>
         /// 从本机客户端玩家表查尸体对应死者名。
         /// </summary>
+        /// <param name="playerId">死者的 PlayerId。</param>
+        /// <returns>死者的名字。</returns>
         public static string FindPlayerName(int playerId)
         {
             var dict = Managers.Player?.Players;

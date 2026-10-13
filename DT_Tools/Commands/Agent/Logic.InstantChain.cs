@@ -24,6 +24,8 @@ namespace DT_Tools.Commands.Agent
         /// 均出自 Managers.Device.Cache）按类型+子类型筛选并 OrderBy(ID)；查询为空
         /// （设备缓存未就绪/地图数据异常）时退回硬编码表。
         /// </summary>
+        /// <param name="devices">本次规划用的设备快照，与其它链同一数据源。</param>
+        /// <returns>按 ID 升序的蜡烛设备 ID 列表。</returns>
         private static List<int> ResolveCandleDeviceIds(List<DeviceBase> devices)
         {
             var ids = devices

@@ -30,6 +30,8 @@ namespace DT_Tools.Features.LiveDraw
         /// <summary>
         /// 把照片字节解析为线稿笔画计划；失败/无内容返回 null。
         /// </summary>
+        /// <param name="bytes">照片的原始字节。</param>
+        /// <returns>线稿笔画计划；解析失败或无内容时为 null。</returns>
         public static List<LiveStroke> BuildPlan(byte[] bytes)
         {
             var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);

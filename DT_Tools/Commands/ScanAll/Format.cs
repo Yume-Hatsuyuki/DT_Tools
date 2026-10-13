@@ -13,6 +13,8 @@ namespace DT_Tools.Commands.ScanAll
         /// <summary>
         /// 设备分类中文标签（尸体 / 武器架 / 其他设备）。
         /// </summary>
+        /// <param name="type">设备类型。</param>
+        /// <returns>中文分类标签：尸体、武器架或其他设备。</returns>
         public static string Category(EDeviceType type)
             => type switch
             {

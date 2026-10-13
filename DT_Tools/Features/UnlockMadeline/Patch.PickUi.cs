@@ -114,6 +114,9 @@ namespace DT_Tools.Features.UnlockMadeline
         /// <summary>
         /// 按绑定器索引写文本；缺槽静默跳过（原版必写，此处更稳）。
         /// </summary>
+        /// <param name="__instance">选人弹窗界面。</param>
+        /// <param name="idx">绑定器中的文本槽索引。</param>
+        /// <param name="text">要写入的文字。</param>
         private static void WriteText(UI_PickPopup __instance, int idx, string text)
         {
             var label = UnlockMadelineUi.GetText(__instance, idx);

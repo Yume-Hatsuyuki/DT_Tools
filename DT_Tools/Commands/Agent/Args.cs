@@ -60,6 +60,10 @@ namespace DT_Tools.Commands.Agent
         /// 解析首个参数：null/空 = 无过滤（预览/全清），stop = 停止，
         /// all/全部/全清 = 全清，其余按 任务ID/别名/#设备号 解析。
         /// </summary>
+        /// <param name="args">命令的参数数组；为 null 或空时表示无过滤。</param>
+        /// <param name="parsed">解析结果。</param>
+        /// <param name="error">失败时的中文原因说明。</param>
+        /// <returns>参数合法时返回 true；不合法时返回 false，原因写入 error。</returns>
         public static bool TryParse(string[] args, out AgentArgs parsed, out string error)
         {
             parsed = new AgentArgs();

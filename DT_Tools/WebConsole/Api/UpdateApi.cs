@@ -13,24 +13,28 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// GET /api/update/status — 检测状态（缓存 3 分钟内直接回缓存）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleStatus(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, UpdateService.GetStatus(false));
 
         /// <summary>
         /// POST /api/update/check — 手动检查：绕过缓存立即请求 GitHub。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleCheck(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, UpdateService.GetStatus(true));
 
         /// <summary>
         /// POST /api/update/download — 启动新版 zip 后台下载，进度经 status 轮询。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleDownload(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, UpdateService.StartDownload());
 
         /// <summary>
         /// POST /api/update/reveal — 资源管理器定位已下载的 zip（仅 Windows）。
         /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleReveal(HttpListenerContext ctx)
         {
             string error = UpdateService.RevealDownload();

@@ -62,6 +62,7 @@ namespace DT_Tools.Features.BenjaminWatch
         /// <summary>
         /// 仅本机玩家为 Rin 时显示（ECharacterType.Rin）。
         /// </summary>
+        /// <returns>本机玩家为 Rin 时为 true。</returns>
         private static bool IsRin()
         {
             if (Managers.Player == null || Managers.Player.MyPlayer == null)
@@ -73,6 +74,7 @@ namespace DT_Tools.Features.BenjaminWatch
         /// <summary>
         /// 仅对局内（生存/侦探/庭审）显示；大厅、选人、结算不显示。
         /// </summary>
+        /// <returns>处于生存、侦探或庭审阶段时为 true。</returns>
         private static bool IsInGame()
         {
             if (Managers.Game == null)

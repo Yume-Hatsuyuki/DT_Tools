@@ -113,6 +113,8 @@ namespace DT_Tools.Core
         /// <remarks>
         /// 前端按此分流显示，禁止硬编码段名。
         /// </remarks>
+        /// <param name="section">段名。</param>
+        /// <returns>分组名。自动化模块段返回 ConfigSectionAttribute.GroupAutomation；未标注分组的功能段返回 "feature"。</returns>
         private static string ClassifyGroup(string section)
         {
             string group = Engine.GroupOfSection(section);
@@ -374,6 +376,9 @@ namespace DT_Tools.Core
         /// min/max : 数值范围
         /// 来源优先级：OptionProviders（动态） > 枚举 > AcceptableValueList/Range。
         /// </summary>
+        /// <param name="def">配置项定义，提供段名与键名。</param>
+        /// <param name="entry">配置项的 BepInEx 条目，提供值类型等信息。</param>
+        /// <returns>归一后的 accepts 对象，前端据此渲染下拉或输入框。</returns>
         private static object ExtractAccepts(ConfigDefinition def, ConfigEntryBase entry)
         {
             // 1) 显式声明的动态选项（角色表、出生点等运行时才知道的数据）

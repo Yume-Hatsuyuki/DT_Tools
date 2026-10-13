@@ -54,6 +54,8 @@ namespace DT_Tools.Commands.Agent
         /// 未就绪（IsReady==false）时保守返回 true——避免游戏刚加载、状态还没同步到，
         /// 或反射链路因未来版本更新而失效时，把所有道具误判为"任务不存在"而抢先丢弃。
         /// </remarks>
+        /// <param name="missionType">任务类型（ESchoolMission 底层值）。</param>
+        /// <returns>任务处于进行中时为 true；未就绪时保守返回 true。</returns>
         public static bool IsActive(int missionType)
         {
             if (!IsReady) return true;

@@ -26,6 +26,7 @@ namespace DT_Tools.WebConsole.Mcp
         /// <summary>
         /// 由 Plugin 在 McpOptions.Enabled 时调用。
         /// </summary>
+        /// <param name="log">BepInEx 的日志来源。</param>
         public void Init(ManualLogSource log)
         {
             if (Instance != null)

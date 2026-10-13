@@ -19,6 +19,7 @@ namespace DT_Tools.Features.SeolCarry
         /// <summary>
         /// 时停结束：记录位置并进入搬人模式（技能键恢复可用）。
         /// </summary>
+        /// <param name="seol">Seol 玩家。</param>
         public static void EnterCarryMode(Server.Game.Player seol)
         {
             if (seol == null || !seol.IsAlive) return;
@@ -37,6 +38,8 @@ namespace DT_Tools.Features.SeolCarry
         /// <summary>
         /// 是否处于搬人模式（Seol 且有时停结束位置记录）。
         /// </summary>
+        /// <param name="seol">要判断的玩家。</param>
+        /// <returns>处于搬人模式时为 true。</returns>
         public static bool IsCarryMode(Server.Game.Player seol)
             => seol != null && _carryMode.ContainsKey(seol.PublicInfo.PlayerId);
 
@@ -46,6 +49,9 @@ namespace DT_Tools.Features.SeolCarry
         /// <remarks>
         /// 返回 true 表示已拦截原技能并完成搬人。
         /// </remarks>
+        /// <param name="seol">执行搬人的 Seol 玩家。</param>
+        /// <param name="pkt">技能使用包。</param>
+        /// <returns>搬人流程已启动时为 true。</returns>
         public static bool TryCarry(Server.Game.Player seol, C_USE_SKILL pkt)
         {
             if (seol == null || pkt == null) return false;

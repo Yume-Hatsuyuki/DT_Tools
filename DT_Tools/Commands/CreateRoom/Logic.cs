@@ -23,6 +23,8 @@ namespace DT_Tools.Commands.CreateRoom
         /// <summary>
         /// 启动建房流程（协程等大厅 UI，随后按原版次序异步推进）。
         /// </summary>
+        /// <param name="roomName">房间名。</param>
+        /// <param name="privacy">房间的隐私设置。</param>
         public static void StartCreateFlow(string roomName, string privacy)
         {
             CoroutineHost.Start(CoCreate(roomName, privacy));

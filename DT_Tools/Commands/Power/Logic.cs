@@ -26,6 +26,8 @@ namespace DT_Tools.Commands.Power
         /// <remarks>
         /// 电力逻辑只存在于 Host 端，且仅在生存阶段有游戏意义。
         /// </remarks>
+        /// <param name="ctx">命令上下文，失败时提示通过它输出。</param>
+        /// <returns>活动房间；失败时为 null 且已输出提示。</returns>
         private static GameRoom Validate(CommandContext ctx)
         {
             var room = GameRoom.Instance;
@@ -55,6 +57,8 @@ namespace DT_Tools.Commands.Power
         /// （Fusebox.Interact → DisconnetCable → AreaManager.RefreshLight），
         /// 断开第 2 个电箱时全体区域灭灯并广播 FuseOffSfx / 电箱指路箭头。
         /// </remarks>
+        /// <param name="ctx">命令上下文，结果通过它输出。</param>
+        /// <returns>命令执行结果。</returns>
         public static CommandResult Blackout(CommandContext ctx)
         {
             var room = Validate(ctx);
@@ -117,6 +121,8 @@ namespace DT_Tools.Commands.Power
         /// 重连全部已断开电箱，计数归 0 时全区亮灯、播放 FuseOnSfx，
         /// 并安排 60 秒后重新随机发放 3 个破坏任务。
         /// </summary>
+        /// <param name="ctx">命令上下文，结果通过它输出。</param>
+        /// <returns>命令执行结果。</returns>
         public static CommandResult RestorePower(CommandContext ctx)
         {
             var room = Validate(ctx);

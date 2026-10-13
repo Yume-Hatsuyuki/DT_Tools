@@ -334,6 +334,8 @@ namespace DT_Tools.Features.PoisonAttack
         /// 毒发前 3 秒触发：给被毒死者附加 3 秒 Footprint 足迹 buff（死亡前 3 秒留脚印），
         /// 并置为毒杀脚印模式 —— GameRoom.FillFootstep 对该玩家按反向角度独立收集脚印。
         /// </summary>
+        /// <param name="room">所在房间。</param>
+        /// <param name="target">被毒的玩家。</param>
         private static void StartPoisonFootprint(Server.Game.GameRoom room, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))
@@ -353,6 +355,10 @@ namespace DT_Tools.Features.PoisonAttack
         /// 毒杀脚印模式下的服务端脚印记录：方向为真实移动方向相反（+180°，同原版随机偏移），
         /// 独立收集到 _poisonFootprints（毒发后写入被毒死者的尸体，尸体被发现时随 S_REPLAY_FOOTSTEP 广播）。
         /// </summary>
+        /// <param name="__instance">被拦截的房间实例。</param>
+        /// <param name="player">留下脚印的玩家。</param>
+        /// <param name="loopId">脚印循环的编号。</param>
+        /// <returns>为 false 时跳过原方法；为 true 时继续执行原方法。</returns>
         [HarmonyPatch(typeof(Server.Game.GameRoom), nameof(Server.Game.GameRoom.FillFootstep))]
         [HarmonyPrefix]
         private static bool FillFootstepPrefix(Server.Game.GameRoom __instance, GamePlayer player, int loopId)
@@ -398,6 +404,8 @@ namespace DT_Tools.Features.PoisonAttack
         /// <summary>
         /// 取毒杀脚印收集列表（不存在则创建）。
         /// </summary>
+        /// <param name="playerId">被毒玩家的 PlayerId。</param>
+        /// <returns>该玩家的毒杀脚印列表；不存在时新建。</returns>
         private static List<FootstepInfo> GetPoisonFootprints(int playerId)
         {
             if (!_poisonFootprints.TryGetValue(playerId, out var steps))
@@ -411,6 +419,8 @@ namespace DT_Tools.Features.PoisonAttack
         /// <summary>
         /// 取消武器再装填任务（原版 ConsumeKillAndRearm 用尽分支的同款清理）。
         /// </summary>
+        /// <param name="attacker">下毒者。</param>
+        /// <param name="section">功能段名，用于日志。</param>
         private static void TryKillWeaponRearmJob(GamePlayer attacker, string section)
         {
             try
@@ -436,6 +446,9 @@ namespace DT_Tools.Features.PoisonAttack
         /// 文本为“您将于N秒后死亡”，N = 警告提前量配置（默认 5，随配置动态变化）。
         /// 仅在 Survive 阶段弹——若游戏已结束（结束前不足毒发时长下毒），不弹警告、不死亡。
         /// </remarks>
+        /// <param name="room">所在房间。</param>
+        /// <param name="attacker">下毒者。</param>
+        /// <param name="target">被毒的玩家。</param>
         private static void WarnDeath(Server.Game.GameRoom room, GamePlayer attacker, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))
@@ -469,6 +482,9 @@ namespace DT_Tools.Features.PoisonAttack
         /// 被毒杀者不会死亡。
         /// 死亡后把死亡前 3 秒收集的反向脚印写入其尸体（尸体未被发现时原版不广播脚印）。
         /// </remarks>
+        /// <param name="room">所在房间。</param>
+        /// <param name="attacker">下毒者。</param>
+        /// <param name="target">被毒的玩家。</param>
         private static void ExecutePoisonDeath(Server.Game.GameRoom room, GamePlayer attacker, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))

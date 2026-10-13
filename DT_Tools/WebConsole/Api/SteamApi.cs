@@ -39,6 +39,7 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// 返回 {"ok":true,"appid":..,"players":N}；失败且有旧缓存时降级返回缓存。
         /// </summary>
+        /// <returns>当前在线人数的 JSON 文本；查询失败且有旧缓存时返回缓存。</returns>
         private static string GetCurrentPlayersJson()
         {
             lock (Gate)

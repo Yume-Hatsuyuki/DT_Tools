@@ -26,6 +26,10 @@ namespace DT_Tools.Game
         /// 昵称清洗的唯一实现：trim → 去富文本 → trim → 截断
         /// （0.1.17a Util.cs:172 NeutralizeRichText，与服务端进房清洗同一道）。
         /// </summary>
+        /// <param name="raw">原始昵称。</param>
+        /// <param name="name">清洗后的昵称；失败时为 null。</param>
+        /// <param name="error">失败原因。</param>
+        /// <returns>清洗成功时为 true。</returns>
         public static bool TrySanitize(string raw, out string name, out string error)
         {
             name = null;
@@ -49,6 +53,8 @@ namespace DT_Tools.Game
         /// <summary>
         /// 服务端改名（反射写 private set；调用方负责已在线客户端不做变更的文案）。
         /// </summary>
+        /// <param name="target">要改名的玩家。</param>
+        /// <param name="newName">新昵称。</param>
         public static void ApplyServerName(Server.Game.Player target, string newName)
         {
             AccessTools.Property(typeof(Server.Game.Player), nameof(Server.Game.Player.Name))
@@ -59,6 +65,9 @@ namespace DT_Tools.Game
         /// 房主本机客户端缓存同步（尽力而为）：客户端 Player.Name 为 protected set
         /// （0.1.17a Player.cs:462），经 Traverse 写入后调 RefreshNameTag（public，:462）。
         /// </summary>
+        /// <param name="playerId">玩家 PlayerId。</param>
+        /// <param name="newName">新昵称。</param>
+        /// <returns>本机缓存刷新成功时为 true；失败不影响服务端。</returns>
         public static bool TryRefreshLocalCache(int playerId, string newName)
         {
             try
@@ -84,6 +93,7 @@ namespace DT_Tools.Game
         /// PlayerPrefs（键 = "LobbyNickname_"+LocalAccountKey，0.1.17a UI_LobbyScene.cs:530，
         /// NetworkManager.cs:144）+ 大厅输入框同步（尽力而为，赋值触发原版校验链）。
         /// </summary>
+        /// <param name="name">本地昵称。</param>
         public static void SetLocalName(string name)
         {
             Managers.Player.MyPlayerName = name;

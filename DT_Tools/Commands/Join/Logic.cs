@@ -22,6 +22,7 @@ namespace DT_Tools.Commands.Join
         /// <summary>
         /// 启动加入流程（协程等大厅 UI，随后异步搜索房间码）。
         /// </summary>
+        /// <param name="code">房间码。</param>
         public static void StartJoinFlow(string code)
         {
             CoroutineHost.Start(CoJoin(code));
@@ -47,6 +48,8 @@ namespace DT_Tools.Commands.Join
         /// 进房复用原版 ProceedLobbyEnter（私有方法，字符串定位：0.1.17a UI_LobbyScene.cs:1305），
         /// 加载界面、语音预连接、School 资源域装载全部按原版编排执行。
         /// </summary>
+        /// <param name="scene">当前的大厅界面。</param>
+        /// <param name="code">房间码。</param>
         private static void JoinByCode(UI_LobbyScene scene, string code)
         {
             Managers.Network.FindLobbyByCode(code, lobbyId =>   // 0.1.17a NetworkManager.cs:256
