@@ -130,7 +130,7 @@
 
   <!-- 可坐椅子（SitOnChairs）：岛屿地图数据（原版+11条椅子设备）内嵌进 dll，运行时注入，无需外部 data 文件夹 -->
   <ItemGroup>
-    <EmbeddedResource Include="Patches/Fun/SitOnChairs/data/**" />
+    <EmbeddedResource Include="Features/SitOnChairs/data/**" />
   </ItemGroup>
 
 </Project>
