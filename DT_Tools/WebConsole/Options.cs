@@ -20,6 +20,9 @@ namespace DT_Tools.WebConsole
         [Config("监听 IP：127.0.0.1=仅本机；0.0.0.0=所有 IPv4 网卡；::=所有 IPv6（通常双栈同收）；也可指定本机具体 IP（IPv4/IPv6 均可，IPv6 自动加方括号）。非回环地址会暴露给局域网，建议同时设置访问密码。")]
         public static string ListenIp = "127.0.0.1";
 
+        [Config("反向代理使用的公网域名（逗号分隔，例如 dt.example.com）。填入后，这些域名的 Origin 与 Host 会被放行（HTTP 与 WebSocket 都生效）。留空=仅本机访问（默认）。nginx 默认的 proxy_set_header Host $proxy_host 可直接使用；若用 Host $host，需监听 0.0.0.0 等通配地址，否则监听层会先拒绝。修改后重启游戏生效。")]
+        public static string AllowedHosts = "";
+
         [Config("访问密码。留空则不需要密码；设置后登录换取会话 token（cookie 不再存明文密码）。")]
         public static string Password = "";
 
