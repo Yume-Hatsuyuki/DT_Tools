@@ -25,6 +25,8 @@ namespace DT_Tools.WebConsole
         private const string WsPath = "/api/log/ws";
 
         private static TcpListener _listener;
+        private static string[] _localWhitelist = new string[0];
+        private static string[] _allowedHosts = new string[0];
         private static Thread _thread;
         private static volatile bool _running;
         private static readonly ConcurrentDictionary<TcpClient, byte> Connections =
@@ -42,6 +44,8 @@ namespace DT_Tools.WebConsole
                 return;
             try
             {
+                _localWhitelist = HostPolicy.LocalWhitelist(listenIp);
+                _allowedHosts = HostPolicy.ParseAllowed(WebConsoleOptions.AllowedHosts);
                 _listener = new TcpListener(ResolveIp(listenIp), port);
                 _listener.Start();
                 _running = true;
@@ -114,6 +118,13 @@ namespace DT_Tools.WebConsole
                 if (req == null || req.Path != WsPath)
                 {
                     WriteRaw(stream, "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
+                    return;
+                }
+                if (!HostPolicy.IsAllowedHost(req.Host, _localWhitelist, _allowedHosts)
+                    || !HostPolicy.IsAllowedWsOrigin(req.Origin, req.Host, WebConsoleOptions.Port, _allowedHosts))
+                {
+                    Log.Warn("WebConsole", "已拒绝 WebSocket 握手：Host 或 Origin 不在允许范围内（Host=" + (req.Host ?? "无") + "）。");
+                    WriteRaw(stream, "HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
                     return;
                 }
                 if (!req.Upgrade || string.IsNullOrEmpty(req.Key))
@@ -205,6 +216,8 @@ namespace DT_Tools.WebConsole
             public string Query;
             public string Key;
             public string CookieToken;
+            public string Host;
+            public string Origin;
             public bool Upgrade;   // Connection: upgrade 且 Upgrade: websocket
 
             public string QueryValue(string name)
@@ -245,6 +258,10 @@ namespace DT_Tools.WebConsole
                 if (colon <= 0) continue;
                 string name = line.Substring(0, colon).Trim();
                 string value = line.Substring(colon + 1).Trim();
+                if (name.Equals("Host", StringComparison.OrdinalIgnoreCase))
+                    req.Host = value;
+                else if (name.Equals("Origin", StringComparison.OrdinalIgnoreCase))
+                    req.Origin = value;
                 if (name.Equals("Connection", StringComparison.OrdinalIgnoreCase))
                     req.Upgrade |= value.IndexOf("upgrade", StringComparison.OrdinalIgnoreCase) >= 0;
                 else if (name.Equals("Upgrade", StringComparison.OrdinalIgnoreCase))
