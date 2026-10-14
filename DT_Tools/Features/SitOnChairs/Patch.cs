@@ -289,6 +289,10 @@ namespace DT_Tools.Features.SitOnChairs
 
             private static void Postfix(DeviceManager __instance)
             {
+                if (!Engine.Enabled<SitOnChairsFeature>())
+                {
+                    return;
+                }
                 if (!SitOnChairsFeature.Debug || Time.unscaledTime < _nextLogAt)
                 {
                     return;
