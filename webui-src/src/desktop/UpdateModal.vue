@@ -6,13 +6,14 @@ import IconRefresh from '~icons/tabler/refresh';
 import IconExternalLink from '~icons/tabler/external-link';
 import IconFolderOpen from '~icons/tabler/folder-open';
 import IconX from '~icons/tabler/x';
+import MarkdownBody from './MarkdownBody.vue';
 
 /**
  * 更新信息弹窗：列出新版本信息（版本号、发布时间、更新说明、安装包资产），
  * 并提供下载（后台线程，进度轮询）与"打开所在文件夹"。数据来自全局单例
  * useUpdateCheck（顶栏徽标/气泡与关于弹窗共用），本组件不自持状态。
- * 更新说明是 GitHub Release 的 Markdown 正文：只做极简安全渲染
- * （标题/列表/加粗/链接），全部经模板插值进 DOM（等价 textContent），不用 v-html。
+ * 更新说明是 GitHub Release 的 Markdown 正文，由 MarkdownBody 渲染（解析为语法树后用 h() 构建节点，
+ * 不使用 v-html，原始 HTML 只显示为文字）。
  */
 const emit = defineEmits(['close']);
 
@@ -43,39 +44,6 @@ function fmtDate(text) {
   return isNaN(d.getTime()) ? text : d.toLocaleString('zh-CN', { hour12: false });
 }
 
-// ---- 极简 Markdown 块解析：标题/列表/段落/空行 + 行内 [文本](链接)/**加粗**/裸链接 ----
-
-const INLINE_RE = /\[([^\]]+)\]\((https?:[^)\s]+)\)|\*\*([^*]+)\*\*|(https?:\/\/[^\s)]+)/g;
-
-function inlineTokens(line) {
-  const tokens = [];
-  let last = 0;
-  let m;
-  INLINE_RE.lastIndex = 0;
-  while ((m = INLINE_RE.exec(line))) {
-    if (m.index > last) tokens.push({ t: 'text', s: line.slice(last, m.index) });
-    if (m[1] !== undefined) tokens.push({ t: 'link', s: m[1], href: m[2] });
-    else if (m[3] !== undefined) tokens.push({ t: 'bold', s: m[3] });
-    else tokens.push({ t: 'link', s: m[4], href: m[4] });
-    last = INLINE_RE.lastIndex;
-  }
-  if (last < line.length) tokens.push({ t: 'text', s: line.slice(last) });
-  return tokens.length ? tokens : [{ t: 'text', s: line }];
-}
-
-const blocks = computed(() => {
-  const notes = (latest.value && latest.value.notes) || '';
-  const out = [];
-  for (const raw of notes.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line) { out.push({ t: 'gap', inl: [] }); continue; }
-    const h = line.match(/^#{1,6}\s+(.*)/);
-    if (h) out.push({ t: 'h', inl: inlineTokens(h[1]) });
-    else if (/^[*\-+]\s+/.test(line)) out.push({ t: 'li', inl: inlineTokens(line.replace(/^[*\-+]\s+/, '')) });
-    else out.push({ t: 'p', inl: inlineTokens(line) });
-  }
-  return out;
-});
 </script>
 
 <template>
@@ -102,17 +70,11 @@ const blocks = computed(() => {
       <div v-else-if="s.error" class="upd-idle err">检查失败：{{ s.error }}</div>
       <div v-else class="upd-idle">尚未检测过更新，点下方"重新检查"。</div>
 
-      <!-- 更新说明（GitHub Release 正文，迷你 Markdown） -->
+      <!-- 更新说明（GitHub Release 正文，Markdown） -->
       <div v-if="latest" class="upd-notes">
         <div class="upd-notes-title">更新说明</div>
         <div class="upd-notes-body">
-          <div v-for="(b, i) in blocks" :key="i" :class="'nb-' + b.t">
-            <template v-for="(t, j) in b.inl">
-              <a v-if="t.t === 'link'" :key="'a' + j" :href="t.href" target="_blank" rel="noopener noreferrer">{{ t.s }}</a>
-              <strong v-else-if="t.t === 'bold'" :key="'b' + j">{{ t.s }}</strong>
-              <span v-else :key="'s' + j">{{ t.s }}</span>
-            </template>
-          </div>
+          <MarkdownBody :source="latest.notes || ''" />
         </div>
       </div>
 
@@ -241,19 +203,6 @@ const blocks = computed(() => {
   line-height: 1.7;
   color: var(--text-1);
 }
-.nb-gap { height: 7px; }
-.nb-h { font-weight: 700; color: var(--text-0); margin: 3px 0; }
-.nb-p { margin: 2px 0; }
-.nb-li { position: relative; padding-left: 14px; margin: 2px 0; }
-.nb-li::before { content: '•'; position: absolute; left: 2px; color: var(--shell-glow); }
-.upd-notes-body a {
-  color: var(--shell-glow);
-  text-decoration: none;
-  word-break: break-all;
-}
-.upd-notes-body a:hover { text-decoration: underline; }
-.upd-notes-body strong { color: var(--text-0); }
-
 /* ---- 下载区 ---- */
 .upd-dl {
   margin-top: 12px;

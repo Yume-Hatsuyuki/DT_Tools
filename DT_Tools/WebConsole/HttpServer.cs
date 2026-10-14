@@ -174,10 +174,9 @@ namespace DT_Tools.WebConsole
             }
         }
 
-        public static string ReadBody(HttpListenerRequest req)
+        public static string ReadBody(HttpListenerRequest req, long maxBytes = BodyLimit.Default)
         {
-            using var reader = new StreamReader(req.InputStream, req.ContentEncoding ?? Encoding.UTF8);
-            return reader.ReadToEnd();
+            return BodyLimit.ReadLimited(req.InputStream, req.ContentEncoding, maxBytes, req.ContentLength64);
         }
 
         public static void WriteJson(HttpListenerResponse resp, object dto)

@@ -25,13 +25,15 @@ namespace DT_Tools.WebConsole
         private readonly List<Route> _routes = new List<Route>();
         private readonly string _listenIp;
         private readonly string[] _localHostWhitelist;
+        private readonly string[] _allowedHosts;
         private readonly bool _serveStaticFiles;
 
         public Router(Auth auth, string listenIp, bool serveStaticFiles = true)
         {
             _auth = auth ?? throw new ArgumentNullException(nameof(auth));
             _listenIp = (listenIp ?? "").Trim();
-            _localHostWhitelist = BuildLocalHostWhitelist();
+            _localHostWhitelist = HostPolicy.LocalWhitelist(_listenIp);
+            _allowedHosts = HostPolicy.ParseAllowed(WebConsoleOptions.AllowedHosts);
             // MCP 独立监听等纯 API 门不服务 WebUI 静态文件（路由未命中直接 404）
             _serveStaticFiles = serveStaticFiles;
         }
@@ -47,34 +49,46 @@ namespace DT_Tools.WebConsole
             _routes.Add(new Route { Method = method, Prefix = prefix, Handler = handler });
         }
 
+        /// <summary>
+        /// 请求分发入口：请求体超限统一回复 413，其它异常原样抛给上层。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public void Dispatch(HttpListenerContext ctx)
+        {
+            try
+            {
+                DispatchCore(ctx);
+            }
+            catch (BodyTooLargeException)
+            {
+                Log.Warn("WebConsole", "已拒绝超大请求体：" + ctx.Request.HttpMethod + " " + ctx.Request.Url.AbsolutePath + "。");
+                HttpServer.WriteText(ctx.Response, 413, "Payload Too Large");
+            }
+        }
+
+        private void DispatchCore(HttpListenerContext ctx)
         {
             var req = ctx.Request;
             var resp = ctx.Response;
 
             string path = req.Url.AbsolutePath;
 
-            // 跨站防护：写请求（非 GET/HEAD）要求同源。浏览器发起的跨站请求必带 Origin
-            // （简单 POST）或 Referer，与 Host 头不符即拒绝；非浏览器客户端（curl 等本机
-            // 脚本）不带这两个头，直接放行。读请求靠同源策略已无法被跨站页面读取
-            // （本服务器不再发送 Access-Control-Allow-Origin: *），无需校验。
-            if (req.HttpMethod != "GET" && req.HttpMethod != "HEAD")
+            // 跨站与 DNS rebinding 防线，所有方法都检查（读请求同样如此）：
+            // 1) Origin 或 Referer 存在时必须同源，或来自反代域名（AllowedHosts）；
+            // 2) Host 必须指向本机，或属于反代域名（AllowedHosts）。
+            // DNS rebinding 时 Origin 与 Host 同为攻击者域名，同源校验会通过，由第 2 条拦截。
+            // 非浏览器客户端（curl 等）不带 Origin 或 Referer，只受第 2 条约束。
+            if (!IsSameOrigin(req))
             {
-                if (!IsSameOrigin(req))
-                {
-                    Log.Warn("WebConsole", $"已拒绝跨站写请求：{req.HttpMethod} {path}（Origin/Referer 与 Host 不符）。");
-                    HttpServer.WriteText(resp, 403, "Forbidden");
-                    return;
-                }
-                // DNS rebinding 防线：该攻击下 Origin 与 Host 同为攻击者域名（其解析被改写
-                // 指向 127.0.0.1），同源校验形同虚设，空密码时无第二道防线——再校验 Host
-                // 是否指向本机（白名单全部本地枚举，不做 DNS 解析）。
-                if (!IsLocalHost(req))
-                {
-                    Log.Warn("WebConsole", $"已拒绝 Host 异常的写请求：{req.HttpMethod} {path}（Host 非本机地址，疑似 DNS rebinding）。");
-                    HttpServer.WriteText(resp, 403, "Forbidden");
-                    return;
-                }
+                Log.Warn("WebConsole", $"已拒绝跨站请求：{req.HttpMethod} {path}（Origin/Referer 与 Host 不符，且不在 AllowedHosts 中）。");
+                HttpServer.WriteText(resp, 403, "Forbidden");
+                return;
+            }
+            if (!IsLocalHost(req))
+            {
+                Log.Warn("WebConsole", $"已拒绝 Host 异常的请求：{req.HttpMethod} {path}（Host 非本机地址，也不在 AllowedHosts 中，疑似 DNS rebinding）。");
+                HttpServer.WriteText(resp, 403, "Forbidden");
+                return;
             }
 
             if (path == "/login" && req.HttpMethod == "POST")
@@ -127,20 +141,18 @@ namespace DT_Tools.WebConsole
         /// </remarks>
         /// <param name="req">HTTP 请求。</param>
         /// <returns>Origin（缺省时用 Referer）与 Host 一致时为 true。</returns>
-        private static bool IsSameOrigin(HttpListenerRequest req)
+        private bool IsSameOrigin(HttpListenerRequest req)
         {
             string origin = req.Headers["Origin"];
             if (string.IsNullOrEmpty(origin))
+            {
                 origin = req.Headers["Referer"];
+            }
             if (string.IsNullOrEmpty(origin))
+            {
                 return true;
-
-            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
-                return false;
-
-            string host = req.Headers["Host"];
-            return !string.IsNullOrEmpty(host) &&
-                   string.Equals(uri.Authority, host.Trim(), StringComparison.OrdinalIgnoreCase);
+            }
+            return HostPolicy.IsSameOriginHttp(origin, req.Headers["Host"], _allowedHosts);
         }
 
         /// <summary>
@@ -155,25 +167,7 @@ namespace DT_Tools.WebConsole
         /// <returns>Host 头指向本机时为 true。</returns>
         private bool IsLocalHost(HttpListenerRequest req)
         {
-            string host = req.Headers["Host"];
-            if (string.IsNullOrEmpty(host))
-                return true;   // HTTP/1.0 客户端可能不带 Host：无法判定，交由同源校验兜底
-
-            string value = host.Trim();
-            if (value.StartsWith("["))
-            {
-                int end = value.IndexOf(']');
-                if (end > 0)
-                    value = value.Substring(1, end - 1);
-            }
-            else
-            {
-                int colon = value.LastIndexOf(':');
-                if (colon >= 0)
-                    value = value.Substring(0, colon);
-            }
-
-            return _localHostWhitelist.Contains(value, StringComparer.OrdinalIgnoreCase);
+            return HostPolicy.IsAllowedHost(req.Headers["Host"], _localHostWhitelist, _allowedHosts);
         }
 
         /// <summary>
@@ -185,28 +179,7 @@ namespace DT_Tools.WebConsole
         /// <returns>本机地址白名单（回环、监听地址、本机主机名与网卡地址）。</returns>
         private string[] BuildLocalHostWhitelist()
         {
-            var list = new List<string> { "127.0.0.1", "localhost", "::1" };
-            if (_listenIp.Length > 0 && _listenIp != "0.0.0.0" && _listenIp != "*" && _listenIp != "::")
-                list.Add(_listenIp);
-            try
-            {
-                string machine = Dns.GetHostName();
-                if (!string.IsNullOrEmpty(machine))
-                {
-                    list.Add(machine);
-                    foreach (IPAddress ip in Dns.GetHostAddresses(machine))
-                    {
-                        if (ip.AddressFamily == AddressFamily.InterNetwork ||
-                            ip.AddressFamily == AddressFamily.InterNetworkV6)
-                            list.Add(ip.ToString());
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                // 主机名/网卡枚举不可用：白名单退化为回环三项，安全侧收敛
-            }
-            return list.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            return HostPolicy.LocalWhitelist(_listenIp);
         }
     }
 }

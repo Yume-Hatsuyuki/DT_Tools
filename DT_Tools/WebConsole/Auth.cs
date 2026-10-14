@@ -17,6 +17,7 @@ namespace DT_Tools.WebConsole
     {
         private readonly string _password;
         private readonly string _token = Guid.NewGuid().ToString("N");
+        private readonly LoginThrottle _throttle = new LoginThrottle();
 
         public Auth(string password)
         {
@@ -38,16 +39,29 @@ namespace DT_Tools.WebConsole
                 return;
             }
 
-            string queryToken = ctx.Request.QueryString["token"] ?? "";
-            string body = HttpServer.ReadBody(ctx.Request).Trim();
-            if (!FixedTimeEquals(queryToken, _password) && !FixedTimeEquals(body, _password))
+            string ip = ClientKey(ctx);
+            DateTime now = DateTime.UtcNow;
+            if (_throttle.IsLocked(ip, now, out TimeSpan wait))
             {
-                Log.Warn("WebConsole", "登录失败：密码错误。");
+                resp.Headers["Retry-After"] = Math.Max(1, (int)Math.Ceiling(wait.TotalSeconds)).ToString();
+                Log.Warn("WebConsole", "登录已被临时锁定（失败次数过多），来源 " + ip + "。");
+                HttpServer.WriteText(resp, 429, "Too Many Requests");
+                return;
+            }
+
+            // 密码只接受请求体：查询串会进入访问日志与浏览器历史，不再接受
+            string body = HttpServer.ReadBody(ctx.Request, BodyLimit.Login).Trim();
+            if (!FixedTimeEquals(body, _password))
+            {
+                _throttle.RecordFailure(ip, now);
+                Log.Warn("WebConsole", "登录失败：密码错误（来源 " + ip + "）。");
                 HttpServer.WriteText(resp, 401, "Unauthorized");
                 return;
             }
 
-            resp.SetCookie(new Cookie("dt_token", _token, "/") { HttpOnly = true });
+            _throttle.RecordSuccess(ip);
+            // SameSite=Strict：跨站页面发起的请求不携带会话 cookie（curl 等非浏览器客户端不受影响）
+            resp.AddHeader("Set-Cookie", "dt_token=" + _token + "; Path=/; HttpOnly; SameSite=Strict");
             Log.Info("WebConsole", "登录成功。");
             HttpServer.WriteText(resp, 200, "ok");
         }
@@ -66,7 +80,19 @@ namespace DT_Tools.WebConsole
             // 免去浏览器登录换 cookie 的流程。仅接受明文密码本身，与 /login 同级。
             string auth = req.Headers["Authorization"];
             if (auth != null && auth.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                return FixedTimeEquals(auth.Substring("Bearer ".Length).Trim(), _password);
+            {
+                // Bearer 也是密码通道，失败计入同一套限速，防止借 MCP 入口爆破
+                string ip = ClientKey(ctx);
+                DateTime now = DateTime.UtcNow;
+                if (_throttle.IsLocked(ip, now, out _))
+                    return false;
+                bool ok = FixedTimeEquals(auth.Substring("Bearer ".Length).Trim(), _password);
+                if (ok)
+                    _throttle.RecordSuccess(ip);
+                else
+                    _throttle.RecordFailure(ip, now);
+                return ok;
+            }
             return CheckToken(req.Cookies["dt_token"]?.Value ?? "", req.QueryString["token"] ?? "");
         }
 
@@ -82,6 +108,17 @@ namespace DT_Tools.WebConsole
             if (Disabled)
                 return true;
             return FixedTimeEquals(queryToken, _token) || FixedTimeEquals(cookieToken, _token);
+        }
+
+        /// <summary>
+        /// 取来源 IP 文本，用于限速计数；取不到时使用 unknown。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
+        /// <returns>来源 IP 文本。</returns>
+        private static string ClientKey(HttpListenerContext ctx)
+        {
+            var ep = ctx.Request.RemoteEndPoint;
+            return ep != null && ep.Address != null ? ep.Address.ToString() : "unknown";
         }
 
         /// <summary>

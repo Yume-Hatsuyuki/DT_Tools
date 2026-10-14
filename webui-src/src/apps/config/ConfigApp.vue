@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, onBeforeUnmount } from 'vue';
 import { API } from '../../api.js';
 import { useConfigToolbar } from '../../composables/useConfigToolbar.js';
 import { useSectionMeta } from '../../composables/useSectionMeta.js';
@@ -14,6 +14,8 @@ import IconRefresh from '~icons/tabler/refresh';
 import IconTrash from '~icons/tabler/trash';
 import IconLayoutGrid from '~icons/tabler/layout-grid';
 import IconList from '~icons/tabler/list';
+import IconChevronDown from '~icons/tabler/chevron-down';
+import IconChevronUp from '~icons/tabler/chevron-up';
 
 /**
  * 功能标签字典（分组 / 键 / 中文名 / 说明）由后端 FeatureTagCatalog 给出（/api/config/tags）。
@@ -55,6 +57,116 @@ const tagCounts = computed(() => {
     for (const t of s.tags || []) counts.set(t, (counts.get(t) || 0) + 1);
   }
   return counts;
+});
+
+/* ---- 标签栏：隐藏未使用标签、自由调高、收起 ---- */
+const TAG_BAR_HEIGHT_KEY = 'dt.config.tagBarHeight';
+const TAG_BAR_COLLAPSED_KEY = 'dt.config.tagBarCollapsed';
+const TAG_BAR_MIN = 96;   // 至少能容下状态与作用面两行，再小就看不清了
+const SIDE_LABEL = { client: '客户端', host: '服务端', both: '双端' };
+
+/** 读写失败（存储被禁用等）时只是不记忆，不影响筛选功能本身。 */
+function readStored(key) {
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+function writeStored(key, value) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, String(value));
+  } catch (e) { /* 忽略 */ }
+}
+
+const storedHeight = Number(readStored(TAG_BAR_HEIGHT_KEY));
+const tagBarHeight = ref(readStored(TAG_BAR_HEIGHT_KEY) !== null && Number.isFinite(storedHeight) && storedHeight > 0 ? storedHeight : null);
+const tagBarCollapsed = ref(readStored(TAG_BAR_COLLAPSED_KEY) === '1');
+const tagBarEl = ref(null);
+const rootEl = ref(null);
+/* 窗口尺寸变化时递增，让依赖配置页高度的样式重新计算 */
+const viewTick = ref(0);
+function onWindowResize() { viewTick.value++; }
+onMounted(() => window.addEventListener('resize', onWindowResize));
+
+/**
+ * 上限取配置页自身高度的 70%。不能用视口高度：配置页是桌面窗口，比视口矮，
+ * 按视口计算会把分隔条推到窗口下方，鼠标和键盘都够不着。
+ */
+function tagBarMax() {
+  const h = rootEl.value ? rootEl.value.clientHeight : window.innerHeight;
+  return Math.round(h * 0.7);
+}
+function clampTagBarHeight(h) { return Math.max(TAG_BAR_MIN, Math.min(tagBarMax(), Math.round(h))); }
+
+/** null 表示自动高度（由内容决定），与首次打开的默认外观一致。 */
+const tagBarStyle = computed(() => {
+  void viewTick.value;
+  if (tagBarCollapsed.value || tagBarHeight.value === null) return {};
+  return { height: clampTagBarHeight(tagBarHeight.value) + 'px' };
+});
+
+function toggleCollapsed() {
+  tagBarCollapsed.value = !tagBarCollapsed.value;
+  writeStored(TAG_BAR_COLLAPSED_KEY, tagBarCollapsed.value ? '1' : '0');
+}
+
+function setTagBarHeight(h) {
+  tagBarHeight.value = clampTagBarHeight(h);
+  writeStored(TAG_BAR_HEIGHT_KEY, tagBarHeight.value);
+}
+function resetTagBarHeight() {
+  tagBarHeight.value = null;
+  writeStored(TAG_BAR_HEIGHT_KEY, null);
+}
+
+/* 拖动分隔条：指针捕获保证鼠标移出分隔条时仍能继续拖动；松开时才写入存储，避免拖动中频繁写盘 */
+let resizeFrom = null;
+function onResizeStart(e) {
+  if (e.button !== 0) return;
+  const bar = tagBarEl.value;
+  resizeFrom = { y: e.clientY, h: bar ? bar.getBoundingClientRect().height : TAG_BAR_MIN };
+  e.currentTarget.setPointerCapture(e.pointerId);
+  window.addEventListener('pointermove', onResizeMove);
+  window.addEventListener('pointerup', onResizeEnd);
+  e.preventDefault();
+}
+function onResizeMove(e) {
+  if (!resizeFrom) return;
+  tagBarHeight.value = clampTagBarHeight(resizeFrom.h + (e.clientY - resizeFrom.y));
+}
+function onResizeEnd() {
+  window.removeEventListener('pointermove', onResizeMove);
+  window.removeEventListener('pointerup', onResizeEnd);
+  if (resizeFrom && tagBarHeight.value !== null) writeStored(TAG_BAR_HEIGHT_KEY, tagBarHeight.value);
+  resizeFrom = null;
+}
+/* 键盘微调：方向键每次 16px，按住 Shift 为 48px */
+function onResizeKey(e) {
+  const step = e.shiftKey ? 48 : 16;
+  const cur = tagBarEl.value ? tagBarEl.value.getBoundingClientRect().height : TAG_BAR_MIN;
+  if (e.key === 'ArrowUp') setTagBarHeight(cur - step);
+  else if (e.key === 'ArrowDown') setTagBarHeight(cur + step);
+  else return;
+  e.preventDefault();
+}
+onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', onResizeMove);
+  window.removeEventListener('pointerup', onResizeEnd);
+  window.removeEventListener('resize', onWindowResize);
+});
+
+/** 未被任何功能段使用的标签不显示，空分组一并隐藏；正在生效的筛选标签即使无人使用也保留，便于清除。 */
+const visibleTagGroups = computed(() => tagGroups.value
+  .map(g => ({ name: g.name, tags: g.tags.filter(t => (tagCounts.value.get(t.key) || 0) > 0 || activeTags.value.includes(t.key)) }))
+  .filter(g => g.tags.length > 0));
+
+const hasActiveFilter = computed(() => activeTags.value.length > 0 || !!statusFilter.value || !!sideFilter.value);
+
+/** 收起时显示在摘要行里的当前筛选。 */
+const filterSummary = computed(() => {
+  const parts = [];
+  if (statusFilter.value) parts.push(statusFilter.value === 'on' ? '启用' : '未启用');
+  if (sideFilter.value) parts.push(SIDE_LABEL[sideFilter.value]);
+  for (const k of activeTags.value) parts.push(tagLabel(k));
+  return parts.length ? '已筛选：' + parts.join(' · ') : '未筛选';
 });
 
 function toggleTag(key) {
@@ -195,7 +307,7 @@ onUnmounted(stopAutoRefresh);
 </script>
 
 <template>
-  <div class="config-app">
+  <div ref="rootEl" class="config-app">
     <div class="toolbar">
       <div class="toolbar-left">
         <template v-if="openSection">
@@ -227,7 +339,8 @@ onUnmounted(stopAutoRefresh);
       </div>
     </div>
 
-    <div v-if="!openSection && tagGroups.length" class="tag-bar">
+    <div v-if="!openSection && tagGroups.length" class="tag-wrap">
+    <div v-if="!tagBarCollapsed" ref="tagBarEl" class="tag-bar" :style="tagBarStyle">
       <div class="tag-group">
         <span class="tag-group-name">状态</span>
         <button class="tag-chip" :class="{ on: statusFilter === 'on' }" @click="toggleStatus('on')">
@@ -249,7 +362,7 @@ onUnmounted(stopAutoRefresh);
           双端<em>{{ sideCounts.both }}</em>
         </button>
       </div>
-      <div v-for="g in tagGroups" :key="g.name" class="tag-group">
+      <div v-for="g in visibleTagGroups" :key="g.name" class="tag-group">
         <span class="tag-group-name">{{ g.name }}</span>
         <button v-for="t in g.tags" :key="t.key"
                 class="tag-chip"
@@ -263,6 +376,26 @@ onUnmounted(stopAutoRefresh);
         <span v-if="activeTags.length > 1" class="tag-hint">多选：任一命中</span>
         <button v-if="activeTags.length || statusFilter || sideFilter" class="tag-clear" @click="clearFilters">清除筛选</button>
       </div>
+    </div>
+    <div v-if="tagBarCollapsed" class="tag-collapsed">
+      <span class="tag-collapsed-title">标签筛选</span>
+      <span class="tag-collapsed-summary" :title="filterSummary">{{ filterSummary }}</span>
+      <button v-if="hasActiveFilter" class="tag-clear" @click="clearFilters">清除筛选</button>
+      <button class="tag-toggle" title="展开标签栏" @click="toggleCollapsed"><IconChevronDown /> 展开</button>
+    </div>
+    <div v-else class="tag-resize"
+         role="separator"
+         aria-orientation="horizontal"
+         aria-label="调整标签栏高度"
+         tabindex="0"
+         title="拖动调整高度；双击恢复自动；方向键微调"
+         @pointerdown="onResizeStart"
+         @dblclick="resetTagBarHeight"
+         @keydown="onResizeKey">
+      <span class="tag-grip"></span>
+      <button class="tag-toggle" title="收起标签栏"
+              @pointerdown.stop @dblclick.stop @click.stop="toggleCollapsed"><IconChevronUp /> 收起</button>
+    </div>
     </div>
 
     <div v-if="toast" class="toast" :class="{ error: toast.error }">{{ toast.text }}</div>
@@ -331,16 +464,65 @@ onUnmounted(stopAutoRefresh);
 .tb-btn.active { color: var(--accent-cyan); border-color: var(--accent-cyan-dim); }
 .tb-btn.danger:hover { color: var(--accent-red); border-color: var(--accent-red); }
 
+.tag-wrap { display: flex; flex-direction: column; flex-shrink: 0; border-bottom: 1px solid var(--line); }
 .tag-bar {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
   padding: 8px 14px;
-  border-bottom: 1px solid var(--line);
   background: var(--surface-1);
-  flex-shrink: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
+.tag-resize {
+  position: relative;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-1);
+  border-top: 1px solid var(--line);
+  cursor: row-resize;
+  user-select: none;
+  touch-action: none;
+  outline: none;
+}
+.tag-resize:focus-visible { box-shadow: inset 0 0 0 1px var(--accent-cyan-dim); }
+.tag-grip { width: 40px; height: 3px; border-radius: 2px; background: var(--line-strong); }
+.tag-resize:hover .tag-grip { background: var(--accent-cyan-dim); }
+.tag-toggle {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 2px 4px;
+}
+.tag-toggle svg { width: 12px; height: 12px; }
+.tag-toggle:hover { color: var(--text-0); }
+.tag-resize .tag-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+.tag-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: var(--surface-1);
+  font-size: 12px;
+}
+.tag-collapsed-title { color: var(--text-2); flex-shrink: 0; }
+.tag-collapsed-summary {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tag-collapsed .tag-toggle { color: var(--text-1); flex-shrink: 0; }
 .tag-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .tag-group-name { font-size: 11px; color: var(--text-2); width: 3.5em; flex-shrink: 0; }
 .tag-chip {
