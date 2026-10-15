@@ -10,10 +10,11 @@ namespace DT_Tools.WebConsole.Api
     /// <summary>
     /// /api/mp3/* — 随身MP3 应用后端：驱动 Game/MicBroadcast 的会话（与 /mic_music、
     /// StageMusic 共用同一引擎，后触发者接管）加传输控制（暂停/跳转/响度/麦克风混入
-    /// 开关/本地静音），歌单持久化在 Mp3Playlist（DtPaths.Mp3Playlist）。
+    /// 开关/本地静音），歌单库（多歌单）持久化在 Mp3Playlist（DtPaths.Mp3Playlist）。
     /// </summary>
     /// <remarks>
-    /// 播放即入歌单（去重）；自然播完经 MicBroadcast.TrackFinished 自动连播下一首（循环）。
+    /// 播放即入歌单（同一歌单内去重）；自然播完经 MicBroadcast.TrackFinished 按播放上下文的歌单自动连播。
+    /// 播放上下文（正在播放的歌单）与界面当前显示的歌单相互独立：浏览别的歌单不打断播放。
     /// 全部端点经 WebConsole.RunOnMain 在 Unity 主线程执行（引擎与歌单都只碰主线程），
     /// 响应沿用命令信封 {ok, error, data}；错误码小写英文短词，中文详情在 data.message。
     /// </remarks>
@@ -21,72 +22,66 @@ namespace DT_Tools.WebConsole.Api
     {
         private const string Tag = "Mp3";
 
-        // 当前播放曲目（原始路径，非 file:/// URI）；phase=idle 时视为无
+        private static readonly Random _rnd = new Random();
+
+        // 当前播放曲目（原始路径，非 file:/// URI）及其所属歌单；会话空闲时无意义
         private static string _currentPath;
+        private static string _playingListId;
 
         // 暂停书签（暂停=销毁引擎会话，恢复=PlayTrack 重建+起始偏移）。
         // 书签只在引擎 idle 时有效——其他入口（/mic_music）接管会话即作废。
         private static string _pausedPath;
+        private static string _pausedListId;
         private static float _pausedPosition;
         private static float _pausedDuration;
 
         /// <summary>
-        /// GET /api/mp3/state — 引擎会话快照 + 暂停书签合并 + 歌单 + 当前曲目下标。
+        /// GET /api/mp3/state — 引擎会话快照 + 暂停书签 + 歌单库 + 播放上下文。
         /// </summary>
         /// <remarks>
-        /// volume / mic / local 取持久化偏好（空闲时引擎不持有这些值，且开关必须反映用户意图）；
-        /// micActive 才是当前会话是否真的在混入麦克风（语音未连接时偏好为开、micActive 为假）。
+        /// volume / mic / local / mode 取持久化偏好（空闲时引擎不持有这些值，且开关必须反映用户意图）；
+        /// micActive 才是当前会话是否真的在混入麦克风。
+        /// playlist 为界面当前显示的歌单；index 与 playingListId 描述的是「正在播放的那一首」，
+        /// 客户端只有在 playingListId 等于 activeId 时才应高亮 index。
         /// </remarks>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleState(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
                 var store = Mp3Playlist.Get();
+                var active = Mp3Playlist.Active();
                 var engine = MicBroadcast.Snapshot();
-                int index;
-                object data;
-                if (_pausedPath != null && engine.Phase == "idle")
+                bool paused = _pausedPath != null && engine.Phase == "idle";
+                if (!paused && _pausedPath != null)
+                    _pausedPath = null;   // 会话被接管/正在重建，书签过期
+
+                string playingListId = paused ? _pausedListId : (OwnsSession() ? _playingListId : null);
+                string playingPath = paused ? _pausedPath : (OwnsSession() ? _currentPath : null);
+                var playingList = Mp3Playlist.Find(playingListId);
+                int index = IndexOfPath(playingList, playingPath);
+                string playingLabel = index >= 0 ? playingList.Items[index].Label : "";
+
+                return CommandResult.Success(new
                 {
-                    // 暂停中（引擎会话已销毁，书签即真相）；引擎被其他入口占用时书签作废
-                    index = IndexOfPath(_pausedPath);
-                    data = new
-                    {
-                        Phase = "paused",
-                        Position = _pausedPosition,
-                        Duration = _pausedDuration,
-                        Volume = store.Volume,
-                        Mic = store.Mic,
-                        MicActive = engine.Mic,
-                        Local = store.Local,
-                        mode = store.Mode,
-                        index,
-                        playlist = store.Items.ToArray(),
-                    };
-                }
-                else
-                {
-                    if (_pausedPath != null)
-                        _pausedPath = null;   // 会话被接管/正在重建，书签过期
-                    index = CurrentIndex();
-                    data = new
-                    {
-                        engine.Phase,
-                        engine.Position,
-                        engine.Duration,
-                        Volume = store.Volume,
-                        Mic = store.Mic,
-                        MicActive = engine.Mic,
-                        Local = store.Local,
-                        mode = store.Mode,
-                        index,
-                        playlist = store.Items.ToArray(),
-                    };
-                }
-                return CommandResult.Success(data);
+                    Phase = paused ? "paused" : engine.Phase,
+                    Position = paused ? _pausedPosition : engine.Position,
+                    Duration = paused ? _pausedDuration : engine.Duration,
+                    Volume = store.Volume,
+                    Mic = store.Mic,
+                    MicActive = engine.Mic,
+                    Local = store.Local,
+                    Mode = store.Mode,
+                    ActiveId = active.Id,
+                    Lists = store.Lists.ConvertAll(l => new { l.Id, l.Name, Count = l.Items.Count }).ToArray(),
+                    PlayingListId = playingListId ?? "",
+                    PlayingLabel = playingLabel,
+                    Index = index,
+                    Playlist = active.Items.ToArray(),
+                });
             });
 
         /// <summary>
-        /// POST /api/mp3/play {path} — 播放（本地路径或 http(s)），自动入歌单去重。
+        /// POST /api/mp3/play {path, listId?} — 播放（本地路径或 http(s)），入指定歌单（缺省为当前歌单）并去重。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlay(HttpListenerContext ctx)
@@ -98,33 +93,43 @@ namespace DT_Tools.WebConsole.Api
                 HttpServer.WriteJson(ctx.Response, CommandResult.Fail("missing path"));
                 return;
             }
+            string listId = body.Value<string>("listId");
             WriteMain(ctx, () =>
             {
-                int index = Mp3Playlist.Ensure(path);
-                return PlayInternal(path, index);
+                var list = Mp3Playlist.Resolve(listId);
+                if (list == null)
+                    return ListError("歌单不存在");
+                int index = Mp3Playlist.Ensure(list.Id, path);
+                return PlayInternal(list.Id, path, index);
             });
         }
 
         /// <summary>
-        /// POST /api/mp3/index {index} — 播放歌单第 index 首。
+        /// POST /api/mp3/index {index, listId?} — 播放指定歌单的第 index 首（缺省为当前歌单）。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleIndex(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
             int index = ReadInt(body, "index");
+            string listId = body.Value<string>("listId");
             WriteMain(ctx, () =>
             {
-                var items = Mp3Playlist.Get().Items;
-                if (index < 0 || index >= items.Count)
-                    return CommandResult.Fail("index out of range", new { message = "歌单序号越界" });
-                return PlayInternal(items[index].Path, index);
+                var list = Mp3Playlist.Resolve(listId);
+                if (list == null)
+                    return ListError("歌单不存在");
+                if (index < 0 || index >= list.Items.Count)
+                    return ListError("歌单序号越界");
+                return PlayInternal(list.Id, list.Items[index].Path, index);
             });
         }
 
         /// <summary>
-        /// POST /api/mp3/next {delta} — 跳转 ±1（默认 +1），歌单循环。
+        /// POST /api/mp3/next {delta} — 跳转 ±1（默认 +1），在播放上下文的歌单内循环。
         /// </summary>
+        /// <remarks>
+        /// 空闲时在当前歌单内跳转；暂停时以暂停的那首为起点。
+        /// </remarks>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleNext(HttpListenerContext ctx)
         {
@@ -133,23 +138,22 @@ namespace DT_Tools.WebConsole.Api
             if (delta == 0) delta = 1;
             WriteMain(ctx, () =>
             {
-                var items = Mp3Playlist.Get().Items;
+                var list = PlaybackList(out int index);
+                var items = list.Items;
                 if (items.Count == 0)
                     return CommandResult.Fail("empty playlist", new { message = "歌单为空" });
-                int index = CurrentIndex();
                 int target = index < 0
                     ? (delta > 0 ? 0 : items.Count - 1)
                     : ((index + delta) % items.Count + items.Count) % items.Count;
-                return PlayInternal(items[target].Path, target);
+                return PlayInternal(list.Id, items[target].Path, target);
             });
         }
 
         /// <summary>
-        /// POST /api/mp3/pause — 暂停：记住进度并销毁引擎会话（还原语音管线，
-        /// 不留挂起状态）；恢复时从书签位置重建。
+        /// POST /api/mp3/pause — 暂停：记住进度并销毁引擎会话（还原语音管线，不留挂起状态）；恢复时从书签位置重建。
         /// </summary>
         /// <remarks>
-        /// 幂等：已暂停返回成功。
+        /// 幂等：已暂停返回成功。只能暂停本入口发起的会话。
         /// </remarks>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePause(HttpListenerContext ctx)
@@ -158,9 +162,10 @@ namespace DT_Tools.WebConsole.Api
                 if (_pausedPath != null)
                     return CommandResult.Success(new { message = "已暂停" });
                 var engine = MicBroadcast.Snapshot();
-                if (engine.Phase != "playing" || string.IsNullOrEmpty(_currentPath))
+                if (engine.Phase != "playing" || string.IsNullOrEmpty(_currentPath) || !OwnsSession())
                     return CommandResult.Fail("not playing", new { message = "当前没有可暂停的会话" });
                 _pausedPath = _currentPath;
+                _pausedListId = _playingListId;
                 _pausedPosition = engine.Position;
                 _pausedDuration = engine.Duration;
                 MicBroadcast.Stop();
@@ -172,7 +177,7 @@ namespace DT_Tools.WebConsole.Api
         /// POST /api/mp3/resume — 恢复：从书签位置重建会话。
         /// </summary>
         /// <remarks>
-        /// 幂等：已在播放返回成功。
+        /// 幂等：已在播放返回成功。暂停所在的歌单若已被删除，则无法恢复并清除书签。
         /// </remarks>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleResume(HttpListenerContext ctx)
@@ -182,9 +187,14 @@ namespace DT_Tools.WebConsole.Api
                 {
                     string path = _pausedPath;
                     float pos = _pausedPosition;
-                    int index = IndexOfPath(path);
-                    _pausedPath = null;
-                    return PlayInternal(path, index, pos);
+                    var list = Mp3Playlist.Find(_pausedListId);
+                    if (list == null)
+                    {
+                        _pausedPath = null;
+                        _pausedListId = null;
+                        return ListError("歌单不存在");
+                    }
+                    return PlayInternal(list.Id, path, IndexOfPath(list, path), pos);
                 }
                 if (MicBroadcast.Snapshot().Phase != "idle")
                     return CommandResult.Success(new { message = "已在播放中" });
@@ -315,7 +325,7 @@ namespace DT_Tools.WebConsole.Api
             => mode == "single" ? "单曲循环（重播当前）" : mode == "random" ? "随机播放" : "列表循环";
 
         /// <summary>
-        /// POST /api/mp3/stop — 停止会话并清除暂停书签。
+        /// POST /api/mp3/stop — 停止会话并清除暂停书签与播放上下文。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleStop(HttpListenerContext ctx)
@@ -323,12 +333,14 @@ namespace DT_Tools.WebConsole.Api
             {
                 MicBroadcast.Stop();
                 _currentPath = null;
+                _playingListId = null;
                 _pausedPath = null;
+                _pausedListId = null;
                 return CommandResult.Success(new { message = "已停止" });
             });
 
         /// <summary>
-        /// POST /api/mp3/playlist/add {path} — 添加（按路径去重）。
+        /// POST /api/mp3/playlist/add {path, listId?} — 入指定歌单（缺省为当前歌单），同一歌单内按路径去重。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlaylistAdd(HttpListenerContext ctx)
@@ -340,34 +352,36 @@ namespace DT_Tools.WebConsole.Api
                 HttpServer.WriteJson(ctx.Response, CommandResult.Fail("missing path"));
                 return;
             }
+            string listId = body.Value<string>("listId");
             WriteMain(ctx, () =>
             {
-                int index = Mp3Playlist.Ensure(path);
+                var list = Mp3Playlist.Resolve(listId);
+                if (list == null)
+                    return ListError("歌单不存在");
+                int index = Mp3Playlist.Ensure(list.Id, path);
                 return CommandResult.Success(new { index, message = "已在歌单中" });
             });
         }
 
         /// <summary>
-        /// POST /api/mp3/playlist/remove {index} — 移除（当前播放中的曲目也可移除，播放不受影响）。
+        /// POST /api/mp3/playlist/remove {index, listId?} — 从指定歌单移除（当前播放中的曲目也可移除，播放不受影响）。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlaylistRemove(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
             int index = ReadInt(body, "index");
+            string listId = body.Value<string>("listId");
             WriteMain(ctx, () =>
             {
-                var items = Mp3Playlist.Get().Items;
-                if (index < 0 || index >= items.Count)
-                    return CommandResult.Fail("index out of range", new { message = "歌单序号越界" });
-                items.RemoveAt(index);
-                Mp3Playlist.Save();
+                if (!Mp3Playlist.RemoveAt(listId, index, out string error))
+                    return ListError(error);
                 return CommandResult.Success(new { message = "已移除" });
             });
         }
 
         /// <summary>
-        /// POST /api/mp3/playlist/move {from,to} — 调序。
+        /// POST /api/mp3/playlist/move {from, to, listId?} — 在指定歌单内调序。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlaylistMove(HttpListenerContext ctx)
@@ -375,48 +389,130 @@ namespace DT_Tools.WebConsole.Api
             if (!ParseBody(ctx, out var body)) return;
             int from = ReadInt(body, "from");
             int to = ReadInt(body, "to");
+            string listId = body.Value<string>("listId");
             WriteMain(ctx, () =>
             {
-                var items = Mp3Playlist.Get().Items;
-                if (from < 0 || from >= items.Count || to < 0 || to >= items.Count)
-                    return CommandResult.Fail("index out of range", new { message = "歌单序号越界" });
-                var item = items[from];
-                items.RemoveAt(from);
-                items.Insert(to, item);
-                Mp3Playlist.Save();
+                if (!Mp3Playlist.Move(listId, from, to, out string error))
+                    return ListError(error);
                 return CommandResult.Success(new { message = "已调整顺序" });
             });
         }
 
         /// <summary>
-        /// POST /api/mp3/playlist/clear — 清空歌单（不停止当前播放）。
+        /// POST /api/mp3/playlist/clear {listId?} — 清空指定歌单（不停止当前播放）。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePlaylistClear(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
-                Mp3Playlist.Get().Items.Clear();
-                Mp3Playlist.Save();
+                string listId = ApiUtil.ParseBody(ctx)?.Value<string>("listId");
+                if (!Mp3Playlist.Clear(listId, out string error))
+                    return ListError(error);
                 return CommandResult.Success(new { message = "歌单已清空" });
             });
+
+        /// <summary>
+        /// POST /api/mp3/lists/create {name} — 新建歌单，并设为当前歌单。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
+        public static void HandleListCreate(HttpListenerContext ctx)
+        {
+            if (!ParseBody(ctx, out var body)) return;
+            string name = body.Value<string>("name") ?? "";
+            WriteMain(ctx, () =>
+            {
+                var list = Mp3Playlist.CreateList(name, out string error);
+                if (list == null)
+                    return ListError(error);
+                return CommandResult.Success(new { id = list.Id, name = list.Name, message = $"已新建歌单「{list.Name}」" });
+            });
+        }
+
+        /// <summary>
+        /// POST /api/mp3/lists/rename {id, name} — 重命名歌单。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
+        public static void HandleListRename(HttpListenerContext ctx)
+        {
+            if (!ParseBody(ctx, out var body)) return;
+            string id = body.Value<string>("id") ?? "";
+            string name = body.Value<string>("name") ?? "";
+            WriteMain(ctx, () =>
+            {
+                if (!Mp3Playlist.RenameList(id, name, out string error))
+                    return ListError(error);
+                return CommandResult.Success(new { message = "已重命名" });
+            });
+        }
+
+        /// <summary>
+        /// POST /api/mp3/lists/delete {id} — 删除歌单（至少保留一个）。
+        /// </summary>
+        /// <remarks>
+        /// 若被删歌单正在播放，先停止播放；若是暂停所在的歌单，清除暂停书签。
+        /// </remarks>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
+        public static void HandleListDelete(HttpListenerContext ctx)
+        {
+            if (!ParseBody(ctx, out var body)) return;
+            string id = body.Value<string>("id") ?? "";
+            WriteMain(ctx, () =>
+            {
+                bool playingHere = OwnsSession() && _playingListId == id;
+                if (!Mp3Playlist.DeleteList(id, out string error))
+                    return ListError(error);
+                if (playingHere)
+                {
+                    MicBroadcast.Stop();
+                    _currentPath = null;
+                    _playingListId = null;
+                }
+                if (_pausedListId == id)
+                {
+                    _pausedPath = null;
+                    _pausedListId = null;
+                }
+                return CommandResult.Success(new { activeId = Mp3Playlist.Active().Id, message = "歌单已删除" });
+            });
+        }
+
+        /// <summary>
+        /// POST /api/mp3/lists/select {id} — 切换界面当前显示的歌单（不影响播放）。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
+        public static void HandleListSelect(HttpListenerContext ctx)
+        {
+            if (!ParseBody(ctx, out var body)) return;
+            string id = body.Value<string>("id") ?? "";
+            WriteMain(ctx, () =>
+            {
+                if (!Mp3Playlist.SelectList(id))
+                    return ListError("歌单不存在");
+                return CommandResult.Success(new { activeId = id });
+            });
+        }
 
         /// <summary>
         /// 启动播放并挂连播回调；静音偏好立即生效（加载完成应用 mute，避免先响一下）。
         /// </summary>
         /// <remarks>
         /// 任何新播放都使暂停书签作废；startSeconds&gt;0 时从该位置重建（恢复暂停）。
+        /// 播放上下文记录为 listId。
         /// </remarks>
+        /// <param name="listId">曲目所属歌单的 id。</param>
         /// <param name="path">曲目路径或链接。</param>
-        /// <param name="index">曲目在歌单中的下标。</param>
+        /// <param name="index">曲目在该歌单中的下标。</param>
         /// <param name="startSeconds">起播位置，单位秒。</param>
         /// <returns>命令执行结果。</returns>
-        private static CommandResult PlayInternal(string path, int index, float startSeconds = 0f)
+        private static CommandResult PlayInternal(string listId, string path, int index, float startSeconds = 0f)
         {
             var store = Mp3Playlist.Get();
             if (!MicBroadcast.PlayTrack(path, store.Volume, store.Mic, startSeconds))
                 return CommandResult.Fail("invalid source", new { message = "播放失败：音频来源无效（文件不存在/路径非法，原因见 MicBroadcast 日志）" });
             _currentPath = path;
+            _playingListId = listId;
             _pausedPath = null;
+            _pausedListId = null;
             MicBroadcast.TrackFinished = OnTrackFinished;
             MicBroadcast.SetLocalAudible(store.Local);
             return CommandResult.Success(new
@@ -427,76 +523,91 @@ namespace DT_Tools.WebConsole.Api
         }
 
         /// <summary>
-        /// 自然播完自动连播。
+        /// 自然播完自动连播：在播放上下文的歌单内，按播放方式选下一首。
         /// </summary>
         /// <remarks>
-        /// 注意：引擎回调发生在 Stop() 之后（phase 已 idle），
-        /// 当前曲目必须直接按路径查表——不能用 CurrentIndex()（其含 idle=-1 守卫，
-        /// 会让连播永远落回第一首）。播放方式：list=顺序循环、single=单曲循环（重播当前）、
-        /// random=随机不重复。
+        /// 注意：引擎回调发生在 Stop() 之后（phase 已 idle），当前曲目必须直接按路径查表，
+        /// 不能依赖会话状态守卫。播放方式的选择逻辑见 <see cref="Mp3Playlist.NextIndex"/>。
         /// </remarks>
         private static void OnTrackFinished()
         {
-            var store = Mp3Playlist.Get();
-            var items = store.Items;
+            var list = Mp3Playlist.Find(_playingListId) ?? Mp3Playlist.Active();
+            var items = list.Items;
             if (items.Count == 0)
                 return;
-            int index = IndexOfPath(_currentPath);
-            int target;
-            switch (store.Mode)
-            {
-                case "single":
-                    target = index < 0 ? 0 : index;   // 单曲循环：重播当前
-                    break;
-                case "random":
-                    target = PickRandom(items.Count, index);
-                    break;
-                default:   // list：顺序循环
-                    target = index < 0 ? 0 : (index + 1) % items.Count;
-                    break;
-            }
+            int index = IndexOfPath(list, _currentPath);
+            int target = Mp3Playlist.NextIndex(items.Count, Mp3Playlist.Get().Mode, index, _rnd);
             Log.Info(Tag, $"自动连播：{items[target].Label}");
-            PlayInternal(items[target].Path, target);
+            PlayInternal(list.Id, items[target].Path, target);
         }
 
         /// <summary>
-        /// 按路径查歌单下标（无会话守卫——连播回调时引擎已 Stop，只认路径）。
+        /// 当前「播放上下文」：暂停中为暂停的那首，播放中为正在播的那首，空闲时为当前显示的歌单（下标 -1）。
         /// </summary>
+        /// <param name="index">上下文中当前曲目的下标；没有当前曲目时为 -1。</param>
+        /// <returns>播放上下文所属的歌单。</returns>
+        private static Mp3Playlist.ListEntry PlaybackList(out int index)
+        {
+            if (_pausedPath != null && MicBroadcast.Snapshot().Phase == "idle")
+            {
+                var paused = Mp3Playlist.Find(_pausedListId) ?? Mp3Playlist.Active();
+                index = IndexOfPath(paused, _pausedPath);
+                return paused;
+            }
+            if (OwnsSession())
+            {
+                var playing = Mp3Playlist.Find(_playingListId) ?? Mp3Playlist.Active();
+                index = IndexOfPath(playing, _currentPath);
+                return playing;
+            }
+            index = -1;
+            return Mp3Playlist.Active();
+        }
+
+        /// <summary>
+        /// 当前会话是否由随身MP3 发起。/mic_music 等其他入口接管引擎时，引擎的 TrackFinished 会被清空。
+        /// </summary>
+        /// <returns>会话属于随身MP3 时为 true。</returns>
+        private static bool OwnsSession()
+            => MicBroadcast.TrackFinished != null && MicBroadcast.Snapshot().Phase != "idle";
+
+        /// <summary>
+        /// 按路径在指定歌单中查下标（不做会话守卫，只认路径）。
+        /// </summary>
+        /// <param name="list">歌单；为 null 时返回 -1。</param>
         /// <param name="path">曲目路径。</param>
         /// <returns>歌单中的下标；不在歌单时为 -1。</returns>
-        private static int IndexOfPath(string path)
+        private static int IndexOfPath(Mp3Playlist.ListEntry list, string path)
         {
-            if (string.IsNullOrEmpty(path))
+            if (list == null || string.IsNullOrEmpty(path))
                 return -1;
-            return Mp3Playlist.Get().Items.FindIndex(i =>
-                string.Equals(i.Path, path, StringComparison.OrdinalIgnoreCase));
+            return list.Items.FindIndex(i => string.Equals(i.Path, path, StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>
-        /// 随机挑一首（避免与当前重复；单曲目时只能原地）。
+        /// 把歌单层的错误转换为命令信封：错误码小写英文短词，中文详情放在 data.message。
         /// </summary>
-        /// <param name="count">歌单曲目数量。</param>
-        /// <param name="exclude">要避开的下标。</param>
-        /// <returns>随机选中的下标；只有一首时返回原下标。</returns>
-        private static int PickRandom(int count, int exclude)
+        /// <param name="message">歌单层返回的中文原因。</param>
+        /// <returns>失败的命令结果。</returns>
+        private static CommandResult ListError(string message)
         {
-            if (count <= 1)
-                return 0;
-            var rnd = new Random();
-            int t;
-            do { t = rnd.Next(count); } while (t == exclude);
-            return t;
-        }
-
-        /// <summary>
-        /// 当前曲目在歌单中的下标（会话空闲或路径不在歌单时 -1）。
-        /// </summary>
-        /// <returns>当前曲目在歌单中的下标；会话空闲或不在歌单时为 -1。</returns>
-        private static int CurrentIndex()
-        {
-            if (MicBroadcast.Snapshot().Phase == "idle")
-                return -1;
-            return IndexOfPath(_currentPath);
+            string code;
+            switch (message)
+            {
+                case "歌单不存在":
+                    code = "list not found";
+                    break;
+                case "歌单序号越界":
+                    code = "index out of range";
+                    break;
+                case "至少保留一个歌单":
+                    code = "last list";
+                    break;
+                default:
+                    code = "invalid name";
+                    break;
+            }
+            return CommandResult.Fail(code, new { message });
         }
 
         /// <summary>

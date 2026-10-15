@@ -106,7 +106,7 @@ if (!Engine.Enabled<本功能Feature>()) return;
 ```text
 BepInEx/config/DT_Tools/
 ├── DT_Tools.cfg        插件配置（DtPaths.Cfg）
-├── mp3/playlist.json   随身 MP3 歌单（DtPaths.Mp3Playlist）
+├── mp3/playlist.json   随身 MP3 歌单库，多歌单 v2（DtPaths.Mp3Playlist）
 └── photos/             默认照片目录（DtPaths.DefaultPhotoFolder）
 ```
 
@@ -620,9 +620,10 @@ public sealed class XxxModule { }
 | `/api/mcp/toggle` | POST | MCP 桥接开关。body `{enabled: bool}`，经 ConfigService 落盘 |
 | `/api/dummy/state`、`/api/dummy/characters` | GET | 假人：房间快照、角色目录 |
 | `/api/dummy/create`、`remove`、`remove-all`、`ready`、`pick` | POST | 假人操作（见下） |
-| `/api/mp3/state` | GET | 随身MP3：引擎快照、暂停书签、歌单 |
+| `/api/mp3/state` | GET | 随身MP3：引擎快照、暂停书签、歌单库、播放上下文 |
 | `/api/mp3/play`、`index`、`next`、`pause`、`resume`、`stop`、`seek`、`volume`、`mic`、`local`、`mode` | POST | 随身MP3 控制（见下） |
-| `/api/mp3/playlist/add`、`remove` | POST | 歌单管理 |
+| `/api/mp3/playlist/add`、`remove`、`move`、`clear` | POST | 曲目管理（均可带 `listId`，缺省为当前歌单） |
+| `/api/mp3/lists/create`、`rename`、`delete`、`select` | POST | 歌单管理（多歌单） |
 | `/api/fs/list?path=目录` | GET | 只读目录浏览（见下） |
 | `/api/meta` | GET | 能力发现。返回 `{ok, wsPort}` |
 | `/login` | POST | 鉴权（见下） |
@@ -648,6 +649,10 @@ public sealed class XxxModule { }
 - mp3 窗口的 `onClose` 联动 `mp3Stop`。窗口关闭即停播。
 - 状态里的 `mic` / `local` / `volume` 取持久化偏好，空闲时也准确；`micActive` 才是当前会话是否真的在混入麦克风。开关表示用户意图，偏好总是先记录。
 - 混入是可选叠加：随身MP3 的 `micMix=true` 遇到语音未连接或麦克风采集未运行时，本曲降级为纯本地播放，不取消曲目（本地出声不依赖语音系统）。`/mic_music` 与阶段音乐的混入仍是硬要求，不可用即取消。
+- 多歌单：歌单库在 `mp3/playlist.json`（版本 2）。`lists` 为有序歌单数组，每个歌单有自己的 `items`；同一歌单内按路径去重，不同歌单可含同一首歌。至少保留一个歌单。版本 1（顶层 `items`）首次读取时迁移为「默认歌单」并立即落盘；无法解析的文件备份为 `playlist.json.broken` 后按空库重建。
+- 两个"当前"概念分开：`activeId` 是界面显示的歌单（浏览别的歌单不打断播放）；`playingListId` + `index` 是正在播放的那首所在的歌单与下标，连播、上一首/下一首、暂停恢复都基于它。客户端只有在 `playingListId == activeId` 时才高亮 `index`。
+- 曲目接口的下标都是相对于所属歌单的；拖动排序走 `playlist/move`，松手才提交一次。
+- 路由按注册顺序做前缀匹配：新增路径不得以已注册的更短路径开头（如 `/api/mp3/play` 会截走 `/api/mp3/playlist/*`）。歌单库接口统一放在 `/api/mp3/lists/*` 下。
 
 #### 目录浏览 API
 

@@ -18,14 +18,17 @@ import IconTrash from '~icons/tabler/trash';
 import IconPlaylistX from '~icons/tabler/playlist-x';
 import IconArrowUp from '~icons/tabler/arrow-up';
 import IconArrowDown from '~icons/tabler/arrow-down';
+import IconGripVertical from '~icons/tabler/grip-vertical';
+import IconPencil from '~icons/tabler/pencil';
+import IconPlus from '~icons/tabler/plus';
 import IconMusic from '~icons/tabler/music';
 
 /**
  * 随身MP3：游戏机本机播放器（服务端播放，非浏览器播放）。选文件（WebUI 内置
- * 目录浏览）→ 歌单（BepInEx/config/DT_Tools/mp3/ 持久化，全窗口/重启共享）→ 播放控制
- * （上一首/播放暂停/下一首/停止 + 可拖进度条 + 响度）。「写入麦克风」开关决定
- * 是否混入游戏语音发给全房（关 = 纯本地出声，无需进语音）；「本地出声」开关
- * 静音喇叭但进度照走（远程当 DJ 用）。与 /mic_music 共用同一播放会话，后触发者接管。
+ * 目录浏览）→ 歌单（多歌单，BepInEx/config/DT_Tools/mp3/ 持久化，全窗口/重启共享；
+ * 每个歌单独立配置曲目，可拖动排序）→ 播放控制（上一首/播放暂停/下一首/停止 +
+ * 可拖进度条 + 响度）。「混入麦克风」开关决定是否发给全房（语音未连接时仅本地出声），
+ * 「本地出声」开关静音喇叭但进度照走（远程当 DJ 用）。与 /mic_music 共用同一播放会话。
  */
 const phase = ref('idle');
 const position = ref(0);
@@ -35,12 +38,16 @@ const mic = ref(true);          // 混入偏好（开关位置，持久化）
 const micActive = ref(false);   // 当前会话是否真的在混入麦克风（语音未连接时偏好为开、此处为假）
 const local = ref(true);
 const mode = ref('list');
-const index = ref(-1);
-const playlist = ref([]);
+const lists = ref([]);          // 歌单库概览：[{ id, name, count }]
+const activeId = ref('');       // 界面当前显示的歌单
+const playingListId = ref('');  // 播放上下文所属歌单（空 = 无）
+const playingLabel = ref('');   // 正在播放的曲目名（来自播放上下文，可能不在当前显示的歌单里）
+const index = ref(-1);          // 正在播放的曲目在其歌单中的下标
+const playlist = ref([]);       // 当前显示歌单的曲目
 const loadError = ref('');
 const toast = reactive({ text: '', error: false });
 let toastTimer = null;
-const busy = ref(false);          // 传输操作进行中（防重复点击）
+const busy = ref(false);        // 传输操作进行中（防重复点击）
 const browsing = ref(false);
 const lastPath = ref(localStorage.getItem('dt_mp3_last') || '');
 
@@ -65,6 +72,10 @@ async function reload() {
   local.value = !!j.data?.local;
   mode.value = j.data?.mode || 'list';
   if (!volumeDragging.value) volume.value = j.data?.volume ?? 0.85;
+  lists.value = j.data?.lists || [];
+  activeId.value = j.data?.activeId || '';
+  playingListId.value = j.data?.playingListId || '';
+  playingLabel.value = j.data?.playingLabel || '';
   index.value = j.data?.index ?? -1;
   playlist.value = j.data?.playlist || [];
 }
@@ -97,10 +108,15 @@ async function act(fn, okText) {
   }
 }
 
+const activeList = computed(() => lists.value.find(l => l.id === activeId.value) || null);
+// 正在播放的那首属于当前显示的歌单时，才在列表里高亮
+const playingHere = computed(() => !!playingListId.value && playingListId.value === activeId.value);
+const highlightIndex = computed(() => (playingHere.value ? index.value : -1));
+
 const playPause = () => {
-  // 空闲时主按钮=「播放歌单」（显示 ▶，点击从第一首开始）；
+  // 空闲时主按钮=「播放歌单」（显示 ▶，点击从当前歌单第一首开始）；
   // 播放中显示 ‖（点击暂停）、暂停中显示 ▶（点击恢复）——按钮永远显示点击后将做的事
-  if (phase.value === 'idle') return act(() => API.mp3Index(0));
+  if (phase.value === 'idle') return act(() => API.mp3Index(0, activeId.value));
   if (phase.value === 'paused') return act(() => API.mp3Resume());
   return act(() => API.mp3Pause());
 };
@@ -149,14 +165,14 @@ async function onPicked(path) {
   if (busy.value) return;
   busy.value = true;
   try {
-    const j = await API.mp3PlaylistAdd(path);
+    const j = await API.mp3PlaylistAdd(path, activeId.value);
     if (j.unauthorized) return;
     if (!j.ok) { showToast(j.data?.message || j.error || '添加失败', true); return; }
     const added = j.data?.index ?? -1;
     // 空闲时选完即播；正在播时只入队（歌单里点播放接管）。
     // 直接调 API 不走 act()——此时 busy 已占用，act 会静默吞掉这次播放
     if (phase.value === 'idle') {
-      const r = await API.mp3Index(added);
+      const r = await API.mp3Index(added, activeId.value);
       if (!r.ok) showToast(r.data?.message || r.error || '播放失败', true);
     } else {
       showToast('已加入歌单');
@@ -167,25 +183,81 @@ async function onPicked(path) {
   }
 }
 
-// 点当前正在播的行 = 切换暂停/恢复（像常规播放器）；点其他行 = 切歌。
-// 旧行为点当前行会把这首歌从头重播，按钮形态也与播放状态脱节。
+// 点正在播的行 = 切换暂停/恢复（像常规播放器）；点其他行 = 切歌。
 function playAt(i) {
-  if (i === index.value && playingSomewhere.value) {
+  if (i === highlightIndex.value && playingSomewhere.value) {
     return phase.value === 'paused' ? act(() => API.mp3Resume()) : act(() => API.mp3Pause());
   }
-  return act(() => API.mp3Index(i));
+  return act(() => API.mp3Index(i, activeId.value));
 }
-const moveUp = (i) => act(() => API.mp3PlaylistMove(i, i - 1));
-const moveDown = (i) => act(() => API.mp3PlaylistMove(i, i + 1));
-const removeAt = (i) => act(() => API.mp3PlaylistRemove(i), '已移除');
+const moveUp = (i) => act(() => API.mp3PlaylistMove(i, i - 1, activeId.value));
+const moveDown = (i) => act(() => API.mp3PlaylistMove(i, i + 1, activeId.value));
+const removeAt = (i) => act(() => API.mp3PlaylistRemove(i, activeId.value), '已移除');
 const clearAll = () => {
   if (!playlist.value.length) return;
-  if (!confirm(`清空歌单全部 ${playlist.value.length} 首？（当前播放不受影响）`)) return;
-  act(() => API.mp3PlaylistClear());
+  if (!confirm(`清空歌单「${activeList.value?.name || ''}」全部 ${playlist.value.length} 首？（当前播放不受影响）`)) return;
+  act(() => API.mp3PlaylistClear(activeId.value));
 };
 
+// ---- 多歌单：切换 / 新建 / 重命名 / 删除 ----
+const creating = ref(false);
+const draftName = ref('');
+const renamingId = ref('');
+const renameText = ref('');
+
+// 输入框出现时自动聚焦并全选（重命名失败回填时同样生效）
+const vFocus = { mounted: (el) => { el.focus(); el.select?.(); } };
+
+function selectList(id) {
+  if (id === activeId.value) return;
+  act(() => API.mp3ListSelect(id));
+}
+
+function startCreate() {
+  renamingId.value = '';
+  draftName.value = '';
+  creating.value = true;
+}
+
+async function commitCreate() {
+  // 回车与失焦会各触发一次：先关闭输入框，保证只提交一次
+  if (!creating.value) return;
+  const name = draftName.value.trim();
+  creating.value = false;
+  if (!name) return;
+  const ok = await act(() => API.mp3ListCreate(name), '已新建歌单');
+  if (ok === false) { creating.value = true; draftName.value = name; }
+}
+
+function startRename(list) {
+  creating.value = false;
+  renamingId.value = list.id;
+  renameText.value = list.name;
+}
+
+async function commitRename() {
+  if (!renamingId.value) return;
+  const id = renamingId.value;
+  const name = renameText.value.trim();
+  const old = lists.value.find(l => l.id === id)?.name || '';
+  renamingId.value = '';
+  if (!name || name === old) return;
+  const ok = await act(() => API.mp3ListRename(id, name), '已重命名');
+  if (ok === false) { renamingId.value = id; renameText.value = name; }
+}
+
+function cancelRename() {
+  renamingId.value = '';
+}
+
+async function deleteList(list) {
+  if (lists.value.length <= 1) { showToast('至少保留一个歌单', true); return; }
+  if (!confirm(`删除歌单「${list.name}」（${list.count} 首）？`)) return;
+  await act(() => API.mp3ListDelete(list.id), '歌单已删除');
+}
+
 // 歌单按文件名过滤：只影响显示，不改歌单顺序。每行保留歌单原下标，
-// 播放 / 移除 / 上下移都用原下标，所以过滤后操作的仍是真实的那一首。
+// 播放 / 移除 / 上下移 / 拖动都用原下标，所以过滤后操作的仍是真实的那一首。
 const nameFilter = ref('');
 const filterKeyword = computed(() => nameFilter.value.trim());
 const filtering = computed(() => filterKeyword.value !== '');
@@ -195,17 +267,83 @@ const visibleRows = computed(() => {
   const q = filterKeyword.value.toLowerCase();
   return rows.filter(({ item }) => (item.label || '').toLowerCase().includes(q));
 });
-const listHeadText = computed(() => (filtering.value
-  ? `歌单（匹配 ${visibleRows.value.length} / ${playlist.value.length}）`
-  : `歌单（${playlist.value.length}）`));
+const listHeadText = computed(() => {
+  const name = activeList.value?.name || '歌单';
+  return filtering.value
+    ? `${name}（匹配 ${visibleRows.value.length} / ${playlist.value.length}）`
+    : `${name}（${playlist.value.length}）`;
+});
+
+// ---- 拖动排序（pointer 事件：鼠标与触摸通用）----
+// 拖动期间只记录目标位置，松手才提交一次 move，避免中途多次写盘
+const listEl = ref(null);
+const drag = reactive({ active: false, from: -1, slot: -1, pointerId: null });
+
+// 插入位置 slot 是「插到第 slot 行之前」；移除原行后的最终下标需要修正
+function finalDropIndex(from, slot) {
+  return slot > from ? slot - 1 : slot;
+}
+const dropPreview = computed(() => drag.active && finalDropIndex(drag.from, drag.slot) !== drag.from);
+
+function slotAt(clientY) {
+  const rows = listEl.value ? listEl.value.querySelectorAll('.row[data-idx]') : [];
+  for (const el of rows) {
+    const r = el.getBoundingClientRect();
+    if (clientY < r.top + r.height / 2) return Number(el.dataset.idx);
+  }
+  return playlist.value.length;
+}
+
+function onGripDown(e, i) {
+  if (busy.value || filtering.value || playlist.value.length < 2) return;
+  e.preventDefault();
+  drag.active = true;
+  drag.from = i;
+  drag.slot = i;
+  drag.pointerId = e.pointerId ?? null;
+  window.addEventListener('pointermove', onDragMove);
+  window.addEventListener('pointerup', onDragEnd);
+  window.addEventListener('pointercancel', onDragCancel);
+}
+
+function onDragMove(e) {
+  if (!drag.active || (e.pointerId ?? null) !== drag.pointerId) return;
+  drag.slot = slotAt(e.clientY);
+}
+
+function stopDrag() {
+  window.removeEventListener('pointermove', onDragMove);
+  window.removeEventListener('pointerup', onDragEnd);
+  window.removeEventListener('pointercancel', onDragCancel);
+}
+
+function resetDrag() {
+  drag.active = false;
+  drag.from = -1;
+  drag.slot = -1;
+  drag.pointerId = null;
+  stopDrag();
+}
+
+function onDragEnd(e) {
+  if (!drag.active || (e.pointerId ?? null) !== drag.pointerId) return;
+  const from = drag.from;
+  const to = finalDropIndex(drag.from, drag.slot);
+  resetDrag();
+  if (to !== from && to >= 0) act(() => API.mp3PlaylistMove(from, to, activeId.value));
+}
+
+function onDragCancel(e) {
+  if (!drag.active || (e.pointerId ?? null) !== drag.pointerId) return;
+  resetDrag();
+}
 
 const phaseText = computed(() => ({
   idle: '未播放', loading: '加载中', playing: '播放中', paused: '已暂停',
 }[phase.value] || phase.value));
 const playingSomewhere = computed(() => phase.value === 'playing' || phase.value === 'paused');
 const currentLabel = computed(() => {
-  if (index.value >= 0 && index.value < playlist.value.length) return playlist.value[index.value].label;
-  if (playingSomewhere.value) return '（其他入口正在使用播放器）';
+  if (playingSomewhere.value) return playingLabel.value || '（其他入口正在使用播放器）';
   return '未选择曲目';
 });
 
@@ -221,7 +359,10 @@ onMounted(() => {
   reload();
   poller.start();
 });
-onUnmounted(poller.stop);
+onUnmounted(() => {
+  poller.stop();
+  stopDrag();
+});
 </script>
 
 <template>
@@ -238,10 +379,10 @@ onUnmounted(poller.stop);
           <IconArrowsShuffle v-else />
           {{ modeMeta.label }}
         </button>
-        <button class="tb-btn" :disabled="busy" title="浏览本机文件并加入歌单" @click="browsing = true">
+        <button class="tb-btn" :disabled="busy" title="浏览本机文件并加入当前歌单" @click="browsing = true">
           <IconFolderPlus /> 添加歌曲
         </button>
-        <button class="tb-btn" :disabled="busy || !playlist.length" title="清空歌单（不影响当前播放）" @click="clearAll">
+        <button class="tb-btn" :disabled="busy || !playlist.length" title="清空当前歌单（不影响当前播放）" @click="clearAll">
           <IconPlaylistX /> 清空
         </button>
       </div>
@@ -276,7 +417,7 @@ onUnmounted(poller.stop);
         <button
           class="icon-btn main"
           :disabled="busy || (!playingSomewhere && !playlist.length)"
-          :title="phase === 'playing' || phase === 'loading' ? '暂停' : (phase === 'paused' ? '继续播放' : '播放歌单第一首')"
+          :title="phase === 'playing' || phase === 'loading' ? '暂停' : (phase === 'paused' ? '继续播放' : '播放当前歌单第一首')"
           @click="playPause"
         >
           <IconPlayerPause v-if="phase === 'playing' || phase === 'loading'" />
@@ -324,24 +465,107 @@ onUnmounted(poller.stop);
       </div>
     </div>
 
+    <div class="lists-bar" role="tablist" aria-label="歌单">
+      <template v-for="l in lists" :key="l.id">
+        <input
+          v-if="renamingId === l.id"
+          v-model="renameText"
+          v-focus
+          class="list-rename"
+          maxlength="40"
+          spellcheck="false"
+          placeholder="歌单名"
+          @keydown.enter.prevent="commitRename"
+          @keydown.esc.prevent="cancelRename"
+          @blur="commitRename"
+        >
+        <button
+          v-else
+          class="list-tab"
+          :class="{ active: l.id === activeId }"
+          role="tab"
+          :aria-selected="l.id === activeId"
+          :title="l.id === activeId ? '双击或点铅笔重命名' : '切换到这个歌单'"
+          @click="selectList(l.id)"
+          @dblclick="startRename(l)"
+        >
+          <span>{{ l.name }}</span>
+          <span class="cnt">{{ l.count }}</span>
+          <span v-if="l.id === playingListId" class="playing" title="正在播放">▶</span>
+        </button>
+      </template>
+      <input
+        v-if="creating"
+        v-model="draftName"
+        v-focus
+        class="list-rename"
+        maxlength="40"
+        spellcheck="false"
+        placeholder="新歌单名"
+        @keydown.enter.prevent="commitCreate"
+        @keydown.esc.prevent="creating = false"
+        @blur="commitCreate"
+      >
+      <button v-else class="list-tab icon" title="新建歌单" :disabled="busy" @click="startCreate">
+        <IconPlus />
+      </button>
+      <button
+        v-if="activeList && !renamingId"
+        class="list-tab icon"
+        title="重命名当前歌单"
+        :disabled="busy"
+        @click="startRename(activeList)"
+      >
+        <IconPencil />
+      </button>
+      <button
+        v-if="activeList && lists.length > 1 && !renamingId"
+        class="list-tab icon danger"
+        title="删除当前歌单"
+        :disabled="busy"
+        @click="deleteList(activeList)"
+      >
+        <IconTrash />
+      </button>
+    </div>
+
     <div class="list-head">
       <span>{{ listHeadText }}</span>
       <input v-model="nameFilter" class="filter" type="search" spellcheck="false" placeholder="按文件名过滤…">
     </div>
-    <div class="list">
-      <div v-if="!playlist.length" class="empty">还没有歌曲——点「添加歌曲」从游戏所在机器选音频文件（mp3/ogg/wav…）。</div>
+    <div ref="listEl" class="list">
+      <div v-if="!playlist.length" class="empty">这个歌单还没有歌曲——点「添加歌曲」从游戏所在机器选音频文件（mp3/ogg/wav…）。</div>
       <div v-else-if="!visibleRows.length" class="empty">没有文件名包含「{{ filterKeyword }}」的歌曲。</div>
-      <div v-for="{ item, i } in visibleRows" :key="item.path" class="row" :class="{ current: i === index && playingSomewhere }">
+      <div
+        v-for="{ item, i } in visibleRows"
+        :key="item.path"
+        :data-idx="i"
+        class="row"
+        :class="{
+          current: i === highlightIndex && playingSomewhere,
+          dragging: drag.active && drag.from === i,
+          'drop-before': dropPreview && drag.slot === i,
+          'drop-after': dropPreview && drag.slot === playlist.length && i === playlist.length - 1,
+        }"
+      >
+        <span
+          class="grip"
+          :class="{ disabled: busy || filtering || playlist.length < 2 }"
+          :title="filtering ? '清空过滤后再拖动排序' : '按住拖动排序'"
+          @pointerdown="onGripDown($event, i)"
+        >
+          <IconGripVertical />
+        </span>
         <span class="no">{{ i + 1 }}</span>
         <span class="label" :title="item.path">{{ item.label }}</span>
         <button
           class="mini-btn"
-          :class="{ active: i === index && playingSomewhere }"
+          :class="{ active: i === highlightIndex && playingSomewhere }"
           :disabled="busy"
-          :title="i === index && phase === 'playing' ? '暂停（当前曲目）' : (i === index && phase === 'paused' ? '继续播放（当前曲目）' : '播放这首')"
+          :title="i === highlightIndex && phase === 'playing' ? '暂停（当前曲目）' : (i === highlightIndex && phase === 'paused' ? '继续播放（当前曲目）' : '播放这首')"
           @click="playAt(i)"
         >
-          <IconPlayerPause v-if="i === index && phase === 'playing'" />
+          <IconPlayerPause v-if="i === highlightIndex && phase === 'playing'" />
           <IconPlayerPlay v-else />
         </button>
         <button class="mini-btn" :disabled="busy || filtering || i === 0" :title="filtering ? '清空过滤后再调整顺序' : '上移'" @click="moveUp(i)"><IconArrowUp /></button>
@@ -363,7 +587,7 @@ onUnmounted(poller.stop);
     <div class="foot">
       <span v-if="loadError" class="foot-err">{{ loadError }}</span>
       <template v-else>
-        <span>播放走游戏所在机器：混入麦克风发给全房（需游戏内麦克风未静音、非按键说话），或仅本地出声；暂停即销毁会话（语音管线还原），播放时从原进度重建；播完按播放方式连播（列表循环 / 单曲循环 / 随机播放）。</span>
+        <span>播放走游戏所在机器：混入麦克风发给全房（需游戏内麦克风未静音、非按键说话），或仅本地出声；语音未连接时自动降级为仅本地。暂停即销毁会话（语音管线还原），播放时从原进度重建；播完按播放方式在所属歌单内连播。</span>
       </template>
     </div>
   </div>
@@ -433,6 +657,28 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius
 .volume-range { max-width: 140px; }
 .volume-num { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); width: 36px; text-align: right; }
 
+.lists-bar {
+  flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px 0; overflow-x: auto; scrollbar-width: thin;
+}
+.list-tab {
+  display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+  background: var(--surface-1); border: 1px solid var(--line); border-radius: 999px;
+  color: var(--text-2); font-size: 12px; padding: 4px 10px; cursor: pointer; white-space: nowrap;
+}
+.list-tab svg { width: 13px; height: 13px; }
+.list-tab:hover:not(:disabled) { color: var(--text-0); border-color: var(--line-strong); }
+.list-tab.active { color: var(--accent-cyan); border-color: var(--accent-cyan-dim); background: var(--surface-2); }
+.list-tab .cnt { font-family: var(--font-mono); font-size: 10.5px; opacity: 0.8; }
+.list-tab .playing { font-size: 9px; color: var(--accent-cyan); }
+.list-tab.icon { width: 26px; height: 26px; padding: 0; justify-content: center; }
+.list-tab.icon.danger:hover:not(:disabled) { color: var(--accent-red); border-color: var(--accent-red); }
+.list-tab:disabled { opacity: 0.45; cursor: default; }
+.list-rename {
+  flex-shrink: 0; width: 140px; background: var(--surface-0); border: 1px solid var(--accent-cyan-dim);
+  border-radius: 999px; color: var(--text-0); font-size: 12px; padding: 4px 10px; outline: none;
+}
+
 .list-head {
   flex-shrink: 0; padding: 8px 14px 4px;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -448,11 +694,20 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius
 .empty { border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); color: var(--text-2); font-size: 12px; padding: 14px 12px; text-align: center; }
 
 .row {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 6px; user-select: none;
   background: var(--surface-1); border: 1px solid var(--line); border-radius: var(--radius-sm);
   padding: 6px 8px;
 }
 .row.current { border-color: var(--accent-cyan-dim); }
+.row.dragging { opacity: 0.45; }
+.row.drop-before { box-shadow: 0 -2px 0 0 var(--accent-cyan); }
+.row.drop-after { box-shadow: 0 2px 0 0 var(--accent-cyan); }
+.grip {
+  display: grid; place-items: center; width: 18px; height: 26px; flex-shrink: 0;
+  color: var(--text-2); cursor: grab; touch-action: none;
+}
+.grip svg { width: 14px; height: 14px; }
+.grip.disabled { opacity: 0.3; cursor: default; }
 .no { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); width: 22px; text-align: right; flex-shrink: 0; }
 .label { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row.current .label { color: var(--accent-cyan); }

@@ -101,8 +101,9 @@ export const API = {
 
   // 随身MP3（服务端播放器：本地出声 + 可选混入麦克风；歌单在 BepInEx/config/DT_Tools/mp3/ 持久化）
   mp3State: () => request('/api/mp3/state'),
-  mp3Play: (path) => post('/api/mp3/play', { path }),
-  mp3Index: (index) => post('/api/mp3/index', { index }),
+  // listId 缺省时后端使用当前歌单；传入则只作用于该歌单（undefined 会被 JSON 忽略）
+  mp3Play: (path, listId) => post('/api/mp3/play', { path, listId }),
+  mp3Index: (index, listId) => post('/api/mp3/index', { index, listId }),
   mp3Next: (delta = 1) => post('/api/mp3/next', { delta }),
   mp3Pause: () => post('/api/mp3/pause'),
   mp3Resume: () => post('/api/mp3/resume'),
@@ -112,10 +113,14 @@ export const API = {
   mp3Mic: (enabled) => post('/api/mp3/mic', { enabled }),
   mp3Local: (enabled) => post('/api/mp3/local', { enabled }),
   mp3Mode: (mode) => post('/api/mp3/mode', { mode }),
-  mp3PlaylistAdd: (path) => post('/api/mp3/playlist/add', { path }),
-  mp3PlaylistRemove: (index) => post('/api/mp3/playlist/remove', { index }),
-  mp3PlaylistMove: (from, to) => post('/api/mp3/playlist/move', { from, to }),
-  mp3PlaylistClear: () => post('/api/mp3/playlist/clear'),
+  mp3PlaylistAdd: (path, listId) => post('/api/mp3/playlist/add', { path, listId }),
+  mp3PlaylistRemove: (index, listId) => post('/api/mp3/playlist/remove', { index, listId }),
+  mp3PlaylistMove: (from, to, listId) => post('/api/mp3/playlist/move', { from, to, listId }),
+  mp3PlaylistClear: (listId) => post('/api/mp3/playlist/clear', { listId }),
+  mp3ListSelect: (id) => post('/api/mp3/lists/select', { id }),
+  mp3ListCreate: (name) => post('/api/mp3/lists/create', { name }),
+  mp3ListRename: (id, name) => post('/api/mp3/lists/rename', { id, name }),
+  mp3ListDelete: (id) => post('/api/mp3/lists/delete', { id }),
 };
 
 /**
