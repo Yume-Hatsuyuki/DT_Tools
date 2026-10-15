@@ -33,6 +33,10 @@ namespace DT_Tools.WebConsole.Api
         /// <summary>
         /// GET /api/mp3/state — 引擎会话快照 + 暂停书签合并 + 歌单 + 当前曲目下标。
         /// </summary>
+        /// <remarks>
+        /// volume / mic / local 取持久化偏好（空闲时引擎不持有这些值，且开关必须反映用户意图）；
+        /// micActive 才是当前会话是否真的在混入麦克风（语音未连接时偏好为开、micActive 为假）。
+        /// </remarks>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleState(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
@@ -50,9 +54,10 @@ namespace DT_Tools.WebConsole.Api
                         Phase = "paused",
                         Position = _pausedPosition,
                         Duration = _pausedDuration,
-                        engine.Volume,
-                        engine.Mic,
-                        engine.Local,
+                        Volume = store.Volume,
+                        Mic = store.Mic,
+                        MicActive = engine.Mic,
+                        Local = store.Local,
                         mode = store.Mode,
                         index,
                         playlist = store.Items.ToArray(),
@@ -68,9 +73,10 @@ namespace DT_Tools.WebConsole.Api
                         engine.Phase,
                         engine.Position,
                         engine.Duration,
-                        engine.Volume,
-                        engine.Mic,
-                        engine.Local,
+                        Volume = store.Volume,
+                        Mic = store.Mic,
+                        MicActive = engine.Mic,
+                        Local = store.Local,
                         mode = store.Mode,
                         index,
                         playlist = store.Items.ToArray(),
@@ -224,8 +230,12 @@ namespace DT_Tools.WebConsole.Api
         }
 
         /// <summary>
-        /// POST /api/mp3/mic {enabled} — 麦克风混入开关（会话中即时挂/卸；持久化）。
+        /// POST /api/mp3/mic {enabled} — 麦克风混入开关（偏好持久化；播放中即时挂/卸）。
         /// </summary>
+        /// <remarks>
+        /// 开关表示用户意图，偏好总是先记录。语音未连接时混入只是待命，本地播放不受影响。
+        /// 加载中不切换（本曲的混入状态已在开始加载时确定）。
+        /// </remarks>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleMic(HttpListenerContext ctx)
         {
@@ -238,22 +248,22 @@ namespace DT_Tools.WebConsole.Api
             }
             WriteMain(ctx, () =>
             {
-                // 无会话时只记偏好（下次播放生效）；有会话时即时挂/卸，失败不落盘
-                if (MicBroadcast.Snapshot().Phase == "idle")
-                {
-                    Mp3Playlist.Get().Mic = enabled.Value;
-                    Mp3Playlist.Save();
-                    return CommandResult.Success(new { message = "已记录混入偏好（下次播放生效）", mic = enabled.Value });
-                }
-                if (!MicBroadcast.SetMicMix(enabled.Value))
-                    return CommandResult.Fail("mic unavailable", new { message = "开启失败：麦克风采集未运行（设备不可用或语音未连接）" });
-                Mp3Playlist.Get().Mic = enabled.Value;
+                var engine = MicBroadcast.Snapshot();
+                if (engine.Phase == "loading")
+                    return CommandResult.Fail("loading", new { message = "曲目加载中，加载完成后再切换混入" });
+
+                var store = Mp3Playlist.Get();
+                store.Mic = enabled.Value;
                 Mp3Playlist.Save();
-                return CommandResult.Success(new
-                {
-                    message = enabled.Value ? "麦克风混入已开启" : "麦克风混入已关闭",
-                    mic = enabled.Value,
-                });
+                if (engine.Phase == "idle")
+                    return CommandResult.Success(new { message = "已记录混入偏好（下次播放生效）", mic = enabled.Value, micActive = false });
+
+                MicBroadcast.SetMicMix(enabled.Value);
+                bool active = MicBroadcast.Snapshot().Mic;
+                string message = !enabled.Value ? "麦克风混入已关闭（本地继续播放）"
+                    : active ? "麦克风混入已开启"
+                    : "语音未连接，混入待命（本地继续播放；语音就绪后关开一次即可混入）";
+                return CommandResult.Success(new { message, mic = enabled.Value, micActive = active });
             });
         }
 
@@ -411,7 +421,7 @@ namespace DT_Tools.WebConsole.Api
             MicBroadcast.SetLocalAudible(store.Local);
             return CommandResult.Success(new
             {
-                message = $"正在播放（{(store.Mic ? "混入麦克风" : "仅本地")}）",
+                message = store.Mic ? "开始播放（语音已连接时混入麦克风，否则仅本地）" : "开始播放（仅本地）",
                 index,
             });
         }

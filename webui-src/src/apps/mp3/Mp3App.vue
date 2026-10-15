@@ -31,7 +31,8 @@ const phase = ref('idle');
 const position = ref(0);
 const duration = ref(0);
 const volume = ref(0.85);
-const mic = ref(true);
+const mic = ref(true);          // 混入偏好（开关位置，持久化）
+const micActive = ref(false);   // 当前会话是否真的在混入麦克风（语音未连接时偏好为开、此处为假）
 const local = ref(true);
 const mode = ref('list');
 const index = ref(-1);
@@ -60,6 +61,7 @@ async function reload() {
   duration.value = j.data?.duration || 0;
   if (!seeking.value) position.value = j.data?.position || 0;
   mic.value = !!j.data?.mic;
+  micActive.value = !!j.data?.micActive;
   local.value = !!j.data?.local;
   mode.value = j.data?.mode || 'list';
   if (!volumeDragging.value) volume.value = j.data?.volume ?? 0.85;
@@ -118,7 +120,14 @@ function onVolumeCommit(e) {
   act(() => API.mp3Volume(v));
 }
 
-const micToggle = () => act(() => API.mp3Mic(!mic.value));
+// 开关标签：关=仅本地；开且会话在混入=混入麦克风；开但未混入（语音未连接/空闲）=混入待命
+const micChip = computed(() => (!mic.value ? '仅本地' : micActive.value ? '混入麦克风' : '混入待命'));
+const micTitle = computed(() => {
+  if (!mic.value) return '纯本地播放（点击开启混入麦克风）';
+  if (micActive.value) return '正在混入麦克风发往全房（点击关闭，变为纯本地播放）';
+  return '已开启混入，当前未混入（语音未连接或未在播放）；本地出声不受影响（点击关闭）';
+});
+const micToggle = () => act(() => API.mp3Mic(!mic.value), true);
 const localToggle = () => act(() => API.mp3Local(!local.value));
 
 // 播放方式循环切换：列表循环 → 单曲循环 → 随机播放
@@ -220,7 +229,7 @@ onUnmounted(poller.stop);
     <div class="toolbar">
       <div class="toolbar-left">
         <span class="chip" :class="{ on: phase === 'playing' }">{{ phaseText }}</span>
-        <span class="chip" :class="{ on: mic }">{{ mic ? '混入麦克风' : '仅本地' }}</span>
+        <span class="chip" :class="{ on: mic }">{{ micChip }}</span>
       </div>
       <div class="toolbar-right">
         <button class="tb-btn" :disabled="busy" :title="modeMeta.title" @click="modeToggle">
@@ -281,7 +290,7 @@ onUnmounted(poller.stop);
           class="icon-btn"
           :class="{ on: mic }"
           :disabled="busy"
-          :title="mic ? '正在混入麦克风发往全房（点击关闭，变为纯本地播放）' : '纯本地播放（点击开启混入麦克风，需语音已连接）'"
+          :title="micTitle"
           @click="micToggle"
         >
           <IconMicrophone v-if="mic" />

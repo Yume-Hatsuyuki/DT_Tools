@@ -52,6 +52,7 @@ namespace DT_Tools.Game
         // 引擎只有 播放中/加载中/空闲 三态，不存在挂起的僵尸会话。
         private static AudioClip _clip;        // 当前会话曲目（Seek/快照/完成判定需要，Stop 清空）
         private static bool _micWanted;        // 本会话是否要麦克风混入（false=纯本地，语音未连接也可播）
+        private static bool _micOptional;      // 混入是否可选：随身MP3=true（不可用则降级为纯本地）；/mic_music 与阶段音乐=false（不可用则取消）
         private static float[] _pendingMono;   // 加载期提取的单声道 PCM，混入启动时交给 Mix 状态
         private static float _pendingStart;    // 起始偏移（秒）：恢复暂停书签/连播跳转用
         private static bool _localMuted;       // 本地喇叭静音偏好（mute 而非 Stop：保留播放时钟与混入头同步）
@@ -154,6 +155,10 @@ namespace DT_Tools.Game
         /// <param name="micMix">是否混入麦克风广播；为 false 时只在本地播放。</param>
         /// <param name="startSeconds">起播位置，单位秒，默认从头开始。</param>
         /// <returns>开始播放时为 true。</returns>
+        /// <remarks>
+        /// micMix=true 但语音未连接或麦克风采集未运行时，本曲降级为纯本地播放，不取消曲目；
+        /// 混入只是叠加在本地播放之上，本地出声不依赖语音系统。
+        /// </remarks>
         public static bool PlayTrack(string rawSource, float volume, bool micMix, float startSeconds = 0f)
         {
             string uri = AudioMix.ResolveSource(rawSource, AudioPlaybackSource.Auto, Tag);
@@ -162,6 +167,7 @@ namespace DT_Tools.Game
             Stop();
             _localPlayback = true;
             _micWanted = micMix;
+            _micOptional = true;
             _pendingVolume = Mathf.Clamp01(volume);
             _pendingMaxSeconds = -1f;   // 不设上限：自然播完走 TrackFinished
             _pendingStart = Mathf.Max(0f, startSeconds);
@@ -186,6 +192,7 @@ namespace DT_Tools.Game
             Stop();   // 取代语义：先还原旧虚拟麦克风（含作废在途加载）
             _localPlayback = localPlayback;
             _micWanted = true;   // /mic_music 与阶段音乐两条复用路径都要混入
+            _micOptional = false;   // 广播类入口的混入是硬要求，麦克风不可用即取消
             _pendingVolume = Mathf.Clamp01(volume);
             _pendingMaxSeconds = maxSeconds;
             _loadGeneration++;
@@ -397,35 +404,37 @@ namespace DT_Tools.Game
                     real0 = null;
                     if (generation != _loadGeneration)
                         yield break;   // 等待期间来了新点播/停止：本次结果作废
+                    if (_micOptional && pipeline == null)
+                        break;         // 语音系统根本不存在（如主页面）：不是重启窗口，无需等待
                     if (attempt == 0)
                         Log.Info(Tag, "麦克风采集暂不可用（可能正处于管线重启窗口），0.1s 间隔重试…");
                     yield return new WaitForSecondsRealtime(0.1f);
                 }
                 if (real0 == null)
                 {
-                    Log.Warn(Tag, "广播失败：麦克风采集未运行（设备不可用或语音未连接），仅取消本次广播");
-                    Stop();
-                    yield break;
+                    if (!_micOptional)
+                    {
+                        Log.Warn(Tag, "广播失败：麦克风采集未运行（设备不可用或语音未连接），仅取消本次广播");
+                        Stop();
+                        yield break;
+                    }
+                    DowngradeToLocal("麦克风采集未运行（设备不可用或语音未连接）");
                 }
-                _pendingMono = AudioMix.ExtractMono(clip, Tag);
-                if (_pendingMono == null)
+                else if (!PrepareMix(clip, real0))
                 {
-                    Stop();
-                    yield break;
+                    if (!_micOptional)
+                    {
+                        Stop();
+                        yield break;
+                    }
+                    DowngradeToLocal("混入源准备或麦克风挂载失败");
                 }
-
-                // 挂载包装器：顶替管线上的采集器（混流点在预处理/VAD 上游）。
-                // 必须先挂载再应用音频档案——档案里的编码器重建（ForceReset）会走
-                // RestartTransmissionPipeline，包装器已在字段上、自动重绑新 preprocessor。
-                if (!TryMountMic(real0))
+                else
                 {
-                    Stop();
-                    yield break;
+                    // 等 ForceReset 生效：约 10 帧内部延迟 + 管线重启（期间麦克风短暂断流）。
+                    // 重建后的编码器才是广播码率——混入必须等它就绪，否则开头几秒仍走旧 32k 编码。
+                    yield return new WaitForSecondsRealtime(0.6f);
                 }
-
-                // 等 ForceReset 生效：约 10 帧内部延迟 + 管线重启（期间麦克风短暂断流）。
-                // 重建后的编码器才是广播码率——混入必须等它就绪，否则开头几秒仍走旧 32k 编码。
-                yield return new WaitForSecondsRealtime(0.6f);
             }
 
             // 本地同步播放：有即时反馈；外放时真实麦克风拾音叠加，进一步稳住 VAD 触发。
@@ -485,6 +494,38 @@ namespace DT_Tools.Game
             WriteMicrophone(pipeline, _wrapper);
             ApplyBroadcastAudioProfile();
             return true;
+        }
+
+        /// <summary>
+        /// 准备麦克风混入：提取混入源 PCM，再挂载虚拟麦克风。
+        /// </summary>
+        /// <remarks>
+        /// 必须先挂载再应用音频档案（档案里的编码器重建会走 RestartTransmissionPipeline，
+        /// 包装器已在字段上时自动重绑新 preprocessor）。失败时已告警。
+        /// </remarks>
+        /// <param name="clip">已加载的曲目。</param>
+        /// <param name="real">游戏原本的麦克风采集器。</param>
+        /// <returns>准备成功时为 true。</returns>
+        private static bool PrepareMix(AudioClip clip, IMicrophoneCapture real)
+        {
+            _pendingMono = AudioMix.ExtractMono(clip, Tag);
+            if (_pendingMono == null)
+                return false;
+            return TryMountMic(real);
+        }
+
+        /// <summary>
+        /// 随身MP3 混入不可用时降级：本次会话改为纯本地播放，曲目照常播放。
+        /// </summary>
+        /// <remarks>
+        /// 之后仍可经 <see cref="SetMicMix"/> 在会话中开启混入（语音就绪后生效）。
+        /// </remarks>
+        /// <param name="reason">降级原因，写入日志。</param>
+        private static void DowngradeToLocal(string reason)
+        {
+            _micWanted = false;
+            _pendingMono = null;
+            Log.Info(Tag, $"麦克风混入未启用（{reason}），本次改为纯本地播放");
         }
 
         /// <summary>
