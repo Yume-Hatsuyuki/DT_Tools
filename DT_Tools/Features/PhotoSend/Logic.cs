@@ -185,6 +185,67 @@ namespace DT_Tools.Features.PhotoSend
         }
 
         /// <summary>
+        /// 图片字节解码为 Texture2D。GIF 取第一帧，其余格式交给 LoadImage（PNG/JPEG）。
+        /// </summary>
+        /// <remarks>
+        /// GIF 先按文件头判断，不先试 LoadImage：结果不依赖 Unity 对 GIF 的内部行为。须主线程。
+        /// </remarks>
+        /// <param name="image">图片的原始字节。</param>
+        /// <param name="error">失败时的中文原因；成功时为 null。</param>
+        /// <returns>可读的 RGBA32 纹理；失败时为 null。</returns>
+        private static Texture2D DecodeToTexture(byte[] image, out string error)
+        {
+            error = null;
+            if (GifFirstFrame.IsGif(image))
+            {
+                if (!GifFirstFrame.TryDecode(image, out int gifW, out int gifH, out byte[] rgba, out string gifError))
+                {
+                    error = $"GIF 解码失败：{gifError}";
+                    return null;
+                }
+                return CreateTextureFromTopDownRgba(gifW, gifH, rgba);
+            }
+
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (ImageConversion.LoadImage(texture, image))
+            {
+                return texture;
+            }
+            UnityEngine.Object.Destroy(texture);
+            error = "图片解码失败（仅支持 jpg/png/gif，gif 取第一帧）";
+            return null;
+        }
+
+        /// <summary>
+        /// 把自上而下排列的 RGBA 字节写入新建的 Texture2D。
+        /// </summary>
+        /// <remarks>
+        /// Unity 的 SetPixels32 从左下角开始按行排列，与图像的自上而下相反，因此逐行翻转。
+        /// </remarks>
+        /// <param name="width">宽度，单位像素。</param>
+        /// <param name="height">高度，单位像素。</param>
+        /// <param name="rgba">自上而下排列的 RGBA 字节，长度为 width * height * 4。</param>
+        /// <returns>可读的 RGBA32 纹理。</returns>
+        private static Texture2D CreateTextureFromTopDownRgba(int width, int height, byte[] rgba)
+        {
+            var pixels = new Color32[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                int srcRow = y * width * 4;
+                int dstRow = (height - 1 - y) * width;
+                for (int x = 0; x < width; x++)
+                {
+                    int s = srcRow + x * 4;
+                    pixels[dstRow + x] = new Color32(rgba[s], rgba[s + 1], rgba[s + 2], rgba[s + 3]);
+                }
+            }
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            texture.SetPixels32(pixels);
+            texture.Apply(false);
+            return texture;
+        }
+
+        /// <summary>
         /// 图片字节解码 → 先按原分辨率编码，超 160KB 再按缩放模式降级。
         /// </summary>
         /// <remarks>
@@ -201,11 +262,10 @@ namespace DT_Tools.Features.PhotoSend
             outW = 0;
             outH = 0;
 
-            Texture2D source = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            if (!ImageConversion.LoadImage(source, image))
+            Texture2D source = DecodeToTexture(image, out string decodeError);
+            if (source == null)
             {
-                UnityEngine.Object.Destroy(source);
-                return "图片解码失败（支持 jpg/png/bmp/gif）";
+                return decodeError;
             }
 
             int quality = Mathf.Clamp(PhotoSendFeature.JpegQuality, 30, 95);
