@@ -175,6 +175,21 @@ const clearAll = () => {
   act(() => API.mp3PlaylistClear());
 };
 
+// 歌单按文件名过滤：只影响显示，不改歌单顺序。每行保留歌单原下标，
+// 播放 / 移除 / 上下移都用原下标，所以过滤后操作的仍是真实的那一首。
+const nameFilter = ref('');
+const filterKeyword = computed(() => nameFilter.value.trim());
+const filtering = computed(() => filterKeyword.value !== '');
+const visibleRows = computed(() => {
+  const rows = playlist.value.map((item, i) => ({ item, i }));
+  if (!filtering.value) return rows;
+  const q = filterKeyword.value.toLowerCase();
+  return rows.filter(({ item }) => (item.label || '').toLowerCase().includes(q));
+});
+const listHeadText = computed(() => (filtering.value
+  ? `歌单（匹配 ${visibleRows.value.length} / ${playlist.value.length}）`
+  : `歌单（${playlist.value.length}）`));
+
 const phaseText = computed(() => ({
   idle: '未播放', loading: '加载中', playing: '播放中', paused: '已暂停',
 }[phase.value] || phase.value));
@@ -300,10 +315,14 @@ onUnmounted(poller.stop);
       </div>
     </div>
 
-    <div class="list-head">歌单（{{ playlist.length }}）</div>
+    <div class="list-head">
+      <span>{{ listHeadText }}</span>
+      <input v-model="nameFilter" class="filter" type="search" spellcheck="false" placeholder="按文件名过滤…">
+    </div>
     <div class="list">
       <div v-if="!playlist.length" class="empty">还没有歌曲——点「添加歌曲」从游戏所在机器选音频文件（mp3/ogg/wav…）。</div>
-      <div v-for="(item, i) in playlist" :key="item.path" class="row" :class="{ current: i === index && playingSomewhere }">
+      <div v-else-if="!visibleRows.length" class="empty">没有文件名包含「{{ filterKeyword }}」的歌曲。</div>
+      <div v-for="{ item, i } in visibleRows" :key="item.path" class="row" :class="{ current: i === index && playingSomewhere }">
         <span class="no">{{ i + 1 }}</span>
         <span class="label" :title="item.path">{{ item.label }}</span>
         <button
@@ -316,8 +335,8 @@ onUnmounted(poller.stop);
           <IconPlayerPause v-if="i === index && phase === 'playing'" />
           <IconPlayerPlay v-else />
         </button>
-        <button class="mini-btn" :disabled="busy || i === 0" title="上移" @click="moveUp(i)"><IconArrowUp /></button>
-        <button class="mini-btn" :disabled="busy || i === playlist.length - 1" title="下移" @click="moveDown(i)"><IconArrowDown /></button>
+        <button class="mini-btn" :disabled="busy || filtering || i === 0" :title="filtering ? '清空过滤后再调整顺序' : '上移'" @click="moveUp(i)"><IconArrowUp /></button>
+        <button class="mini-btn" :disabled="busy || filtering || i === playlist.length - 1" :title="filtering ? '清空过滤后再调整顺序' : '下移'" @click="moveDown(i)"><IconArrowDown /></button>
         <button class="mini-btn remove" :disabled="busy" title="从歌单移除" @click="removeAt(i)"><IconTrash /></button>
       </div>
     </div>
@@ -407,7 +426,13 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius
 
 .list-head {
   flex-shrink: 0; padding: 8px 14px 4px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
   font-size: 11px; color: var(--text-2); text-transform: none;
+}
+.filter {
+  width: 100%; max-width: 200px; min-width: 0;
+  background: var(--surface-0); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  color: var(--text-0); font-size: 12px; padding: 4px 8px; outline: none;
 }
 .list { flex: 1; overflow-y: auto; padding: 4px 14px 12px; display: flex; flex-direction: column; gap: 6px; }
 
