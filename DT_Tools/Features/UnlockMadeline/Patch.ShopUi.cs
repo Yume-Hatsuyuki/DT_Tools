@@ -46,7 +46,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
     /// <summary>
     /// CharacterSortOrder.FillChineseOrder 后缀（私有静态方法，字符串定位）：
-    /// 0.1.16b CharacterSortOrder.cs:16（待核对）。原版填 12 人中文序（101 不在其中；非中文
+    /// 0.1.18c CharacterSortOrder.cs。原版填 12 人中文序（101 不在其中；非中文
     /// 分支也显式排除 101，见 :57-63）——后缀仅追加 101 置末位，不复制原版 12 人序，
     /// 游戏改序时零漂移。
     /// </summary>
@@ -88,7 +88,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
     /// <summary>
     /// UI_InfoSkillSubItem.SetInfo(ESkillType, bool, bool) 后缀（public 重载，
-    /// 可用 nameof）：0.1.16b UI_InfoSkillSubItem.cs:92（待核对）。
+    /// 可用 nameof）：0.1.18c UI_InfoSkillSubItem.cs。
     /// </summary>
     /// <remarks>
     /// 己方 SuperRazer 技能条目为 Madeline 时替换头像与名字（原版无其资源）。
@@ -97,6 +97,14 @@ namespace DT_Tools.Features.UnlockMadeline
         new global::System.Type[] { typeof(ESkillType), typeof(bool), typeof(bool) })]
     internal static class UnlockMadelineSkillInfoPatch
     {
+        /// <summary>无日志的文本查询：缺键返回 null（Managers.GetText 缺键会 Debug.LogError）。</summary>
+        private static string TryText(string key)
+        {
+            global::Data.TextData data;
+            if (Managers.Data == null || Managers.Data.TextDic == null) return null;
+            return Managers.Data.TextDic.TryGetValue(key, out data) && !string.IsNullOrEmpty(data.Text) ? data.Text : null;
+        }
+
         private static void Postfix(
             UI_InfoSkillSubItem __instance, ESkillType type, bool isActive, bool isMine)
         {
@@ -122,11 +130,10 @@ namespace DT_Tools.Features.UnlockMadeline
             TMP_Text nameLabel = UnlockMadelineUi.GetText(__instance, 0);
             if (nameLabel != null)
             {
-                string localized = Managers.GetText("Medelin");
-                if (string.IsNullOrEmpty(localized) || localized == "Medelin")
-                    localized = Managers.GetText("Madeline");
-                if (string.IsNullOrEmpty(localized) || localized == "Madeline")
-                    localized = "Medelin";
+                // 两种拼写并存：文本表的键是 "Madeline"（CHS：梅德琳）；角色表 Name 与资源名是 "Medelin"
+                // （游戏代码按 "Medelin_Skeleton" 加载骨骼）。这里按文本键查，不用 GetText，避免缺键时的
+                // Missing TextData 报错；都查不到时回退到代码层的 "Medelin"。
+                string localized = TryText("Madeline") ?? TryText("Medelin") ?? "Medelin";
                 nameLabel.text = localized;
             }
         }
