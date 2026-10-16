@@ -51,5 +51,6 @@ namespace DT_Tools.Core.Attributes
         SysData = 1UL << 35,
         SysAutomation = 1UL << 36,
         SysDebug = 1UL << 37,
+        Peripheral = 1UL << 38,
     }
 }

@@ -67,6 +67,7 @@ namespace DT_Tools.Core.Attributes
                 new Entry { Tag = FeatureTag.SysData, Key = "SysData", Group = "系统", Label = "数据", Description = "存档、配置、导入导出" },
                 new Entry { Tag = FeatureTag.SysAutomation, Key = "SysAutomation", Group = "系统", Label = "自动化", Description = "无需人工操作的自动行为" },
                 new Entry { Tag = FeatureTag.SysDebug, Key = "SysDebug", Group = "系统", Label = "开发调试", Description = "测试模式、协议自检、截图、日志、帮助" },
+                new Entry { Tag = FeatureTag.Peripheral, Key = "Peripheral", Group = "外设", Label = "外设与输入", Description = "鼠标、键盘、手柄、宏、灵敏度、按键映射" },
         };
 
         /// <summary>
