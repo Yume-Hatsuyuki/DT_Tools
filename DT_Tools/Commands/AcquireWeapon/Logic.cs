@@ -18,7 +18,7 @@ namespace DT_Tools.Commands.AcquireWeapon
         // ═══════════════════════════════════════════════════
         //  具名常量：凶器道具 DataId（服务端 Armory 发放，背包出现即生效）
         // ═══════════════════════════════════════════════════
-        internal const int WeaponDataId = Define.ITEM_ID_KNIFE;   // 2001（0.1.17a Define.cs:712）
+        internal const int WeaponDataId = Define.ITEM_ID_KNIFE;   // 2001（0.1.18c Define.cs:714）
 
         /// <summary>
         /// 武器架空场后自动换点的剩余秒数（StateList[2]=总时长, [3]=已计时）。

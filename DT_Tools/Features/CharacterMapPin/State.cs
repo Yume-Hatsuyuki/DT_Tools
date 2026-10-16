@@ -13,7 +13,7 @@ namespace DT_Tools.Features.CharacterMapPin
     {
         /// <summary>
         /// 常驻箭头轨道半径：与 Kaho 角色箭头一致（原版 UI_Arrow.SetInfo(ECharacterType,...)
-        /// 写 _orbitRadius = 300，0.1.17a UI_Arrow.cs:77；字段默认 200，0.1.17a UI_Arrow.cs:14）。
+        /// 写 _orbitRadius = 300，0.1.18c UI_Arrow.cs:77；字段默认 200，0.1.18c UI_Arrow.cs:14）。
         /// </summary>
         public const float CharacterArrowOrbit = 300f;
 

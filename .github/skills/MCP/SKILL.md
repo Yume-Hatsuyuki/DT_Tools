@@ -47,7 +47,7 @@ MCP 服务器随游戏进程运行（独立监听，与 WebConsole 互不依赖�
 要用的功能（包/命令能力）在 MCP.md 里没有，按以下顺序处理，**补录后再用**：
 
 1. **查运行期**：`run_command` 调 `packets <包名>`（或 `/packets`）拿字段表——字段名/类型/序号的运行期真值。
-2. **读游戏源码**确认语义与副作用：包注册在 `0.1.17a/Server.Game/HostPacketRegistry.cs`（grep `RegisterHandler(PacketID.<包名>`）；处理函数在 `0.1.17a/Server.Game/HostPacketHandler.cs` 的 `Handle_<包名>`；消息定义在 `0.1.17a/Protocol/`。私有成员引用处写锚点 `0.1.17a 文件:行号`。
+2. **读游戏源码**确认语义与副作用：包注册在 `0.1.18c/Server.Game/HostPacketRegistry.cs`（grep `RegisterHandler(PacketID.<包名>`）；处理函数在 `0.1.18c/Server.Game/HostPacketHandler.cs` 的 `Handle_<包名>`；消息定义在 `0.1.18c/Protocol/`。私有成员引用处写锚点 `0.1.18c 文件:行号`。
 3. **补条目**：按 MCP.md 里的条目模板写进其对应小节（C_* / S_* / 风险速查），锚点、风险一项不缺。
 4. 再发包。
 

@@ -9,7 +9,7 @@ namespace DT_Tools.Commands.ExitRoom
     /// </summary>
     /// <remarks>
     /// 与原版退出确认 OnClickExitYes / 观战退出 OnClickSpectateExitYes 同路径
-    /// （0.1.17a UI_GameScene.cs:2305-2311、2340-2348）：Network.Leave + LoadScene(LobbyScene)。
+    /// （0.1.18c UI_GameScene.cs:2221-2227、2340-2348）：Network.Leave + LoadScene(LobbyScene)。
     /// 若自己是房主，房间按原版规则移交或解散。
     /// </remarks>
     internal sealed class ExitRoomCommand : ICommand

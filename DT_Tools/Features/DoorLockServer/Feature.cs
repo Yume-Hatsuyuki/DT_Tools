@@ -5,7 +5,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.DoorLockServer
 {
     /// <summary>
-    /// 锁门服务端：原版 Door.HandleEvent 只允许黑幕锁门（0.1.17a Server.Game/Door.cs:66）。
+    /// 锁门服务端：原版 Door.HandleEvent 只允许黑幕锁门（0.1.18c Server.Game/Door.cs:66）。
     /// </summary>
     /// <remarks>
     /// 本功能按 LockDoorMode 额外放行黑方/白方/所有身份，并调整冷却间隔。

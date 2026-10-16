@@ -7,28 +7,28 @@ using Protocol;
 namespace DT_Tools.Features.PlayerRadar
 {
     /// <summary>
-    /// LateUpdate 整替：复刻 0.1.17a UI_GameTablet.cs:2992，去掉“myPlayer.Color == White &amp;&amp; Managers.Game.IsAlive 则不刷新他人”分支（:3004）。
+    /// LateUpdate 整替：复刻 0.1.18c UI_GameTablet.cs:2948，去掉“myPlayer.Color == White &amp;&amp; Managers.Game.IsAlive 则不刷新他人”分支（:3004）。
     /// </summary>
     /// <remarks>
-    /// 方法为 private，字符串定位：0.1.16b UI_GameTablet.cs:2992（待核对）；_init 为基类 InitBase 的 protected 字段（0.1.17a InitBase.cs:5，AccessTools.Field 已实测沿基类链命中）；RefreshMyPlayerPin（:1200）/ RefreshPlayerPin(Player)（:1211）为 private，逐帧热路径，反射缓存策略见 Core/Reflect.cs 头注释。
+    /// 方法为 private，字符串定位：0.1.16b UI_GameTablet.cs:2992（待核对）；_init 为基类 InitBase 的 protected 字段（0.1.18c InitBase.cs:5，AccessTools.Field 已实测沿基类链命中）；RefreshMyPlayerPin（:1200）/ RefreshPlayerPin(Player)（:1211）为 private，逐帧热路径，反射缓存策略见 Core/Reflect.cs 头注释。
     /// 与 CharacterMapPin 的隐式联动：本补丁经委托调用原 RefreshPlayerPin，仍会触发 CharacterMapPin 挂在其上的 Postfix（头像替换）。该联动靠补丁机制维持，若本补丁改为不再调用原方法，CharacterMapPin 的平板 pin 头像会静默失效。
     /// </remarks>
     [HarmonyPatch(typeof(UI_GameTablet), "LateUpdate")]
     internal static class PlayerRadarPatch
     {
         /// <summary>
-        /// _init：0.1.17a InitBase.cs:5，protected（AccessTools.Field 沿基类链查找）。
+        /// _init：0.1.18c InitBase.cs:5，protected（AccessTools.Field 沿基类链查找）。
         /// </summary>
         private static readonly FieldInfo InitField = AccessTools.Field(typeof(UI_GameTablet), "_init");
 
         /// <summary>
-        /// RefreshMyPlayerPin() 私有：0.1.17a UI_GameTablet.cs:1200。
+        /// RefreshMyPlayerPin() 私有：0.1.18c UI_GameTablet.cs:1190。
         /// </summary>
         private static readonly Action<UI_GameTablet> RefreshMyPlayerPinOf =
             Reflect.Bind<Action<UI_GameTablet>>(typeof(UI_GameTablet), "RefreshMyPlayerPin");
 
         /// <summary>
-        /// RefreshPlayerPin(Player) 私有：0.1.17a UI_GameTablet.cs:1211。
+        /// RefreshPlayerPin(Player) 私有：0.1.18c UI_GameTablet.cs:1201。
         /// </summary>
         private static readonly Action<UI_GameTablet, Player> RefreshPlayerPinOf =
             Reflect.Bind<Action<UI_GameTablet, Player>>(typeof(UI_GameTablet), "RefreshPlayerPin", new[] { typeof(Player) });

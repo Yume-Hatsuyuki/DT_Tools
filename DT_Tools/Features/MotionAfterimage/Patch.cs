@@ -4,7 +4,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.MotionAfterimage
 {
     /// <summary>
-    /// 对局 HUD LateUpdate 后置 Tick（0.1.17a UI_GameScene.cs:804）。
+    /// 对局 HUD LateUpdate 后置 Tick（0.1.18c UI_GameScene.cs:789）。
     /// </summary>
     [HarmonyPatch(typeof(UI_GameScene), "LateUpdate")]
     internal static class MotionAfterimageTickPatch

@@ -45,21 +45,21 @@ namespace DT_Tools.Commands.Join
 
         /// <summary>
         /// 按码搜索并进入：FindLobbyByCode → 回调在主线程（游戏主循环泵 Steam 回调）；
-        /// 进房复用原版 ProceedLobbyEnter（私有方法，字符串定位：0.1.17a UI_LobbyScene.cs:1305），
+        /// 进房复用原版 ProceedLobbyEnter（私有方法，字符串定位：0.1.18c UI_LobbyScene.cs:1305），
         /// 加载界面、语音预连接、School 资源域装载全部按原版编排执行。
         /// </summary>
         /// <param name="scene">当前的大厅界面。</param>
         /// <param name="code">房间码。</param>
         private static void JoinByCode(UI_LobbyScene scene, string code)
         {
-            Managers.Network.FindLobbyByCode(code, lobbyId =>   // 0.1.17a NetworkManager.cs:256
+            Managers.Network.FindLobbyByCode(code, lobbyId =>   // 0.1.18c NetworkManager.cs:256
             {
                 if (lobbyId == CSteamID.Nil)
                 {
                     Log.Warn("Join", $"未找到房间码 {code} 对应的房间（注意：码随房间解散失效）。");
                     return;
                 }
-                if (SteamLobbyManager.IsLobbyInGame(lobbyId))    // 0.1.17a SteamLobbyManager.cs:477
+                if (SteamLobbyManager.IsLobbyInGame(lobbyId))    // 0.1.18c SteamLobbyManager.cs:477
                     Log.Info("Join", $"房间 {code} 正在对局，将以观战方式加入。");
                 AccessTools.Method(typeof(UI_LobbyScene), "ProceedLobbyEnter")
                     ?.Invoke(scene, new object[] { lobbyId });

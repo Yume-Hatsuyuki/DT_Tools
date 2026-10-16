@@ -10,7 +10,7 @@ using Server.Game;
 namespace DT_Tools.Features.DetectivePhaseFix
 {
     /// <summary>
-    /// StartDetective 开头 black.IsAlive 在 Black==null 时 NRE（0.1.17a GameRoom.cs:2037，
+    /// StartDetective 开头 black.IsAlive 在 Black==null 时 NRE（0.1.18c GameRoom.cs:2037，
     /// 2041 行触发——同一方法内 SyncAllPlayer 回调对 black 判空，可证原版即为潜在缺陷）。
     /// </summary>
     /// <remarks>
@@ -70,7 +70,7 @@ namespace DT_Tools.Features.DetectivePhaseFix
             Log.Info<DetectivePhaseFixFeature>("Transpiler 已卸载");
         }
 
-        // StartDetective 为私有方法，字符串定位：0.1.17a GameRoom.cs:2037
+        // StartDetective 为私有方法，字符串定位：0.1.18c GameRoom.cs:2037
         [HarmonyPatch(typeof(GameRoom), "StartDetective")]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)

@@ -12,7 +12,7 @@ using Server.Game;
 namespace DT_Tools.Features.DoorLockServer
 {
     /// <summary>
-    /// Door.HandleEvent 补丁点（public override，0.1.17a Server.Game/Door.cs:63-82）：
+    /// Door.HandleEvent 补丁点（public override，0.1.18c Server.Game/Door.cs:63-82）：
     /// 前缀按 LockDoorMode 放行并逐句复刻原版锁门序列（锁门不留痕，与原版一致）；
     /// Transpiler 把原方法三处冷却常量 40（:69/:70/:76）替换为 Interval——放行身份走
     /// 前缀复刻、未放行身份走原方法，两路同读 Interval 才不出现同人不同 CD。
@@ -62,7 +62,7 @@ namespace DT_Tools.Features.DoorLockServer
             return false;
         }
 
-        // 原方法冷却常量 40 共 3 处：0.1.16b Server.Game/Door.cs:69（EndTick）/ :70（恢复任务）/ :76（S_COOLTIME 包）
+        // 原方法冷却常量 40 共 3 处：0.1.16b Server.Game/Door.cs:69（待核对）（EndTick）/ :70（恢复任务）/ :76（S_COOLTIME 包）
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {

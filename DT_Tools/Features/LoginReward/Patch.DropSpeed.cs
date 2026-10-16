@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DT_Tools.Features.LoginReward
 {
     /// <summary>
-    /// 按玩家自设秒数改写 FreeCurrencyDrops 客户端等待（0.1.17a FreeCurrencyDrops.cs）。
+    /// 按玩家自设秒数改写 FreeCurrencyDrops 客户端等待（0.1.18c FreeCurrencyDrops.cs）。
     /// </summary>
     /// <remarks>
     /// 官方硬编码：RESULT_TIMEOUT=20、RECHECK_WAIT=65、RETRY_MIN=2、RETRY_MAX=60。
@@ -31,7 +31,7 @@ namespace DT_Tools.Features.LoginReward
     }
 
     /// <summary>
-    /// FreeCurrencyDrops.Update（public）：0.1.17a FreeCurrencyDrops.cs:131。
+    /// FreeCurrencyDrops.Update（public）：0.1.18c FreeCurrencyDrops.cs:131。
     /// </summary>
     /// <remarks>
     /// Prefix：配置的结果超时短于官方 20s 时，提前结束 in-flight 并重试。
@@ -86,7 +86,7 @@ namespace DT_Tools.Features.LoginReward
     }
 
     /// <summary>
-    /// FreeCurrencyDrops.TryHandleResult（public）：0.1.17a FreeCurrencyDrops.cs:180。
+    /// FreeCurrencyDrops.TryHandleResult（public）：0.1.18c FreeCurrencyDrops.cs:180。
     /// </summary>
     /// <remarks>
     /// Postfix：把刚写入的空结果/Prime _waitUntil 改为配置的复查秒数。
@@ -124,7 +124,7 @@ namespace DT_Tools.Features.LoginReward
     }
 
     /// <summary>
-    /// FreeCurrencyDrops.ScheduleRetry（private）：0.1.17a FreeCurrencyDrops.cs:248。
+    /// FreeCurrencyDrops.ScheduleRetry（private）：0.1.18c FreeCurrencyDrops.cs:248。
     /// </summary>
     /// <remarks>
     /// Postfix：按配置的下限/上限重写 _nextAt 指数退避。

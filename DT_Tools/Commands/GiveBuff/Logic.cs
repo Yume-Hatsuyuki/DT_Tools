@@ -70,7 +70,7 @@ namespace DT_Tools.Commands.GiveBuff
         /// 原版 AddBuff 在已有同类时直接忽略，这里先强制移除再加
         /// 以刷新时长；原版 Flush 只遍历 AlivePlayers，大厅列表为空导致不会自动到期，
         /// 故额外 PushAfter(durationMs) 调 RemoveBuffForce 兜底
-        /// （0.1.17a Server.Game/BuffComponent.cs:93 AddBuff / :118 RemoveBuffForce，
+        /// （0.1.18c Server.Game/BuffComponent.cs:93 AddBuff / :118 RemoveBuffForce，
         /// Server.Game/JobSerializer.cs:98 PushAfter）。
         /// </remarks>
         /// <param name="room">所在房间。</param>

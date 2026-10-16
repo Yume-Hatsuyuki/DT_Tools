@@ -101,7 +101,7 @@ namespace DT_Tools.Commands.Agent
         // ═══════════════════════════════════════════════════
 
         /// <summary>
-        /// 矿点 SubType → 掉落 DataId（与 Server Mineral.HandleEvent 一致，0.1.17a Server.Game/Mineral.cs:26/43）。
+        /// 矿点 SubType → 掉落 DataId（与 Server Mineral.HandleEvent 一致，0.1.18c Server.Game/Mineral.cs:26/43）。
         /// </summary>
         /// <param name="subType">矿点的 SubType。</param>
         /// <returns>掉落物的 DataId。</returns>

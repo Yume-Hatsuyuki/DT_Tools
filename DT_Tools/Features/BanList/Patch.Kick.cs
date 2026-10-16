@@ -7,7 +7,7 @@ using Steamworks;
 namespace DT_Tools.Features.BanList
 {
     /// <summary>
-    /// KickPlayer 捕获（0.1.17a Server.Game/GameRoom.cs:1544）。
+    /// KickPlayer 捕获（0.1.18c Server.Game/GameRoom.cs:1544）。
     /// </summary>
     /// <remarks>
     /// Prefix 在玩家对象还留在房间时抓名字与 SteamId——Lobby 下踢人会同步经

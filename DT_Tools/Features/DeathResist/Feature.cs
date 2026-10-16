@@ -10,7 +10,7 @@ namespace DT_Tools.Features.DeathResist
     /// 服务端 Player.IsAlive 仍为 false，
     /// 需房主放行的包照样会被拒。不替代 GhostInteract，仅作对照实验。
     ///
-    /// 0.1.17a：GameManagerEX.Dead IsAlive=false 见 GameManagerEX.cs:338；
+    /// 0.1.18c（待核对）：GameManagerEX.Dead IsAlive=false 见 GameManagerEX.cs:338；
     /// IsGhostView 见 MyPlayer.cs:1884-1886；幽灵移动 FixedUpdate 见 MyPlayer.cs:1703-1714。
     /// </remarks>
     [PatchFeature(

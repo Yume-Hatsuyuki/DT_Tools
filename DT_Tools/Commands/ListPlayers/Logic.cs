@@ -58,7 +58,7 @@ namespace DT_Tools.Commands.ListPlayers
         /// </summary>
         /// <remarks>
         /// 识别失败返回 0
-        /// （0.1.17a DummyClient/SteamLobbyManager.cs:90 HostSteamId / :104 InLobby）。
+        /// （0.1.18c DummyClient/SteamLobbyManager.cs:90 HostSteamId / :104 InLobby）。
         /// </remarks>
         /// <returns>房主的 PlayerId。客户端通过 Steam Lobby 查询。</returns>
         public static int ResolveHostPlayerId()
@@ -128,7 +128,7 @@ namespace DT_Tools.Commands.ListPlayers
         /// 通过 P2PSessionManager → SteamP2PSession.Connection → GetConnectionInfo 取远端地址 / 是否中继 / ping。
         /// </summary>
         /// <remarks>
-        /// 路径对齐 0.1.17a DummyClient/SteamP2PSession.cs:39 GetConnectionInfo、DummyClient/P2PSessionManager.cs:39 TryGet。
+        /// 路径对齐 0.1.18c DummyClient/SteamP2PSession.cs:39 GetConnectionInfo、DummyClient/P2PSessionManager.cs:39 TryGet。
         /// 拓扑：游戏是星型，客机只与房主建连，客机之间没有 P2P 句柄，故客机执行本命令时除房主外均为无连接（ip_src=—）。SDR 下 m_addrRemote 常为空，此时用 m_idPOPRelay 显示 sdr:POP。
         /// </remarks>
         /// <param name="steamId">要查询的 Steam ID。</param>
@@ -195,7 +195,7 @@ namespace DT_Tools.Commands.ListPlayers
         /// SteamNetworkingPOPID → 四字符 POP 名（如 hkg）。
         /// </summary>
         /// <remarks>
-        /// 对齐 0.1.17a DummyClient/SteamP2PSession.cs:64 DecodePop。
+        /// 对齐 0.1.18c DummyClient/SteamP2PSession.cs:64 DecodePop。
         /// </remarks>
         /// <param name="popId">Steam 中继节点 ID。</param>
         /// <returns>四字符 POP 名，如 hkg。</returns>
@@ -263,7 +263,7 @@ namespace DT_Tools.Commands.ListPlayers
 
         /// <summary>
         /// Steam 账号昵称（persona name）：同房间/同大厅玩家无需好友关系即可查
-        /// （查询模式对齐 0.1.17a GameHistoryStorage.cs:472 GetSteamName；
+        /// （查询模式对齐 0.1.18c GameHistoryStorage.cs:472 GetSteamName；
         /// 清洗对齐同文件 CleanName——去控制字符、NeutralizeRichText、截断 32）。
         /// </summary>
         /// <remarks>

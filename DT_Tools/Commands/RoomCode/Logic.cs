@@ -43,7 +43,7 @@ namespace DT_Tools.Commands.RoomCode
                 return false;
             }
 
-            code = Managers.Network.RoomCode;   // 0.1.17a NetworkManager.cs:138
+            code = Managers.Network.RoomCode;   // 0.1.18c NetworkManager.cs:138
             if (string.IsNullOrEmpty(code))
             {
                 errCode = "not in room";

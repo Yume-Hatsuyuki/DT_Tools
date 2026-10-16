@@ -99,7 +99,7 @@ namespace DT_Tools.Commands.Beacon
 
         /// <summary>
         /// 越界预警（不阻断）：服务端 HandleMove 对存活玩家按 AreaManager.ValidPosition
-        /// （224 网格 + MapArray，0.1.17a Server.Game/AreaManager.cs:82）判定，越界时
+        /// （224 网格 + MapArray，0.1.18c Server.Game/AreaManager.cs:82）判定，越界时
         /// &lt;b>仅 Survive / Detective 阶段&lt;/b> fallback 到 ErrorPos（0.1.16b
         /// Server.Game/GameRoom.cs:2349-2354）；其余阶段（Lobby/Vote/Trial 等）整包
         /// 静默丢弃——本机已本地落位，但服务端不广播 S_MOVE，他人视角仍在原地。

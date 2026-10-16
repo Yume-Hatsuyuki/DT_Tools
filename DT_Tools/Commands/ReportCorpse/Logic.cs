@@ -88,7 +88,7 @@ namespace DT_Tools.Commands.ReportCorpse
             if (states == null || states.Count < 5) return "状态字段缺失";
             if (states[3] != 0) return "炸弹尸体";
             if (states[4] != 0) return "已隐藏";
-            if (device != null && device.IsCorpseTrickLocked(corpse.ID)) return "被致命诡计锁定";   // 0.1.17a DeviceManager.cs:499
+            if (device != null && device.IsCorpseTrickLocked(corpse.ID)) return "被致命诡计锁定";   // 0.1.18c DeviceManager.cs:503
             return null;
         }
 

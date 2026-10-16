@@ -21,10 +21,10 @@ namespace DT_Tools.Features.CharacterMapPin
     /// </remarks>
     internal static class CharacterMapPinUi
     {
-        // ── UI 元素魔法索引（UI_Base 的 protected GetObject/GetImage，0.1.17a UI_Base.cs:93/:113，
+        // ── UI 元素魔法索引（UI_Base 的 protected GetObject/GetImage，0.1.18c UI_Base.cs:93/:113，
         //    本类不在继承链上，经下方缓存的开放实例委托调用）──
         /// <summary>
-        /// UI_MinimapSubItem 的 GameObjects 枚举 ComplyRules=0（0.1.17a UI_MinimapSubItem.cs:7-10）。
+        /// UI_MinimapSubItem 的 GameObjects 枚举 ComplyRules=0（0.1.18c UI_MinimapSubItem.cs:7-10）。
         /// </summary>
         private const int PinComplyRulesObject = 0;
         /// <summary>
@@ -32,7 +32,7 @@ namespace DT_Tools.Features.CharacterMapPin
         /// </summary>
         private const int PinMarkImage = 0;
         /// <summary>
-        /// UI_Arrow 的 Images 枚举 Arrow=0 / Mark=1（0.1.17a UI_Arrow.cs:6-9）。
+        /// UI_Arrow 的 Images 枚举 Arrow=0 / Mark=1（0.1.18c UI_Arrow.cs:6-9）。
         /// </summary>
         private const int ArrowMarkImage = 1;
 
@@ -42,19 +42,19 @@ namespace DT_Tools.Features.CharacterMapPin
         private static bool _diagnosticsLogged;
 
         /// <summary>
-        /// UI_Base.GetObject(int) protected：0.1.17a UI_Base.cs:93。
+        /// UI_Base.GetObject(int) protected：0.1.18c UI_Base.cs:93。
         /// </summary>
         private static readonly Func<UI_Base, int, GameObject> PinGetObject =
             Reflect.Bind<Func<UI_Base, int, GameObject>>(typeof(UI_Base), "GetObject", new[] { typeof(int) });
 
         /// <summary>
-        /// UI_Base.GetImage(int) protected：0.1.17a UI_Base.cs:113。
+        /// UI_Base.GetImage(int) protected：0.1.18c UI_Base.cs:113。
         /// </summary>
         private static readonly Func<UI_Base, int, Image> PinGetImage =
             Reflect.Bind<Func<UI_Base, int, Image>>(typeof(UI_Base), "GetImage", new[] { typeof(int) });
 
         /// <summary>
-        /// UI_Arrow.TargetPos { get; private set; }：0.1.17a UI_Arrow.cs:20，每帧反射写入。
+        /// UI_Arrow.TargetPos { get; private set; }：0.1.18c UI_Arrow.cs:20，每帧反射写入。
         /// </summary>
         private static readonly PropertyInfo ArrowTargetPos = AccessTools.Property(typeof(UI_Arrow), "TargetPos");
 
@@ -109,7 +109,7 @@ namespace DT_Tools.Features.CharacterMapPin
             if (sprite == null)
                 return;
 
-            // ComplyRules 子物体：SetVisible 用游戏扩展（0.1.17a Extension.cs:92）
+            // ComplyRules 子物体：SetVisible 用游戏扩展（0.1.18c Extension.cs:92）
             GameObject comply = PinGetObject?.Invoke(pin, PinComplyRulesObject);
             if (comply != null)
                 comply.SetVisible(true);
@@ -139,14 +139,14 @@ namespace DT_Tools.Features.CharacterMapPin
             if (state != null)
                 CharacterMapPinState.Arrows.Remove(id);
 
-            UI_Arrow arrow = Managers.UI.MakeWorldSpaceUI<UI_Arrow>(my.UIGroup);  // Player.UIGroup: 0.1.17a Player.cs:333
+            UI_Arrow arrow = Managers.UI.MakeWorldSpaceUI<UI_Arrow>(my.UIGroup);  // Player.UIGroup: 0.1.18c Player.cs:333
             if (arrow == null)
                 return null;
 
             arrow.transform.localPosition = new Vector2(0f, 90f);
             arrow.SetInfo(EArrowType.WeaponArrow, player.Position);
 
-            // 覆盖轨道半径为 Kaho 角色箭头的 300（_orbitRadius：0.1.17a UI_Arrow.cs:14）
+            // 覆盖轨道半径为 Kaho 角色箭头的 300（_orbitRadius：0.1.18c UI_Arrow.cs:14）
             Traverse.Create(arrow).Field("_orbitRadius")
                 .SetValue(CharacterMapPinState.CharacterArrowOrbit);
 
@@ -164,7 +164,7 @@ namespace DT_Tools.Features.CharacterMapPin
 
         public static void UpdateArrow(ArrowState state, Player player)
         {
-            // TargetPos 是 { get; private set; }：0.1.17a UI_Arrow.cs:20，经缓存的 PropertyInfo 反射写入
+            // TargetPos 是 { get; private set; }：0.1.18c UI_Arrow.cs:20，经缓存的 PropertyInfo 反射写入
             ArrowTargetPos?.SetValue(state.Arrow, player.Position);
 
             string key = BuildKey(player);
@@ -227,7 +227,7 @@ namespace DT_Tools.Features.CharacterMapPin
     /// </summary>
     /// <remarks>
     /// HUD DeletePin(int) 私有走反射
-    /// （Logic.DeleteHudPin），平板 DeletePin(int) 为公开方法（0.1.17a UI_GameTablet.cs:1264）。
+    /// （Logic.DeleteHudPin），平板 DeletePin(int) 为公开方法（0.1.18c UI_GameTablet.cs:1254）。
     /// </remarks>
     public static void ClearKeptPins()
     {
@@ -258,9 +258,9 @@ namespace DT_Tools.Features.CharacterMapPin
             if (Managers.Resource == null)
                 return;
 
-            // 实例获取：场景 UI 经 UIManager.GetSceneUI<T>（0.1.17a UIManager.cs:317，
+            // 实例获取：场景 UI 经 UIManager.GetSceneUI<T>（0.1.18c UIManager.cs:317，
             // 返回 _sceneUI as T）；平板经 TabletManager.Tablet（0.1.16b TabletManager.cs:17（待核对），
-            // Managers.Tablet 静态入口 0.1.17a Managers.cs:144）——平板不是 SceneUI，不能走 GetSceneUI
+            // Managers.Tablet 静态入口 0.1.18c Managers.cs:144）——平板不是 SceneUI，不能走 GetSceneUI
             UI_GameScene scene = Managers.UI != null ? Managers.UI.GetSceneUI<UI_GameScene>() : null;
             if (scene != null)
                 RestorePinsOf(CharacterMapPinLogic.HudPinListOf(scene));
@@ -280,7 +280,7 @@ namespace DT_Tools.Features.CharacterMapPin
         }
 
         /// <summary>
-        /// 单个 pin 还原：根底图按原版 RefreshType 的取图逻辑走 UI_MinimapSubItem.PinSpriteKey（public static，0.1.17a UI_MinimapSubItem.cs:88；Player → "minimap_player.sprite"）。
+        /// 单个 pin 还原：根底图按原版 RefreshType 的取图逻辑走 UI_MinimapSubItem.PinSpriteKey（public static，0.1.18c UI_MinimapSubItem.cs:88；Player → "minimap_player.sprite"）。
         /// </summary>
         /// <remarks>
         /// 黑幕 pin 的已识破表现是 TurnBlack 的 minimap_black.sprite（:62-67），不在 PinSpriteKey 表内，统一还原为通用玩家底图即可，下一次识破事件由原版 RefreshBlackPin 重新置黑；不调 sizeDelta（ApplyPin 替换时也没改尺寸）。
@@ -306,11 +306,11 @@ namespace DT_Tools.Features.CharacterMapPin
 
             if (!pin.AlreadyComplyRules)
             {
-                comply.SetVisible(false);   // 游戏扩展（0.1.17a Extension.cs:92）
+                comply.SetVisible(false);   // 游戏扩展（0.1.18c Extension.cs:92）
                 return;
             }
 
-            // 已识破玩家：原版 TurnComplyRules 固定用 Black 版头像（0.1.17a UI_MinimapSubItem.cs:69）
+            // 已识破玩家：原版 TurnComplyRules 固定用 Black 版头像（0.1.18c UI_MinimapSubItem.cs:69）
             Player cached = Managers.Player != null ? Managers.Player.GetPlayerCache(pin.ID) : null;
             if (cached?.CharData == null)
                 return;

@@ -12,7 +12,7 @@ using Steamworks;
 namespace DT_Tools.Features.LobbyMaxPlayers
 {
     /// <summary>
-    /// HandleEnterPlayer 整替（0.1.17a GameRoom.cs:1037-1210）：
+    /// HandleEnterPlayer 整替（0.1.18c GameRoom.cs:1037-1210）：
     /// 唯一差异为进房上限 RoomMemberCountForMetadata() &gt;= 8 改为 &gt;= MaxMembers
     /// （原版判断在 0.1.16b GameRoom.cs:1078（待核对）)，其余逐行对应原版。
     /// 反射目标（0.1.16b GameRoom.cs，升级时全文搜索核对）：_pendingDisconnects:73 /
@@ -52,7 +52,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             if (!Engine.Enabled<LobbyMaxPlayersFeature>())
                 return true;
 
-            // 已绑定非 Dummy 的重复 C_ENTER_GAME 忽略（原版 0.1.17a GameRoom.cs:1037）
+            // 已绑定非 Dummy 的重复 C_ENTER_GAME 忽略（原版 0.1.18c GameRoom.cs:1037）
             if (session.Player != null && !session.Player.IsDummy)
             {
                 // 原版英文文案："Duplicate enter ignored"
@@ -101,7 +101,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
                 s_ENTER_GAME.Success = false;
                 s_ENTER_GAME.Name = "ErrorDuplicateAccount";
             }
-            // RoomMemberCountForMetadata 为公开方法：0.1.17a GameRoom.cs:2795（上限判断原版在 :1078）
+            // RoomMemberCountForMetadata 为公开方法：0.1.18c GameRoom.cs:2795（上限判断原版在 :1078）
             else if ((!reclaimDummy && __instance.RoomMemberCountForMetadata() >= LobbyMaxPlayersFeature.MaxMembers)
                      || !ObjectUtils.HasFreeSeat())
             {
@@ -258,7 +258,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             return false;
         }
 
-        // HasSameAccountRemnant 为私有方法（out 参数需借数组回读）：0.1.17a GameRoom.cs:981
+        // HasSameAccountRemnant 为私有方法（out 参数需借数组回读）：0.1.18c GameRoom.cs:981
         private static bool InvokeHasSameAccountRemnant(
             GameRoom room, HostPeerSession session, string accountId, out bool allOwnDummies)
         {
@@ -268,31 +268,31 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             return result;
         }
 
-        // CheckDuplicationName 为私有方法：0.1.17a GameRoom.cs:1025
+        // CheckDuplicationName 为私有方法：0.1.18c GameRoom.cs:1025
         private static bool InvokeCheckDuplicationName(GameRoom room, string name, HostPeerSession session, string accountId)
         {
             return (bool)MiCheckDuplicationName.Invoke(room, new object[] { name, session, accountId });
         }
 
-        // SanitizeOwnedCharacters 为私有静态方法：0.1.17a GameRoom.cs:1321
+        // SanitizeOwnedCharacters 为私有静态方法：0.1.18c GameRoom.cs:1321
         private static List<int> InvokeSanitizeOwnedCharacters(IEnumerable<int> ids)
         {
             return (List<int>)MiSanitizeOwnedCharacters.Invoke(null, new object[] { ids });
         }
 
-        // AssignLobbyCharacter 为私有方法：0.1.17a GameRoom.cs:1687
+        // AssignLobbyCharacter 为私有方法：0.1.18c GameRoom.cs:1687
         private static int InvokeAssignLobbyCharacter(GameRoom room, Server.Game.Player player)
         {
             return (int)MiAssignLobbyCharacter.Invoke(room, new object[] { player });
         }
 
-        // EnterPlayer 为私有方法：0.1.17a GameRoom.cs:2771
+        // EnterPlayer 为私有方法：0.1.18c GameRoom.cs:2771
         private static void InvokeEnterPlayer(GameRoom room, Server.Game.Player player)
         {
             MiEnterPlayer.Invoke(room, new object[] { player });
         }
 
-        // EnterSpectator 为私有方法：0.1.17a GameRoom.cs:1212
+        // EnterSpectator 为私有方法：0.1.18c GameRoom.cs:1212
         private static void InvokeEnterSpectator(GameRoom room, Server.Game.Player player)
         {
             MiEnterSpectator.Invoke(room, new object[] { player });

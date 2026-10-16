@@ -24,7 +24,7 @@ namespace DT_Tools.Features.BanList
         Author = "梦初雪")]
     public sealed class BanListFeature
     {
-        // 私有字段锚点：0.1.16b Server.Game/GameRoom.cs:79（升级时全文搜索 _bannedSteamIds 核对）
+        // 私有字段锚点：0.1.16b Server.Game/GameRoom.cs:79（待核对）（升级时全文搜索 _bannedSteamIds 核对）
         private static readonly FieldInfo BannedField =
             AccessTools.Field(typeof(GameRoom), "_bannedSteamIds");
 

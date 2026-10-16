@@ -9,7 +9,7 @@ namespace DT_Tools.Features.ShowTrueName
     /// （0.1.16b PlayerManager.cs:645（待核对）)，这里对非 Lobby 阶段强制打开。
     /// </summary>
     /// <remarks>
-    /// 公共方法（nameof 定位）；Player.NameTag 属性：0.1.17a Player.cs:337。
+    /// 公共方法（nameof 定位）；Player.NameTag 属性：0.1.18c Player.cs:337。
     /// </remarks>
     [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.ChangeMyPlayer))]
     internal static class ShowTrueNameChangeMyPlayerPatch

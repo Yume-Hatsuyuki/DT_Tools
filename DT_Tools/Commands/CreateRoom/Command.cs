@@ -11,7 +11,7 @@ namespace DT_Tools.Commands.CreateRoom
     /// /create_room [名称] [public|private] — 从大厅创建联机房间（本机成为房主）。
     /// </summary>
     /// <remarks>
-    /// 复刻原版创建入口编排（0.1.17a UI_LobbyScene.cs:1198 OnClickCreateButton）：
+    /// 复刻原版创建入口编排（0.1.18c UI_LobbyScene.cs:1198 OnClickCreateButton）：
     /// 语音预连 → School 资源域 → Steam 建房。建房是异步流程：本命令立即返回，
     /// 结果进日志，房间码用 /room_code 查看。房名合法性原版只在 UI 输入框校验
     /// （OnValidateRoomName），Steam 元数据不限制，此处仅做非空+长度兜底。

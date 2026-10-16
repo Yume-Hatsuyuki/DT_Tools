@@ -12,7 +12,7 @@ namespace DT_Tools.Features.EmoteReader
     /// 表情 id→解读台词映射与 EmoteTaunt 的 18 个表情一一对应（0.1.16b Emotions.cs），
     /// 台词逐表情配置于 Feature（配置页可直接修改，留空=该表情不解读）。
     /// 广播描述的是"对方的行为"（XX 的解读），不是冒充对方发言，无冒名风险。
-    /// 庭审阶段：表情走 UI_TrialEvent.UseEmotion 而非 Player.UseEmotion（0.1.17a PacketHandler.cs:442），
+    /// 庭审阶段：表情走 UI_TrialEvent.UseEmotion 而非 Player.UseEmotion（0.1.18c PacketHandler.cs:454），
     /// 由下方 EmoteReaderTrialPatch 单独钩住，与平时共用台词与冷却。
     /// </remarks>
     [HarmonyPatch(typeof(Player), nameof(Player.UseEmotion))]
@@ -74,7 +74,7 @@ namespace DT_Tools.Features.EmoteReader
     }
 
     /// <summary>
-    /// 庭审阶段钩子：庭审中表情经 UI_TrialEvent.UseEmotion(playerId, emotionId)（0.1.17a UI_TrialEvent.cs:1687），
+    /// 庭审阶段钩子：庭审中表情经 UI_TrialEvent.UseEmotion(playerId, emotionId)（0.1.18c UI_TrialEvent.cs:1687），
     /// 只解读他人（playerId != MyPlayerID），玩家名从 PlayerCache 取；台词与冷却与平时共享。
     /// </summary>
     [HarmonyPatch(typeof(UI_TrialEvent), nameof(UI_TrialEvent.UseEmotion))]

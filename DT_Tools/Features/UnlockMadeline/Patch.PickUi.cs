@@ -21,7 +21,7 @@ namespace DT_Tools.Features.UnlockMadeline
             if (!Engine.Enabled<UnlockMadelineFeature>())
                 return true;
 
-            // _list 为私有字段：0.1.17a UI_PickPopup.cs:74
+            // _list 为私有字段：0.1.18c UI_PickPopup.cs:74
             var listField = Traverse.Create(__instance).Field<List<UI_PickSubItem>>("_list");
             List<UI_PickSubItem> list = listField.Value;
 
@@ -29,14 +29,14 @@ namespace DT_Tools.Features.UnlockMadeline
                 Managers.Resource.Destroy(item.gameObject);
             list.Clear();
 
-            // UI_Base.GetObject 为 protected：0.1.17a UI_Base.cs:93；容器 0 = 列表区
+            // UI_Base.GetObject 为 protected：0.1.18c UI_Base.cs:93；容器 0 = 列表区
             Transform container = Traverse.Create(__instance)
                 .Method("GetObject", new[] { typeof(int) })
                 .GetValue<GameObject>(0)
                 .transform;
             ScrollRect scroll = container.GetComponentInParent<ScrollRect>();
 
-            // OnPickCharacter（0.1.17a UI_PickPopup.cs:361）与 RegisterPickItem
+            // OnPickCharacter（0.1.18c UI_PickPopup.cs:361）与 RegisterPickItem
             //（0.1.16b UI_PickPopup.cs:163（待核对）)均为私有实例方法
             var onPickMethod = AccessTools.Method(typeof(UI_PickPopup), "OnPickCharacter");
             var onPickDelegate = (global::System.Action<PointerEventData>)global::System.Delegate.CreateDelegate(
@@ -61,7 +61,7 @@ namespace DT_Tools.Features.UnlockMadeline
     /// UI_PickPopup.SetMainInfo 前缀整替（私有方法，字符串定位）：
     /// 0.1.16b UI_PickPopup.cs:492（待核对）。原版 default 分支对每个角色取 "&lt;Name&gt;Explain"
     /// 文本键（UI_PickPopup.cs:517），Madeline 无该文本数据，Managers.GetText 缺键必
-    /// Debug.LogError（0.1.17a Managers.cs:223-229）→ 非 Madeline 放行原版；
+    /// Debug.LogError（0.1.18c Managers.cs:223-229）→ 非 Madeline 放行原版；
     /// Madeline 时按原方法体（UI_PickPopup.cs:492-541）等价重写 UI 写入，
     /// 介绍行改用内置六语言文案（Logic.GetExplain），从源头消除缺键报错。
     /// </summary>
@@ -86,7 +86,7 @@ namespace DT_Tools.Features.UnlockMadeline
                 return false;
             Transform transform = infoGo.transform;
 
-            // SetMainCharacterOnlyActive 为私有方法：0.1.17a UI_PickPopup.cs:572
+            // SetMainCharacterOnlyActive 为私有方法：0.1.18c UI_PickPopup.cs:572
             AccessTools.Method(typeof(UI_PickPopup), "SetMainCharacterOnlyActive")
                 ?.Invoke(__instance, new object[] { true });
 

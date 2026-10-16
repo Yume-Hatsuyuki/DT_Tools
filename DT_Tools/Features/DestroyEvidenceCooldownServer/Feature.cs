@@ -14,7 +14,7 @@ namespace DT_Tools.Features.DestroyEvidenceCooldownServer
     /// 破坏线索冷却（房主侧）：调整“多久可以破坏一次线索”（服务端判定频率），与客户端「DestroyEvidence」（单次破坏读条秒数）是两回事。
     /// </summary>
     /// <remarks>
-    /// 客户端倒计时由服务端 S_COOLTIME_DESTROY_EVIDENCE 包值驱动（0.1.17a PacketHandler.cs:776），自动跟随。
+    /// 客户端倒计时由服务端 S_COOLTIME_DESTROY_EVIDENCE 包值驱动（0.1.18c PacketHandler.cs:788），自动跟随。
     /// 冷却常量 30 在两条执行路径各一份，必须同值：
     /// - 黑方/黑幕路径：Device.DestroyEvidence（Server.Game/Device.cs:224 记账 / :225 恢复任务 / :231 下发包）。
     /// - 白方路径：「WhiteSabotageClue」的放行前缀整段复刻了原方法（Logic.cs:28/29/35），白方销毁不走原方法，只改原方法管不住白方，故两条路径一并替换。
@@ -72,7 +72,7 @@ namespace DT_Tools.Features.DestroyEvidenceCooldownServer
             Log.Info<DestroyEvidenceCooldownServerFeature>("Transpiler 已卸载");
         }
 
-        // 原方法冷却常量 30 共 3 处：0.1.16b Server.Game/Device.cs:224（EndTick）/ :225（恢复任务）/ :231（S_COOLTIME 包）
+        // 原方法冷却常量 30 共 3 处：0.1.16b Server.Game/Device.cs:224（待核对）（EndTick）/ :225（恢复任务）/ :231（S_COOLTIME 包）
         [HarmonyPatch(typeof(Server.Game.Device), nameof(Server.Game.Device.DestroyEvidence))]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> TranspileOriginal(IEnumerable<CodeInstruction> instructions)

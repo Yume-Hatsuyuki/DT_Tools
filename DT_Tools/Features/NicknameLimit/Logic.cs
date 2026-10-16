@@ -9,7 +9,7 @@ using UnityEngine;
 namespace DT_Tools.Features.NicknameLimit
 {
     /// <summary>
-    /// 昵称校验与大厅 UI 刷新：与原版 OnValidateNickname（0.1.17a UI_LobbyScene.cs:1772）
+    /// 昵称校验与大厅 UI 刷新：与原版 OnValidateNickname（0.1.18c UI_LobbyScene.cs:1772）
     /// 同一套字符白名单，仅去掉「权重 > 12」这一档；门禁 _isNickNameValid 的写法保持一致。
     /// </summary>
     internal static class NicknameLimitLogic
@@ -19,7 +19,7 @@ namespace DT_Tools.Features.NicknameLimit
         /// </summary>
         public const int SoftCap = 64;
 
-        // ── UI 元素索引（UI_Base 的 protected GetText/GetInputField，0.1.17a UI_Base.cs:98/:103，
+        // ── UI 元素索引（UI_Base 的 protected GetText/GetInputField，0.1.18c UI_Base.cs:98/:103，
         //    Traverse 定位）──
         /// <summary>
         /// 昵称错误提示文本（原版 UI_LobbyScene.cs:529 清空、UI_LobbyScene.cs:1803 写 LobbyNicknameTooLong）。
@@ -34,7 +34,7 @@ namespace DT_Tools.Features.NicknameLimit
 
         private static readonly int[] ButtonTextIds = { TextCreateGame, TextFindGame, TextEnterGame };
 
-        // 与原版 OnValidateNickname 白名单一致（0.1.17a UI_LobbyScene.cs:1772 的正则）
+        // 与原版 OnValidateNickname 白名单一致（0.1.18c UI_LobbyScene.cs:1772 的正则）
         private static readonly Regex Other = new Regex(
             "[^a-zA-Z0-9\\u3131-\\u318E\\uAC00-\\uD7A3\\u3040-\\u309F\\u30A0-\\u30FF\\u31F0-\\u31FF\\u4E00-\\u9FFF]",
             RegexOptions.Compiled);
@@ -193,7 +193,7 @@ namespace DT_Tools.Features.NicknameLimit
         public static void ApplyValidUi(UI_LobbyScene scene, bool valid, string tip)
         {
             var t = Traverse(scene);
-            t.Field("_isNickNameValid").SetValue(valid);   // 0.1.17a UI_LobbyScene.cs:204
+            t.Field("_isNickNameValid").SetValue(valid);   // 0.1.18c UI_LobbyScene.cs:204
 
             try
             {

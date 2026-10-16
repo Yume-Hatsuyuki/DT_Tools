@@ -12,7 +12,7 @@ namespace DT_Tools.Features.StrokeTools
     /// 房间识别与官方一致：格子 = 世界坐标 ÷ 224 − MapOffset（0.1.16b
     /// Server.Game/AreaManager.cs:79 GetArea；ValidPosition 同文件 :89-99 边界检查），
     /// 格子值 = Managers.Data.MapArray[x][y]（DataManager.cs:28，byte 即 ERoomType），
-    /// 0 为 DefaultRoom（空地）。房间名 = Managers.GetText(枚举名)（0.1.17a UI_ChatDevicePopup.cs:471）。
+    /// 0 为 DefaultRoom（空地）。房间名 = Managers.GetText(枚举名)（0.1.18c UI_ChatDevicePopup.cs:475）。
     /// </remarks>
     internal static class StrokeRouteLogic
     {
@@ -20,8 +20,8 @@ namespace DT_Tools.Features.StrokeTools
         /// 平板坐标 → 世界坐标所需的原点平移。
         /// </summary>
         /// <remarks>
-        /// 画布（对象88/89）覆盖地图显示区域（对象10），对象10 sizeDelta = 世界尺寸 × 0.094（0.1.17a UI_GameTablet.cs:1189 InitConstMap(9184,7235)），UI 局部坐标原点 = RectTransform 中心（ScreenPointToLocalPointInRectangle 相对 pivot，默认 0.5）。
-        /// 世界地图范围由 MapOffset 定义：X ∈ [896, 896+9184]（4 格×224）、Y ∈ [1120, 1120+7235]（5 格×224，0.1.17a MapManager.cs:274 IsValidPos x=(x−896)/224, y=(y−1120)/224）。中心 = ((896+10080)/2, (1120+8355)/2) = (5488, 4737.5)。world = 局部 ÷ scale + origin（scale = MinimapScale，正式图 0.094，与对象10 缩放一致）。
+        /// 画布（对象88/89）覆盖地图显示区域（对象10），对象10 sizeDelta = 世界尺寸 × 0.094（0.1.18c UI_GameTablet.cs:1179 InitConstMap(9184,7235)），UI 局部坐标原点 = RectTransform 中心（ScreenPointToLocalPointInRectangle 相对 pivot，默认 0.5）。
+        /// 世界地图范围由 MapOffset 定义：X ∈ [896, 896+9184]（4 格×224）、Y ∈ [1120, 1120+7235]（5 格×224，0.1.18c MapManager.cs:274 IsValidPos x=(x−896)/224, y=(y−1120)/224）。中心 = ((896+10080)/2, (1120+8355)/2) = (5488, 4737.5)。world = 局部 ÷ scale + origin（scale = MinimapScale，正式图 0.094，与对象10 缩放一致）。
         /// </remarks>
         /// <param name="map">当前地图数据。</param>
         /// <returns>平板坐标换算到世界坐标所需的原点平移量。</returns>

@@ -5,7 +5,7 @@ using Protocol;
 namespace DT_Tools.Features.BlackKillNotify
 {
     /// <summary>
-    /// MyPlayer.Modify 后缀（public，0.1.17a MyPlayer.cs:941）：仅 RemainKill 类型包
+    /// MyPlayer.Modify 后缀（public，0.1.18c MyPlayer.cs:941）：仅 RemainKill 类型包
     /// 进入检测。
     /// </summary>
     /// <remarks>

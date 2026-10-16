@@ -10,7 +10,7 @@ using Server.Game;
 namespace DT_Tools.Features.DuplicateCharacter
 {
     /// <summary>
-    /// GameRoom.PickCharacter 整替（0.1.17a GameRoom.cs:1717）：去掉角色唯一性闸门，
+    /// GameRoom.PickCharacter 整替（0.1.18c GameRoom.cs:1717）：去掉角色唯一性闸门，
     /// 其余与原版一致；确认包只回选择者本人（原版为全员广播——对端收不到确认包
     /// 就不会把格子置灰/标记 Selected，也就不会在本地拦截后续的重复选择请求）。
     /// </summary>
@@ -26,7 +26,7 @@ namespace DT_Tools.Features.DuplicateCharacter
                 return false;
 
             var t = Traverse.Create(__instance);
-            // _pickReady 为私有字段：0.1.17a GameRoom.cs:97
+            // _pickReady 为私有字段：0.1.18c GameRoom.cs:97
             if (!t.Field("_pickReady").GetValue<bool>())
             {
                 // 原版同分支英文文案（GameRoom.cs:1723 一带）："PickCharacter ignored - phase not ready yet"
@@ -86,7 +86,7 @@ namespace DT_Tools.Features.DuplicateCharacter
             return false;
         }
 
-        // CheckPickAllDone 为私有方法，触发全员锁定：0.1.17a GameRoom.cs:1769。
+        // CheckPickAllDone 为私有方法，触发全员锁定：0.1.18c GameRoom.cs:1769。
         // 每次选角确认都会走到这里：MethodInfo 进程内不变，static readonly 缓存一次；
         // AccessTools 未命中返回 null（缓存即失败标记，不再重查），调用处 ?. 保持原语义。
         private static readonly MethodInfo MiCheckPickAllDone =

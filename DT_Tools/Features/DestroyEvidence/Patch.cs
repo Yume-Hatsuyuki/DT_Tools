@@ -6,7 +6,7 @@ namespace DT_Tools.Features.DestroyEvidence
 {
     /// <summary>
     /// UseSabotage 整替：改读条时长，收尾动作与原版一致
-    /// （PlaySystem("SabotageSfx") + C_DESTROY_EVIDENCE，0.1.17a DeviceBase.cs:456-469）。
+    /// （PlaySystem("SabotageSfx") + C_DESTROY_EVIDENCE，0.1.18c DeviceBase.cs:457-470）。
     /// </summary>
     /// <remarks>
     /// protected virtual，字符串定位。

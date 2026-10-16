@@ -55,7 +55,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// DeviceManager.Spawn(string, DeviceInfo)（0.1.17a DeviceManager.cs:155）：spawn 椅子时确保运行时预制体存在。
+        /// DeviceManager.Spawn(string, DeviceInfo)（0.1.18c DeviceManager.cs:155）：spawn 椅子时确保运行时预制体存在。
         /// </summary>
         [HarmonyPatch(typeof(DeviceManager), "Spawn", new[] { typeof(string), typeof(DeviceInfo) })]
         internal static class ChairSpawnPatch
@@ -94,7 +94,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// Managers.GetText（0.1.17a Managers.cs:223）：补 "ChairInteract" 交互文案（原版文案表无此键）。
+        /// Managers.GetText（0.1.18c Managers.cs:223）：补 "ChairInteract" 交互文案（原版文案表无此键）。
         /// </summary>
         [HarmonyPatch(typeof(Managers), "GetText")]
         internal static class ChairTextPatch
@@ -193,7 +193,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// MyPlayer.FixedUpdateMove（0.1.17a MyPlayer.cs:1869）：本地坐着时钉住位置、跳过移动。
+        /// MyPlayer.FixedUpdateMove（0.1.18c MyPlayer.cs:1869）：本地坐着时钉住位置、跳过移动。
         /// </summary>
         [HarmonyPatch(typeof(MyPlayer), "FixedUpdateMove")]
         internal static class LocalSitMovePatch
@@ -215,7 +215,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// DeviceManager.SearchInteractDevice（0.1.17a DeviceManager.cs:686）Postfix：[ / ] 实时微调坐姿高低（每按一次 5 世界单位）。
+        /// DeviceManager.SearchInteractDevice（0.1.18c DeviceManager.cs:686）Postfix：[ / ] 实时微调坐姿高低（每按一次 5 世界单位）。
         /// </summary>
         [HarmonyPatch(typeof(DeviceManager), "SearchInteractDevice")]
         internal static class ChairTunePatch

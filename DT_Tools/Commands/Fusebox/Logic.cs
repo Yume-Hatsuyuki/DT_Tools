@@ -12,7 +12,7 @@ namespace DT_Tools.Commands.Fusebox
     /// 修电 / 拆电共用业务（校验与协程发包；设备查询已上浮 Game/Devices.cs）。
     /// </summary>
     /// <remarks>
-    /// 原版：同一个 C_INTERACT_FUSEBOX 经 DeviceManager.Interact → Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16），按 StateList[0] 分流：0 → DisconnetCable（拉闸，:114），9999 → ConnetCable（修电，:97）。
+    /// 原版：同一个 C_INTERACT_FUSEBOX 经 DeviceManager.Interact → Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16（待核对）），按 StateList[0] 分流：0 → DisconnetCable（拉闸，:114），9999 → ConnetCable（修电，:97）。
     /// DisconnetCable 仅校验 MissionType==-1（开局 StartFuseboxSabotage 武装的 3 个电闸），无颜色、距离、谜题校验（好人也能拉闸）；ConnetCable 无身份或读条校验。
     /// 服务端 DeviceManager.Interact 有 500ms InteractLock（Player.InteractLock setter 内 PushAfter(500)），连续发包需间隔 >0.5s。
     /// </remarks>

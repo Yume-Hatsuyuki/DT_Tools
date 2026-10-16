@@ -38,7 +38,7 @@ namespace DT_Tools.Features.UnlockMadeline
             "Madeline_standing_exp_sinister.sprite",
         };
 
-        // _data 为私有字段：0.1.17a SaveManager.cs:16；MarkDirty 为私有方法。
+        // _data 为私有字段：0.1.18c SaveManager.cs:16；MarkDirty 为私有方法。
 
         public static PlayerSaveData GetSaveData(SaveManager save)
             => Traverse.Create(save).Field("_data").GetValue<PlayerSaveData>();
@@ -48,7 +48,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
         /// <summary>
         /// 确保 CharacterPlayCounts 含 101（原版 EnsureCharacterStats 明确跳过 101：
-        /// 0.1.17a SaveManager.cs:487；RecordGamePlayed 只对已有键自增：SaveManager.cs:470）。
+        /// 0.1.18c SaveManager.cs:487；RecordGamePlayed 只对已有键自增：SaveManager.cs:470）。
         /// 新补键时 MarkDirty。
         /// </summary>
         /// <param name="save">存档管理器。</param>
@@ -110,7 +110,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
         /// <summary>
         /// 选人列表排序：已拥有优先，其次中文序（或 DataId），与原版一致但不再
-        /// 过滤 ECharacterType.Madeline（原版过滤见 0.1.17a UI_PickPopup.cs:142）。
+        /// 过滤 ECharacterType.Madeline（原版过滤见 0.1.18c UI_PickPopup.cs:142）。
         /// </summary>
         /// <returns>排序后的角色列表：已拥有的在前，其次按中文序（或 DataId）。</returns>
         public static IEnumerable<CharacterData> OrderedPickList()
@@ -167,7 +167,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
         /// <summary>
         /// 表情图集不在 ResourceManager 缓存（Madeline 未开放），尝试经 Addressables
-        /// 同步预载进 _resources 字典（私有字段：0.1.17a ResourceManager.cs:11）。
+        /// 同步预载进 _resources 字典（私有字段：0.1.18c ResourceManager.cs:11）。
         /// </summary>
         /// <remarks>
         /// 只试一次；Addressables 不可用时静默跳过（审判过场表情缺失可接受）。

@@ -69,7 +69,7 @@ namespace DT_Tools.Commands.CreateRoom
                 Log.Warn("CreateRoom", "未找到 PrepareVoiceForRoomAsync，跳过语音预连。");
             }
 
-            var scopeTask = Managers.Resource.LoadScopeAsync("School");   // 0.1.17a ResourceManager.cs:220
+            var scopeTask = Managers.Resource.LoadScopeAsync("School");   // 0.1.18c ResourceManager.cs:220
             while (scopeTask != null && !scopeTask.IsCompleted)
                 yield return null;
             Managers.Data.LoadMapSet(EMapType.School);

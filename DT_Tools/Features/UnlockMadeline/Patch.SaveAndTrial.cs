@@ -43,7 +43,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
     /// <summary>
     /// UI_InfomationPopup.RefreshProfile 前缀（私有方法，字符串定位）：
-    /// 0.1.17a UI_InfomationPopup.cs:381。其立绘位置表 STANDING_POS_LIST
+    /// 0.1.18c UI_InfomationPopup.cs:381。其立绘位置表 STANDING_POS_LIST
     /// （私有静态只读字典：UI_InfomationPopup.cs:68）缺 Madeline/Medelin 键，
     /// 原版回退通用底位；此处预先补键（void 前缀，不拦截原方法）。
     /// </summary>

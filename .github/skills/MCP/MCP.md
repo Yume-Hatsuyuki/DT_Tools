@@ -22,7 +22,7 @@
 - 服务端对**未注册 Protocol 或校验失败**的包静默丢弃，不回错误。效果以 S_* 回包与状态变化为准；`/packets` 详情可确认注册状态。
 - 设备交互类包有服务端 `InteractLock`：连续发要隔开间隔（范本：Fusebox all 模式 `PacketInterval`）。
 - 时序敏感的包过早发送会被忽略（范本：选角阶段 `C_PICK_CHARACTER` 需等服务端 SyncAllPlayer 完成前 `_pickReady=false`；重试节奏范本 AutoPickCharacter）。
-- 反作弊/留痕：`CosmeticSightingReporter` 是外观类上报哨兵（0.1.17a CosmeticSightingReporter.cs），解锁类操作在联机有留痕风险。发包前评估，风险写在条目里。
+- 反作弊/留痕：`CosmeticSightingReporter` 是外观类上报哨兵（0.1.18c CosmeticSightingReporter.cs），解锁类操作在联机有留痕风险。发包前评估，风险写在条目里。
 - 局内动作优先用现成命令（`beacon`（瞬移）、`repair_fuse` / `sabotage_fuse`（电闸）、`agent` 等，见 `list_commands`）；它们已处理时序、状态校验与重试。`call_*` 是逃生舱，不是首选。
 
 ## 2. 协议包目录
@@ -36,8 +36,8 @@
 - 用途：准备开局（非房主）。
 - 字段：空包。
 - 发送：`call_me C_READY`；门禁：无
-- 备注：房主开局走 C_START（房主侧，0.1.17a Server.Game/GameRoom.cs:1571）。模组用例：Automation/AutoReady/Action.cs:64（经原版 UI_GameScene.OnClickReadyButton）。
-- 锚点：0.1.17a Server.Game/HostPacketRegistry.cs:14-15；HostPacketHandler.cs Handle_C_READY:65
+- 备注：房主开局走 C_START（房主侧，0.1.18c Server.Game/GameRoom.cs:1571）。模组用例：Automation/AutoReady/Action.cs:64（经原版 UI_GameScene.OnClickReadyButton）。
+- 锚点：0.1.18c Server.Game/HostPacketRegistry.cs:14-15；HostPacketHandler.cs Handle_C_READY:65
 
 #### C_MOVE
 - 方向：客户端 → 服务端
@@ -55,7 +55,7 @@
 - 示例：`{"characterId":3}`
 - 发送：`call_me C_PICK_CHARACTER {...}`；门禁：无
 - 风险：服务端 StartPick 前静默忽略；已选玩家幂等。重试范本 Automation/AutoPickCharacter/Action.cs:52。
-- 锚点：模组 Automation/AutoPickCharacter/Action.cs:52；0.1.17a Server.Game/HostPacketRegistry.cs:150-151
+- 锚点：模组 Automation/AutoPickCharacter/Action.cs:52；0.1.18c Server.Game/HostPacketRegistry.cs:150-151
 
 #### C_MODIFY_PLAYER
 - 方向：客户端 → 服务端
@@ -64,7 +64,7 @@
 - 示例：`{"type":"ChangeCharacter","value":3}`
 - 发送：`call_me C_MODIFY_PLAYER {...}`；门禁：无
 - 风险：目标角色被占用/被拒时无效，重试范本 Automation/AutoPickCharacter/Action.cs:113。
-- 锚点：模组 Automation/AutoPickCharacter/Action.cs:113；0.1.17a Server.Game/HostPacketRegistry.cs:124-125
+- 锚点：模组 Automation/AutoPickCharacter/Action.cs:113；0.1.18c Server.Game/HostPacketRegistry.cs:124-125
 
 #### C_INTERACT_ARMORY
 - 方向：客户端 → 服务端
@@ -108,7 +108,7 @@
 - 示例：`{"deviceId":3}`
 - 发送：`call_me`/`call_c`；门禁：无
 - 备注：服务端处理零限流，勿同帧大量发送（见模组 scan_all 节奏）。
-- 锚点：0.1.17a Server.Game/HostPacketRegistry.cs:130-131
+- 锚点：0.1.18c Server.Game/HostPacketRegistry.cs:130-131
 
 #### 设备交互族（C_INTERACT_*，统一模式：`<设备名>Id` int32 [+ `index`/`color` 等附加字段]）
 - 用途：与对应设备交互（任务机/电脑/充电桩/矿机/传送门/炼金/符文/神秘/饮料机/合成台/采集器/锅炉/药水/收获/花/仓储/Bio/Cancer）。
@@ -142,7 +142,7 @@
 
 - 静默丢弃：未注册 Protocol / 校验失败 / 阶段不符。发包后用 `read_log` + 状态查询核实。
 - InteractLock：设备交互连发要间隔。
-- 留痕哨兵：CosmeticSightingReporter（0.1.17a CosmeticSightingReporter.cs）——外观类上报；解锁类操作联机有留痕风险。
+- 留痕哨兵：CosmeticSightingReporter（0.1.18c CosmeticSightingReporter.cs）——外观类上报；解锁类操作联机有留痕风险。
 - 房主类命令（call_c/call_s）在非房主机器上被框架门禁拦截（错误码 `host only`）。
 
 ## 4. 条目模板（新条目照此写入上方对应小节）
@@ -155,5 +155,5 @@
 - 示例：`{"fieldA":1}`
 - 发送：`call_me C_XXX {...}`；门禁：无 / 仅房主
 - 风险：静默拒绝条件、时序要求、留痕。
-- 锚点：0.1.17a Server.Game/HostPacketRegistry.cs:<行>；HostPacketHandler.cs Handle_C_XXX:<行>
+- 锚点：0.1.18c Server.Game/HostPacketRegistry.cs:<行>；HostPacketHandler.cs Handle_C_XXX:<行>
 ```

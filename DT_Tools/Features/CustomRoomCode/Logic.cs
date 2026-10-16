@@ -12,7 +12,7 @@ namespace DT_Tools.Features.CustomRoomCode
     internal static class CustomRoomCodeLogic
     {
         /// <summary>
-        /// 原版随机码长度（0.1.17a Util.cs:185 GenerateRandomRoomCode 生成 7 位）。
+        /// 原版随机码长度（0.1.18c Util.cs:185 GenerateRandomRoomCode 生成 7 位）。
         /// </summary>
         private const int MaxCodeLength = 7;
 
@@ -46,12 +46,12 @@ namespace DT_Tools.Features.CustomRoomCode
             // 游戏内房间码 UI 显示的是内存值（0.1.16b UI_GameScene.cs:2184（待核对）)，写 Lobby 后同步本地显示
             return RoomLobbyData.TryApplyLobbyData<CustomRoomCodeFeature>(
                 SteamLobbyManager.LOBBY_DATA_CODE_KEY, code, "房间码", reason,
-                onSet: () => Managers.Network.SetInfo(code));   // public：0.1.17a NetworkManager.cs:1116
+                onSet: () => Managers.Network.SetInfo(code));   // public：0.1.18c NetworkManager.cs:1116
         }
 
         /// <summary>
         /// 房间码清洗的唯一实现：trim → 大写 → 仅保留 A–Z / 0–9（与原版输入校验
-        /// OnValidateRoomCodeChar 一致，0.1.17a UI_LobbyScene.cs:1732）→ 7 位截断
+        /// OnValidateRoomCodeChar 一致，0.1.18c UI_LobbyScene.cs:1732）→ 7 位截断
         /// （原版随机码长度，Util.cs:185）。
         /// </summary>
         /// <remarks>

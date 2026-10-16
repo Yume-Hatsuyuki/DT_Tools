@@ -8,7 +8,7 @@ namespace DT_Tools.Features.ForceRelay
     /// 隐私保护：强制 P2P 走 Steam SDR 中继，关闭 ICE 直连，避免交换真实公网 / 内网候选地址。
     /// </summary>
     /// <remarks>
-    /// 原版 SteamP2PTransport.ConfigureTransportSelection（0.1.17a DummyClient/SteamP2PTransport.cs:182）设置 ICE_Enable=-1（用户默认）、ICE_Penalty=0、SDR_Penalty=1000。本功能覆盖为 ICE_Enable=0 + SDR_Penalty=0，两端各自生效（side=Both）。
+    /// 原版 SteamP2PTransport.ConfigureTransportSelection（0.1.18c DummyClient/SteamP2PTransport.cs:182）设置 ICE_Enable=-1（用户默认）、ICE_Penalty=0、SDR_Penalty=1000。本功能覆盖为 ICE_Enable=0 + SDR_Penalty=0，两端各自生效（side=Both）。
     /// OnPatched 时 Steam 可能尚未就绪，故全部 try/catch；真正生效依赖 ConfigureTransportSelection 的 Postfix（进房 Init 时必跑）。
     /// </remarks>
     [PatchFeature(
@@ -19,7 +19,7 @@ namespace DT_Tools.Features.ForceRelay
         Author = "梦初雪")]
     public sealed class ForceRelayFeature
     {
-        // 与原版 ConfigureTransportSelection 对齐（0.1.17a SteamP2PTransport.cs:184）
+        // 与原版 ConfigureTransportSelection 对齐（0.1.18c SteamP2PTransport.cs:184）
         const int VanillaIceEnable = -1;
         const int VanillaIcePenalty = 0;
         const int VanillaSdrPenalty = 1000;
@@ -126,7 +126,7 @@ namespace DT_Tools.Features.ForceRelay
 
         /// <summary>
         /// 与游戏 SteamP2PTransport.SetGlobalInt32 同实现
-        /// （0.1.17a DummyClient/SteamP2PTransport.cs:269）。
+        /// （0.1.18c DummyClient/SteamP2PTransport.cs:269）。
         /// </summary>
         /// <param name="key">要设置的 Steam 网络配置项。</param>
         /// <param name="value">配置值。</param>

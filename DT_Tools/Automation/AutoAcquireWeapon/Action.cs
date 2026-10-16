@@ -12,7 +12,7 @@ namespace DT_Tools.Automation.AutoAcquireWeapon
     /// </summary>
     /// <remarks>
     /// 发包路径与游戏一致：
-    /// 白方 Armory.InteractArmory（0.1.17a Armory.cs:233）、黑方 UseSabotageArmory（0.1.17a Armory.cs:265）。
+    /// 白方 Armory.InteractArmory（0.1.18c Armory.cs:233）、黑方 UseSabotageArmory（0.1.18c Armory.cs:265）。
     /// </remarks>
     internal static class AutoAcquireWeaponAction
     {

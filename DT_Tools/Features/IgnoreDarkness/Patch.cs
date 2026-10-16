@@ -4,7 +4,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.IgnoreDarkness
 {
     /// <summary>
-    /// ApplyDarkness 整替为恒亮（0.1.17a GameManagerEX.cs:260）。
+    /// ApplyDarkness 整替为恒亮（0.1.18c GameManagerEX.cs:260）。
     /// </summary>
     /// <remarks>
     /// 原版：IsAlive &amp;&amp; _darkness → 玩家点光源开、全局光关。
@@ -23,7 +23,7 @@ namespace DT_Tools.Features.IgnoreDarkness
     }
 
     /// <summary>
-    /// CheckValidWithLight 恒 true（0.1.17a Util.cs:774）。
+    /// CheckValidWithLight 恒 true（0.1.18c Util.cs:774）。
     /// </summary>
     /// <remarks>
     /// 原版黑暗时 distance &lt; 224 才有效，用于尸体发现、他人特效显隐等。

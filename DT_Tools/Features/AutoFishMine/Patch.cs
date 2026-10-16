@@ -9,7 +9,7 @@ namespace DT_Tools.Features.AutoFishMine
     /// <summary>
     /// 一键钓鱼挖矿的三个补丁（同一功能，三个入口）：
     /// 1) AutoStartPatch：DeviceManager.SearchInteractDevice Postfix，走近钓鱼点（Fishing）或矿机（Miner）自动 InteractBase 开始（Fishing.cs:45（待核对）、Mineral.cs:34）。
-    /// 2) AutoFishingPatch：UI_FishingSlider.Update Postfix，钓鱼小游戏四阶段（0.1.16b UI_FishingSlider.cs:77-142）：Bite(1) 自动提竿；Reeling(3) 每帧 AddGauge（+0.05）模拟连按，满则自动收获。
+    /// 2) AutoFishingPatch：UI_FishingSlider.Update Postfix，钓鱼小游戏四阶段（0.1.16b UI_FishingSlider.cs:77-142（待核对））：Bite(1) 自动提竿；Reeling(3) 每帧 AddGauge（+0.05）模拟连按，满则自动收获。
     /// 3) AutoMiningPatch：UI_MineralSlider.Update Postfix（0.1.16b UI_MineralSlider.cs:74（待核对））：滑块进入目标区（CheckCatch）时自动按成功分支，累计 3 次后发 C_HANDLE_MINERAL(IsSuccess=true) 并 StopCasting 收获。所有协议均为游戏原生请求，失败只记录日志，不中断。
     /// </summary>
     [HarmonyPatch(typeof(DeviceManager), nameof(DeviceManager.SearchInteractDevice))]
@@ -63,11 +63,11 @@ namespace DT_Tools.Features.AutoFishMine
             int phase = GetPhase(__instance);
             if (phase == 1) // Phase.Bite：咬钩瞬间自动提竿
             {
-                TryInvoke(__instance, "EnterCatchIntro"); // 0.1.17a UI_FishingSlider.cs:164
+                TryInvoke(__instance, "EnterCatchIntro"); // 0.1.18c UI_FishingSlider.cs:164
             }
             else if (phase == 3) // Phase.Reeling：自动连按收线
             {
-                TryInvoke(__instance, "AddGauge"); // 0.1.17a UI_FishingSlider.cs:205
+                TryInvoke(__instance, "AddGauge"); // 0.1.18c UI_FishingSlider.cs:205
             }
         }
 
@@ -75,7 +75,7 @@ namespace DT_Tools.Features.AutoFishMine
         {
             try
             {
-                return Convert.ToInt32(Traverse.Create(popup).Field("_phase").GetValue<object>()); // 0.1.17a UI_FishingSlider.cs:40
+                return Convert.ToInt32(Traverse.Create(popup).Field("_phase").GetValue<object>()); // 0.1.18c UI_FishingSlider.cs:40
             }
             catch (Exception ex)
             {
@@ -109,16 +109,16 @@ namespace DT_Tools.Features.AutoFishMine
                 return;
             try
             {
-                if (!Traverse.Create(__instance).Field("_isCatch").GetValue<bool>()) // 0.1.17a UI_MineralSlider.cs:28
+                if (!Traverse.Create(__instance).Field("_isCatch").GetValue<bool>()) // 0.1.18c UI_MineralSlider.cs:28
                     return;
                 if (!__instance.CheckCatch())
                     return; // 滑块未到位，等它摆回来
 
                 // 滑块到位：执行与"按键成功"等价的分支（0.1.16b UI_MineralSlider.cs:81（待核对）-100（待核对）)
                 Managers.Sound.PlaySystem("AxeSfx");
-                Traverse.Create(__instance).Field("_mineral").GetValue<Mineral>()?.PlayAxeEffect(); // _mineral: 0.1.17a UI_MineralSlider.cs:22
+                Traverse.Create(__instance).Field("_mineral").GetValue<Mineral>()?.PlayAxeEffect(); // _mineral: 0.1.18c UI_MineralSlider.cs:22
 
-                int count = Traverse.Create(__instance).Field("_successCount").GetValue<int>() + 1; // _successCount: 0.1.17a UI_MineralSlider.cs:24
+                int count = Traverse.Create(__instance).Field("_successCount").GetValue<int>() + 1; // _successCount: 0.1.18c UI_MineralSlider.cs:24
                 Traverse.Create(__instance).Field("_successCount").SetValue(count);
                 if (count < 3)
                 {

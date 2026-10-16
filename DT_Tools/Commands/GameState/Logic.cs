@@ -43,7 +43,7 @@ namespace DT_Tools.Commands.GameState
                 result.Transitioning = room.IsTransitioning;
                 result.Migrating = room.IsMigrating;
 
-                // 裁判子状态以服务器 TrialManager 为准（0.1.17a Server.Game/TrialManager.cs:81/:93）
+                // 裁判子状态以服务器 TrialManager 为准（0.1.18c Server.Game/TrialManager.cs:81/:93）
                 if (result.State == EGameState.Trial && TrialManager.Instance != null)
                     result.TrialState = TrialManager.Instance.State;
             }

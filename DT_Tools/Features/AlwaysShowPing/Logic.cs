@@ -11,18 +11,18 @@ namespace DT_Tools.Features.AlwaysShowPing
     /// 延迟常显逻辑：保证 UI_PingIndicator 在任意阶段可见并按间隔刷新。
     /// </summary>
     /// <remarks>
-    /// 私有字段定位见 0.1.17a UI_GameScene.cs。
+    /// 私有字段定位见 0.1.18c UI_GameScene.cs。
     /// </remarks>
     internal static class AlwaysShowPingLogic
     {
         /// <summary>
-        /// _pingIndicator：0.1.17a UI_GameScene.cs:337。
+        /// _pingIndicator：0.1.18c UI_GameScene.cs:325。
         /// </summary>
         private static readonly FieldInfo PingIndicatorField =
             AccessTools.Field(typeof(UI_GameScene), "_pingIndicator");
 
         /// <summary>
-        /// _nextPingRefreshAt：0.1.17a UI_GameScene.cs:339。
+        /// _nextPingRefreshAt：0.1.18c UI_GameScene.cs:327。
         /// </summary>
         private static readonly FieldInfo NextRefreshField =
             AccessTools.Field(typeof(UI_GameScene), "_nextPingRefreshAt");
@@ -58,7 +58,7 @@ namespace DT_Tools.Features.AlwaysShowPing
             NextRefreshField.SetValue(scene, Time.unscaledTime + interval);
 
             bool isHost = Managers.Host != null && Managers.Host.IsHost;
-            // 与原版 TickPingIndicator 一致（0.1.17a UI_GameScene.cs:1940-1941）：
+            // 与原版 TickPingIndicator 一致（0.1.18c UI_GameScene.cs:1868-1869）：
             // 房主显示客人平均延迟，客人显示到房主的 ping。
             int ms = isHost
                 ? Managers.Player.GetAverageGuestPing()

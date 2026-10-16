@@ -4,7 +4,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.ChatHistory
 {
     /// <summary>
-    /// 打字机公开频道记录点：SendDeviceChatMessage 无本地拒绝分支（0.1.17a VoiceManager.cs:1298
+    /// 打字机公开频道记录点：SendDeviceChatMessage 无本地拒绝分支（0.1.18c VoiceManager.cs:1286
     /// 直接 SendChatPacket），Postfix 即实际发出。
     /// </summary>
     /// <remarks>
@@ -23,7 +23,7 @@ namespace DT_Tools.Features.ChatHistory
 
     /// <summary>
     /// 打字机秘密频道记录点：SendSecretChatMessage 冷却未就绪时静默拒绝不发包
-    /// （0.1.17a VoiceManager.cs:1305-1309），故 Prefix 存 IsSecretChatReady 快照、
+    /// （0.1.18c VoiceManager.cs:1293-1297），故 Prefix 存 IsSecretChatReady 快照、
     /// Postfix 仅在就绪时记录，避免把被拒消息写进历史。
     /// </summary>
     /// <remarks>

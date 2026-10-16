@@ -11,7 +11,7 @@ namespace DT_Tools.Commands.BanList
     /// </summary>
     /// <remarks>
     /// 直接从 GameRoom._bannedSteamIds 移除（BanList.TryUnban）。解封后对方的下一条
-    /// C_ENTER_GAME 即可正常通过封禁校验（0.1.17a Server.Game/GameRoom.cs:1037），
+    /// C_ENTER_GAME 即可正常通过封禁校验（0.1.18c Server.Game/GameRoom.cs:1037），
     /// 需要对方自行经房间码 / 邀请重新加入；其余进房条件（人数上限、房间状态）照原版走。
     /// </remarks>
     internal sealed class UnbanCommand : ICommand

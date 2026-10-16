@@ -6,7 +6,7 @@ using Protocol;
 namespace DT_Tools.Features.BlackKillNotify
 {
     /// <summary>
-    /// MyPlayer.UseWeaponItem 前缀（public，0.1.17a MyPlayer.cs:704）：镜像其放行条件
+    /// MyPlayer.UseWeaponItem 前缀（public，0.1.18c MyPlayer.cs:704）：镜像其放行条件
     /// （CanAttack、Black、持刀、武器在册、目标在册）——盾牌拦截除外，被盾挡下不扣
     /// RemainKill 也不会发包，记录会被下一次真实击杀覆盖，不产生误报。
     /// </summary>

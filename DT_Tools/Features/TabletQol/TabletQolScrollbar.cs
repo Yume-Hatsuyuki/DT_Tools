@@ -6,7 +6,7 @@ namespace DT_Tools.Features.TabletQol
 {
     /// <summary>
     /// ① 滚动条：运行时给 ScrollRect 补上可拖拽的滚动条。
-    /// 游戏从不用 UnityEngine.UI.Scrollbar（0.1.17a 反编译转储全文 0 处），没有现成 prefab，自己拼：轨道（背景 Image）+ 手柄（子 Image）+ Scrollbar，交给 ScrollRect 驱动。
+    /// 游戏从不用 UnityEngine.UI.Scrollbar（0.1.17a 单文件转储（待核对）全文 0 处），没有现成 prefab，自己拼：轨道（背景 Image）+ 手柄（子 Image）+ Scrollbar，交给 ScrollRect 驱动。
     /// 默认贴边（BarOffset=0）。BarTrackClickPages 打开时轨道可点（点空白翻一页）；关闭时轨道 raycastTarget=false，不抢底下按钮的点击，只留手柄可拖。
     /// 轴以 ScrollRect 当前真实轴为准；两个轴都没开时按竖排处理（平板列表都是竖排，verticalNormalizedPosition / UI_SmoothScroll.ScrollToVertical，转储 :52730 / :53667 / :54830），不跳过。都没开通常只是内容还短或还没刷新，跳过会永远挂不上（同一 ClueSrollRect 会议阶段有条、调查阶段没条）。
     /// </summary>

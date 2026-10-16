@@ -10,7 +10,7 @@ namespace DT_Tools.Commands.Fusebox
     /// /sabotage_fuse [#id|all]：客户端拉闸，无视拔螺栓谜题，直接发 C_INTERACT_FUSEBOX（跟随控制台，非房主可用，仅生存阶段）。
     /// </summary>
     /// <remarks>
-    /// 服务端 DisconnetCable 只校验 MissionType==-1（开局武装的 3 个电闸，0.1.17a Server.Game/Fusebox.cs:114），
+    /// 服务端 DisconnetCable 只校验 MissionType==-1（开局武装的 3 个电闸，0.1.18c Server.Game/Fusebox.cs:114），
     /// 没有颜色、距离、谜题校验，所以好人也能拉闸；第 2 个电闸拉断会获得 OnBlackout「主谋」成就。
     /// 多人局使用会污染成就与进程归属，服务端无法区分是否为命令所为。
     /// 谜题进度 C_HANDLE_FUSEBOX.SaveProgress 只是表现层广播，拉断只看 C_INTERACT_FUSEBOX（StateList[0]==0），故直接发包可绕过谜题。

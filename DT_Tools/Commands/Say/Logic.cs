@@ -65,7 +65,7 @@ namespace DT_Tools.Commands.Say
             if (channel == EChatType.SecretChat)
             {
                 // 生存浮层要求 Time >= SurvivalTime - 3，否则按"过期消息"跳过
-                // （0.1.17a Server.Game/TimeManager.cs:16 SurviveTime）
+                // （0.1.18c Server.Game/TimeManager.cs:16 SurviveTime）
                 packet.Time = TimeManager.Instance.SurviveTime;
             }
             return packet;

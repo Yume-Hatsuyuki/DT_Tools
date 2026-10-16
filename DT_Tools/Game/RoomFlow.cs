@@ -6,9 +6,9 @@ namespace DT_Tools.Game
     /// 房间流转助手（Game 层）：Join/ExitRoom 两个命令域共用的"是否在房/退出回大厅"行为。
     /// </summary>
     /// <remarks>
-    /// IsInRoom：NetworkManager.InRoom 为 private（0.1.17a NetworkManager.cs:167，判
+    /// IsInRoom：NetworkManager.InRoom 为 private（0.1.18c NetworkManager.cs:167，判
     /// GameServer != null），GameServer 公开读（NetworkManager.cs:130）。
-    /// LeaveCurrentRoom：与原版退出确认 OnClickExitYes 同路径（0.1.17a UI_GameScene.cs:2305-2311）。
+    /// LeaveCurrentRoom：与原版退出确认 OnClickExitYes 同路径（0.1.18c UI_GameScene.cs:2221-2227）。
     /// </remarks>
     public static class RoomFlow
     {
@@ -17,7 +17,7 @@ namespace DT_Tools.Game
         public static void LeaveCurrentRoom()
         {
             Managers.Network.Leave();                              // 0.1.16b NetworkManager.cs:1312（待核对）
-            Managers.Scene.LoadScene(Define.EScene.LobbyScene);    // 0.1.17a SceneManagerEx.cs:9
+            Managers.Scene.LoadScene(Define.EScene.LobbyScene);    // 0.1.18c SceneManagerEx.cs:9
         }
 
         /// <summary>

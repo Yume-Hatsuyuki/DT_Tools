@@ -10,7 +10,7 @@ namespace DT_Tools.Commands.BanList
     /// /banlist — 列出被踢封禁的玩家（名字 / SteamId / 被踢时间）。
     /// </summary>
     /// <remarks>
-    /// 黑名单本体是 GameRoom._bannedSteamIds（只有 SteamId，0.1.17a Server.Game/GameRoom.cs:79），
+    /// 黑名单本体是 GameRoom._bannedSteamIds（只有 SteamId，0.1.18c Server.Game/GameRoom.cs:79），
     /// 名字与时间来自 BanList 功能在 KickPlayer 时的捕获；功能关闭期间被踢的人没有记录，显示「名字未知」。
     /// </remarks>
     internal sealed class BanListCommand : ICommand

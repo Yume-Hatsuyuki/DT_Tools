@@ -24,7 +24,7 @@ namespace DT_Tools.Game
 
         /// <summary>
         /// 昵称清洗的唯一实现：trim → 去富文本 → trim → 截断
-        /// （0.1.17a Util.cs:172 NeutralizeRichText，与服务端进房清洗同一道）。
+        /// （0.1.18c Util.cs:172 NeutralizeRichText，与服务端进房清洗同一道）。
         /// </summary>
         /// <param name="raw">原始昵称。</param>
         /// <param name="name">清洗后的昵称；失败时为 null。</param>
@@ -63,7 +63,7 @@ namespace DT_Tools.Game
 
         /// <summary>
         /// 房主本机客户端缓存同步（尽力而为）：客户端 Player.Name 为 protected set
-        /// （0.1.17a Player.cs:462），经 Traverse 写入后调 RefreshNameTag（public，:462）。
+        /// （0.1.18c Player.cs:462），经 Traverse 写入后调 RefreshNameTag（public，:462）。
         /// </summary>
         /// <param name="playerId">玩家 PlayerId。</param>
         /// <param name="newName">新昵称。</param>
@@ -90,7 +90,7 @@ namespace DT_Tools.Game
 
         /// <summary>
         /// 本地昵称（主页输入值）：写 PlayerManager.MyPlayerName（public set，:46）+
-        /// PlayerPrefs（键 = "LobbyNickname_"+LocalAccountKey，0.1.17a UI_LobbyScene.cs:530，
+        /// PlayerPrefs（键 = "LobbyNickname_"+LocalAccountKey，0.1.18c UI_LobbyScene.cs:530，
         /// NetworkManager.cs:144）+ 大厅输入框同步（尽力而为，赋值触发原版校验链）。
         /// </summary>
         /// <param name="name">本地昵称。</param>

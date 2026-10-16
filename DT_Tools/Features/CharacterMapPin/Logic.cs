@@ -30,13 +30,13 @@ namespace DT_Tools.Features.CharacterMapPin
             AccessTools.Field(typeof(UI_GameScene), "_playerPinList");
 
         /// <summary>
-        /// RefreshPlayerPin(Player) 私有：0.1.17a UI_GameScene.cs:852。
+        /// RefreshPlayerPin(Player) 私有：0.1.18c UI_GameScene.cs:837。
         /// </summary>
         private static readonly Action<UI_GameScene, Player> RefreshPlayerPinOf =
             Reflect.Bind<Action<UI_GameScene, Player>>(typeof(UI_GameScene), "RefreshPlayerPin", new[] { typeof(Player) });
 
         /// <summary>
-        /// DeletePin(int) 私有：0.1.17a UI_GameScene.cs:935。
+        /// DeletePin(int) 私有：0.1.18c UI_GameScene.cs:920。
         /// </summary>
         private static readonly Action<UI_GameScene, int> DeletePinOf =
             Reflect.Bind<Action<UI_GameScene, int>>(typeof(UI_GameScene), "DeletePin", new[] { typeof(int) });
@@ -84,7 +84,7 @@ namespace DT_Tools.Features.CharacterMapPin
 
         /// <summary>
         /// 白方强制显示他人 Pin（独立开关 ShowPinsForWhite）：
-        /// 原版 LateUpdate 在 Color==White 时直接 return（0.1.17a UI_GameScene.cs:804-807），
+        /// 原版 LateUpdate 在 Color==White 时直接 return（0.1.18c UI_GameScene.cs:789-792），
         /// 不调用 RefreshPlayerPin。开启后每帧补调 RefreshPlayerPin + ApplyPin，
         /// 并清理已死亡/离开的 pin（保留自己的 MyPlayer pin）。
         /// </summary>
@@ -112,7 +112,7 @@ namespace DT_Tools.Features.CharacterMapPin
                     continue;
 
                 LiveIds.Add(id);
-                // RefreshPlayerPin(Player) 私有：0.1.17a UI_GameScene.cs:852（委托缓存在上方）
+                // RefreshPlayerPin(Player) 私有：0.1.18c UI_GameScene.cs:837（委托缓存在上方）
                 RefreshPlayerPinOf?.Invoke(scene, player);
 
                 UI_MinimapSubItem pin = FindHudPin(scene, id);
@@ -120,7 +120,7 @@ namespace DT_Tools.Features.CharacterMapPin
                     CharacterMapPinUi.ApplyPin(pin, player, CharacterMapPinFeature.ReplaceBlackPin);
             }
 
-            // 清掉已不在 live 列表里的他人 pin（DeletePin(int) 私有：0.1.17a UI_GameScene.cs:935）。
+            // 清掉已不在 live 列表里的他人 pin（DeletePin(int) 私有：0.1.18c UI_GameScene.cs:920）。
             // 「死亡保留 Pin」拦下的 pin 也在 live 列表外（玩家已 Despawn），按集合跳过。
             var pinList = HudPinListOf(scene);
             if (pinList == null)
@@ -160,7 +160,7 @@ namespace DT_Tools.Features.CharacterMapPin
         }
 
         /// <summary>
-        /// HUD 删除 pin（DeletePin(int) 私有：0.1.17a UI_GameScene.cs:935；热关闭清理保留 pin 用）。
+        /// HUD 删除 pin（DeletePin(int) 私有：0.1.18c UI_GameScene.cs:920；热关闭清理保留 pin 用）。
         /// </summary>
         /// <param name="scene">游戏场景界面。</param>
         /// <param name="id">要删除 pin 的 PlayerId。</param>
@@ -171,7 +171,7 @@ namespace DT_Tools.Features.CharacterMapPin
         /// 「死亡保留 Pin」跟随服务器广播的强制位移（Patch.RespawnFollow 在 PlayerManager.HandleRespawn 后置调用）。
         /// </summary>
         /// <remarks>
-        /// 复刻原版 Kaho（ComplyRules）对被追踪者的位置推送语义：服务器每次接受移动都向追踪者发 S_PIN_MOVE（含强制移动，0.1.16b Server.Game/Player.cs:764-770（待核对）），客户端经 Handle_S_PIN_MOVE（0.1.17a PacketHandler.cs:231-237）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.17a UI_GameScene.cs:901-904）。本方法与其同构：HUD / 平板两份保留 pin 一起平滑推到目标点，坐标换算与逐帧刷新同源（0.1.17a Util.cs:887-892）。
+        /// 复刻原版 Kaho（ComplyRules）对被追踪者的位置推送语义：服务器每次接受移动都向追踪者发 S_PIN_MOVE（含强制移动，0.1.16b Server.Game/Player.cs:764-770（待核对）），客户端经 Handle_S_PIN_MOVE（0.1.18c PacketHandler.cs:243-249）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.18c UI_GameScene.cs:886-889）。本方法与其同构：HUD / 平板两份保留 pin 一起平滑推到目标点，坐标换算与逐帧刷新同源（0.1.18c Util.cs:884-889）。
         /// </remarks>
         /// <param name="id">保留 pin 对应的 PlayerId。</param>
         /// <param name="pos">服务器广播的强制位移目标坐标。</param>

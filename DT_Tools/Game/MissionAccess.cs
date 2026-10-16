@@ -108,7 +108,7 @@ namespace DT_Tools.Game
         }
 
         /// <summary>
-        /// StartMission()：开局启动任务分配（0.1.17a MissionManager.cs:355）。
+        /// StartMission()：开局启动任务分配（0.1.18c MissionManager.cs:355）。
         /// </summary>
         /// <returns>调用成功时为 true。</returns>
         public static bool StartParameterless()

@@ -10,7 +10,7 @@ namespace DT_Tools.Features.UnlockMadeline
 {
     /// <summary>
     /// UI_Shop_Skin.OrderedOwnedIds 整替（私有方法，字符串定位）：
-    /// 0.1.17a UI_Shop_Skin.cs:46。原版过滤 id != 101 且依赖 OwnedCharacterIds；
+    /// 0.1.18c UI_Shop_Skin.cs:46（待核对）。原版过滤 id != 101 且依赖 OwnedCharacterIds；
     /// 改为直接取 Inventory.OwnedCharacterIds（含本功能追加的 101），排序逻辑不变。
     /// </summary>
     [HarmonyPatch(typeof(UI_Shop_Skin), "OrderedOwnedIds")]
@@ -22,7 +22,7 @@ namespace DT_Tools.Features.UnlockMadeline
                 return true;
 
             global::System.Collections.Generic.IEnumerable<int> enumerable = Managers.Inventory.OwnedCharacterIds;
-            // _shop 为私有字段：0.1.17a UI_Shop_Skin.cs:13；SortMode 见 UI_ShopPopup.cs:232
+            // _shop 为私有字段：0.1.18c UI_Shop_Skin.cs:13；SortMode 见 UI_ShopPopup.cs:232
             var shop = Traverse.Create(__instance).Field<UI_ShopPopup>("_shop").Value;
 
             if (shop != null && shop.SortMode == EShopSortMode.Name)
@@ -33,7 +33,7 @@ namespace DT_Tools.Features.UnlockMadeline
             }
             else
             {
-                // CharacterAcquiredAt：0.1.17a InventoryManager.cs:187
+                // CharacterAcquiredAt：0.1.18c InventoryManager.cs:187
                 enumerable = from id in enumerable
                              orderby Managers.Inventory.CharacterAcquiredAt(id) descending, id
                              select id;

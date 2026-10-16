@@ -9,9 +9,9 @@ namespace DT_Tools.Features.ChatHistory
     /// </summary>
     /// <remarks>
     /// 覆盖聊天快捷条全部实例——大厅（Lobby 场景预制体挂载
-    /// UI_DirectChat_Lobby）、对局昼夜（0.1.17a UI_GameScene.cs:577）与庭审
+    /// UI_DirectChat_Lobby）、对局昼夜（0.1.18c UI_GameScene.cs:577（待核对））与庭审
     /// （0.1.16b UI_TrialEvent.cs:392（待核对）)；子类不重写 Init，基类方法每次实例化都会命中。
-    /// _input 为私有字段（0.1.17a UI_DirectChat.cs:26），按 AGENTS.md §10 反射定位。
+    /// _input 为私有字段（0.1.18c UI_DirectChat.cs:26），按 AGENTS.md §10 反射定位。
     /// </remarks>
     [HarmonyPatch(typeof(UI_DirectChat), nameof(UI_DirectChat.Init))]
     internal static class ChatHistoryMountDirectChatPatch
@@ -33,7 +33,7 @@ namespace DT_Tools.Features.ChatHistory
     /// </summary>
     /// <remarks>
     /// 按枚举名直接查找子对象，
-    /// 与 BindInputField 的取数路径同源（Util.FindChild，0.1.17a Util.cs:302），
+    /// 与 BindInputField 的取数路径同源（Util.FindChild，0.1.18c Util.cs:302），
     /// 不走 GetInputField（UI_Base.cs:98 protected）的方法反射绑定。平板与快捷条
     /// 同为全局聊天频道，共用历史。
     /// </remarks>
@@ -53,7 +53,7 @@ namespace DT_Tools.Features.ChatHistory
 
     /// <summary>
     /// 挂载点三：UI_ChatDevicePopup.Init 的打字机（对讲机）输入框（ChatField，
-    /// 私有字段 _input 0.1.17a UI_ChatDevicePopup.cs:42）。
+    /// 私有字段 _input 0.1.18c UI_ChatDevicePopup.cs:42）。
     /// </summary>
     /// <remarks>
     /// 频道按 Init 时的 _isSecret
@@ -80,7 +80,7 @@ namespace DT_Tools.Features.ChatHistory
 
     /// <summary>
     /// 打字机频道修正：UI_ChatDevicePopup.Open(device, isSecret, readOnly) 每次打开决定
-    /// 公开/秘密模式（0.1.17a UI_ChatDevicePopup.cs:143，_isSecret 私有字段 :36）。
+    /// 公开/秘密模式（0.1.18c UI_ChatDevicePopup.cs:143，_isSecret 私有字段 :36）。
     /// </summary>
     /// <remarks>
     /// Postfix 按实参切换导航器历史频道；readOnly 时输入框被隐藏（OnReadOnlyChanged），

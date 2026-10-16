@@ -8,7 +8,7 @@ namespace DT_Tools.Features.PlaytestMode
     /// </summary>
     /// <remarks>
     /// 公共静态属性（nameof 定位），
-    /// 0.1.17a Define.cs:2003（原版按 Steam AppId 判定）。
+    /// 0.1.18c Define.cs:2005（原版按 Steam AppId 判定）。
     /// </remarks>
     [HarmonyPatch(typeof(Define), nameof(Define.IsPlaytestApp), MethodType.Getter)]
     internal static class PlaytestModePlaytestAppPatch

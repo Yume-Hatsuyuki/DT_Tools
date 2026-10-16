@@ -6,12 +6,12 @@ using Protocol;
 namespace DT_Tools.Features.BlackAttack
 {
     /// <summary>
-    /// 仅改写原版攻击冷却入参：5（DelayAcquireWeapon，0.1.17a Server.Game/Player.cs:1005）与
-    /// 20（ConsumeKillAndRearm，0.1.17a Server.Game/Player.cs:1025）。
+    /// 仅改写原版攻击冷却入参：5（DelayAcquireWeapon，0.1.18c Server.Game/Player.cs:1005）与
+    /// 20（ConsumeKillAndRearm，0.1.18c Server.Game/Player.cs:1025）。
     /// </summary>
     /// <remarks>
     /// 方法本体（私有）：
-    /// 0.1.17a Server.Game/Player.cs:1008。Cooltime=0 时跳过原方法并立即恢复 CanAttack。
+    /// 0.1.18c Server.Game/Player.cs:1008。Cooltime=0 时跳过原方法并立即恢复 CanAttack。
     /// </remarks>
     [HarmonyPatch(typeof(Server.Game.Player), "StartWeaponCooltime")]
     internal static class BlackAttackCooltimePatch

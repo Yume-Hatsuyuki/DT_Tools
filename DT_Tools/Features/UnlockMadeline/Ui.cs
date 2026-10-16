@@ -79,7 +79,7 @@ namespace DT_Tools.Features.UnlockMadeline
         private const string SomeoneMapWhiteKey = "Someone_Map_White.sprite";
 
         /// <summary>
-        /// ResourceManager 缓存字典（私有字段 _resources：0.1.17a ResourceManager.cs:11）。
+        /// ResourceManager 缓存字典（私有字段 _resources：0.1.18c ResourceManager.cs:11）。
         /// </summary>
         /// <param name="rm">资源管理器。</param>
         /// <returns>资源管理器的缓存字典。</returns>
@@ -414,7 +414,7 @@ namespace DT_Tools.Features.UnlockMadeline
         }
 
         /// <summary>
-        /// UI_Base.GetImage 为 protected：0.1.17a UI_Base.cs:113。
+        /// UI_Base.GetImage 为 protected：0.1.18c UI_Base.cs:113。
         /// </summary>
         /// <param name="ui">UI 组件。</param>
         /// <param name="idx">绑定器中的图片槽索引。</param>
@@ -423,7 +423,7 @@ namespace DT_Tools.Features.UnlockMadeline
             => AccessTools.Method(typeof(UI_Base), "GetImage")?.Invoke(ui, new object[] { idx }) as Image;
 
         /// <summary>
-        /// UI_Base.GetObject 为 protected：0.1.17a UI_Base.cs:93。
+        /// UI_Base.GetObject 为 protected：0.1.18c UI_Base.cs:93。
         /// </summary>
         /// <param name="ui">UI 组件。</param>
         /// <param name="idx">绑定器中的对象槽索引。</param>
@@ -432,7 +432,7 @@ namespace DT_Tools.Features.UnlockMadeline
             => AccessTools.Method(typeof(UI_Base), "GetObject")?.Invoke(ui, new object[] { idx }) as GameObject;
 
         /// <summary>
-        /// UI_Base.GetText 为 protected：0.1.17a UI_Base.cs:103。
+        /// UI_Base.GetText 为 protected：0.1.18c UI_Base.cs:103。
         /// </summary>
         /// <param name="ui">UI 组件。</param>
         /// <param name="idx">绑定器中的文本槽索引。</param>

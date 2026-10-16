@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DT_Tools.Features.LoginReward
 {
     /// <summary>
-    /// 发放与弹窗流程（0.1.17a）：TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）→ SteamInventorySource.GrantFreeFromStars（:964）→ FreeCurrencyDrops.Enqueue → 串行 SteamInventory.TriggerItemDrop。
+    /// 发放与弹窗流程（0.1.18c（待核对））：TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）→ SteamInventorySource.GrantFreeFromStars（:964）→ FreeCurrencyDrops.Enqueue → 串行 SteamInventory.TriggerItemDrop。
     /// </summary>
     /// <remarks>
     /// OnProgress 可能多次中间回调；终态为 FreeDropPendingUnits 回落到请求前基线后读 LastRevealEarned，再 TryShowPopup。
@@ -15,7 +15,7 @@ namespace DT_Tools.Features.LoginReward
     internal static class LoginRewardLogic
     {
         /// <summary>
-        /// 0.1.17a InventoryManager.cs:14——公开属性 LastRevealEarned 的后备字段；
+        /// 0.1.18c InventoryManager.cs:14——公开属性 LastRevealEarned 的后备字段；
         /// 写点 :353（入口清 0）与 :356（grant 回调写终值）。游戏升级后按行号复核；
         /// 仅写需要反射（读走公开属性），字段缺失时跳过标记并告警。
         /// </summary>
@@ -154,8 +154,8 @@ namespace DT_Tools.Features.LoginReward
                 return;
             }
 
-            // DailyEarned → FreeCurrencyDrops.DailyUsed（0.1.17a SteamInventorySource.cs:145）
-            // DailyCap：0.1.17a InventoryManager.cs:38（public 属性，原版即硬编码 250）
+            // DailyEarned → FreeCurrencyDrops.DailyUsed（0.1.18c SteamInventorySource.cs:145）
+            // DailyCap：0.1.18c InventoryManager.cs:38（public 属性，原版即硬编码 250）
             int earnedToday = inv.DailyEarned;
             int cap = inv.DailyCap;
             int want = Mathf.Clamp(LoginRewardFeature.GrantAmount, 0, cap);
@@ -202,12 +202,12 @@ namespace DT_Tools.Features.LoginReward
                 Log.Info<LoginRewardFeature>(
                     $"请求掉落发放 amount={want} → 金星={gold} 银星={silver}（今日 {earnedToday}/{cap}，pending基线={LoginRewardState.PendingBaseline}，ForceAnim={forceAnim}）");
 
-                // 在途标记：GrantFreeFromStars 入口会清 0（0.1.17a InventoryManager.cs:353）
+                // 在途标记：GrantFreeFromStars 入口会清 0（0.1.18c InventoryManager.cs:353）
                 if (RevealEarnedField != null)
                     RevealEarnedField.SetValue(inv, LoginRewardState.InFlightEarned);
                 else
                     Log.Warn<LoginRewardFeature>(
-                        "InventoryManager._revealEarned 缺失（游戏升级？）——在途标记不可用（0.1.17a InventoryManager.cs:14 核对）。");
+                        "InventoryManager._revealEarned 缺失（游戏升级？）——在途标记不可用（0.1.18c InventoryManager.cs:14 核对）。");
 
                 LoginRewardState.InGrantCall = true;
                 try
@@ -237,7 +237,7 @@ namespace DT_Tools.Features.LoginReward
         /// </summary>
         /// <remarks>
         /// 上限读库存组件 DailyCap
-        /// （0.1.17a InventoryManager.cs:38，原版即硬编码 250），由调用方传入。
+        /// （0.1.18c InventoryManager.cs:38，原版即硬编码 250），由调用方传入。
         /// SteamInventorySource 再按 num/10 折成 drop 单位（每单位 10）。
         /// </remarks>
         /// <param name="amount">实验数据数量。</param>
@@ -305,7 +305,7 @@ namespace DT_Tools.Features.LoginReward
                     Log.Info<LoginRewardFeature>(
                         $"掉落发放 earned={earned}，播放官方动画（今日 {inv.DailyEarned}/{inv.DailyCap}）。");
                     if (sceneUi != null)
-                        sceneUi.TryShowDailyCapPopup();     // 0.1.17a UI_GameScene.cs:2922
+                        sceneUi.TryShowDailyCapPopup();     // 0.1.18c UI_GameScene.cs:2838
                     else
                         PlayDirect(inv.FreeBalance, earned);
                 }

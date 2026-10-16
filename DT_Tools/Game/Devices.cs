@@ -14,17 +14,17 @@ namespace DT_Tools.Game
     public static class Devices
     {
         /// <summary>
-        /// 电闸损坏：StateList[0]==9999（0.1.17a Define.cs:554 DISCONNET_STATE；拉闸写入见 Server.Game/Fusebox.cs:122）。
+        /// 电闸损坏：StateList[0]==9999（0.1.18c Define.cs:554 DISCONNET_STATE；拉闸写入见 Server.Game/Fusebox.cs:122）。
         /// </summary>
         public const int FuseboxStateBroken = 9999;
 
         /// <summary>
-        /// 电闸完好：StateList[0]==0（0.1.17a Define.cs:556 NORMAL_STATE）。
+        /// 电闸完好：StateList[0]==0（0.1.18c Define.cs:556 NORMAL_STATE）。
         /// </summary>
         public const int FuseboxStateIntact = 0;
 
         /// <summary>
-        /// 破坏任务武装：MissionType==-1（开局 StartFuseboxSabotage → StartMission 写入，0.1.17a Server.Game/Fusebox.cs:141）。
+        /// 破坏任务武装：MissionType==-1（开局 StartFuseboxSabotage → StartMission 写入，0.1.18c Server.Game/Fusebox.cs:141）。
         /// </summary>
         public const int FuseboxMissionArmed = -1;
 
@@ -57,7 +57,7 @@ namespace DT_Tools.Game
                 .ToList();
 
         /// <summary>
-        /// 服务端设备管理器的全部货架（私有字段 _storages，0.1.17a Server.Game/DeviceManager.cs:32）。
+        /// 服务端设备管理器的全部货架（私有字段 _storages，0.1.18c Server.Game/DeviceManager.cs:32）。
         /// </summary>
         /// <remarks>
         /// 房主侧功能用。

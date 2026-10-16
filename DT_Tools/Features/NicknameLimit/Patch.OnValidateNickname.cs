@@ -10,7 +10,7 @@ namespace DT_Tools.Features.NicknameLimit
     /// </summary>
     /// <remarks>
     /// 私有方法，字符串定位：0.1.16b UI_LobbyScene.cs:1772（待核对）；
-    /// 私有字段 _nicknameKey：0.1.17a UI_LobbyScene.cs:409。
+    /// 私有字段 _nicknameKey：0.1.18c UI_LobbyScene.cs:409。
     /// </remarks>
     [HarmonyPatch(typeof(UI_LobbyScene), "OnValidateNickname")]
     internal static class NicknameLimitValidatePatch

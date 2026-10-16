@@ -14,11 +14,11 @@ namespace DT_Tools.Features.ChatTranslate
 {
     /// <summary>
     /// 聊天翻译补丁：
-    /// 接收翻译——注入 VoiceManager.EnqueueNormalChat（0.1.17a VoiceManager.cs:1331，
+    /// 接收翻译——注入 VoiceManager.EnqueueNormalChat（0.1.18c VoiceManager.cs:1319，
     /// 普通聊天接收入口，自己发出的消息经房主广播回显也会走这里）。
     /// 原文照常入队显示（不拼接、不超长、不改变广播）；译文作为第二条本地消息追加
     /// （带色[翻译版]标签 + 译文，仅自己可见，别人收不到）。
-    /// 发送翻译——注入 VoiceManager.SendChatMessage（0.1.17a VoiceManager.cs:1239，发包入口），
+    /// 发送翻译——注入 VoiceManager.SendChatMessage（0.1.18c VoiceManager.cs:1227，发包入口），
     /// 把发出的中文消息翻译成目标语言再广播，让所有人看到译文。
     /// 翻译通道：填了百度开放平台 appid/密钥走正式 API（稳定）；未填且开启免 key 模式
     /// 走百度网页翻译接口（SSE 流式，免费，逆向实现、可能随官方调整失效）；都不可用时回退原文。

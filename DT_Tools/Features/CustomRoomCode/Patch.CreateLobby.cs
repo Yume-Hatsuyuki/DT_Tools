@@ -8,7 +8,7 @@ namespace DT_Tools.Features.CustomRoomCode
     /// 建房：把 roomCode 入参替换为配置的自定义码。
     /// </summary>
     /// <remarks>
-    /// CreateLobby 为公开方法（0.1.17a DummyClient/SteamLobbyManager.cs:128）；
+    /// CreateLobby 为公开方法（0.1.18c DummyClient/SteamLobbyManager.cs:128）；
     /// 入参存入 _pendingRoomCode，OnLobbyCreated 写入 lobby data "code"（:263-266），
     /// 进房时游戏回读 "code" 更新本地显示（:389-391）——整条链路自动生效，无需补丁点。
     /// </remarks>

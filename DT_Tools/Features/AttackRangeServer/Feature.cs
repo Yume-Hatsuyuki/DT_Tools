@@ -3,7 +3,7 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.AttackRangeServer
 {
     /// <summary>
-    /// 服务端攻击距离判定：GameRoom.AttackPlayer 用 Util.UnifiedAttackRect（攻击盒，0.1.17a Util.cs:71，前向 80 / 后向 40）对 PlayerHitRect 做 AABB 碰撞（0.1.16b Server.Game/GameRoom.cs:2382-2402（待核对））。
+    /// 服务端攻击距离判定：GameRoom.AttackPlayer 用 Util.UnifiedAttackRect（攻击盒，0.1.18c Util.cs:71，前向 80 / 后向 40）对 PlayerHitRect 做 AABB 碰撞（0.1.16b Server.Game/GameRoom.cs:2382-2402（待核对））。
     /// </summary>
     /// <remarks>
     /// 客户端 AttackRange 只放宽了选人距离（MyPlayer.cs:2178 的 224），超原版范围的攻击会在服务端判定落空（表现为空挥不掉血）。

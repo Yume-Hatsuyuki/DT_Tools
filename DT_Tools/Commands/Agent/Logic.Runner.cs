@@ -12,7 +12,7 @@ namespace DT_Tools.Commands.Agent
     /// <remarks>
     /// 日志经启动命令的 CommandContext（ctx.Reply/Warn）输出，不直接用 Log 门面。
     /// 参数依据（2026-09 复核服务端源码）：JobSerializer.Push→Flush 为无限容量 FIFO 同步执行，Replicator 同步发送，HostPacketGate 只拦截未绑定会话的包，与频率无关；未发现针对 C_INTERACT_*/C_HANDLE_* 的限频、去重或冷却。故 TickInterval 可低至 0.25s 而不触发限流。
-    /// Mineral.HandleEvent 服务端零冷却，每收到 C_HANDLE_MINERAL{IsSuccess=true} 即 CreateAndDropItem + Broadcast(S_SPAWN_DEVICE)（0.1.17a Server.Game/Mineral.cs:43）；MineralMineCooldown 只是客户端“等回包 + 刷新 Cache”的自保护。
+    /// Mineral.HandleEvent 服务端零冷却，每收到 C_HANDLE_MINERAL{IsSuccess=true} 即 CreateAndDropItem + Broadcast(S_SPAWN_DEVICE)（0.1.18c Server.Game/Mineral.cs:43）；MineralMineCooldown 只是客户端“等回包 + 刷新 Cache”的自保护。
     /// MaxIdleTicks / MaxTicks 随 TickInterval 按时长等效换算，保持“空闲多久停止”“最多运行多久”的实际秒数不变。
     /// </remarks>
     internal sealed class AgentRunner : MonoBehaviour

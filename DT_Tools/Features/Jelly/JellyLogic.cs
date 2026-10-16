@@ -28,7 +28,7 @@ namespace DT_Tools.Features.Jelly
     /// 果冻周期：全员同相位（Time.unscaledTime 取模），下压段 smoothstep + 回弹段阻尼余弦，每帧绝对赋值 scale。
     /// </summary>
     /// <remarks>
-    /// 玩家目标：挂 SkeletonAnimation 的视觉子节点（0.1.17a Player.cs:302/608）。主游戏不写该节点的 scale/localPosition；
+    /// 玩家目标：挂 SkeletonAnimation 的视觉子节点（0.1.18c Player.cs:302/608）。主游戏不写该节点的 scale/localPosition；
     /// 碰撞体、UIGroup、EffectGroup 都是它的兄弟节点，Spine 也不写 transform scale。绝对赋值因此不会被覆盖，晚加入或重生的角色无需额外挂钩。
     /// 设备目标（IncludeDevices）：优先 SkeletonAnimation 子节点（Corpse.cs:127、Chair.cs:31）；掉落物与根视觉设备（Mineral/Curtain）缩根；
     /// 其余找 "Body" 主视觉与图标叶子节点（Battery/Slot/Slots/Required）。设备交互判定是纯矩形（DeviceManager.cs:692-746），与 scale 无关，设备一律不改 localPosition。

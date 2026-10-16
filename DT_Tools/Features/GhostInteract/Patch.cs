@@ -6,7 +6,7 @@ using Protocol;
 namespace DT_Tools.Features.GhostInteract
 {
     /// <summary>
-    /// 幽灵交互（0.1.17a）：设备交互 + 对话 + 拖尸 + 销毁证据 + 杀人。
+    /// 幽灵交互（0.1.18c（待核对））：设备交互 + 对话 + 拖尸 + 销毁证据 + 杀人。
     /// </summary>
     /// <remarks>
     /// 阵营：ExitPlayer 不改 Color，死后仍为 White/Black/Dark；本功能在「全能」模式下
@@ -190,7 +190,7 @@ namespace DT_Tools.Features.GhostInteract
         }
 
         /// <summary>
-        /// MyPlayer.CanDropHand（0.1.17a MyPlayer.cs:1608）要求 IsAlive，且状态须 Idle/Run。
+        /// MyPlayer.CanDropHand（0.1.18c MyPlayer.cs:1608）要求 IsAlive，且状态须 Idle/Run。
         /// </summary>
         /// <remarks>
         /// 幽灵死后多为 Hide，导致 UI 丢弃键与 TryDropHand 全失效。
@@ -462,7 +462,7 @@ namespace DT_Tools.Features.GhostInteract
         }
 
         /// <summary>
-        /// ExitPlayer（0.1.17a Player.cs:947）在死后执行：IsGhost=true、移出 AlivePlayers。
+        /// ExitPlayer（0.1.18c Player.cs:947）在死后执行：IsGhost=true、移出 AlivePlayers。
         /// </summary>
         /// <remarks>
         /// 在此恢复 CanAttack / CanDestroyEvidence / CanUseItem，便于幽灵继续黑向行为。
@@ -494,7 +494,7 @@ namespace DT_Tools.Features.GhostInteract
         }
 
         /// <summary>
-        /// Player.UseWeapon（0.1.17a Player.cs:1117）：原版拒绝 attacker dead。
+        /// Player.UseWeapon（0.1.18c Player.cs:1117）：原版拒绝 attacker dead。
         /// </summary>
         [HarmonyPatch(typeof(Server.Game.Player), nameof(Server.Game.Player.UseWeapon))]
         internal static class UseWeaponPatch

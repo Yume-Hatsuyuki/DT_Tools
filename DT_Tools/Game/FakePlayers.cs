@@ -120,7 +120,7 @@ namespace DT_Tools.Game
 
             var session = new HostPeerSession(new FakePacketSink())
             {
-                // AccountID 取 session.PlayerID（Player 构造，0.1.17a Server.Game/Player.cs:566）。
+                // AccountID 取 session.PlayerID（Player 构造，0.1.18c Server.Game/Player.cs:566）。
                 // 真实玩家的 AccountID 是 Steam 账号串，昵称不会与之冲突，
                 // 也就不会误触进房的同账号重入校验（GameRoom.cs:981-1014）。
                 PlayerID = name,
@@ -137,7 +137,7 @@ namespace DT_Tools.Game
             try
             {
                 // 角色在进房前经 CharacterId 属性写入：属性 setter 会按角色表分配技能
-                // （0.1.17a Server.Game/Player.cs:356-372）——旧版直写 PublicInfo.CharacterId
+                // （0.1.18c Server.Game/Player.cs:356-372）——旧版直写 PublicInfo.CharacterId
                 // 绕过了 AllocateSkill。顺序对齐 HandleEnterPlayer（GameRoom.cs:1132-1135）：
                 // 进房前赋值，S_ADD_PLAYER 携带给各客户端。
                 if (characterId != 0 && characterId != RandomCharacterId)
@@ -155,7 +155,7 @@ namespace DT_Tools.Game
                     player.CharacterId = RandomFreeCharacter(room, player);
                 }
 
-                // 进房：EnterPlayer 为 private（0.1.17a Server.Game/GameRoom.cs:2771），
+                // 进房：EnterPlayer 为 private（0.1.18c Server.Game/GameRoom.cs:2771），
                 // 等效两步 = Players.Add + 名单脏标记。
                 room.Players.Add(player);
                 room.MarkRosterDirty();
@@ -165,7 +165,7 @@ namespace DT_Tools.Game
                 player.InitLobby();
 
                 // S_ADD_PLAYER 环：让已在线客户端的名单/画面出现假人
-                // （对齐 HandleEnterPlayer，0.1.17a Server.Game/GameRoom.cs:1037-1063）。
+                // （对齐 HandleEnterPlayer，0.1.18c Server.Game/GameRoom.cs:1037-1063）。
                 // 原版还会把各现有玩家的就绪态发给新进玩家——假 sink 丢弃入站包，
                 // 无需复刻；假人自身的就绪态变化由 Ready 属性 setter 广播给各客户端。
                 var addPacket = new S_ADD_PLAYER
@@ -183,7 +183,7 @@ namespace DT_Tools.Game
                 }
 
                 // 大厅场景可见性：真实客户端进厅后会发 C_MOVE，服务端 Move →
-                // AreaManager.SearchAndUpdatePlayer（0.1.17a Server.Game/AreaManager.cs:59-72）
+                // AreaManager.SearchAndUpdatePlayer（0.1.18c Server.Game/AreaManager.cs:59-72）
                 // 对每个其他玩家调 AddPlayer——按其语义（Player.cs:672-689，"把调用者的
                 // S_SPAWN 发给对方会话"）这就是彼此身体出现的时机。假人永远不发
                 // C_MOVE，这条链路不会为它触发，必须显式双向 AddPlayer：
@@ -198,7 +198,7 @@ namespace DT_Tools.Game
                 }
 
                 // 标记为原生假人：IsDummy=true + 广播 S_PLAYER_DUMMY_CHANGED + 名单脏标记
-                // （0.1.17a Server.Game/Player.cs:503-519；OnDamagedEvent/Trial 通知在大厅均为无害分支）。
+                // （0.1.18c Server.Game/Player.cs:503-519；OnDamagedEvent/Trial 通知在大厅均为无害分支）。
                 player.ConvertToDummy();
 
                 Created.Add(player);
@@ -270,7 +270,7 @@ namespace DT_Tools.Game
         }
 
         /// <summary>
-        /// 设置就绪态（大厅限定；Ready 属性 setter 会广播 S_READY，0.1.17a Player.cs:110-130）。
+        /// 设置就绪态（大厅限定；Ready 属性 setter 会广播 S_READY，0.1.18c Player.cs:110-130）。
         /// </summary>
         /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
         /// <param name="ready">目标就绪状态。</param>
@@ -299,8 +299,8 @@ namespace DT_Tools.Game
         /// </summary>
         /// <remarks>
         /// 选角阶段直接走原生 PickCharacter（支持 -2 随机/占用校验，
-        /// 0.1.17a Server.Game/GameRoom.cs:2371-2421）；大厅阶段走 ModifyPlayer 换角
-        /// （0.1.17a Server.Game/Player.cs:1713 方法头；ChangeCharacter 分支 :1713-1717，
+        /// 0.1.18c Server.Game/GameRoom.cs:2371-2421）；大厅阶段走 ModifyPlayer 换角
+        /// （0.1.18c Server.Game/Player.cs:1713 方法头；ChangeCharacter 分支 :1713-1717，
         /// 要求未准备），随机先解析成具体角色。
         /// </remarks>
         /// <param name="nameOrId">假人昵称或 #座位 ID。</param>

@@ -6,7 +6,7 @@ namespace DT_Tools.Automation.AutoReady
 {
     /// <summary>
     /// 动作：延迟等待 → 上限检查 → 定位 UI_GameScene 准备按钮 → 经原版
-    /// OnClickReadyButton 发送 C_READY（0.1.17a UI_GameScene.cs:2162，私有方法；
+    /// OnClickReadyButton 发送 C_READY（0.1.18c UI_GameScene.cs:2078，私有方法；
     /// F5 快捷键即直接调用它 :4882）。
     /// </summary>
     /// <remarks>
@@ -34,14 +34,14 @@ namespace DT_Tools.Automation.AutoReady
                 return;
             }
 
-            var scene = Managers.UI?.SceneUI as UI_GameScene;   // 0.1.17a UIManager.cs:61
+            var scene = Managers.UI?.SceneUI as UI_GameScene;   // 0.1.18c UIManager.cs:61
             if (scene == null)
             {
                 ScheduleRetry();
                 return;
             }
 
-            // GetObject 为 UI_Base protected（0.1.17a UI_Base.cs:93）；绑定器
+            // GetObject 为 UI_Base protected（0.1.18c UI_Base.cs:93）；绑定器
             // 32 = 房主开局按钮、31 = 准备按钮（绑定 UI_GameScene.cs:612，F5 判定 :4878-4884）
             var t = HarmonyLib.Traverse.Create(scene);
             GameObject startBtn = t.Method("GetObject", new object[] { 32 }).GetValue<GameObject>();
@@ -58,7 +58,7 @@ namespace DT_Tools.Automation.AutoReady
                 return;
             }
 
-            if (scene.IsReady)   // 公开属性：0.1.17a UI_GameScene.cs:509
+            if (scene.IsReady)   // 公开属性：0.1.18c UI_GameScene.cs:497
             {
                 AutoReadyState.MarkLeft();
                 Log.Info<AutoReadyModule>("已处于就绪状态");

@@ -13,7 +13,7 @@ namespace DT_Tools.Features.SupplyShelf
         public static void RefillAll(List<Server.Game.Storage> storages)
         {
             foreach (Server.Game.Storage storage in storages)
-                storage.ResetItems();                                  // 0.1.17a Server.Game/Storage.cs:58
+                storage.ResetItems();                                  // 0.1.18c Server.Game/Storage.cs:58
 
             int slotCount = 0;
             foreach (Server.Game.Storage s in storages)
@@ -38,7 +38,7 @@ namespace DT_Tools.Features.SupplyShelf
                     slice.Add(bag[idx]);
                     bag.RemoveAt(idx);
                 }
-                storage.InitStorage(slice);                            // 0.1.17a Server.Game/Storage.cs:77
+                storage.InitStorage(slice);                            // 0.1.18c Server.Game/Storage.cs:77
             }
 
             Log.Info<SupplyShelfFeature>(

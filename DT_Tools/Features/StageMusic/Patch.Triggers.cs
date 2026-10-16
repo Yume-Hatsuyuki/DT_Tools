@@ -27,7 +27,7 @@ namespace DT_Tools.Features.StageMusic
     }
 
     /// <summary>
-    /// 递刀触发（黑幕侧）：UseHandWeapon 发包成功（return true，0.1.17a MyPlayer.cs:779）
+    /// 递刀触发（黑幕侧）：UseHandWeapon 发包成功（return true，0.1.18c MyPlayer.cs:779）
     /// 即黑幕把刀递出，黑幕本地播放递刀音乐。
     /// </summary>
     [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.UseHandWeapon))]
@@ -41,7 +41,7 @@ namespace DT_Tools.Features.StageMusic
     }
 
     /// <summary>
-    /// 阶段切换总触发：StartState（私有，0.1.17a GameManagerEX.cs:386）在每次
+    /// 阶段切换总触发：StartState（私有，0.1.18c GameManagerEX.cs:386）在每次
     /// State 变化时被调用且各 Start* 子方法已执行完——一个补丁覆盖
     /// 大厅/选角/生存/侦探/开庭/结算六阶段；未配置曲目的阶段会停掉当前播放。
     /// </summary>
@@ -81,7 +81,7 @@ namespace DT_Tools.Features.StageMusic
     }
 
     /// <summary>
-    /// 审判子阶段触发：UI_TrialEvent.StartState（私有，0.1.17a UI_TrialEvent.cs:1652）在
+    /// 审判子阶段触发：UI_TrialEvent.StartState（私有，0.1.18c UI_TrialEvent.cs:1652）在
     /// 审判内部 Discuss→VotePhase→VoteResult→Replay→TrialResult 每次切换时调用。
     /// </summary>
     /// <remarks>
@@ -131,7 +131,7 @@ namespace DT_Tools.Features.StageMusic
     }
 
     /// <summary>
-    /// 主菜单大厅触发：UI_LobbyScene.OnEnable 播 MainTitleBGM（0.1.17a UI_LobbyScene.cs:2209），
+    /// 主菜单大厅触发：UI_LobbyScene.OnEnable 播 MainTitleBGM（0.1.18c UI_LobbyScene.cs:2209），
     /// 同一曲目与房内大厅互为去重。
     /// </summary>
     [HarmonyPatch(typeof(UI_LobbyScene), "OnEnable")]
@@ -166,7 +166,7 @@ namespace DT_Tools.Features.StageMusic
     }
 
     /// <summary>
-    /// 自己死亡触发：S_DEAD 只发死者本人（0.1.17a Server.Game/Player.cs:827），
+    /// 自己死亡触发：S_DEAD 只发死者本人（0.1.18c Server.Game/Player.cs:827），
     /// 客户端 Handle_S_DEAD 调 Managers.Game.Dead()（PacketHandler.cs:392）。
     /// </summary>
     /// <remarks>
@@ -190,7 +190,7 @@ namespace DT_Tools.Features.StageMusic
     /// <summary>
     /// 结局动画触发：Handle_S_ENDING_CAMERA 驱动电梯离场结局镜头，s_ENDING_CAMERA.IsEnd
     /// 区分"进入结局镜头"(true) 与"结局镜头结束"(false)，只在 true 时触发
-    /// （0.1.17a PacketHandler.cs:592，S_ENDING_CAMERA.cs:28）。
+    /// （0.1.18c PacketHandler.cs:604，S_ENDING_CAMERA.cs:28）。
     /// </summary>
     [HarmonyPatch]
     internal static class StageMusicEndingCutsceneTrigger

@@ -43,7 +43,7 @@ namespace DT_Tools.Commands.Nickname
                 return CommandResult.Fail("invalid name");
             }
 
-            var room = GameRoom.Instance;   // 0.1.17a Server.Game/GameRoom.cs:119
+            var room = GameRoom.Instance;   // 0.1.18c Server.Game/GameRoom.cs:119
             if (room == null)
             {
                 ctx.Reply("当前没有活动的游戏房间。");

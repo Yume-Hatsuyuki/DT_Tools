@@ -3,7 +3,7 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.PassKnifeRange
 {
     /// <summary>
-    /// 递刀距离：GetHandWeaponTarget 中原版硬编码 224f（0.1.17a MyPlayer.cs:2191）→ 可配置；
+    /// 递刀距离：GetHandWeaponTarget 中原版硬编码 224f（0.1.18c MyPlayer.cs:2191）→ 可配置；
     /// 仍排除 Hide / KnownBlackIds（已知的黑幕）。
     /// </summary>
     /// <remarks>

@@ -10,8 +10,8 @@ namespace DT_Tools.Commands.Power
     /// /blackout、/restore_power 共用业务（对应旧 PowerControlHelper；房主门禁由框架统一执行）。
     /// </summary>
     /// <remarks>
-    /// 原版：Dark 剪完破坏任务电箱（Fusebox.DeviceInfo.MissionType == -1）全部线后，C_INTERACT_FUSEBOX → Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16）→ DisconnetCable（:114）。断开第 2 个电箱时 AreaManager.RefreshLight 把所有 Area.IsLight 置 false，Area.IsLight setter 向区域内玩家单播 S_AREA_PUBLIC，客户端 Managers.Game.Darkness=true：关全局灯、中断读条，只剩身边小聚光灯。
-    /// 修复走 Fusebox.ConnetCable（:97）；DeviceManager.RefuseAllFuse（0.1.16b Server.Game/DeviceManager.cs:308）重连全部已断开电箱，计数归 0 时全区亮灯、播放 FuseOnSfx，并安排 60 秒后重新发放 3 个破坏任务。
+    /// 原版：Dark 剪完破坏任务电箱（Fusebox.DeviceInfo.MissionType == -1）全部线后，C_INTERACT_FUSEBOX → Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16（待核对））→ DisconnetCable（:114）。断开第 2 个电箱时 AreaManager.RefreshLight 把所有 Area.IsLight 置 false，Area.IsLight setter 向区域内玩家单播 S_AREA_PUBLIC，客户端 Managers.Game.Darkness=true：关全局灯、中断读条，只剩身边小聚光灯。
+    /// 修复走 Fusebox.ConnetCable（:97）；DeviceManager.RefuseAllFuse（0.1.16b Server.Game/DeviceManager.cs:308（待核对））重连全部已断开电箱，计数归 0 时全区亮灯、播放 FuseOnSfx，并安排 60 秒后重新发放 3 个破坏任务。
     /// </remarks>
     internal static class PowerLogic
     {
@@ -65,7 +65,7 @@ namespace DT_Tools.Commands.Power
             if (room == null) return CommandResult.Fail("invalid state");
 
             // 用全名限定：程序集里另有客户端 DeviceManager（Managers.Device，全局命名空间），
-            // 这里需要的是 Host 端 Server.Game.DeviceManager（0.1.17a Server.Game/DeviceManager.cs:10/:38）
+            // 这里需要的是 Host 端 Server.Game.DeviceManager（0.1.18c Server.Game/DeviceManager.cs:10/:38）
             var deviceManager = Server.Game.DeviceManager.Instance;
             int disconnected = deviceManager.GetDisconnectFuseCount();
             if (disconnected >= RequiredDisconnectedFuses)

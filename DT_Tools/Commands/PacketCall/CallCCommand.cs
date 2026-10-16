@@ -9,7 +9,7 @@ namespace DT_Tools.Commands.PacketCall
 {
     /// <summary>
     /// /call_c &lt;#id&gt; &lt;C_*包名&gt; [json] — 模拟指定玩家向 Host 提交 C_* 包
-    /// （走 PacketManager.HandlePacket，0.1.17a PacketManager.cs:84 HandlePacket、:16 Instance）。
+    /// （走 PacketManager.HandlePacket，0.1.18c PacketManager.cs:84 HandlePacket、:16 Instance）。
     /// </summary>
     /// <remarks>
     /// 仅房主。

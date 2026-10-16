@@ -8,8 +8,8 @@ namespace DT_Tools.Features.ChatLimit
     /// UI_DirectChat.Init 后置：抬高私聊输入框上限。
     /// </summary>
     /// <remarks>
-    /// 公共方法（nameof 定位），0.1.17a UI_DirectChat.cs:88（:88 写 characterLimit = 100）；
-    /// 私有字段 _input：0.1.17a UI_DirectChat.cs:26。
+    /// 公共方法（nameof 定位），0.1.18c UI_DirectChat.cs:88（:88 写 characterLimit = 100）；
+    /// 私有字段 _input：0.1.18c UI_DirectChat.cs:26。
     /// </remarks>
     [HarmonyPatch(typeof(UI_DirectChat), nameof(UI_DirectChat.Init))]
     internal static class ChatLimitDirectChatPatch

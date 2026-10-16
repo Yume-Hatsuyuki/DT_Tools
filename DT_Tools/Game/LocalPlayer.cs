@@ -58,7 +58,7 @@ namespace DT_Tools.Game
         /// <remarks>
         /// 该表只含存活且已 Spawn 的玩家：死亡玩家收到 S_DESPAWN 后被 PlayerManager.Despawn
         /// 移除、旁观者不入表；本机 MyPlayer 不在表内（#自己 查不到，需调用方自行提示）。
-        /// 返回客户端 Player（全局命名空间，0.1.17a Player.cs:294 Name/292 PublicInfo/294 TargetPos），
+        /// 返回客户端 Player（全局命名空间，0.1.18c Player.cs:294 Name/292 PublicInfo/294 TargetPos），
         /// 与 Server.Game.Player 同名，调用方如需服务端玩家请写全名。
         /// </remarks>
         /// <param name="playerId">玩家 PlayerId。</param>

@@ -8,8 +8,8 @@ namespace DT_Tools.Commands.Agent
     /// </summary>
     /// <remarks>
     /// 服务端 Server.Game.MissionManager 维护 ProgressMissionList（进行中）与 WaitMissionQueue（排队），每次变化经 BroadcastMissionState 广播为 S_MISSION_STATE，数据实时、无过期风险。
-    /// 可访问性（直接引用会编译失败 CS0122）：MissionManager 是 internal class（0.1.17a MissionManager.cs:10），DT_Tools 为外部编译。
-    /// Server.Game.MissionMirror 是 public static class（0.1.17a Server.Game/MissionMirror.cs:5），可编译期引用，但只在非 Host 客户端由 PacketHandler 写入（见 Handle_S_MISSION_STATE），Host 模式下为空。
+    /// 可访问性（直接引用会编译失败 CS0122）：MissionManager 是 internal class（0.1.18c MissionManager.cs:10），DT_Tools 为外部编译。
+    /// Server.Game.MissionMirror 是 public static class（0.1.18c Server.Game/MissionMirror.cs:5），可编译期引用，但只在非 Host 客户端由 PacketHandler 写入（见 Handle_S_MISSION_STATE），Host 模式下为空。
     /// 因此：非 Host 直接引用 MissionMirror；Host 经 <see cref="MissionAccess"/> 反射访问 MissionManager（反射目标与行号收口在 Game/MissionAccess.cs）。
     /// </remarks>
     internal static class AgentMissionState
@@ -30,7 +30,7 @@ namespace DT_Tools.Commands.Agent
             {
                 if (IsHost)
                     return MissionAccess.Available && MissionAccess.Instance != null;
-                return Server.Game.MissionMirror.HasState;   // 0.1.17a Server.Game/MissionMirror.cs:11
+                return Server.Game.MissionMirror.HasState;   // 0.1.18c Server.Game/MissionMirror.cs:11
             }
         }
 

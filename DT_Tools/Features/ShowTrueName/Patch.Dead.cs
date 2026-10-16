@@ -8,7 +8,7 @@ namespace DT_Tools.Features.ShowTrueName
     /// </summary>
     /// <remarks>
     /// 原版 Dead 会关闭本机 NameTag
-    /// （0.1.17a GameManagerEX.cs:345，SetActive(false) 位于 :344）。
+    /// （0.1.18c GameManagerEX.cs:345，SetActive(false) 位于 :344）。
     /// 公共方法（nameof 定位）。
     /// </remarks>
     [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]

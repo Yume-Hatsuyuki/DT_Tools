@@ -9,10 +9,10 @@ using UnityEngine;
 namespace DT_Tools.Features.SurviveSpeed
 {
     /// <summary>
-    /// FixedUpdateSurvive 整替：逐分支复刻 0.1.17a MyPlayer.cs:1757，仅倍率可配。
+    /// FixedUpdateSurvive 整替：逐分支复刻 0.1.18c MyPlayer.cs:1757，仅倍率可配。
     /// </summary>
     /// <remarks>
-    /// 被调用的私有成员（字符串定位）：UpdateMovePacket 0.1.17a MyPlayer.cs:1955、
+    /// 被调用的私有成员（字符串定位）：UpdateMovePacket 0.1.18c MyPlayer.cs:1955、
     /// FixedUpdateMove(float) :1869、FixedKnockbackPlayer :1943——逐帧热路径，
     /// 反射缓存策略见 Core/Reflect.cs 头注释。
     /// 公共成员直接引用：Controller 属性 :87、ChangeMyPlayerState :338、
@@ -23,19 +23,19 @@ namespace DT_Tools.Features.SurviveSpeed
     internal static class SurviveSpeedPatch
     {
         /// <summary>
-        /// UpdateMovePacket() 私有：0.1.17a MyPlayer.cs:1955。
+        /// UpdateMovePacket() 私有：0.1.18c MyPlayer.cs:1955。
         /// </summary>
         private static readonly Action<MyPlayer> UpdateMovePacketOf =
             Reflect.Bind<Action<MyPlayer>>(typeof(MyPlayer), "UpdateMovePacket");
 
         /// <summary>
-        /// FixedUpdateMove(float deltaSpeed) 私有：0.1.17a MyPlayer.cs:1869。
+        /// FixedUpdateMove(float deltaSpeed) 私有：0.1.18c MyPlayer.cs:1869。
         /// </summary>
         private static readonly Action<MyPlayer, float> FixedUpdateMoveOf =
             Reflect.Bind<Action<MyPlayer, float>>(typeof(MyPlayer), "FixedUpdateMove", new[] { typeof(float) });
 
         /// <summary>
-        /// FixedKnockbackPlayer() 私有：0.1.17a MyPlayer.cs:1943。
+        /// FixedKnockbackPlayer() 私有：0.1.18c MyPlayer.cs:1943。
         /// </summary>
         private static readonly Action<MyPlayer> FixedKnockbackPlayerOf =
             Reflect.Bind<Action<MyPlayer>>(typeof(MyPlayer), "FixedKnockbackPlayer");

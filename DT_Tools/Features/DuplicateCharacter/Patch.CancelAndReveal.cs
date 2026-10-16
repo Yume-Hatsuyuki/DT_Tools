@@ -8,7 +8,7 @@ using Server.Game;
 namespace DT_Tools.Features.DuplicateCharacter
 {
     /// <summary>
-    /// 取消确认只回操作者本人（CancelPickCharacter，0.1.17a GameRoom.cs:1777）。
+    /// 取消确认只回操作者本人（CancelPickCharacter，0.1.18c GameRoom.cs:1777）。
     /// </summary>
     /// <remarks>
     /// 原版取消会全员广播 S_CANCEL_PICK_CHARACTER，对端收到后对被取消角色执行
@@ -27,7 +27,7 @@ namespace DT_Tools.Features.DuplicateCharacter
                 return false;
 
             var t = Traverse.Create(__instance);
-            // _pickReady 为私有字段：0.1.17a GameRoom.cs:97
+            // _pickReady 为私有字段：0.1.18c GameRoom.cs:97
             if (!t.Field("_pickReady").GetValue<bool>())
             {
                 // 原版英文文案："CancelPickCharacter ignored - phase not ready yet"
@@ -89,7 +89,7 @@ namespace DT_Tools.Features.DuplicateCharacter
     }
 
     /// <summary>
-    /// 开局占位 + 全员锁定后统一揭晓（PickCharacterTick，0.1.17a GameRoom.cs:1619）。
+    /// 开局占位 + 全员锁定后统一揭晓（PickCharacterTick，0.1.18c GameRoom.cs:1619）。
     /// </summary>
     /// <remarks>
     /// - Prefix 捕获进入时的 StopWatch。原方法在末尾才 TimeManager.Tick() 自增，所以 Postfix 读到的是自增后的值（进入 0 读到 1，进入 40 读到 41）。

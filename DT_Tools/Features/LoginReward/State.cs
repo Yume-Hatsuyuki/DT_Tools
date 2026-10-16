@@ -6,7 +6,7 @@ namespace DT_Tools.Features.LoginReward
     internal static class LoginRewardState
     {
         /// <summary>
-        /// 等待掉落批次完成的兜底超时。0.1.17a FreeCurrencyDrops 串行 TriggerItemDrop：
+        /// 等待掉落批次完成的兜底超时。0.1.18c（待核对） FreeCurrencyDrops 串行 TriggerItemDrop：
         /// 单次结果 20s、空结果复查 65s、失败指数退避至 60s；25 单位批量可能数分钟。
         /// 正常成功/耗尽都会经 OnProgress + FreeDropPendingUnits 回落终结。
         /// </summary>
@@ -16,7 +16,7 @@ namespace DT_Tools.Features.LoginReward
         /// 发放在途标记：TryGrant 发请求前写入 InventoryManager._revealEarned。
         /// </summary>
         /// <remarks>
-        /// 真正的 grant 回调只会写 0（未发放）或正数（累计发放量），见 0.1.17a InventoryManager.cs:354-358，
+        /// 真正的 grant 回调只会写 0（未发放）或正数（累计发放量），见 0.1.18c InventoryManager.cs:354-358，
         /// 因此 -1 可区分「回调未到」——请求刚发出、同步 OnChanged 抢跑时据此过滤。
         /// </remarks>
         public const int InFlightEarned = -1;
@@ -62,7 +62,7 @@ namespace DT_Tools.Features.LoginReward
         public static bool SyncChangedDuringGrant;
 
         /// <summary>
-        /// 发起请求前的 FreeDropPendingUnits 基线（0.1.17a SaveManager.cs:116）。
+        /// 发起请求前的 FreeDropPendingUnits 基线（0.1.18c SaveManager.cs:116）。
         /// </summary>
         /// <remarks>
         /// 批次完成时 pending 回落到 ≤ 此值；中间 OnProgress 不得当作终态。

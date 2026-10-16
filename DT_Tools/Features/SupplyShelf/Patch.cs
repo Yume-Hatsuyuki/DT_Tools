@@ -6,7 +6,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.SupplyShelf
 {
     /// <summary>
-    /// 原版 InitStorage（0.1.17a Server.Game/DeviceManager.cs:347）固定投放 {BELL(3009), AIRHORN(3008)}
+    /// 原版 InitStorage（0.1.18c Server.Game/DeviceManager.cs:347）固定投放 {BELL(3009), AIRHORN(3008)}
     /// 加空槽；开启功能后整替为扩展池随机投放。
     /// </summary>
     /// <remarks>
