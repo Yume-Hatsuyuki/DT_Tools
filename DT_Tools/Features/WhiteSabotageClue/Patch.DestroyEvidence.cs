@@ -6,12 +6,13 @@ using Server.Game;
 namespace DT_Tools.Features.WhiteSabotageClue
 {
     /// <summary>
-    /// 白方销毁证据放行：Device.DestroyEvidence 前缀（public，0.1.17a Server.Game/Device.cs:217）。
+    /// 白方销毁证据放行：Device.DestroyEvidence 前缀（public，0.1.18c Server.Game/Device.cs:219）。
     /// </summary>
     /// <remarks>
-    /// 原版门禁硬编码仅黑方/黑幕（:219 的颜色判断），白方的销毁请求会被静默拒绝；
+    /// 原版门禁硬编码仅黑方/黑幕（:222 的颜色判断），白方的销毁请求会被静默拒绝；
     /// 本前缀在白方请求且其余门禁条件（存活/设备有证据/个人冷却，与原版同式）满足时
-    /// 接管执行白方销毁序列（Logic.DestroyEvidence，痕迹记真实身份），其余一律交回
+    /// 接管执行白方销毁序列（Logic.DestroyEvidence，痕迹记真实身份；0.1.18c 起内置
+    /// "无可销毁线索"前置校验并回发带 DestroyedList 的 S_LEFT_CLUE），其余一律交回
     /// 原版——黑方/黑幕路径零改动，关闭功能即原版门禁。
     /// DestroyEvidence 为非虚方法且由 DeviceManager 分发（Server.Game/HostPacketHandler.cs:747），
     /// 补丁打在基类即可覆盖全部设备。

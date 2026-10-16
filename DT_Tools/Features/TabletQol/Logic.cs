@@ -158,8 +158,7 @@ namespace DT_Tools.Features.TabletQol
             {
                 UI_ClueSubItem embedded = Managers.UI.MakeSubItem<UI_ClueSubItem>(parent);
                 var clue = source.Clue;                   // 类型是嵌套类型，用 var 免去命名
-                embedded.SetInfo(clue);
-                embedded.InitPopupClue();                 // 与游戏自己的线索浮窗同一套初始化（转储 :52838-52840）
+                embedded.SetInfo(clue);                   // SetInfo 内部已 Init + Refresh；0.1.18c 删除 InitPopupClue（悬停展开文本随 What 维度一并移除）
 
                 GameObject submitGo = Traverse.Create(embedded).Method("GetObject", new object[] { 3 }).GetValue<GameObject>();
                 if (submitGo != null)

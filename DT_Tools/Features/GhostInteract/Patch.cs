@@ -535,7 +535,7 @@ namespace DT_Tools.Features.GhostInteract
         }
 
         /// <summary>
-        /// Device.DestroyEvidence（0.1.17a Device.cs:219）：要求 IsAlive + Black/Dark。
+        /// Device.DestroyEvidence（0.1.18c Device.cs:219）：要求 IsAlive + Black/Dark。
         /// </summary>
         /// <remarks>
         /// 幽灵开启后不限阵营；逻辑镜像原版后半段。
@@ -554,12 +554,19 @@ namespace DT_Tools.Features.GhostInteract
                     return false;
                 if (!player.CanDestroyEvidence)
                     return false;
+                // 0.1.18c 原版门禁：设备上无可销毁的普通线索（非销毁证据痕迹）时静默失败
+                if (!__instance.ClueList.Any(x => !x.Destroyed && !Define.IsDestroyEvidenceClue(x)))
+                    return false;
 
                 player.CanDestroyEvidence = false;
                 player.DestroyEvidenceCooltimeEndTick = Server.Game.TimeManager.Instance.SurviveTime + 30;
                 Server.Game.TimeManager.Instance.PushSurvivalJob(30, () => { player.CanDestroyEvidence = true; });
                 player.Session.Send(new S_COOLTIME_DESTROY_EVIDENCE { Cooltime = 30 });
 
+                var leftClue = new S_LEFT_CLUE
+                {
+                    RoleFace = true
+                };
                 foreach (var item in __instance.ClueList.Where(x => !x.Destroyed && !Define.IsDestroyEvidenceClue(x)).ToList())
                 {
                     Server.Game.GameRoom.Instance.Broadcast(new S_REMOVE_CLUE
@@ -573,16 +580,16 @@ namespace DT_Tools.Features.GhostInteract
                         DeviceId = __instance.ID,
                         Info = item.Clone()
                     });
+                    leftClue.DestroyedList.Add(item.Clone());
                 }
 
-                // 幽灵销毁：原 Dark 用 11037，其余用黑方痕迹 66613
-                int cluePid = player.Color == EPlayerColor.Dark ? 11037 : 66613;
+                // 幽灵销毁：0.1.18c 起 Dark 销毁证据占位为 11038（11037 改为蓄意破坏），其余用黑方痕迹 66613
+                int cluePid = player.Color == EPlayerColor.Dark ? 11038 : 66613;
                 var propositionInfo = new PropositionInfo
                 {
                     PlayerId = cluePid,
                     Time = Server.Game.TimeManager.Instance.SurviveTime,
-                    RoomId = __instance.RoomID,
-                    WhatType = __instance.DeviceData.WhatType
+                    RoomId = __instance.RoomID
                 };
                 __instance.ClueList.Add(propositionInfo);
                 Server.Game.GameRoom.Instance.Broadcast(new S_ADD_CLUE
@@ -590,6 +597,7 @@ namespace DT_Tools.Features.GhostInteract
                     DeviceId = __instance.ID,
                     Info = propositionInfo.Clone()
                 });
+                player.Session.Send(leftClue);
                 AccessTools.Method(typeof(Server.Game.Device), "OnEvidenceDestroyed")
                     ?.Invoke(__instance, null);
                 return false;

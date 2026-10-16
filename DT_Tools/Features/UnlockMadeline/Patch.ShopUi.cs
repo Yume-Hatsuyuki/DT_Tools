@@ -65,7 +65,10 @@ namespace DT_Tools.Features.UnlockMadeline
 
     /// <summary>
     /// Managers.GetText 文本重定向（public static，可用 nameof）：
-    /// 0.1.16b Managers.cs:223（待核对）。Madeline 的宣言句文本键无数据，重定向到线索宣言。
+    /// 0.1.18c Managers.cs:223。Madeline 的宣言句文本键无数据（Localization 仅覆盖 12 人）。
+    /// 0.1.18c 起宣言句改为 PropositionSentence{Name} / PropositionSentenceRole{Name}
+    /// （Util.GetPropositionSentence 按 IsRoleClueId 分支，Define 已删除 PROPOSITION_SENTENCE_CLUE）。
+    /// 将缺失的 Madeline 键重定向到 Rin 句式，避免 Missing TextData 并保持可读。
     /// </summary>
     [HarmonyPatch(typeof(Managers), nameof(Managers.GetText))]
     internal static class UnlockMadelineGetTextPatch
@@ -75,8 +78,11 @@ namespace DT_Tools.Features.UnlockMadeline
             if (!Engine.Enabled<UnlockMadelineFeature>())
                 return;
 
+            // 0.1.18c：普通宣言 / 角色特殊线索宣言均按角色名拼键
             if (textId == "PropositionSentenceMadeline")
-                textId = Define.PROPOSITION_SENTENCE_CLUE;   // Define.cs:900
+                textId = "PropositionSentenceMiyuki";
+            else if (textId == "PropositionSentenceRoleMadeline")
+                textId = "PropositionSentenceRoleMiyuki";
         }
     }
 
