@@ -126,7 +126,7 @@ namespace DT_Tools.Features.NicknameLimit
 
         /// <summary>
         /// OnDisabled 还原：恢复抬限前的 characterLimit，并按原版权重规则
-        /// （CJK×2 + 字母数字 &gt; 12 即超长，0.1.16b UI_LobbyScene.cs:1798（待核对）)重算门禁与按钮着色，
+        /// （CJK×2 + 字母数字 &gt; 12 即超长，0.1.18c UI_LobbyScene.cs)重算门禁与按钮着色，
         /// 不给热关闭后遗留"超长名可进房"的窗口。
         /// </summary>
         public static void RestoreAllLobbyScenes()
@@ -154,7 +154,7 @@ namespace DT_Tools.Features.NicknameLimit
         }
 
         /// <summary>
-        /// 原版三档校验（0.1.16b UI_LobbyScene.cs:1772（待核对）-1814（待核对）)，仅供 OnDisabled 还原使用。
+        /// 原版三档校验（0.1.18c UI_LobbyScene.cs)，仅供 OnDisabled 还原使用。
         /// </summary>
         /// <param name="name">要校验的昵称。</param>
         /// <param name="failTip">校验失败时的提示文字。</param>

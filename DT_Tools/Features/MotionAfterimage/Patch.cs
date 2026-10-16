@@ -19,7 +19,7 @@ namespace DT_Tools.Features.MotionAfterimage
     }
 
     /// <summary>
-    /// 他人 Despawn：只保留最后一次黑色定格（0.1.16b PlayerManager.cs:434（待核对）)。
+    /// 他人 Despawn：只保留最后一次黑色定格（0.1.18c PlayerManager.cs:442)。
     /// </summary>
     /// <remarks>
     /// Hide/进柜子不走此路径。
@@ -37,7 +37,7 @@ namespace DT_Tools.Features.MotionAfterimage
     }
 
     /// <summary>
-    /// 自己死亡：S_DEAD → GameManagerEX.Dead（0.1.16b GameManagerEX.cs:334（待核对））。
+    /// 自己死亡：S_DEAD → GameManagerEX.Dead（0.1.18c GameManagerEX.cs:334）。
     /// </summary>
     /// <remarks>
     /// 原版对自己忽略 S_DESPAWN，故本地定格走此钩子。

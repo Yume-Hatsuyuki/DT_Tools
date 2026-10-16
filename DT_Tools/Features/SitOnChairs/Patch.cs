@@ -70,7 +70,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// Chair.SetInfo（0.1.16b Chair.cs，Chair 继承 DeviceBase.SetInfo DeviceBase.cs:132）：初始化骨架、固定层级、应用坐姿偏移。
+        /// Chair.SetInfo（0.1.18c Chair.cs，Chair 继承 DeviceBase.SetInfo DeviceBase.cs:132）：初始化骨架、固定层级、应用坐姿偏移。
         /// </summary>
         [HarmonyPatch(typeof(Chair), "SetInfo")]
         internal static class ChairSetInfoPatch
@@ -111,7 +111,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// Chair.GetInteractMessage（0.1.16b Chair.cs）：CafeSit=false 时咖啡椅交互提示置空（按 E 无效、不显示提示）。
+        /// Chair.GetInteractMessage（0.1.18c Chair.cs）：CafeSit=false 时咖啡椅交互提示置空（按 E 无效、不显示提示）。
         /// </summary>
         [HarmonyPatch(typeof(Chair), "GetInteractMessage")]
         internal static class ChairCafeNoSitPatch
@@ -145,7 +145,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// Chair.Interact（0.1.16b Chair.cs）：Lobby 阶段且 CafeSit=true 时改走本地坐
+        /// Chair.Interact（0.1.18c Chair.cs）：Lobby 阶段且 CafeSit=true 时改走本地坐
         /// （不发送 C_INTERACT_CHAIR）；对局内（非 Lobby）本地立即坐（GameSit），
         /// 同时照发原版 C_INTERACT_CHAIR（房主装了则全房同步，没装也不影响本地坐）。
         /// </summary>
@@ -181,7 +181,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// Player.UpdateAnimation（0.1.16b Player.cs）：本地坐着（等待室/对局内）时跳过玩家动画更新。
+        /// Player.UpdateAnimation（0.1.18c Player.cs）：本地坐着（等待室/对局内）时跳过玩家动画更新。
         /// </summary>
         [HarmonyPatch(typeof(Player), "UpdateAnimation")]
         internal static class LocalSitAnimPatch
@@ -479,7 +479,7 @@ namespace DT_Tools.Features.SitOnChairs
         }
 
         /// <summary>
-        /// Managers.Update（0.1.16b Managers.cs:325（待核对）)Postfix：非坐着状态时还原被抬高的家具美术（安全兜底）。
+        /// Managers.Update（0.1.18c Managers.cs:325)Postfix：非坐着状态时还原被抬高的家具美术（安全兜底）。
         /// </summary>
         [HarmonyPatch(typeof(Managers), "Update")]
         internal static class ChairFurnitureOnTopSafetyPatch

@@ -19,7 +19,7 @@ namespace DT_Tools.Commands.GiveMission
     {
         /// <summary>
         /// switch 中无对应 Start_ScXXX 分支的占位任务类型
-        /// （0.1.16b MissionManager.cs:807（待核对）-814（待核对） 空分组，另含枚举外的裸值 5/19）。
+        /// （0.1.18c Server.Game/MissionManager.cs 空分组，另含枚举外的裸值 5/19）。
         /// </summary>
         private static readonly HashSet<ESchoolMission> EmptyCaseMissions =
             new HashSet<ESchoolMission>

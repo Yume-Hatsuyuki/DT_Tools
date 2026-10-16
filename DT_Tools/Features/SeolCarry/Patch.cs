@@ -81,7 +81,7 @@ namespace DT_Tools.Features.SeolCarry
                 return true; // 仍拦截原技能（避免误触发时停）
             }
 
-            // 复制原版传送流程（0.1.16b UseTeleport）：Stop + Casting + 延迟后强制 Move
+            // 复制原版传送流程（0.1.18c UseTeleport）：Stop + Casting + 延迟后强制 Move
             target.BuffComponent.AddBuff(EBuffType.Stop, 3600000, isBroadcast: false);
             target.State = EPlayerState.Casting;
             Server.Game.GameRoom.Instance.PushAfter(SeolCarryFeature.CarryDelayMs, delegate
@@ -100,7 +100,7 @@ namespace DT_Tools.Features.SeolCarry
     }
 
     /// <summary>
-    /// 时停使用（0.1.16b SkillComponent.UseTimeStop，private）：Postfix 挂 5 秒时停结束
+    /// 时停使用（0.1.18c SkillComponent.UseTimeStop，private）：Postfix 挂 5 秒时停结束
     /// 检测——TheWorld 持续 5000ms，结束时记录 Seol 位置并进入搬人模式。
     /// </summary>
     [HarmonyPatch(typeof(Server.Game.SkillComponent), "UseTimeStop")]
@@ -129,7 +129,7 @@ namespace DT_Tools.Features.SeolCarry
     }
 
     /// <summary>
-    /// 技能使用入口（0.1.16b SkillComponent.UseSkill(C_USE_SKILL)，public）：Seol 处于
+    /// 技能使用入口（0.1.18c SkillComponent.UseSkill(C_USE_SKILL)，public）：Seol 处于
     /// 搬人模式时拦截原技能（不触发时停），改为执行搬人。
     /// </summary>
     [HarmonyPatch(typeof(Server.Game.SkillComponent), "UseSkill")]

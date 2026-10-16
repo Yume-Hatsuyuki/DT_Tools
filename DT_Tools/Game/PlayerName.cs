@@ -11,9 +11,9 @@ namespace DT_Tools.Game
     /// </summary>
     /// <remarks>
     /// 服务端无改名广播包（S_MODIFY_PLAYER 事件不含名字）——Server.Game.Player.Name
-    /// 为 private set 自动属性（0.1.16b Server.Game/Player.cs:68（待核对），仅构造时赋值），
+    /// 为 private set 自动属性（0.1.18c Server.Game/Player.cs，仅构造时赋值），
     /// 经属性 setter 反射写入；新名字对后续加入者（进房握手逐个下发 S_ADD_PLAYER，
-    /// 0.1.16b GameRoom.cs:1183（待核对）-1190（待核对）)生效，已在线客户端不做变更。
+    /// 0.1.18c Server.Game/GameRoom.cs)生效，已在线客户端不做变更。
     /// </remarks>
     public static class PlayerName
     {

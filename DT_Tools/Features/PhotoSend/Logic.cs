@@ -22,7 +22,7 @@ namespace DT_Tools.Features.PhotoSend
     /// </remarks>
     internal static class PhotoSendLogic
     {
-        private const int JpegLimitBytes = 163840;   // 原版上限（0.1.16b PhotoManager.cs:700（待核对）)
+        private const int JpegLimitBytes = 163840;   // 原版上限（0.1.18c PhotoManager.cs)
         private const long DownloadLimitBytes = 20L * 1024 * 1024; // 网络图片下载上限，防超大文件撑爆内存
         private const int DownloadTimeoutMs = 10000;
 
@@ -283,7 +283,7 @@ namespace DT_Tools.Features.PhotoSend
 
             if (jpeg == null || jpeg.Length > JpegLimitBytes)
             {
-                // 原图太大 → 按缩放模式压缩（0.1.16b PhotoManager 无缩放，此为本功能扩展）
+                // 原图太大 → 按缩放模式压缩（0.1.18c PhotoManager 无缩放，此为本功能扩展）
                 int maxSide = Mathf.Clamp(PhotoSendFeature.MaxSide, 128, 1024);
                 int minSide = Mathf.Clamp(PhotoSendFeature.MinSide, 64, 512);
                 float srcMax = Mathf.Max(source.width, source.height);

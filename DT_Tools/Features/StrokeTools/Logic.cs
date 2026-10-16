@@ -9,7 +9,7 @@ namespace DT_Tools.Features.StrokeTools
     /// 路线解读辅助逻辑（独立于补丁类，避免 Harmony 补丁参数静态分析误报）。
     /// </summary>
     /// <remarks>
-    /// 房间识别与官方一致：格子 = 世界坐标 ÷ 224 − MapOffset（0.1.16b
+    /// 房间识别与官方一致：格子 = 世界坐标 ÷ 224 − MapOffset（0.1.18c
     /// Server.Game/AreaManager.cs:79 GetArea；ValidPosition 同文件 :89-99 边界检查），
     /// 格子值 = Managers.Data.MapArray[x][y]（DataManager.cs:28，byte 即 ERoomType），
     /// 0 为 DefaultRoom（空地）。房间名 = Managers.GetText(枚举名)（0.1.18c UI_ChatDevicePopup.cs:475）。
@@ -59,7 +59,7 @@ namespace DT_Tools.Features.StrokeTools
         /// </summary>
         /// <remarks>
         /// 索引与官方一致：MapArray[x][y]（x = pos.X/格 − Offset.X，
-        /// y = pos.Y/格 − Offset.Y，0.1.16b AreaManager.cs:79（待核对）)；边界与空地检查照抄
+        /// y = pos.Y/格 − Offset.Y，0.1.18c Server.Game/AreaManager.cs)；边界与空地检查照抄
         /// AreaManager.ValidPosition（:89-99）。
         /// </remarks>
         /// <param name="world">世界坐标。</param>

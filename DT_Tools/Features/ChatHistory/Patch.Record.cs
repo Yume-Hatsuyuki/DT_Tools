@@ -28,7 +28,7 @@ namespace DT_Tools.Features.ChatHistory
     /// </summary>
     /// <remarks>
     /// IsSecretChatReady 为公开属性
-    /// （0.1.16b VoiceManager.cs:254（待核对），UI_ChatDevicePopup.cs:278 亦调用）。
+    /// （0.1.18c VoiceManager.cs，UI_ChatDevicePopup.cs:278 亦调用）。
     /// </remarks>
     [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.SendSecretChatMessage))]
     internal static class ChatHistoryRecordInterphoneSecretPatch

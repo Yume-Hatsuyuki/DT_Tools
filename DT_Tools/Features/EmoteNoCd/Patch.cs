@@ -10,7 +10,7 @@ namespace DT_Tools.Features.EmoteNoCd
     /// </summary>
     /// <remarks>
     /// CanUseEmotion 为 private（0.1.18c UI_EmotionSubItem.cs:110），经 Traverse 调用。
-    /// 原版经全局 Log.Assert 报父面板缺失（0.1.16b UI_EmotionSubItem.cs:94（待核对）)，
+    /// 原版经全局 Log.Assert 报父面板缺失（0.1.18c UI_EmotionSubItem.cs)，
     /// 按日志规范改走本插件 Log 门面。
     /// </remarks>
     [HarmonyPatch(typeof(UI_EmotionSubItem), nameof(UI_EmotionSubItem.UseEmotion))]

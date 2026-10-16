@@ -6,7 +6,7 @@ using Protocol;
 namespace DT_Tools.Features.KahoWatch
 {
     /// <summary>
-    /// 拆电闸提示（0.1.16b DeviceManager.HandleEvent(Player,int,Packet)，C_HANDLE_FUSEBOX
+    /// 拆电闸提示（0.1.18c DeviceManager.HandleEvent(Player,int,Packet)，C_HANDLE_FUSEBOX
     /// 服务端入口）：被监视者拆电闸（破坏，非修理）时提示 KAHO。
     /// </summary>
     /// <remarks>

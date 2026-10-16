@@ -9,7 +9,7 @@ namespace DT_Tools.Features.CanShowLie
     /// 用缓存的 S_INIT_MAP 数据构造等价包喂给 InitBlackPropositionData（0.1.18c ClueManager.cs:35）。
     /// </summary>
     /// <remarks>
-    /// 私有方法，字符串定位：0.1.16b UI_GameTablet.cs:2372（待核对）。
+    /// 私有方法，字符串定位：0.1.18c UI_GameTablet.cs。
     /// </remarks>
     [HarmonyPatch(typeof(UI_GameTablet), "BuildLieSection")]
     internal static class CanShowLieBuildPatch

@@ -4,7 +4,7 @@ using HarmonyLib;
 namespace DT_Tools.Features.ForceRinPick
 {
     /// <summary>
-    /// 选角拦截（0.1.16b GameRoom.PickCharacter(Player, int)，服务端）：被标记玩家选角时
+    /// 选角拦截（0.1.18c GameRoom.PickCharacter(Player, int)，服务端）：被标记玩家选角时
     /// 把 CharacterId 参数改写为目标角色 DataId（仅本次，标记即取即删）。
     /// </summary>
     /// <remarks>

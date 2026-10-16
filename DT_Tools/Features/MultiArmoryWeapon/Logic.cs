@@ -11,7 +11,7 @@ namespace DT_Tools.Features.MultiArmoryWeapon
     /// 原版取刀断言（SendWeapon 要求 ID == CurrentArmory.ID：0.1.18c Server.Game/Armory.cs:134）与任务箭头。
     /// </summary>
     /// <remarks>
-    /// DeviceManager 私有成员定位（0.1.16b Server.Game/DeviceManager.cs）：_armories:28、_lastArmory:14、
+    /// DeviceManager 私有成员定位（0.1.18c Server.Game/DeviceManager.cs）：_armories:28、_lastArmory:14、
     /// CurrentArmory:42（private set 属性）、ArmoryPos:44（private set 属性）。
     /// </remarks>
     internal static class MultiArmoryWeaponLogic

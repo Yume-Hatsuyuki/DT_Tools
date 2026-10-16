@@ -11,7 +11,7 @@ namespace DT_Tools.Features.SitOnChairs
 {
     /// <summary>
     /// 椅子运行时工厂（原 IslandMap ChairFactory）：游戏原版资源里没有 "Chair"
-    /// 预制体（0.1.16b 只有 Chair.cs 逻辑），这里在运行时动态构建一个：
+    /// 预制体（0.1.18c 只有 Chair.cs 逻辑），这里在运行时动态构建一个：
     /// 根物体 = 透明 SpriteRenderer（sortingOrder 240，仅承载设备交互与定位），
     /// 子物体 Skeleton = MeshRenderer（sortingOrder 260 = 坐姿人物层级）+ SkeletonAnimation，
     /// 骨架数据取任意已加载的角色骨骼资源（FindSkeletonData），坐下时 Chair.ChangeCharacter
@@ -24,7 +24,7 @@ namespace DT_Tools.Features.SitOnChairs
     internal static class ChairFactory
     {
         /// <summary>
-        /// 注入到 ResourceManager._resources 的预制体键名（0.1.16b 无此资源，运行时注入）
+        /// 注入到 ResourceManager._resources 的预制体键名（0.1.18c 无此资源，运行时注入）
         /// </summary>
         internal const string PrefabKey = "Chair";
 

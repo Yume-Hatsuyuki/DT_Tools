@@ -4,7 +4,7 @@ namespace DT_Tools.Features.ChatSanitize
 {
     /// <summary>
     /// 房主侧聊天长度过滤（服务端）：GameRoom.SanitizeChat 原版硬编码 100 截断
-    /// （0.1.16b Server.Game/GameRoom.cs:2524（待核对））。
+    /// （0.1.18c Server.Game/GameRoom.cs）。
     /// </summary>
     /// <remarks>
     /// 与客户端「ChatLimit」（输入框抬限）

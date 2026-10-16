@@ -68,7 +68,7 @@ namespace DT_Tools.Features.SoiDoubleSteal
     }
 
     /// <summary>
-    /// 偷技能计数（0.1.16b SkillComponent.UseRuleBreaker(int)，private）。
+    /// 偷技能计数（0.1.18c SkillComponent.UseRuleBreaker(int)，private）。
     /// </summary>
     [HarmonyPatch(typeof(Server.Game.SkillComponent), "UseRuleBreaker")]
     internal static class SoiDoubleStealCountPatch
@@ -89,7 +89,7 @@ namespace DT_Tools.Features.SoiDoubleSteal
     }
 
     /// <summary>
-    /// 技能使用入口（0.1.16b SkillComponent.UseSkill(C_USE_SKILL)，public）：正在使用
+    /// 技能使用入口（0.1.18c SkillComponent.UseSkill(C_USE_SKILL)，public）：正在使用
     /// 偷来的技能（Data.Type != RuleBreaker）时，用完后恢复 RuleBreaker，使其可偷下一个。
     /// </summary>
     [HarmonyPatch(typeof(Server.Game.SkillComponent), "UseSkill")]

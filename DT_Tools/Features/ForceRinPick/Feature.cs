@@ -4,7 +4,7 @@ namespace DT_Tools.Features.ForceRinPick
 {
     /// <summary>
     /// 强制选角任意角色：任意玩家在聊天输入 `!force 玩家名/ID 角色名/ID`，房主进程（服务端）
-    /// 把该玩家标记为"下次选角强制为该角色"——Hook 0.1.16b HostPacketHandler.Handle_C_CHAT_MESSAGE
+    /// 把该玩家标记为"下次选角强制为该角色"——Hook 0.1.18c HostPacketHandler.Handle_C_CHAT_MESSAGE
     /// （服务端聊天入口）解析指令并拦截（指令文本不广播全房）；Hook GameRoom.PickCharacter
     /// 在选角时把被标记玩家的 CharacterId 参数改写为目标角色 DataId，且只生效一次
     /// （标记即取即删）。

@@ -43,7 +43,7 @@ namespace DT_Tools.Features.CustomRoomCode
                 return false;
             }
 
-            // 游戏内房间码 UI 显示的是内存值（0.1.16b UI_GameScene.cs:2184（待核对）)，写 Lobby 后同步本地显示
+            // 游戏内房间码 UI 显示的是内存值（0.1.18c UI_GameScene.cs)，写 Lobby 后同步本地显示
             return RoomLobbyData.TryApplyLobbyData<CustomRoomCodeFeature>(
                 SteamLobbyManager.LOBBY_DATA_CODE_KEY, code, "房间码", reason,
                 onSet: () => Managers.Network.SetInfo(code));   // public：0.1.18c NetworkManager.cs:1116

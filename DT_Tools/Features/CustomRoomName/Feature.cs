@@ -10,7 +10,7 @@ namespace DT_Tools.Features.CustomRoomName
     /// WebUI / 配置文件修改后即时生效。
     /// </remarks>
     [PatchFeature(
-        "自定义房间名：配置 RoomName 后建房即用该名；修改配置会立刻写入当前房间（需房主，0.1.16b 起游戏内房间名显示同步更新）。",
+        "自定义房间名：配置 RoomName 后建房即用该名；修改配置会立刻写入当前房间（需房主，0.1.18c 起游戏内房间名显示同步更新）。",
         defaultEnabled: false,
         side: FeatureSide.Host,
         Tags = FeatureTag.SysRoom,

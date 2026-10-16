@@ -6,12 +6,12 @@ namespace DT_Tools.Features.AttackRange
 {
     /// <summary>
     /// GetTargetPlayer 整替：无武器返回 null；最近玩家搜索见 NearestTargetFinder
-    /// （骨架与 0.1.16b MyPlayer.cs:2162（待核对） 一致，仅 224f → 可配置 Range）。
+    /// （骨架与 0.1.18c MyPlayer.cs 一致，仅 224f → 可配置 Range）。
     /// </summary>
     /// <remarks>
-    /// 方法为 private，字符串定位：0.1.16b MyPlayer.cs:2162（待核对）。
-    /// 覆盖范围注意：0.1.16b 教程局重写后用独立的 TutorialMyPlayer
-    /// （0.1.16b TutorialMyPlayer.cs:7（待核对），继承 Tutorial_Player），不继承 MyPlayer、
+    /// 方法为 private，字符串定位：0.1.18c MyPlayer.cs。
+    /// 覆盖范围注意：0.1.18c 教程局重写后用独立的 TutorialMyPlayer
+    /// （0.1.18c TutorialMyPlayer.cs，继承 Tutorial_Player），不继承 MyPlayer、
     /// 攻击不走 GetTargetPlayer，故本补丁不覆盖教学局，教学局内攻击距离仍为原版逻辑。
     /// </remarks>
     [HarmonyPatch(typeof(MyPlayer), "GetTargetPlayer")]

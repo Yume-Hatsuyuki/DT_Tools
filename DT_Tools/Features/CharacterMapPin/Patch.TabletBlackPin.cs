@@ -7,7 +7,7 @@ namespace DT_Tools.Features.CharacterMapPin
     /// 平板 RefreshBlackPin(int) 后置：已识破黑幕的黑点也换黑色角色头像。
     /// </summary>
     /// <remarks>
-    /// 公共方法（nameof 定位）：0.1.16b UI_GameTablet.cs:1229（待核对）。
+    /// 公共方法（nameof 定位）：0.1.18c UI_GameTablet.cs。
     /// </remarks>
     [HarmonyPatch(typeof(UI_GameTablet), nameof(UI_GameTablet.RefreshBlackPin))]
     internal static class CharacterMapPinTabletBlackPinPatch

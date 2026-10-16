@@ -14,7 +14,7 @@ namespace DT_Tools.Features.CharacterMapPin
     /// Enabled 热关闭时把已替换 pin 还原为原版贴图。
     /// </summary>
     /// <remarks>
-    /// Pin 替换不调用 pin.TurnComplyRules()——它会把 AlreadyComplyRules=true（0.1.16b
+    /// Pin 替换不调用 pin.TurnComplyRules()——它会把 AlreadyComplyRules=true（0.1.18c
     /// UI_MinimapSubItem.cs:69-73），导致 Kaho 的 RefreshComplyRulesPin 跳过
     /// SetComplyRulesArrow，监视箭头直接消失。只换贴图，不碰 AlreadyComplyRules。
     /// 官方 Black/White 主要差边框色（粉/绿）；Kaho 路径固定用 Black。
@@ -28,7 +28,7 @@ namespace DT_Tools.Features.CharacterMapPin
         /// </summary>
         private const int PinComplyRulesObject = 0;
         /// <summary>
-        /// UI_MinimapSubItem 的 Images 枚举 Target=0（0.1.16b UI_MinimapSubItem.cs:12（待核对）-15（待核对））。
+        /// UI_MinimapSubItem 的 Images 枚举 Target=0（0.1.18c UI_MinimapSubItem.cs）。
         /// </summary>
         private const int PinMarkImage = 0;
         /// <summary>
@@ -74,7 +74,7 @@ namespace DT_Tools.Features.CharacterMapPin
         /// </summary>
         /// <remarks>
         /// 顺序：key → 同色 Black（若原是 White）→ Someone 对应色。
-        /// 绝不发起 Addressables 加载（Managers.Resource.Load 直查缓存，0.1.16b ResourceManager.cs:69（待核对）)。
+        /// 绝不发起 Addressables 加载（Managers.Resource.Load 直查缓存，0.1.18c ResourceManager.cs)。
         /// </remarks>
         /// <param name="key">BuildKey 返回的键。</param>
         /// <returns>预加载的头像；缓存中没有时为 null。</returns>
@@ -217,7 +217,7 @@ namespace DT_Tools.Features.CharacterMapPin
         }
 
     // 原版 RefreshPlayerPin 对已存在的 pin 只调 SetLocalPosition、不重设 sprite
-    //（0.1.16b UI_GameScene.cs:852（待核对）-868（待核对） / UI_GameTablet.cs:1211-1226 的 else 分支已核实），
+    //（0.1.18c UI_GameScene.cs / UI_GameTablet.cs:1211-1226 的 else 分支已核实），
     // 所以热关闭后本功能换上的角色头像不会自行还原，必须在 OnDisabled 主动恢复。
 
     /// <summary>
@@ -259,7 +259,7 @@ namespace DT_Tools.Features.CharacterMapPin
                 return;
 
             // 实例获取：场景 UI 经 UIManager.GetSceneUI<T>（0.1.18c UIManager.cs:317，
-            // 返回 _sceneUI as T）；平板经 TabletManager.Tablet（0.1.16b TabletManager.cs:17（待核对），
+            // 返回 _sceneUI as T）；平板经 TabletManager.Tablet（0.1.18c TabletManager.cs:17，
             // Managers.Tablet 静态入口 0.1.18c Managers.cs:144）——平板不是 SceneUI，不能走 GetSceneUI
             UI_GameScene scene = Managers.UI != null ? Managers.UI.GetSceneUI<UI_GameScene>() : null;
             if (scene != null)

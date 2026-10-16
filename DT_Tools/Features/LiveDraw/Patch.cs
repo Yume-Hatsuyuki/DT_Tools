@@ -16,7 +16,7 @@ namespace DT_Tools.Features.LiveDraw
     /// 庭审画布“动态照片”补丁集合（原 DT_LiveDraw v1.0.0 移植）：
     /// 1. Managers.Update Postfix：仅庭审讨论阶段处理按键（F9 画下一张 / F10 沸腾开关 / F11 手动波浪；聊天框打开时不抢按键）；阶段切换时停止动画并作废进行中的绘制。
     /// 2. 绘制协程（CoroutineHost.Start）：ClearMine 清空自己层 → 按笔画逐点落笔（对齐原版 64 点/包、0.09s 间隔 &lt; 房主 12 包/秒限速）→ FlushOutbox 收尾。
-    /// 3. 动画（TickBoil / SendBoilFrame）：按配置帧率发 C_DRAW_REPLACE 变形帧（基准点正弦偏移 + 周期波浪），复用原笔画 StrokeId。DrawingMirror.Replace（0.1.16b Server.Game/DrawingMirror.cs:47（待核对） 静态）同步服务端镜像（房主迁移后能恢复到当前动画帧，非房主为空镜像写入无害）；UpsertFromProto（DrawingManager 私有方法，反射调用）同步本地模型并触发重绘。照片→笔画管线见 Draw.cs；配置与开关见 Feature.cs（defaultEnabled:false，需手动开启）。
+    /// 3. 动画（TickBoil / SendBoilFrame）：按配置帧率发 C_DRAW_REPLACE 变形帧（基准点正弦偏移 + 周期波浪），复用原笔画 StrokeId。DrawingMirror.Replace（0.1.18c Server.Game/DrawingMirror.cs:47 静态）同步服务端镜像（房主迁移后能恢复到当前动画帧，非房主为空镜像写入无害）；UpsertFromProto（DrawingManager 私有方法，反射调用）同步本地模型并触发重绘。照片→笔画管线见 Draw.cs；配置与开关见 Feature.cs（defaultEnabled:false，需手动开启）。
     /// </summary>
     internal static class Patch
     {
@@ -447,7 +447,7 @@ namespace DT_Tools.Features.LiveDraw
         /// </summary>
         /// <remarks>
         /// 用客户端 Managers.Game.State +
-        /// 静态单例 TrialManager.Instance.State（0.1.16b trial.cs:41（待核对） s_instance，State 为独立
+        /// 静态单例 TrialManager.Instance.State（0.1.18c Server.Game/GameRoom.cs:45 s_instance，State 为独立
         /// 字段不依赖 GameRoom），任何玩家（含非房主）都能画；房主进程同样有效。
         /// </remarks>
         /// <returns>处于庭审讨论（作画）阶段时为 true。</returns>

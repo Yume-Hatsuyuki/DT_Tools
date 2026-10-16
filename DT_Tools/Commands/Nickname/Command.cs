@@ -10,7 +10,7 @@ namespace DT_Tools.Commands.Nickname
     /// /nick &lt;target&gt; &lt;新昵称&gt; — 更改玩家昵称（任何阶段可用，需房主）。
     /// </summary>
     /// <remarks>
-    /// 服务端无改名协议包：改 Server.Game.Player.Name（0.1.16b Server.Game/Player.cs:68（待核对），
+    /// 服务端无改名协议包：改 Server.Game.Player.Name（0.1.18c Server.Game/Player.cs:68，
     /// private set 反射写入，见 Game/PlayerName）后，新名字对**新进入房间的玩家**生效
     /// （进房握手 S_ADD_PLAYER 读服务端记录，GameRoom.cs:1183-1190）；被改名者与其他
     /// 在场玩家的客户端显示不变——改名不会写入对方本地，也不影响其自己上报的名字。

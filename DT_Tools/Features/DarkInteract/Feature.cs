@@ -5,7 +5,7 @@ namespace DT_Tools.Features.DarkInteract
     /// <summary>
     /// 断电可交互设备：跳过 DeviceBase.GetInteractMessageBase 中
     /// 「Survive + Darkness + !CanUseDarkness → DarknessError」门闩
-    /// （0.1.16b DeviceBase.cs:365（待核对）-368（待核对）)。
+    /// （0.1.18c DeviceBase.cs)。
     /// </summary>
     /// <remarks>
     /// 纯客户端；服务端不校验黑暗交互。

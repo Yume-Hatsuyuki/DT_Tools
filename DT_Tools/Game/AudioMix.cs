@@ -9,7 +9,7 @@ namespace DT_Tools.Game
     /// 音频纯函数（Game 层共享）：StageMusic 播放器、点播引擎（AudioPlayback）与虚拟麦克风
     /// 广播（MicBroadcast）是同构引擎，播放槽状态（AudioSource/片段缓存/加载协程）各归各引擎，
     /// 但无状态部分只留一份实现——多声道下混提取、语音帧混入、来源解析、本地路径解析
-    /// （0.1.16b 审计 F-M9/F-M18）。
+    /// （审计项 F-M9/F-M18）。
     /// </summary>
     internal static class AudioMix
     {

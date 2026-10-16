@@ -9,7 +9,7 @@ namespace DT_Tools.Features.SabotageButtonUnlock
 {
     /// <summary>
     /// 显示层判定与交互提示整替：按档位扩展 DeviceBase.GetInteractSabotageMessageBase
-    /// （0.1.16b DeviceBase.cs:389（待核对）-403（待核对） 的 Dark/Black 门槛）与
+    /// （0.1.18c DeviceBase.cs 的 Dark/Black 门槛）与
     /// UI_GameScene.ShowInteractSabotageText（0.1.18c UI_GameScene.cs:1358-1403（待核对） 的 flag）
     /// 两层判定；ChatDevice/尸体/销毁证据目标维持原版 Black 分支不动。
     /// </summary>
@@ -100,7 +100,7 @@ namespace DT_Tools.Features.SabotageButtonUnlock
 
         /// <summary>
         /// UI_GameScene.ShowInteractSabotageText 整替（私有方法，字符串定位：
-        /// 0.1.16b UI_GameScene.cs:1358（待核对）-1403（待核对）)：原版 flag 基础上按档位扩展
+        /// 0.1.18c UI_GameScene.cs)：原版 flag 基础上按档位扩展
         /// Door/Fusebox 的放行分支，其余 UI 写入逐句保持原版。
         /// </summary>
         /// <param name="scene">游戏场景界面。</param>

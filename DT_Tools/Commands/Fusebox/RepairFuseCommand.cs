@@ -10,7 +10,7 @@ namespace DT_Tools.Commands.Fusebox
     /// /repair_fuse [#id|all]：客户端秒修损坏电闸，无视 10 秒读条，直接发 C_INTERACT_FUSEBOX（跟随控制台，非房主可用，仅生存阶段）。
     /// </summary>
     /// <remarks>
-    /// 原版客户端 Fusebox.Interact 先本地读条 10 秒才发包；服务端 Server.Game.Fusebox.Interact（0.1.16b Server.Game/Fusebox.cs:16（待核对））见 StateList[0]==9999 直接 ConnetCable()（:97），没有读条、距离、颜色、存活校验，所以直接发包即可。
+    /// 原版客户端 Fusebox.Interact 先本地读条 10 秒才发包；服务端 Server.Game.Fusebox.Interact（0.1.18c Server.Game/Fusebox.cs:16）见 StateList[0]==9999 直接 ConnetCable()（:97），没有读条、距离、颜色、存活校验，所以直接发包即可。
     /// 服务端 DeviceManager.Interact 有 500ms InteractLock，all 模式用协程每 0.6 秒发一包。
     /// 示例：/repair_fuse 查看损坏列表；/repair_fuse all 秒修全部；/修电 #12 秒修指定电闸。
     /// </remarks>

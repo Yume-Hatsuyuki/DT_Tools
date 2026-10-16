@@ -21,7 +21,7 @@ namespace DT_Tools.Features.DestroyEvidence
             if (!Engine.Enabled<DestroyEvidenceFeature>())
                 return true;
 
-            // 与原版守卫一致：已有读条在跑就不重复开（0.1.16b DeviceBase.cs:458（待核对）)
+            // 与原版守卫一致：已有读条在跑就不重复开（0.1.18c DeviceBase.cs)
             if (Managers.Game.CastingSlider != null)
                 return false;
 

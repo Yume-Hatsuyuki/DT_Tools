@@ -64,7 +64,7 @@ namespace DT_Tools.Features.UnlockMadeline
         }
 
         /// <summary>
-        /// 档案立绘位置表（私有静态只读字典）：0.1.16b UI_InfomationPopup.cs:68（待核对）。
+        /// 档案立绘位置表（私有静态只读字典）：0.1.18c UI_InfomationPopup.cs。
         /// </summary>
         /// <returns>角色名到立绘位置的映射表。</returns>
         private static Dictionary<string, Vector2> StandingPosList()
@@ -92,7 +92,7 @@ namespace DT_Tools.Features.UnlockMadeline
         }
 
         /// <summary>
-        /// 审判过场位置表（public 静态字段）：0.1.16b UI_TrialEvent.cs:143（待核对）。
+        /// 审判过场位置表（public 静态字段）：0.1.18c UI_TrialEvent.cs。
         /// </summary>
         public static void EnsureCutscenePos()
         {
@@ -124,7 +124,7 @@ namespace DT_Tools.Features.UnlockMadeline
         /// 选人面板介绍文案（六语言）。
         /// </summary>
         /// <remarks>
-        /// 原版取 "&lt;Name&gt;Explain" 文本键（0.1.16b
+        /// 原版取 "&lt;Name&gt;Explain" 文本键（0.1.18c
         /// UI_PickPopup.cs:517），Madeline 无对应文本数据，故本地内置。
         /// </remarks>
         /// <returns>选人面板的角色介绍文案，按当前语言返回。</returns>

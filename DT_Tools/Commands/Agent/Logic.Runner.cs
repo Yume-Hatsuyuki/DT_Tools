@@ -43,9 +43,9 @@ namespace DT_Tools.Commands.Agent
 
         /// <summary>
         /// 任务全部完成判定阈值。依据 Server.Game/MissionManager.cs CheckAllClear：
-        /// Percent &gt;= 100 置 AllClear（0.1.16b :30 / :461）；客户端经
+        /// Percent &gt;= 100 置 AllClear（0.1.18c MissionManager.cs:30 / :461）；客户端经
         /// S_MISSION_PROGRESS_PERCENT → 场景事件 ChangeMissionPercent 收到同一值
-        /// （0.1.16b GameManagerEX.cs:258（待核对）、Define.cs:170）。
+        /// （0.1.18c GameManagerEX.cs、Define.cs:170）。
         /// </summary>
         private const int AllClearPercent = 100;
 
@@ -90,7 +90,7 @@ namespace DT_Tools.Commands.Agent
         /// </summary>
         /// <remarks>
         /// 注意：Managers.Game.OnBroadcastSceneEvent 在每局游戏结束/重开时会被
-        /// GameManagerEX.Clear() 整体置 null（0.1.16b GameManagerEX.cs:280（待核对），Managers.Clear() 调用链），
+        /// GameManagerEX.Clear() 整体置 null（0.1.18c GameManagerEX.cs:277，Managers.Clear() 调用链），
         /// 不是移除单个订阅者，所以旧局的订阅不会自动带到新局——必须在每次 Runner 创建时
         /// 重新订阅，不能假设订阅一次全局有效。退订统一放在 OnDestroy 里。
         /// </remarks>
@@ -162,7 +162,7 @@ namespace DT_Tools.Commands.Agent
         /// ChangesHand==true 的步骤（进/出/替换 Hand）仅在 <see cref="_handOpCooldown"/> 归零时执行，本 tick 最多 1 个，执行后进入 <see cref="HandOpCooldownTicks"/> tick 冷却。
         /// </summary>
         /// <remarks>
-        /// 依据 1：Server.Game/ItemManager.cs InsertInven（0.1.16b:101）在 Hand 非空时会强制 DropItem 踢落已持物品（:105-108），同 tick 连发两个改 Hand 包会让先发的被踢落地。
+        /// 依据 1：Server.Game/ItemManager.cs InsertInven（0.1.18c:101）在 Hand 非空时会强制 DropItem 踢落已持物品（:105-108），同 tick 连发两个改 Hand 包会让先发的被踢落地。
         /// 依据 2：HandItemId 依赖服务端异步回包刷新，冷却期给回包留时间，避免 Planner 对同一目标重复发改 Hand 请求。batch 已按 Priority 升序排列，第一个遇到的改 Hand 步骤即优先级最高者。返回值：本 tick 是否至少执行了一个步骤（供 idle 计数）。
         /// </remarks>
         /// <param name="batch">本 tick 待执行的步骤，已按 Priority 升序排列。</param>

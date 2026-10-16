@@ -6,7 +6,7 @@ namespace DT_Tools.Features.WhiteSabotageClue
     /// 白方破坏留痕（房主端）：白方拉电闸 / 销毁证据时，在对应设备上以真实玩家身份写入一条线索（PropositionInfo），侦探扫描设备即可在平板上看到是谁在破坏。
     /// </summary>
     /// <remarks>
-    /// 原版线索只记黑幕（拉电闸固定记 11037，0.1.16b Server.Game/Fusebox.cs:126（待核对）），黑方销毁证据记 66613；白方的破坏行为原版完全不留痕，本功能补齐这一环。
+    /// 原版线索只记黑幕（拉电闸固定记 11037，0.1.18c Server.Game/Fusebox.cs），黑方销毁证据记 66613；白方的破坏行为原版完全不留痕，本功能补齐这一环。
     /// 销毁证据原版仅黑方 / 黑幕（Server.Game/Device.cs:219 硬校验），开启 DestroyEvidence 后白方也可销毁，痕迹记真实身份。白方的销毁按钮显示需白方端启用「SabotageButtonUnlock」（WhiteDestroyEvidence）。白方锁门的放行已并入「DoorLockServer」（锁门不留痕，与原版一致）。拉电闸服务端无身份校验，白方拆完线即可触发。白方留痕会暴露自己：破坏收益与被推理风险并存。
     /// </remarks>
     [PatchFeature(

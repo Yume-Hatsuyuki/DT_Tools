@@ -4,7 +4,7 @@ namespace DT_Tools.Features.HasungBoost
 {
     /// <summary>
     /// Hasung 移速强化——"越跑越快"：Hasung 奔跑（消耗体力）时累积冲刺能量，每 1 秒 +1 点；
-    /// 每点能量在移速计算（0.1.16b BuffComponent.RefreshSpeed，Speed = 560 × (SpeedDelta + 0.3)）
+    /// 每点能量在移速计算（0.1.18c BuffComponent.RefreshSpeed，Speed = 560 × (SpeedDelta + 0.3)）
     /// 基础上额外增加 BoostPerPoint 档（SpeedDelta 单位），上限 MaxBoostPoints 点。
     /// </summary>
     /// <remarks>

@@ -3,7 +3,7 @@ using DT_Tools.Core.Attributes;
 namespace DT_Tools.Features.LouisFootstepDelay
 {
     /// <summary>
-    /// 路易斯警报脚印延长：路易斯技能（Telekinesis 警报标记，DeadDetective buff）标记的玩家被杀死后，全图警报（警报音 + 尸体箭头，0.1.16b Player.OnDead 内）的同时，凶手会获得脚印追踪（每 300ms 记录凶手脚印，全图重放 Footstep）。
+    /// 路易斯警报脚印延长：路易斯技能（Telekinesis 警报标记，DeadDetective buff）标记的玩家被杀死后，全图警报（警报音 + 尸体箭头，0.1.18c Player.OnDead 内）的同时，凶手会获得脚印追踪（每 300ms 记录凶手脚印，全图重放 Footstep）。
     /// </summary>
     /// <remarks>
     /// 原版脚印追踪 3000ms，本功能在路易斯标记场景下延长为 FootprintMs（默认 5000ms）。

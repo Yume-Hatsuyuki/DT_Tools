@@ -44,7 +44,7 @@ namespace DT_Tools.Commands.Kill
         /// 单目标校验：观战者 / 已死亡不可处决。
         /// </summary>
         /// <remarks>
-        /// （0.1.16b Server.Game/Player.cs:857-878（待核对）），假会话只丢弃发给自己的包，死亡流程完整。
+        /// （0.1.18c Server.Game/Player.cs），假会话只丢弃发给自己的包，死亡流程完整。
         /// </remarks>
         /// <param name="target">要检查的玩家。</param>
         /// <param name="text">不可处决时的提示文字。</param>
@@ -73,7 +73,7 @@ namespace DT_Tools.Commands.Kill
         /// <summary>
         /// 执行处决：非审判阶段先预热（DeadDetective 标记 + Louis 瞄准镜 + 警告音），
         /// 再逐个调用原版 OnDeadCollarBomb——先立即广播 DyingVfx 倒地，PushAfter(6000)
-        /// 后才真死亡（0.1.16b Server.Game/Player.cs:857-878（待核对），JobTimer 按原版触发）。
+        /// 后才真死亡（0.1.18c Server.Game/Player.cs，JobTimer 按原版触发）。
         /// </summary>
         /// <param name="room">当前房间。</param>
         /// <param name="targets">要处决的玩家列表。</param>

@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace DT_Tools.Features.PhotoTools
 {
     /// <summary>
-    /// 拍照工具补丁集合（基于 0.1.16b PhotoManager）：
+    /// 拍照工具补丁集合（基于 0.1.18c PhotoManager）：
     /// 1. EncodeAdaptive Prefix：Filter 非 None 时在 JPEG 编码前对截图像素应用滤镜，
     /// 发送给全房的照片即为处理后的效果（接收方无需装 mod）；
     /// 2. CanStayInPhotoMode Postfix：GhostCamera 开启时死亡（幽灵）也放行，

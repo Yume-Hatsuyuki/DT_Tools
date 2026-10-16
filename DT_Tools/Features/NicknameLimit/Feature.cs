@@ -8,7 +8,7 @@ namespace DT_Tools.Features.NicknameLimit
     /// <remarks>
     /// 源码侧无 characterLimit；若 Prefab 仍设了硬上限，一并抬高。
     /// 门禁点：OnValidateNickname / EnsureNicknameOrShowError / StartLobbySection 重校验
-    /// （0.1.16b UI_LobbyScene.cs:855（待核对）)/ 各进房入口读 _isNickNameValid——
+    /// （0.1.18c UI_LobbyScene.cs:204)/ 各进房入口读 _isNickNameValid——
     /// 全部经由 Logic.IsNameAcceptable 单一判定源，字符与字数两个维度在此正交。
     /// </remarks>
     [PatchFeature(

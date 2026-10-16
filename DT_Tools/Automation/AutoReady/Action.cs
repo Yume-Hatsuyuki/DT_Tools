@@ -11,7 +11,7 @@ namespace DT_Tools.Automation.AutoReady
     /// </summary>
     /// <remarks>
     /// 房主（开局按钮可见）无需准备；
-    /// 原版开局只由房主发 C_START 触发（0.1.16b Server.Game/GameRoom.cs:1571-1587（待核对）），
+    /// 原版开局只由房主发 C_START 触发（0.1.18c Server.Game/GameRoom.cs），
     /// 准备动作因此不可能间接开局。
     /// </remarks>
     internal static class AutoReadyAction

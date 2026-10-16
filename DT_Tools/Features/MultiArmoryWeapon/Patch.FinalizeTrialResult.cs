@@ -29,7 +29,7 @@ namespace DT_Tools.Features.MultiArmoryWeapon
 
             Server.Game.GameRoom room = __instance.Room;
             room.ResultType = EResultType.WhiteWin;          // 0.1.18c Protocol/EResultType.cs:8
-            room.ApplyTeamResults();                          // 0.1.16b Server.Game/GameRoom.cs:725（待核对）（WhiteWin 分支不设 PrimaryWinnerId）
+            room.ApplyTeamResults();                          // 0.1.18c Server.Game/GameRoom.cs:725（WhiteWin 分支不设 PrimaryWinnerId）
             Log.Info<MultiArmoryWeaponFeature>($"投票任意黑方胜利：最高票 #{catchId} 为黑方，判白方胜利");
             room.ChangeGameState(EGameState.TotalResult);     // 0.1.18c Server.Game/GameRoom.cs:573
             return false;

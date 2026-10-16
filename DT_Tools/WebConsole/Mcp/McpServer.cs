@@ -202,7 +202,7 @@ namespace DT_Tools.WebConsole.Mcp
                     ["version"] = MyPluginInfo.PLUGIN_VERSION,
                 },
                 ["instructions"] = "DT_Tools（Deadly Trick 工具插件）桥接。行动能力全部在 run_command（模组命令）里，先 list_commands 查阅；发包用 call_c/call_s（房主）或 call_me（客户端），"
-                    + "包语义与风险先读仓库 .github/skills/MCP/MCP.md（功能列表），未收录的包按同目录 SKILL.md 维护协议读 0.1.16b 源码补录后再发。",
+                    + "包语义与风险先读仓库 .github/skills/MCP/MCP.md（功能列表），未收录的包按同目录 SKILL.md 维护协议读 0.1.18c 源码补录后再发。",
             };
         }
 

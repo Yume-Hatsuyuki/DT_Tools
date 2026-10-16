@@ -9,7 +9,7 @@ namespace DT_Tools.Features.EmoteReader
     /// （Managers.Player.MyPlayer == __instance 时跳过，不自我解说）。
     /// </summary>
     /// <remarks>
-    /// 表情 id→解读台词映射与 EmoteTaunt 的 18 个表情一一对应（0.1.16b Emotions.cs），
+    /// 表情 id→解读台词映射与 EmoteTaunt 的 18 个表情一一对应（0.1.18c Emotions.cs），
     /// 台词逐表情配置于 Feature（配置页可直接修改，留空=该表情不解读）。
     /// 广播描述的是"对方的行为"（XX 的解读），不是冒充对方发言，无冒名风险。
     /// 庭审阶段：表情走 UI_TrialEvent.UseEmotion 而非 Player.UseEmotion（0.1.18c PacketHandler.cs:454），

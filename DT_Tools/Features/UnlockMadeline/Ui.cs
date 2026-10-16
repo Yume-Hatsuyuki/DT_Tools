@@ -16,7 +16,7 @@ namespace DT_Tools.Features.UnlockMadeline
     internal static class UnlockMadelineUi
     {
         // 裁切参数（来源：DT_Tools v1 实测标定，目标图集为游戏自带
-        // Madeline_standing.sprite / Mastermind_SD.sprite；0.1.16b 未改动这些
+        // Madeline_standing.sprite / Mastermind_SD.sprite
         // 资源布局。Unity 纹理坐标 Y 向上。版本升级若立绘图集变化需重新标定。）
 
         /// <summary>
@@ -442,7 +442,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
         /// <summary>
         /// 选人面板立绘容器（UI_PickPopup.SetStanding 用 GetObject(6)，
-        /// 0.1.16b UI_PickPopup.cs:428（待核对）)：原版 switch 未覆盖 Madeline，图区恒空，
+        /// 0.1.18c UI_PickPopup.cs)：原版 switch 未覆盖 Madeline，图区恒空，
         /// 此处创建/复用一个常驻 Image 并挂到容器上。
         /// </summary>
         /// <param name="container">选人面板的立绘容器。</param>

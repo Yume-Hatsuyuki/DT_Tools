@@ -5,7 +5,7 @@ namespace DT_Tools.Features.ChatHistory
 {
     /// <summary>
     /// 记录点（全局聊天）：VoiceManager.SendChatMessage 是全局聊天的唯一出口——聊天快捷条
-    /// （0.1.16b UI_DirectChat.cs:273（待核对）)与庭审平板（0.1.16b UI_GameTablet.cs:2644（待核对）)都调用它，
+    /// （0.1.18c UI_DirectChat.cs)与庭审平板（0.1.18c UI_GameTablet.cs)都调用它，
     /// 在此记录可保证两条 UI 的历史一致（共用一份全局池）。
     /// </summary>
     /// <remarks>

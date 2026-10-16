@@ -72,7 +72,7 @@ namespace DT_Tools.Features.DestroyEvidenceCooldownServer
             Log.Info<DestroyEvidenceCooldownServerFeature>("Transpiler 已卸载");
         }
 
-        // 原方法冷却常量 30 共 3 处：0.1.16b Server.Game/Device.cs:224（待核对）（EndTick）/ :225（恢复任务）/ :231（S_COOLTIME 包）
+        // 原方法冷却常量 30 共 3 处：0.1.18c Server.Game/Device.cs（EndTick）/ :225（恢复任务）/ :231（S_COOLTIME 包）
         [HarmonyPatch(typeof(Server.Game.Device), nameof(Server.Game.Device.DestroyEvidence))]
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> TranspileOriginal(IEnumerable<CodeInstruction> instructions)

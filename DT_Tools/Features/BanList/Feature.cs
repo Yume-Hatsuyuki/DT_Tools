@@ -10,7 +10,7 @@ using Steamworks;
 namespace DT_Tools.Features.BanList
 {
     /// <summary>
-    /// 踢人黑名单：房主踢人时游戏把对方 SteamId 记进 GameRoom._bannedSteamIds（0.1.16b Server.Game/GameRoom.cs:79（待核对）），此后进房校验直接拒绝（HandleEnterPlayer，:1068，回包 ErrorKicked）。
+    /// 踢人黑名单：房主踢人时游戏把对方 SteamId 记进 GameRoom._bannedSteamIds（0.1.18c Server.Game/GameRoom.cs:79），此后进房校验直接拒绝（HandleEnterPlayer，:1068，回包 ErrorKicked）。
     /// </summary>
     /// <remarks>
     /// 原版没有解封接口，房主会话存续期间被踢者永远进不来，只有 FullReset（:522）才清空。
@@ -24,7 +24,7 @@ namespace DT_Tools.Features.BanList
         Author = "梦初雪")]
     public sealed class BanListFeature
     {
-        // 私有字段锚点：0.1.16b Server.Game/GameRoom.cs:79（待核对）（升级时全文搜索 _bannedSteamIds 核对）
+        // 私有字段锚点：0.1.18c Server.Game/GameRoom.cs:79（升级时全文搜索 _bannedSteamIds 核对）
         private static readonly FieldInfo BannedField =
             AccessTools.Field(typeof(GameRoom), "_bannedSteamIds");
 

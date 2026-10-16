@@ -10,7 +10,7 @@ namespace DT_Tools.Features.UnlockMadeline
 {
     /// <summary>
     /// UI_PickPopup.RebuildPickList 整替（私有方法，字符串定位）：
-    /// 0.1.16b UI_PickPopup.cs:132（待核对）。原版 where Type != ECharacterType.Madeline 过滤掉
+    /// 0.1.18c UI_PickPopup.cs。原版 where Type != ECharacterType.Madeline 过滤掉
     /// 梅德琳；改为全角色列表（排序算法见 Logic.OrderedPickList，所有权经补丁恒真）。
     /// </summary>
     [HarmonyPatch(typeof(UI_PickPopup), "RebuildPickList")]
@@ -37,7 +37,7 @@ namespace DT_Tools.Features.UnlockMadeline
             ScrollRect scroll = container.GetComponentInParent<ScrollRect>();
 
             // OnPickCharacter（0.1.18c UI_PickPopup.cs:361）与 RegisterPickItem
-            //（0.1.16b UI_PickPopup.cs:163（待核对）)均为私有实例方法
+            //（0.1.18c UI_PickPopup.cs)均为私有实例方法
             var onPickMethod = AccessTools.Method(typeof(UI_PickPopup), "OnPickCharacter");
             var onPickDelegate = (global::System.Action<PointerEventData>)global::System.Delegate.CreateDelegate(
                 typeof(global::System.Action<PointerEventData>),
@@ -59,7 +59,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
     /// <summary>
     /// UI_PickPopup.SetMainInfo 前缀整替（私有方法，字符串定位）：
-    /// 0.1.16b UI_PickPopup.cs:492（待核对）。原版 default 分支对每个角色取 "&lt;Name&gt;Explain"
+    /// 0.1.18c UI_PickPopup.cs。原版 default 分支对每个角色取 "&lt;Name&gt;Explain"
     /// 文本键（UI_PickPopup.cs:517），Madeline 无该文本数据，Managers.GetText 缺键必
     /// Debug.LogError（0.1.18c Managers.cs:223-229）→ 非 Madeline 放行原版；
     /// Madeline 时按原方法体（UI_PickPopup.cs:492-541）等价重写 UI 写入，
@@ -127,7 +127,7 @@ namespace DT_Tools.Features.UnlockMadeline
 
     /// <summary>
     /// UI_PickPopup.SetStanding 后缀（私有方法，字符串定位）：
-    /// 0.1.16b UI_PickPopup.cs:421（待核对）。原版立绘 switch 不含 Madeline 类型，图区恒空；
+    /// 0.1.18c UI_PickPopup.cs。原版立绘 switch 不含 Madeline 类型，图区恒空；
     /// 容器为 GetObject(6)（UI_PickPopup.cs:428），注入常驻 Image 并挂立绘。
     /// </summary>
     [HarmonyPatch(typeof(UI_PickPopup), "SetStanding")]

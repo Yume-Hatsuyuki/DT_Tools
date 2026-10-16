@@ -7,7 +7,7 @@ namespace DT_Tools.Features.StageMusic
 {
     /// <summary>
     /// 击杀触发：Handle_S_KILL_PLAYER 是"本机击杀了人"的权威信号（服务端只发凶手，
-    /// 0.1.16b Server.Game/DeviceManager.cs:588-609（待核对））。
+    /// 0.1.18c Server.Game/DeviceManager.cs）。
     /// </summary>
     /// <remarks>
     /// PacketHandler 为 internal（PacketHandler.cs:9），
@@ -118,7 +118,7 @@ namespace DT_Tools.Features.StageMusic
 
     /// <summary>
     /// 处刑触发（审判子演出）：TrialResult 为处刑演出序列起点
-    /// （0.1.16b UI_TrialEvent.cs:1214（待核对），public）。
+    /// （0.1.18c UI_TrialEvent.cs，public）。
     /// </summary>
     [HarmonyPatch(typeof(UI_TrialEvent), nameof(UI_TrialEvent.TrialResult))]
     internal static class StageMusicExecutionTrigger
@@ -145,7 +145,7 @@ namespace DT_Tools.Features.StageMusic
     }
 
     /// <summary>
-    /// 发现尸体触发：Handle_S_DISCOVER_CORPSE 仅发给发现者本人（0.1.16b
+    /// 发现尸体触发：Handle_S_DISCOVER_CORPSE 仅发给发现者本人（0.1.18c
     /// Server.Game/Corpse.cs:349 只 player.Session.Send，其余人仅收 SeeCorpseSfx 音效），
     /// 即本机发现尸体时播放。
     /// </summary>
@@ -208,7 +208,7 @@ namespace DT_Tools.Features.StageMusic
     }
 
     /// <summary>
-    /// 黑幕继承触发：S_NOTIFY_BLACK 的接收者收到的都是"别人的 id"——0.1.16b
+    /// 黑幕继承触发：S_NOTIFY_BLACK 的接收者收到的都是"别人的 id"——0.1.18c
     /// Server.Game/Player.cs:220-238 的全部发送点：主脑收新黑幕 id、新黑幕本人收主脑 id、
     /// 死者收新黑幕 id，旧条件 PlayerId==本机 永假成死分支。
     /// </summary>

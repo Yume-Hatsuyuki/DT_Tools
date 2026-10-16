@@ -4,7 +4,7 @@ namespace DT_Tools.Features.ScanTime
 {
     /// <summary>
     /// 扫描读条：GameManagerEX.StartScanning 的 castingTime 可配置
-    /// （0.1.16b GameManagerEX.cs:809（待核对）)。
+    /// （0.1.18c GameManagerEX.cs)。
     /// </summary>
     /// <remarks>
     /// 配置 ≥0.5 时仍尊重 ScanUp→0.5。

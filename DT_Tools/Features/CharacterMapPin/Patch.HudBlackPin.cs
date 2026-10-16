@@ -7,7 +7,7 @@ namespace DT_Tools.Features.CharacterMapPin
     /// HUD RefreshBlackPin(int) 后置：已识破黑幕的黑点也换黑色角色头像。
     /// </summary>
     /// <remarks>
-    /// 公共方法（nameof 定位）：0.1.16b UI_GameScene.cs:870（待核对）。
+    /// 公共方法（nameof 定位）：0.1.18c UI_GameScene.cs。
     /// </remarks>
     [HarmonyPatch(typeof(UI_GameScene), nameof(UI_GameScene.RefreshBlackPin))]
     internal static class CharacterMapPinHudBlackPinPatch

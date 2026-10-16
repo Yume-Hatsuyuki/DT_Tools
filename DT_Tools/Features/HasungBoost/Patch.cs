@@ -84,7 +84,7 @@ namespace DT_Tools.Features.HasungBoost
     }
 
     /// <summary>
-    /// 移速计算点（0.1.16b BuffComponent.RefreshSpeed，public）：Hasung 且持有点数时，
+    /// 移速计算点（0.1.18c BuffComponent.RefreshSpeed，public）：Hasung 且持有点数时，
     /// 在计算结果上追加冲刺加成并广播最新移速。
     /// </summary>
     /// <remarks>

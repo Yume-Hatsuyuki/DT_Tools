@@ -9,7 +9,7 @@ namespace DT_Tools.Commands.CreateRoom
 {
     /// <summary>
     /// /create_room 业务编排：等大厅界面就绪 → 复刻原版 OnClickCreateButton 的
-    /// 建房前序（0.1.16b UI_LobbyScene.cs:1198（待核对）)：回跳段 → 语音预连 → School 资源域
+    /// 建房前序（0.1.18c UI_LobbyScene.cs)：回跳段 → 语音预连 → School 资源域
     /// → Steam 建房。
     /// </summary>
     /// <remarks>
@@ -58,7 +58,7 @@ namespace DT_Tools.Commands.CreateRoom
                 Managers.Network.ReturnLobbySection = section;
 
             var voiceTask = AccessTools.Method(typeof(UI_LobbyScene), "PrepareVoiceForRoomAsync")
-                ?.Invoke(scene, null) as System.Threading.Tasks.Task;   // 0.1.16b UI_LobbyScene.cs:1557（待核对）
+                ?.Invoke(scene, null) as System.Threading.Tasks.Task;   // 0.1.18c UI_LobbyScene.cs
             if (voiceTask != null)
             {
                 while (!voiceTask.IsCompleted)

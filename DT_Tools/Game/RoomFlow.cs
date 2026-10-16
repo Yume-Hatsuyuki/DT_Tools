@@ -16,7 +16,7 @@ namespace DT_Tools.Game
 
         public static void LeaveCurrentRoom()
         {
-            Managers.Network.Leave();                              // 0.1.16b NetworkManager.cs:1312（待核对）
+            Managers.Network.Leave();                              // 0.1.18c NetworkManager.cs:1312
             Managers.Scene.LoadScene(Define.EScene.LobbyScene);    // 0.1.18c SceneManagerEx.cs:9
         }
 

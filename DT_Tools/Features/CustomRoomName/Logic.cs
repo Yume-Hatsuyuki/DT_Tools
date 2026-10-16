@@ -37,7 +37,7 @@ namespace DT_Tools.Features.CustomRoomName
                 return false;
             }
 
-            // 0.1.16b 官方房间名链路：游戏内 HUD 房间名读 NetworkManager.RoomName
+            // 0.1.18c 官方房间名链路：游戏内 HUD 房间名读 NetworkManager.RoomName
             //（SetRoomName：0.1.18c NetworkManager.cs:1121）。建房回调里原版会用输入框
             // 原名 SetRoomName，把本机显示盖回 UI 名；onSet 仅在房主写库后触发，
             // 落在原版回调之后（OnLobbyCreated 体末才 invoke 回调，Postfix 更晚），

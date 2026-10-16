@@ -8,7 +8,7 @@ namespace DT_Tools.Features.BenjaminWatch
     /// </summary>
     /// <remarks>
     /// 纯本地显示，不用按 R 附身查看。
-    /// 检测算法与游戏一致（0.1.16b Summon.DetectNearbyPlayer：椭圆范围 448×410.7、Raycast 挡墙判定、
+    /// 检测算法与游戏一致（0.1.18c Summon.DetectNearbyPlayer：椭圆范围 448×410.7、Raycast 挡墙判定、
     /// 排除幽灵/躲藏/坐下/旁观/假人等），不改变游戏行为，只是把结果常驻可视化。
     /// 本机自己也计入检测（本杰明通常跟随主人）；IgnoreWalls 开启时忽略墙壁/家具遮挡
     /// （解决室内探测被桌椅等碰撞体误挡导致一直"无人"的问题）。

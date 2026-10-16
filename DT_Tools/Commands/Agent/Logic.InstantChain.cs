@@ -14,7 +14,7 @@ namespace DT_Tools.Commands.Agent
         //  SubType == OccultCandle（0.1.18c Server.Game/Occult.cs:55-57 SubType==2 走
         //  InteractOccultCandle；0.1.18c Protocol/EOccultType.cs:12 OccultCandle=2），
         //  按 ID 升序即与 OccultBook 的 StateList[0..5] 目标一一对应。
-        //  旧版硬编码 10121-10126 来自地图数据、0.1.16b 代码不可核对，地图变更即静默
+        //  旧版硬编码 10121-10126 来自地图数据（未在 0.1.18c 源码中核对），地图变更即静默
         //  失效——仅保留作动态查询为空时的 fallback。
         // ═══════════════════════════════════════════════════
         private static readonly int[] FallbackCandleDeviceIds = { 10121, 10122, 10123, 10124, 10125, 10126 };

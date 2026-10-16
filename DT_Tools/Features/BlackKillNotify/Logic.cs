@@ -142,7 +142,7 @@ namespace DT_Tools.Features.BlackKillNotify
                     killer.RemainKill);
 
                 // 包构造逐句镜像 RelayDeviceChat 的 SecretChat 分支
-                // （0.1.16b Server.Game/HostPacketHandler.cs:668-686（待核对））：Seq 入主机日志序、
+                // （0.1.18c Server.Game/HostPacketHandler.cs）：Seq 入主机日志序、
                 // Replicator.Secrets 只发黑方频道；差异仅两处——不做占用/冷却校验（直发），
                 // DeviceId 取离受害者最近的一台打字机（仅影响秘密喂料面板的房间署名）。
                 var packet = new S_CHAT_MESSAGE

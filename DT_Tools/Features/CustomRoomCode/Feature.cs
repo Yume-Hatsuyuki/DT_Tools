@@ -7,7 +7,7 @@ namespace DT_Tools.Features.CustomRoomCode
     /// </summary>
     /// <remarks>
     /// 加入方按 Steam lobby data "code"
-    /// 精确等于过滤搜索（0.1.16b DummyClient/SteamLobbyManager.cs:178-193（待核对）），
+    /// 精确等于过滤搜索（0.1.18c DummyClient/SteamLobbyManager.cs），
     /// 写入即对加入方生效。与 CustomRoomName 互不影响（不同的 data 键）。
     /// </remarks>
     [PatchFeature(

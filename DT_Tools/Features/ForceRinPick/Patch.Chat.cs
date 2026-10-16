@@ -111,7 +111,7 @@ namespace DT_Tools.Features.ForceRinPick
     }
 
     /// <summary>
-    /// 服务端聊天入口（0.1.16b HostPacketHandler.Handle_C_CHAT_MESSAGE，static）：解析
+    /// 服务端聊天入口（0.1.18c HostPacketHandler.Handle_C_CHAT_MESSAGE，static）：解析
     /// `!force 目标 [角色]` 指令——命中则标记目标玩家并拦截本次聊天（指令文本不广播全房）。
     /// </summary>
     /// <remarks>

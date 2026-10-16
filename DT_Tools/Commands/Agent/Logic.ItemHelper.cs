@@ -15,7 +15,7 @@ namespace DT_Tools.Commands.Agent
     internal static class AgentItemHelper
     {
         // ═══════════════════════════════════════════════════
-        //  Agent 域设备 StateList 槽位布局表（0.1.16b Server.Game 行号锚点）
+        //  Agent 域设备 StateList 槽位布局表（0.1.18c Server.Game 行号锚点）
         //  —— 四条链（Delivery/Vacuum/Instant/Generate）+ 本文件全部槽位判断的唯一
         //     核对入口；游戏升级后按此表逐行复核（审计技术负债 #1 的收口）。
         // ═══════════════════════════════════════════════════
@@ -51,7 +51,7 @@ namespace DT_Tools.Commands.Agent
         //
         // ═══════════════════════════════════════════════════
         //  道具 DataId 具名常量（统一引用 Define.ITEM_ID_*，双权威收敛到游戏定义；
-        //  行号=0.1.16b Define.cs）
+        //  行号=0.1.18c Define.cs）
         // ═══════════════════════════════════════════════════
 
         public const int ItemUsb = Define.ITEM_ID_USB;                       // 1008 U 盘 → ScFixPc 修电脑（Define.cs:632）

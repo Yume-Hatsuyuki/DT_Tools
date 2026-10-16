@@ -21,7 +21,7 @@ namespace DT_Tools.Features.UnlockMadeline
         private static void OnEnabled()
         {
             // 热开启补注入：IsInit 是自动属性且只在启动时置 true 一次
-            //（0.1.16b ResourceManager.cs:17（待核对）)，错过 setter 时在此手动触发
+            //（0.1.18c ResourceManager.cs)，错过 setter 时在此手动触发
             if (Managers.Resource != null && Managers.Resource.IsInit)
                 UnlockMadelineUi.InjectAll(Managers.Resource);
         }

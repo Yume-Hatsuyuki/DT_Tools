@@ -40,7 +40,7 @@ namespace DT_Tools.Commands.Kick
         /// <returns>目标可踢时为 true；失败返回 false，原因写入 code 与 text。</returns>
         public static bool TryResolveTarget(GameRoom room, int targetId, out Server.Game.Player target, out string code, out string text)
         {
-            var host = room.Host;   // 0.1.16b Server.Game/GameRoom.cs:145（待核对）
+            var host = room.Host;   // 0.1.18c Server.Game/GameRoom.cs:145
             if (host?.PublicInfo == null)
             {
                 target = null;

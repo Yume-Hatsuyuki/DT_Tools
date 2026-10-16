@@ -41,7 +41,7 @@ namespace DT_Tools.Commands.PacketCall
                 ctx.Reply("  /packets <C_包名|S_包名> — 输出该包完整字段表");
                 ctx.Reply("  /packets <子串>     — 两侧按子串过滤");
                 ctx.Reply("发包: /call_me <C_包名> [json]（本机身份，无门禁）；/call_c #id <C_包名> [json] 与 /call_s all|#id <S_包名> [json]（仅房主）。");
-                ctx.Reply("包语义/风险详见 .github/skills/MCP/MCP.md；未收录的包先读 0.1.16b 源码补录再发。");
+                ctx.Reply("包语义/风险详见 .github/skills/MCP/MCP.md；未收录的包先读 0.1.18c 源码补录再发。");
                 return CommandResult.Success(new { mode = "help" });
             }
 

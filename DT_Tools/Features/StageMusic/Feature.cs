@@ -6,12 +6,12 @@ namespace DT_Tools.Features.StageMusic
     /// 阶段音乐（客户端，实验性）：按游戏阶段播放自定义音乐（来源由 TrackSource 指定：http 链接或本地文件，仅本地收听）。
     /// </summary>
     /// <remarks>
-    /// 触发点（0.1.16b 源码，2026-09 补充审计）：
-    /// 击杀 Handle_S_KILL_PLAYER（只发凶手，PacketHandler.cs:953）；递刀 UseHandWeapon（MyPlayer.cs:779）；阶段切换 GameManagerEX.StartState（GameManagerEX.cs:386，六阶段）；
-    /// 处刑 UI_TrialEvent.TrialResult（UI_TrialEvent.cs:1214）；大厅 UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2209）与 StartLobby（GameManagerEX.cs:447）；
-    /// 审判子阶段 UI_TrialEvent.StartState（UI_TrialEvent.cs:1652，TrialResult 沿用处刑触发）；发现尸体 Handle_S_DISCOVER_CORPSE（PacketHandler.cs:821，仅发现者）；
-    /// 自己死亡 Handle_S_DEAD（PacketHandler.cs:392，仅死者；S_NOTIFY_DEAD 是灵媒通知，不能作为本机死亡信号）；结局 Handle_S_ENDING_CAMERA（PacketHandler.cs:592，IsEnd=true）；
-    /// 黑幕继承 Handle_S_NOTIFY_BLACK（PacketHandler.cs:482，非递刀时按收包瞬间的本机 Dark 与存活判定）。
+    /// 触发点（2026-09 补充审计，已对照 0.1.18c 源码核对行号）：
+    /// 击杀 Handle_S_KILL_PLAYER（只发凶手，PacketHandler.cs:965）；递刀 UseHandWeapon（MyPlayer.cs:779）；阶段切换 GameManagerEX.StartState（GameManagerEX.cs:386，六阶段）；
+    /// 处刑 UI_TrialEvent.TrialResult（UI_TrialEvent.cs:1214）；大厅 UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2209）与 StartLobby（GameManagerEX.cs:452）；
+    /// 审判子阶段 UI_TrialEvent.StartState（UI_TrialEvent.cs:1652，TrialResult 沿用处刑触发）；发现尸体 Handle_S_DISCOVER_CORPSE（PacketHandler.cs:833，仅发现者）；
+    /// 自己死亡 Handle_S_DEAD（PacketHandler.cs:404，仅死者；S_NOTIFY_DEAD 是灵媒通知，不能作为本机死亡信号）；结局 Handle_S_ENDING_CAMERA（PacketHandler.cs:604，IsEnd=true）；
+    /// 黑幕继承 Handle_S_NOTIFY_BLACK（PacketHandler.cs:494，非递刀时按收包瞬间的本机 Dark 与存活判定）。
     /// 播放槽：同曲目播放中不重播（防连杀重复），切阶段只保留一首，限长到点停止。
     /// 原版 BGM 可选静音（各阶段原版会播 DetectiveBGM、TrialMainBGM、Beta_Result_BGM 等，含 MainTitleBGM）。
     /// 麦克风广播（MicBroadcast 配置，默认关）：经 Game/MicBroadcast 混入全房；随播放槽启停，与 /mic_music 互斥（后触发者接管）。

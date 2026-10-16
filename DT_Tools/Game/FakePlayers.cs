@@ -17,15 +17,15 @@ namespace DT_Tools.Game
     /// <remarks>
     /// 只做行为，不含配置与补丁。
     /// 与旧版 Playertest 插件的关键差异（修复开局卡帧）：
-    /// 1. 创建即 ConvertToDummy。游戏原生 CompleteWaitCount 只统计非 Dummy 玩家，状态切换只等真实客户端确认；旧版即时 ACK 会把开局流程压进同一帧，并在 Broadcast 的 foreach 内重入（JobSerializer.CompletePacket，0.1.16b Server.Game/JobSerializer.cs:50-64（待核对））。
-    /// 2. 玩家 ID 走 ObjectUtils 座位表（1..16，0.1.16b Server/ObjectUtils.cs:76-88（待核对）），与真实玩家同一 ID 空间；旧版随机 100000+ 不占座位、无法释放。
-    /// 3. 移除走 HandleLeavePlayer 完整清理（广播 S_LEAVE_GAME、释放座位、清可见性与存活表，0.1.16b Server.Game/GameRoom.cs:1486-1542（待核对））。假会话是安全的：SessionManager 全为空实现（0.1.16b Server/SessionManager.cs），HostPeerSession.Disconnect 为空（0.1.16b Server.Game/HostPeerSession.cs:74-76（待核对））。
+    /// 1. 创建即 ConvertToDummy。游戏原生 CompleteWaitCount 只统计非 Dummy 玩家，状态切换只等真实客户端确认；旧版即时 ACK 会把开局流程压进同一帧，并在 Broadcast 的 foreach 内重入（JobSerializer.CompletePacket，0.1.18c Server.Game/JobSerializer.cs:50）。
+    /// 2. 玩家 ID 走 ObjectUtils 座位表（1..16，0.1.18c Server/ObjectUtils.cs），与真实玩家同一 ID 空间；旧版随机 100000+ 不占座位、无法释放。
+    /// 3. 移除走 HandleLeavePlayer 完整清理（广播 S_LEAVE_GAME、释放座位、清可见性与存活表，0.1.18c Server.Game/GameRoom.cs:1486）。假会话是安全的：SessionManager 全为空实现（0.1.18c Server/SessionManager.cs），HostPeerSession.Disconnect 为空（0.1.18c Server.Game/HostPeerSession.cs:74）。
     /// 回大厅时游戏自行移除所有假人，本类台账经 Prune 同步失效；WebUI 的行配置保留，重新点「准备」即可再次进场。所有方法须在 Unity 主线程调用（WebConsole.RunOnMain / 命令泵内）。
     /// </remarks>
     public static class FakePlayers
     {
         /// <summary>
-        /// 随机选角协议值（0.1.16b Server.Game/GameRoom.cs:1733（待核对），PickCharacter 原生支持）。
+        /// 随机选角协议值（0.1.18c Server.Game/GameRoom.cs:1717，PickCharacter 原生支持）。
         /// </summary>
         public const int RandomCharacterId = -2;
 
@@ -52,7 +52,7 @@ namespace DT_Tools.Game
         /// 创建假人并接入大厅。
         /// </summary>
         /// <remarks>
-        /// 流程对齐真实入房（0.1.16b Server.Game/GameRoom.cs:1037-1210（待核对）
+        /// 流程对齐真实入房（0.1.18c Server.Game/GameRoom.cs
         /// HandleEnterPlayer 的大厅分支）：座位 ID → 角色 → 进房 → InitLobby → S_ADD_PLAYER 环
         /// → ConvertToDummy。characterId 传 RandomCharacterId 表示随机空闲角色。
         /// capacity = 有效房间人数上限（由 API 层解析：解除上限功能开启时为其 MaxMembers，
@@ -327,7 +327,7 @@ namespace DT_Tools.Game
                 room.PickCharacter(player, characterId);
 
                 // PickCharacter 对"角色已被占用 / 该玩家已锁定"是静默忽略
-                // （0.1.16b Server.Game/GameRoom.cs:1736-1765（待核对）），读私有台账核对是否真的锁定，
+                // （0.1.18c Server.Game/GameRoom.cs），读私有台账核对是否真的锁定，
                 // 给用户诚实反馈（范本：Game/PlayerName 的 AccessTools 私有成员用法）。
                 var picked = AccessTools.Field(typeof(GameRoom), "_pickPlayers")?.GetValue(room) as List<int>;
                 var randomPicked = AccessTools.Field(typeof(GameRoom), "_randomPickPlayers")?.GetValue(room) as HashSet<int>;
@@ -418,7 +418,7 @@ namespace DT_Tools.Game
 
         /// <summary>
         /// 台账清理：游戏在回大厅（StartLobby）时会自行移除所有假人
-        /// （0.1.16b Server.Game/GameRoom.cs:804-832（待核对）），台账里已不在房间的条目在此剔除。
+        /// （0.1.18c Server.Game/GameRoom.cs），台账里已不在房间的条目在此剔除。
         /// </summary>
         /// <param name="room">当前房间。</param>
         /// <returns>被清理的台账条目数量。</returns>
@@ -476,7 +476,7 @@ namespace DT_Tools.Game
 
         /// <summary>
         /// 从角色表挑一个未被占用的角色（对齐 PickRandomOwnedCharacter 的三级回退：
-        /// 未占用非梅德琳 → 全部未占用 → 全表，0.1.16b Server.Game/GameRoom.cs:1669-1715（待核对））。
+        /// 未占用非梅德琳 → 全部未占用 → 全表，0.1.18c Server.Game/GameRoom.cs）。
         /// </summary>
         /// <param name="room">当前房间。</param>
         /// <param name="self">要选角的玩家。</param>

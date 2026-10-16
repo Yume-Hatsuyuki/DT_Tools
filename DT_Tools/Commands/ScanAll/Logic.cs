@@ -12,8 +12,8 @@ namespace DT_Tools.Commands.ScanAll
     /// /scan_all 业务：本机身份守卫 + 可扫描设备筛选 + C_SCAN_DEVICE 群发（间隔由参数指定，0=同帧发完）。
     /// </summary>
     /// <remarks>
-    /// 原版 DeviceBase.Scan 需本地接触并读 2 秒扫描条；服务端 DeviceManager.Scan → device.Scan(player) 全程无距离/阶段/颜色/存活检查，仅校验 !player.IsSpectator（0.1.16b Server.Game/DeviceManager.cs:142-144（待核对）、Server.Game/Device.cs:89），故可直接对每个可扫描 ID 发包（回 S_SCAN_DEVICE / S_SCAN_CORPSE / S_SCAN_ARMORY）。
-    /// 筛选：Bubble == -1 表示“有线索可扫描”，三类同源（0.1.16b Device.cs:298-311（待核对） ClueList>0；Server.Game/Corpse.cs:490-496 !IsBombCorpse；Server.Game/Armory.cs:277-284 StateList[6]!=0），统一按 Bubble==-1 过滤。已扫描设备 SetBubble(0)，不会重复发包。
+    /// 原版 DeviceBase.Scan 需本地接触并读 2 秒扫描条；服务端 DeviceManager.Scan → device.Scan(player) 全程无距离/阶段/颜色/存活检查，仅校验 !player.IsSpectator（0.1.18c Server.Game/DeviceManager.cs:142、Server.Game/Device.cs:89），故可直接对每个可扫描 ID 发包（回 S_SCAN_DEVICE / S_SCAN_CORPSE / S_SCAN_ARMORY）。
+    /// 筛选：Bubble == -1 表示“有线索可扫描”，三类同源（0.1.18c Server.Game/Device.cs:23 ClueList>0；Server.Game/Corpse.cs:490-496 !IsBombCorpse；Server.Game/Armory.cs:277-284 StateList[6]!=0），统一按 Bubble==-1 过滤。已扫描设备 SetBubble(0)，不会重复发包。
     /// </remarks>
     internal static class ScanAllLogic
     {

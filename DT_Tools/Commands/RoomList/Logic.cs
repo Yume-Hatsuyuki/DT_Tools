@@ -31,7 +31,7 @@ namespace DT_Tools.Commands.RoomList
         }
 
         /// <summary>
-        /// 发起异步查询（0.1.16b DummyClient/SteamLobbyManager.cs:140（待核对）
+        /// 发起异步查询（0.1.18c DummyClient/SteamLobbyManager.cs
         /// RequestLobbyList(Action&lt;List&lt;LobbyListEntry&gt;&gt;)，结果经 Steam 回调送达）。
         /// </summary>
         /// <param name="lobby">大厅管理器。</param>

@@ -62,7 +62,7 @@ namespace DT_Tools.Features.DoorLockServer
             return false;
         }
 
-        // 原方法冷却常量 40 共 3 处：0.1.16b Server.Game/Door.cs:69（待核对）（EndTick）/ :70（恢复任务）/ :76（S_COOLTIME 包）
+        // 原方法冷却常量 40 共 3 处：0.1.18c Server.Game/Door.cs（EndTick）/ :70（恢复任务）/ :76（S_COOLTIME 包）
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {

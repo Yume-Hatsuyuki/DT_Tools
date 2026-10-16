@@ -9,7 +9,7 @@ namespace DT_Tools.Commands.ReportCorpse
     /// /report 业务：本机身份守卫 + 尸体筛选与可报警判定 + C_INTERACT_CORPSE 报警。
     /// </summary>
     /// <remarks>
-    /// 原版 Corpse.Interact（0.1.16b Server.Game/Corpse.cs:262-270（待核对））只校验 !IsHidden &amp;&amp; !TrickLocked &amp;&amp; !_isReport &amp;&amp; !DiscoverdDone，无距离/颜色/存活/观战检查，可在任意位置发包触发 EndSurvival 进入 Detective。尸体 DeviceId = 死者 PlayerId（Server.Game/Corpse.cs:190/:227）。
+    /// 原版 Corpse.Interact（0.1.18c Server.Game/Corpse.cs:262）只校验 !IsHidden &amp;&amp; !TrickLocked &amp;&amp; !_isReport &amp;&amp; !DiscoverdDone，无距离/颜色/存活/观战检查，可在任意位置发包触发 EndSurvival 进入 Detective。尸体 DeviceId = 死者 PlayerId（Server.Game/Corpse.cs:190/:227）。
     /// 客户端可见状态：StateList[3]!=0 → 炸弹尸体（UI 同样禁报）；StateList[4]!=0 → HideDeviceId!=0，IsHidden（藏在容器里）；IsCorpseTrickLocked → 被致命诡计锁定。
     /// _isReport / DiscoverdDone 为服务端私有字段不可见；二者为 true 时 EndSurvival 已执行，报警会被 RequireSurvive 拦截。
     /// </remarks>

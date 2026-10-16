@@ -14,7 +14,7 @@ namespace DT_Tools.Features.SabotageButtonUnlock
     /// </summary>
     /// <remarks>
     /// Door.UseSabotage 为 protected（全局 Door.cs:347）——字符串定位。
-    /// 注意：0.1.16b 存在全局 Door.cs 与 Server.Game/Door.cs 两个同名文件，行号锚点必须带子目录。
+    /// 注意：0.1.18c 存在全局 Door.cs 与 Server.Game/Door.cs 两个同名文件，行号锚点必须带子目录。
     /// </remarks>
     [HarmonyPatch(typeof(Door), "UseSabotage")]
     internal static class DoorLockAttemptPatch

@@ -37,7 +37,7 @@ namespace DT_Tools.Features.PhotoSend
                     return true; // 严格 markdown：只认半角 !
                 }
 
-                // 大厅/观战/死亡时原版照片入口不可用（与 0.1.16b UI_GameTablet.RefreshPhotoButton 同条件），
+                // 大厅/观战/死亡时原版照片入口不可用（与 0.1.18c UI_GameTablet.RefreshPhotoButton 同条件），
                 // 此时完全不接管，避免在大厅等场景吃掉消息
                 if (Managers.Game == null || !Managers.Game.IsAlive || Managers.Game.IsSpectator)
                 {

@@ -18,13 +18,13 @@ namespace DT_Tools.Features.CharacterMapPin
     internal static class CharacterMapPinLogic
     {
         /// <summary>
-        /// 平板 pin 列表：0.1.16b UI_GameTablet.cs:243（待核对）。
+        /// 平板 pin 列表：0.1.18c UI_GameTablet.cs。
         /// </summary>
         private static readonly FieldInfo TabletPinsField =
             AccessTools.Field(typeof(UI_GameTablet), "_subItems");
 
         /// <summary>
-        /// HUD 小地图 pin 列表：0.1.16b UI_GameScene.cs:285（待核对）。
+        /// HUD 小地图 pin 列表：0.1.18c UI_GameScene.cs。
         /// </summary>
         private static readonly FieldInfo HudPinsField =
             AccessTools.Field(typeof(UI_GameScene), "_playerPinList");
@@ -144,8 +144,8 @@ namespace DT_Tools.Features.CharacterMapPin
         /// </summary>
         /// <remarks>
         /// 庭审开始时原版 StartTrial→ClearSharedAndObservedPlayers 会广播 S_DESPAWN 清场
-        /// （0.1.16b GameRoom.cs:2164（待核对）-2166（待核对）)，此时状态已是 Trial（服务器先切 State 再广播，
-        /// 0.1.16b GameRoom.cs:573（待核对）-581（待核对） + 601-610），不在 Survive/Detective 内，照常删除。
+        /// （0.1.18c Server.Game/GameRoom.cs:143)，此时状态已是 Trial（服务器先切 State 再广播，
+        /// 0.1.18c Server.Game/GameRoom.cs + 601-610），不在 Survive/Detective 内，照常删除。
         /// </remarks>
         /// <param name="id">pin 对应的 PlayerId。</param>
         /// <returns>应拦下本次删除时为 true。</returns>
@@ -171,7 +171,7 @@ namespace DT_Tools.Features.CharacterMapPin
         /// 「死亡保留 Pin」跟随服务器广播的强制位移（Patch.RespawnFollow 在 PlayerManager.HandleRespawn 后置调用）。
         /// </summary>
         /// <remarks>
-        /// 复刻原版 Kaho（ComplyRules）对被追踪者的位置推送语义：服务器每次接受移动都向追踪者发 S_PIN_MOVE（含强制移动，0.1.16b Server.Game/Player.cs:764-770（待核对）），客户端经 Handle_S_PIN_MOVE（0.1.18c PacketHandler.cs:243-249）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.18c UI_GameScene.cs:886-889）。本方法与其同构：HUD / 平板两份保留 pin 一起平滑推到目标点，坐标换算与逐帧刷新同源（0.1.18c Util.cs:884-889）。
+        /// 复刻原版 Kaho（ComplyRules）对被追踪者的位置推送语义：服务器每次接受移动都向追踪者发 S_PIN_MOVE（含强制移动，0.1.18c Server.Game/Player.cs），客户端经 Handle_S_PIN_MOVE（0.1.18c PacketHandler.cs:243-249）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.18c UI_GameScene.cs:886-889）。本方法与其同构：HUD / 平板两份保留 pin 一起平滑推到目标点，坐标换算与逐帧刷新同源（0.1.18c Util.cs:884-889）。
         /// </remarks>
         /// <param name="id">保留 pin 对应的 PlayerId。</param>
         /// <param name="pos">服务器广播的强制位移目标坐标。</param>

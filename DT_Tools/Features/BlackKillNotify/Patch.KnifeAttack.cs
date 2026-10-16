@@ -12,7 +12,7 @@ namespace DT_Tools.Features.BlackKillNotify
     /// </summary>
     /// <remarks>
     /// 放行即本帧
-    /// 必然发出 C_KILL_PLAYER（0.1.16b 全客户端唯一发送点 MyPlayer.cs:743），先记下目标。
+    /// 必然发出 C_KILL_PLAYER（0.1.18c 全客户端唯一发送点 MyPlayer.cs:743），先记下目标。
     /// </remarks>
     [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.UseWeaponItem))]
     internal static class BlackKillNotifyKnifeAttackPatch

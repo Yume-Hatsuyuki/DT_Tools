@@ -54,7 +54,7 @@ namespace DT_Tools.Commands.Say
             }
 
             // 文本经 GameRoom.SanitizeChat 过滤（去富文本、截断 100 字），与游戏聊天一致
-            // （0.1.16b Server.Game/GameRoom.cs:2524（待核对））
+            // （0.1.18c Server.Game/GameRoom.cs）
             string text = room.SanitizeChat(args.Text);
             if (string.IsNullOrEmpty(text))
             {

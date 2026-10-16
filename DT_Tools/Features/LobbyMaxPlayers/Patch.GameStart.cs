@@ -36,7 +36,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
                 $"本局人数 {__instance.RoundStartPlayerCount} → 黑幕击杀上限 {__instance.BlackKillLimit} 次（出生点循环复用）");
 
             foreach (Server.Game.Player player in __instance.Players)
-                player.Clear();                                 // 0.1.16b Server.Game/Player.cs:706（待核对）
+                player.Clear();                                 // 0.1.18c Server.Game/Player.cs:706
 
             List<PosInfo> list = Managers.Data.MapData.StartPosList != null
                 ? Managers.Data.MapData.StartPosList.ToList()
@@ -53,7 +53,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             }
             else
             {
-                list = Util.Shuffle(list, list.Count);          // 0.1.16b Util.cs:521（待核对）
+                list = Util.Shuffle(list, list.Count);          // 0.1.18c Util.cs
                 int n = __instance.Players.Count;
                 for (int i = 0; i < n; i++)
                     __instance.Players[i].GameStart(list[i % list.Count]);
@@ -72,7 +72,7 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             // FirstBloodVictimId 只有 private set（0.1.18c GameRoom.cs:127），走 public Restore
             __instance.RestoreFirstBloodVictimId(0);            // 0.1.18c GameRoom.cs:167
 
-            AwardManager.Instance.StartRound();                 // 0.1.16b Server.Game/AwardManager.cs:48（待核对）（public）
+            AwardManager.Instance.StartRound();                 // 0.1.18c Server.Game/AwardManager.cs:48（public）
 
             return false;
         }

@@ -38,7 +38,7 @@ namespace DT_Tools.Features.DuplicateCharacter
             if (TimeManager.Instance.StopWatch >= 40)
                 return false;
 
-            // 私有字段：_pickPlayers:91 / _pickCharacters:93 / _randomPickPlayers:95（0.1.16b GameRoom.cs）
+            // 私有字段：_pickPlayers:91 / _pickCharacters:93 / _randomPickPlayers:95（0.1.18c GameRoom.cs）
             var pickPlayers = t.Field("_pickPlayers").GetValue<List<int>>();
             var pickCharacters = t.Field("_pickCharacters").GetValue<List<int>>();
             var randomPickPlayers = t.Field("_randomPickPlayers").GetValue<HashSet<int>>();
@@ -100,7 +100,7 @@ namespace DT_Tools.Features.DuplicateCharacter
 
     /// <summary>
     /// 超时补选 / 进房随机分配（原版 private static int PickRandomOwnedCharacter(Player, HashSet&lt;int&gt;)，
-    /// 0.1.16b GameRoom.cs:1669（待核对）)：不排除已被占用的角色。
+    /// 0.1.18c Server.Game/GameRoom.cs)：不排除已被占用的角色。
     /// </summary>
     [HarmonyPatch(typeof(GameRoom), "PickRandomOwnedCharacter")]
     internal static class DuplicateCharacterRandomPickPatch
