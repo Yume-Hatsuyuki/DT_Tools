@@ -22,6 +22,7 @@ namespace DT_Tools.Core
         /// 随身 MP3 歌单。
         /// </summary>
         public static string Mp3Playlist => Under("mp3", "playlist.json");
+        public static string GamepadMapping => Under("gamepad", "mapping.json");
 
         /// <summary>
         /// 默认照片目录（PhotoSend / LiveDraw 共用）。

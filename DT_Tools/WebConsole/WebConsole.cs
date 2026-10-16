@@ -184,6 +184,11 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/mp3/lists/rename", Api.Mp3Api.HandleListRename);
             router.Add("POST", "/api/mp3/lists/delete", Api.Mp3Api.HandleListDelete);
             router.Add("POST", "/api/mp3/lists/select", Api.Mp3Api.HandleListSelect);
+            // 手柄应用：配置面（手柄本身由 Features/Gamepad 的后台线程处理）
+            router.Add("GET", "/api/gamepad/state", Api.GamepadApi.HandleState);
+            router.Add("POST", "/api/gamepad/bind", Api.GamepadApi.HandleBind);
+            router.Add("POST", "/api/gamepad/toggle", Api.GamepadApi.HandleToggle);
+            router.Add("POST", "/api/gamepad/reset", Api.GamepadApi.HandleReset);
             router.Add("GET", "/api/mp3/state", Api.Mp3Api.HandleState);
             router.Add("POST", "/api/mp3/play", Api.Mp3Api.HandlePlay);
             router.Add("POST", "/api/mp3/index", Api.Mp3Api.HandleIndex);

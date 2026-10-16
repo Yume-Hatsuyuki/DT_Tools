@@ -25,6 +25,7 @@ import AutomationApp from '../apps/automation/AutomationApp.vue';
 import LogApp from '../apps/log/LogApp.vue';
 import DummyApp from '../apps/dummy/DummyApp.vue';
 import Mp3App from '../apps/mp3/Mp3App.vue';
+import GamepadApp from '../apps/gamepad/GamepadApp.vue';
 
 import IconTerminal from '~icons/tabler/terminal';
 import IconPhoto from '~icons/tabler/photo';
@@ -42,6 +43,7 @@ import IconRobot from '~icons/tabler/robot';
 import IconListDetails from '~icons/tabler/list-details';
 import IconUsersGroup from '~icons/tabler/users-group';
 import IconDeviceAudioTape from '~icons/tabler/device-audio-tape';
+import IconDeviceGamepad2 from '~icons/tabler/device-gamepad-2';
 import IconBrandSteam from '~icons/tabler/brand-steam';
 import IconModelAi from '~icons/tabler/model-ai';
 
@@ -60,6 +62,7 @@ const apps = [
   { id: 'automation', title: '自动化', icon: markRaw(IconRobot), component: markRaw(AutomationApp), defaults: { x: 180, y: 140, w: 720, h: 520 } },
   { id: 'dummy', title: '假人管理', icon: markRaw(IconUsersGroup), component: markRaw(DummyApp), defaults: { x: 220, y: 170, w: 780, h: 480 } },
   { id: 'mp3', title: '随身MP3', icon: markRaw(IconDeviceAudioTape), component: markRaw(Mp3App), defaults: { x: 300, y: 230, w: 620, h: 560 }, onClose: () => API.mp3Stop() },
+  { id: 'gamepad', title: '手柄', icon: markRaw(IconDeviceGamepad2), component: markRaw(GamepadApp), defaults: { x: 340, y: 260, w: 720, h: 580 } },
   { id: 'log', title: '日志', icon: markRaw(IconListDetails), component: markRaw(LogApp), defaults: { x: 260, y: 200, w: 820, h: 560 } },
 ];
 

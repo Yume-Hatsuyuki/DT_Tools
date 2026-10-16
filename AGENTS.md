@@ -421,6 +421,7 @@ public sealed class XxxModule { }
 - 禁止写段名、键名字符串。
 - 前端需要开关键名时，走协议字段 `enabledKey`。不要硬编码 `'Enabled'`。
 - 例外：非配置数据（如随身MP3 歌单）走独立 JSON 文件。零字符串约定只约束 `[Config]` 体系。
+- 独立 JSON 的结构里不要用字典：`Core.Json` 的序列化会把字典键转成小写（`"A"` → `"a"`），读回对不上。改用对象数组（如 `[{button, output}]`）。
 
 ### 约束 6：BepInEx 5.4.20 的怪癖
 
@@ -624,6 +625,8 @@ public sealed class XxxModule { }
 | `/api/mp3/play`、`index`、`next`、`pause`、`resume`、`stop`、`seek`、`volume`、`mic`、`local`、`mode` | POST | 随身MP3 控制（见下） |
 | `/api/mp3/playlist/add`、`remove`、`move`、`clear` | POST | 曲目管理（均可带 `listId`，缺省为当前歌单） |
 | `/api/mp3/lists/create`、`rename`、`delete`、`select` | POST | 歌单管理（多歌单） |
+| `/api/gamepad/state` | GET | 手柄：功能状态、实时读数、映射表、可选输出 |
+| `/api/gamepad/bind`、`toggle`、`reset` | POST | 手柄：设置按钮输出 / 光标切换键 / 恢复默认 |
 | `/api/fs/list?path=目录` | GET | 只读目录浏览（见下） |
 | `/api/meta` | GET | 能力发现。返回 `{ok, wsPort}` |
 | `/login` | POST | 鉴权（见下） |
@@ -653,6 +656,21 @@ public sealed class XxxModule { }
 - 两个"当前"概念分开：`activeId` 是界面显示的歌单（浏览别的歌单不打断播放）；`playingListId` + `index` 是正在播放的那首所在的歌单与下标，连播、上一首/下一首、暂停恢复都基于它。客户端只有在 `playingListId == activeId` 时才高亮 `index`。
 - 曲目接口的下标都是相对于所属歌单的；拖动排序走 `playlist/move`，松手才提交一次。
 - 路由按注册顺序做前缀匹配：新增路径不得以已注册的更短路径开头（如 `/api/mp3/play` 会截走 `/api/mp3/playlist/*`）。歌单库接口统一放在 `/api/mp3/lists/*` 下。
+
+#### 手柄
+
+- 目的：手柄只控制游戏，不操作 WebUI。WebUI 只负责配置键位（游戏内做菜单的难度远高于 WebUI）。
+- 设计：无 Harmony 补丁、无 Unity 组件。后台线程 `Game/Gamepad/GamepadRuntime` 轮询 XInput（`xinput1_4.dll`，缺失回退 `1_3`），经 `GamepadMapper` 算出每帧按下的输出，再由 `GamepadDispatcher` 做边沿差分，经 `SendInput` 注入。
+- 只在游戏窗口为前台（Unity 窗口类、本进程）时注入；失焦、断连、停止时抬起全部自己按下的输出，避免按键卡住。
+- 输出种类：`action:<动作>`（读玩家在游戏里设置的实际键位，经主线程 `KeyBindings.Get` 缓存）、`key:<键名>`、`mouse:left|right`、`none`。
+- 两层映射：普通层与光标层（菜单用）。光标模式由切换键（默认 Back）在按下边沿切换；光标模式下左摇杆输出方向键，右摇杆移动光标。
+- 普通模式左摇杆输出 MoveUp/Down/Left/Right 动作。摇杆方向带滞回（进入 0.5、退出 0.35）。
+- 配置（`[Config]`，Feature 为 `Features/Gamepad`）：`DeadZone`（摇杆死区）、`TriggerThreshold`（扳机阈值）、`CursorSpeed`（光标速度）。
+- 映射文件：`gamepad/mapping.json`（`DtPaths.GamepadMapping`），结构 `{ toggle, normal: [{button, output}], cursor: [{button, output}] }`。读取逐项校验，非法项退回默认并告警。
+- 生命周期：`OnPatched` 按 `Engine.Enabled` 补挂（启动读档不触发 `OnEnabled`），`OnEnabled` / `OnDisabled` 热切换。
+- 文件：`Game/Gamepad/`（纯逻辑与原生层）、`Features/Gamepad/Feature.cs`、`WebConsole/Api/GamepadApi.cs`、`webui-src/src/apps/gamepad/GamepadApp.vue`。
+- 已知限制：只支持 XInput 手柄（Steam Input 默认设置会以虚拟 Xbox 手柄出现，可直接用）；摇杆转为数字键，没有模拟速度；右摇杆光标会移动真实系统光标；注入依赖游戏窗口在前台。
+- 作者字段为占位 `Claude（AI 助手）`，待替换为实名（AGENTS §7）。
 
 #### 目录浏览 API
 
@@ -685,7 +703,7 @@ public sealed class XxxModule { }
 #### 目录
 
 - 桌面壳在 `src/desktop/`。
-- 应用在 `src/apps/`。共 7 个：
+- 应用在 `src/apps/`。共 8 个：
 
 | 目录 | 应用 |
 | --- | --- |
@@ -696,6 +714,7 @@ public sealed class XxxModule { }
 | `log` | 全量日志 |
 | `dummy` | 假人管理 |
 | `mp3` | 随身MP3 |
+| `gamepad` | 手柄。只配置键位（映射）并实时显示读数；手柄只控制游戏，不操作 WebUI |
 
 - 跨应用共享组件在 `apps/common/`，共 6 个：`SuggestPopup`、`FolderGrid`、`LogPanel`、`EntryList`、`CropperHost`、`FileBrowser`。
 - `FileBrowser` 是本机文件选择弹窗。数据源是 `/api/fs/list`。
