@@ -22,15 +22,30 @@ namespace DT_Tools.Features.PhotoSend
     }
 
     /// <summary>
+    /// GIF 解码器：两种实现都只取第一帧，输出一致，按环境与偏好二选一。
+    /// </summary>
+    public enum GifDecoderType
+    {
+        /// <summary>
+        /// 系统 GDI+（游戏自带的 System.Drawing）：代码少、覆盖全面，依赖 Windows 自带的 gdiplus.dll（默认）。
+        /// </summary>
+        SystemDrawing = 0,
+        /// <summary>
+        /// 内置纯托管解码：零依赖、所有边界都检查，已与 Pillow 逐像素对比验证。
+        /// </summary>
+        Builtin,
+    }
+
+    /// <summary>
     /// 照片发送器（PhotoSend）：游戏内聊天输入 `![文字](路径)`（严格 markdown 括号对）。
     /// </summary>
     /// <remarks>
     /// 文字非空时先发一条普通聊天消息，再从路径直发照片；文字可空（`![](路径)`），路径不允许为空。路径支持本地文件、相对图片目录（BepInEx/config/DT_Tools/photos/）的文件名，或 http(s) 链接。
-    /// 实现：读图（LoadImage；GIF 由 GifFirstFrame 取第一帧）→ 缩放（保证 JPEG ≤160KB 原版上限）→ 构造 C_CHAT_PHOTO 直发（SlotIndex=-1，不触碰相册）→ 房主转 S_CHAT_PHOTO 全房广播。完全走原版照片协议：无需房主权限、无需对方安装本 mod，庭审阶段也可直接发。
+    /// 实现：读图（LoadImage；GIF 由配置 GifDecoder 选择的解码器取第一帧）→ 缩放（保证 JPEG ≤160KB 原版上限）→ 构造 C_CHAT_PHOTO 直发（SlotIndex=-1，不触碰相册）→ 房主转 S_CHAT_PHOTO 全房广播。完全走原版照片协议：无需房主权限、无需对方安装本 mod，庭审阶段也可直接发。
     /// </remarks>
     [PatchFeature(
         "照片发送器：聊天输入 ![文字](路径)（markdown 格式），文字非空先发一条文字再直发照片，文字可空、路径必填；" +
-        "图片支持本地路径、相对图片目录的文件名或 http(s) 网络链接；格式为 jpg / png，gif 只发第一帧（静态）。\n" +
+        "图片支持本地路径、相对图片目录的文件名或 http(s) 网络链接；格式为 jpg / png，gif 只发第一帧（静态），解码器见配置 GifDecoder。\n" +
         "走原版照片广播，全房可见，无需房主或对方安装本 MOD，庭审阶段可直接发。",
         defaultEnabled: false,
         side: FeatureSide.Client,
@@ -52,5 +67,8 @@ namespace DT_Tools.Features.PhotoSend
 
         [Config("JPEG 质量（0-100），越小体积越小。85=接近原版拍照画质（原版 q90 起步按体积自适应下调）。", Min = 30, Max = 95)]
         public static int JpegQuality = 85;
+
+        [Config("GIF 解码器：SystemDrawing=系统 GDI+（默认，依赖 Windows 自带的 gdiplus.dll）；Builtin=内置纯托管解码（零依赖，已逐像素验证）。下一张 GIF 起生效。")]
+        public static GifDecoderType GifDecoder = GifDecoderType.SystemDrawing;
     }
 }

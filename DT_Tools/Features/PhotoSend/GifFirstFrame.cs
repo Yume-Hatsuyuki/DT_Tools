@@ -44,6 +44,41 @@ namespace DT_Tools.Features.PhotoSend
         }
 
         /// <summary>
+        /// 读取逻辑屏幕描述符的尺寸，不解码图像数据。供两种解码器在解码前拦截超大画布。
+        /// </summary>
+        /// <param name="data">GIF 的原始字节。</param>
+        /// <param name="width">逻辑屏幕宽度，单位像素；0 表示未声明。</param>
+        /// <param name="height">逻辑屏幕高度，单位像素；0 表示未声明。</param>
+        /// <returns>文件头为 GIF 且长度足够时返回 true。</returns>
+        internal static bool TryReadLogicalScreen(byte[] data, out int width, out int height)
+        {
+            width = 0;
+            height = 0;
+            if (!IsGif(data) || data.Length < 13)
+            {
+                return false;
+            }
+            width = ReadUInt16(data, 6);
+            height = ReadUInt16(data, 8);
+            return true;
+        }
+
+        /// <summary>
+        /// 检查画布尺寸是否在解码上限内（最长边 4096，总像素 1600 万）。
+        /// </summary>
+        /// <param name="width">画布宽度，单位像素。</param>
+        /// <param name="height">画布高度，单位像素。</param>
+        /// <returns>超出上限时返回中文原因；在上限内返回 null。</returns>
+        internal static string CheckCanvasLimit(int width, int height)
+        {
+            if (width > MaxSide || height > MaxSide || (long)width * height > MaxPixels)
+            {
+                return $"GIF 画布 {width}x{height} 超过解码上限";
+            }
+            return null;
+        }
+
+        /// <summary>
         /// 解码 GIF 第一幅图像，合成到逻辑屏幕画布上。
         /// </summary>
         /// <remarks>
@@ -211,9 +246,9 @@ namespace DT_Tools.Features.PhotoSend
 
             int canvasW = screenWidth > 0 ? screenWidth : left + frameWidth;
             int canvasH = screenHeight > 0 ? screenHeight : top + frameHeight;
-            if (canvasW > MaxSide || canvasH > MaxSide || (long)canvasW * canvasH > MaxPixels)
+            error = CheckCanvasLimit(canvasW, canvasH);
+            if (error != null)
             {
-                error = $"GIF 画布 {canvasW}x{canvasH} 超过解码上限";
                 return false;
             }
 

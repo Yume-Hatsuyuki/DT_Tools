@@ -188,7 +188,8 @@ namespace DT_Tools.Features.PhotoSend
         /// 图片字节解码为 Texture2D。GIF 取第一帧，其余格式交给 LoadImage（PNG/JPEG）。
         /// </summary>
         /// <remarks>
-        /// GIF 先按文件头判断，不先试 LoadImage：结果不依赖 Unity 对 GIF 的内部行为。须主线程。
+        /// GIF 先按文件头判断，不先试 LoadImage：结果不依赖 Unity 对 GIF 的内部行为；
+        /// GIF 的解码器由配置 GifDecoder 选择（系统 GDI+ 或内置解码）。须主线程。
         /// </remarks>
         /// <param name="image">图片的原始字节。</param>
         /// <param name="error">失败时的中文原因；成功时为 null。</param>
@@ -198,7 +199,14 @@ namespace DT_Tools.Features.PhotoSend
             error = null;
             if (GifFirstFrame.IsGif(image))
             {
-                if (!GifFirstFrame.TryDecode(image, out int gifW, out int gifH, out byte[] rgba, out string gifError))
+                int gifW;
+                int gifH;
+                byte[] rgba;
+                string gifError;
+                bool decoded = PhotoSendFeature.GifDecoder == GifDecoderType.SystemDrawing
+                    ? GifSystemDrawing.TryDecode(image, out gifW, out gifH, out rgba, out gifError)
+                    : GifFirstFrame.TryDecode(image, out gifW, out gifH, out rgba, out gifError);
+                if (!decoded)
                 {
                     error = $"GIF 解码失败：{gifError}";
                     return null;

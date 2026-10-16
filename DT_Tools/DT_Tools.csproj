@@ -150,4 +150,11 @@
            Text="可坐椅子内嵌数据未全部收录：EmbeddedResource 收录 @(_SitOnChairsEmbedded->Count()) 个，应为 @(_SitOnChairsRequiredData->Count()) 个。请检查 csproj 中 EmbeddedResource 的路径是否与数据目录一致。" />
   </Target>
 
+  <!-- 游戏自带的 System.Drawing 与 netstandard2.1 参考包同名，SDK 的引用冲突解析会丢掉前者；
+       这里直接把游戏版本加进编译参考，别名 GameDrawing 供 GifSystemDrawing.cs 的 extern alias 使用。 -->
+  <Target Name="AddGameSystemDrawingReference" AfterTargets="ResolveAssemblyReferences" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <ReferencePath Include="$(GameManaged)\System.Drawing.dll" Aliases="GameDrawing" Private="false" CopyLocal="false" />
+    </ItemGroup>
+  </Target>
 </Project>
