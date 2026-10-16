@@ -626,7 +626,7 @@ public sealed class XxxModule { }
 | `/api/mp3/playlist/add`、`remove`、`move`、`clear` | POST | 曲目管理（均可带 `listId`，缺省为当前歌单） |
 | `/api/mp3/lists/create`、`rename`、`delete`、`select` | POST | 歌单管理（多歌单） |
 | `/api/gamepad/state` | GET | 手柄：功能状态、实时读数、映射表、可选输出 |
-| `/api/gamepad/bind`、`toggle`、`reset` | POST | 手柄：设置按钮输出 / 光标切换键 / 恢复默认 |
+| `/api/gamepad/bind`、`toggle`、`reset` | POST | 手柄：设置按钮输出（光标层可传 `inherit`，恢复为跟随普通层）/ 光标切换键 / 恢复默认 |
 | `/api/fs/list?path=目录` | GET | 只读目录浏览（见下） |
 | `/api/meta` | GET | 能力发现。返回 `{ok, wsPort}` |
 | `/login` | POST | 鉴权（见下） |
@@ -660,15 +660,18 @@ public sealed class XxxModule { }
 #### 手柄
 
 - 目的：手柄只控制游戏，不操作 WebUI。WebUI 只负责配置键位（游戏内做菜单的难度远高于 WebUI）。
-- 设计：无 Harmony 补丁、无 Unity 组件。后台线程 `Game/Gamepad/GamepadRuntime` 轮询 XInput（`xinput1_4.dll`，缺失回退 `1_3`），经 `GamepadMapper` 算出每帧按下的输出，再由 `GamepadDispatcher` 做边沿差分，经 `SendInput` 注入。
+- 设计：输入线程本身不碰 Unity；唯一的补丁是 `Features/Gamepad/Patch.CursorVisible.cs`。后台线程 `Game/Gamepad/GamepadRuntime` 轮询 XInput（`xinput1_4.dll`，缺失回退 `1_3`），经 `GamepadMapper` 算出每帧按下的输出，再由 `GamepadDispatcher` 做边沿差分，经 `SendInput` 注入。
 - 只在游戏窗口为前台（Unity 窗口类、本进程）时注入；失焦、断连、停止时抬起全部自己按下的输出，避免按键卡住。
 - 输出种类：`action:<动作>`（读玩家在游戏里设置的实际键位，经主线程 `KeyBindings.Get` 缓存）、`key:<键名>`、`mouse:left|right`、`none`。
 - 两层映射：普通层与光标层（菜单用）。光标模式由切换键（默认 Back）在按下边沿切换；光标模式下左摇杆输出方向键，右摇杆移动光标。
 - 普通模式左摇杆输出 MoveUp/Down/Left/Right 动作。摇杆方向带滞回（进入 0.5、退出 0.35）。
 - 配置（`[Config]`，Feature 为 `Features/Gamepad`）：`DeadZone`（摇杆死区）、`TriggerThreshold`（扳机阈值）、`CursorSpeed`（光标速度）。
-- 映射文件：`gamepad/mapping.json`（`DtPaths.GamepadMapping`），结构 `{ toggle, normal: [{button, output}], cursor: [{button, output}] }`。读取逐项校验，非法项退回默认并告警。
+- 映射文件：`gamepad/mapping.json`（`DtPaths.GamepadMapping`），`version` 为 2，结构 `{ version, toggle, normal: [{button, output}], cursor: [{button, output}] }`。读取逐项校验，非法项退回默认并告警。
+- 光标层的「跟随」：光标层某按钮未单独设置时，文件里写 `inherit`，内存里为 null。显示（`Tokens`）与运行时（`Compile`）都取生效值，即跟随普通层的输出，因此未设置的光标项不显示为「（无）」。玩家显式选「（无）」写 `none`，两者不混淆。`inherit` 只允许出现在光标层。
+- 迁移：version 1 文件里光标层的 `none` 视为未设置，读取时迁移为跟随（v1 保存时把整张光标表都写成了 `none`）。
 - 生命周期：`OnPatched` 按 `Engine.Enabled` 补挂（启动读档不触发 `OnEnabled`），`OnEnabled` / `OnDisabled` 热切换。
-- 文件：`Game/Gamepad/`（纯逻辑与原生层）、`Features/Gamepad/Feature.cs`、`WebConsole/Api/GamepadApi.cs`、`webui-src/src/apps/gamepad/GamepadApp.vue`。
+- 文件：`Game/Gamepad/`（纯逻辑与原生层）、`Features/Gamepad/Feature.cs`、`Features/Gamepad/Patch.CursorVisible.cs`、`WebConsole/Api/GamepadApi.cs`、`webui-src/src/apps/gamepad/GamepadApp.vue`。
+- 光标可见性：游戏的 `Managers.UpdateMouse`（私有，依据 0.1.18c `Managers.cs:243-266` 核对）在鼠标 3.0 秒无移动与点击后把 `Cursor.visible` 置为 false。`Features/Gamepad/Patch.CursorVisible.cs` 后缀该方法：光标模式生效（运行中、窗口在前台、处于光标模式）时重新置为 true；拍照模式不干预。依据 0.1.18c `Managers.cs:243-266`（已核对）。
 - 已知限制：只支持 XInput 手柄（Steam Input 默认设置会以虚拟 Xbox 手柄出现，可直接用）；摇杆转为数字键，没有模拟速度；右摇杆光标会移动真实系统光标；注入依赖游戏窗口在前台。
 - 作者字段为占位 `Claude（AI 助手）`，待替换为实名（AGENTS §7）。
 

@@ -25,7 +25,7 @@ namespace DT_Tools.WebConsole.Api
         }
 
         /// <summary>
-        /// POST /api/gamepad/bind {layer, button, output} — 设置某层某按钮的输出。
+        /// POST /api/gamepad/bind {layer, button, output} — 设置某层某按钮的输出。光标层可传 inherit，恢复为跟随普通层。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleBind(HttpListenerContext ctx)
@@ -79,6 +79,7 @@ namespace DT_Tools.WebConsole.Api
             GamepadLiveState live = GamepadService.Live;
             string[] normal = m.Tokens(GamepadMapping.LayerNormal);
             string[] cursor = m.Tokens(GamepadMapping.LayerCursor);
+            bool[] inherited = m.CursorInherited();
 
             var pressed = new List<string>();
             var buttons = new List<object>();
@@ -95,6 +96,7 @@ namespace DT_Tools.WebConsole.Api
                     label = GamepadButtons.LabelOf(i),
                     normal = normal[i],
                     cursor = cursor[i],
+                    cursorInherited = inherited[i],
                 });
             }
 

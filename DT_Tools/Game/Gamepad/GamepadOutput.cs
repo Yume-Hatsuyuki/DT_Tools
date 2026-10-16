@@ -26,6 +26,9 @@ namespace DT_Tools.Game
         public const string MouseLeftToken = "mouse:left";
         public const string MouseRightToken = "mouse:right";
 
+        /// <summary>光标层专用：该按钮未单独设置，跟随普通层的输出。只出现在映射文件与接口里，不是可输出的 token。</summary>
+        public const string InheritToken = "inherit";
+
         /// <summary>
         /// 解析 token。
         /// </summary>

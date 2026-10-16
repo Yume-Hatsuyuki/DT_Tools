@@ -88,6 +88,12 @@ const outputOptions = computed(() => [
   { group: '鼠标', items: mouse.value.map(m => ({ value: m.token, label: m.label })) },
 ]);
 
+// 光标层多一项「跟随普通模式」：未单独设置的按钮显示普通层的输出（虚线框），选它可恢复跟随
+const cursorOptions = computed(() => [
+  { group: '跟随', items: [{ value: 'inherit', label: '（跟随普通模式）' }] },
+  ...outputOptions.value,
+]);
+
 const labelOf = computed(() => {
   const map = {};
   for (const b of buttons.value) map[b.id] = b.label;
@@ -161,8 +167,8 @@ onUnmounted(() => poller.stop());
             <option v-for="o in g.items" :key="o.value" :value="o.value">{{ o.label }}</option>
           </optgroup>
         </select>
-        <select class="sel" :value="row.cursor" :disabled="busy" @change="setBinding(row, 'cursor', $event.target.value)">
-          <optgroup v-for="g in outputOptions" :key="g.group" :label="g.group">
+        <select class="sel" :class="{ inherited: row.cursorInherited }" :title="row.cursorInherited ? '未单独设置，跟随普通模式' : ''" :value="row.cursor" :disabled="busy" @change="setBinding(row, 'cursor', $event.target.value)">
+          <optgroup v-for="g in cursorOptions" :key="g.group" :label="g.group">
             <option v-for="o in g.items" :key="o.value" :value="o.value">{{ o.label }}</option>
           </optgroup>
         </select>
@@ -172,6 +178,7 @@ onUnmounted(() => poller.stop());
     <div class="foot">
       <button class="tb-btn" :disabled="busy" @click="resetAll">恢复默认映射</button>
       <span class="hint">手柄只控制游戏，本应用只负责配置。游戏动作读取玩家在游戏里设置的实际键位；Steam Input 保持默认即可。</span>
+      <span class="hint">光标模式里虚线框的按钮未单独设置，跟随普通模式；选「（跟随普通模式）」可恢复，选「（无）」则关闭该按钮。</span>
     </div>
 
     <div v-if="error" class="err">{{ error }}</div>
@@ -203,6 +210,7 @@ onUnmounted(() => poller.stop());
 .label { font-size: 12px; color: var(--text-1); }
 .sel { background: var(--surface-0); border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--text-0); font-size: 12px; padding: 4px 6px; min-width: 0; }
 .sel:disabled { opacity: 0.5; }
+.sel.inherited { border-style: dashed; color: var(--text-2); }
 .table { border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
 .thead, .trow { display: grid; grid-template-columns: 110px 1fr 1fr; gap: 8px; align-items: center; padding: 6px 10px; }
 .thead { background: var(--surface-2); font-size: 11px; color: var(--text-2); }

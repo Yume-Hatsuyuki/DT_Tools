@@ -23,6 +23,21 @@ namespace DT_Tools.Game
         public static GamepadLiveState Live => Runtime.Live;
 
         /// <summary>
+        /// 光标模式是否生效：运行中、游戏窗口在前台、且处于光标模式。
+        /// </summary>
+        /// <remarks>
+        /// 只读快照，可在主线程（Harmony 补丁）调用。失焦或停止时为 false，光标可见性由游戏自行接管。
+        /// </remarks>
+        public static bool CursorModeActive
+        {
+            get
+            {
+                GamepadLiveState s = Runtime.Live;
+                return Runtime.Running && s.CursorMode && s.Focused;
+            }
+        }
+
+        /// <summary>
         /// 映射表（首次访问时从磁盘加载）。
         /// </summary>
         public static GamepadMapping Mapping
