@@ -86,6 +86,10 @@ namespace DT_Tools.Game.WebTablet
         public int Time;
         /// <summary>所属局号（由存储在入库时写入）。同一局的线索共用一个值，回到大厅即递增。</summary>
         public int Round;
+        /// <summary>线索对象的玩家编号（游戏 Info.PlayerId），用于同一时间的次序。</summary>
+        public int TargetId;
+        /// <summary>线索所在房间的编号（游戏 Info.RoomId），用于同一时间的次序。</summary>
+        public int RoomId;
     }
 
     /// <summary>
