@@ -16,6 +16,24 @@ namespace DT_Tools.Automation.AutoReady
     /// </remarks>
     internal static class AutoReadyAction
     {
+        /// <summary>
+        /// 房主开局按钮（StartButton，枚举值 31）：只有房主可见。
+        /// </summary>
+        /// <remarks>
+        /// 0.1.18c UI_GameScene.cs:52 枚举；SelectedHostPlayer（:1735-1749）按房主身份切换显隐，
+        /// F5 快捷键也以它的显隐判定开局（:4800）。
+        /// </remarks>
+        private const int StartButtonIndex = 31;
+
+        /// <summary>
+        /// 准备按钮（ReadyButton，枚举值 30）：非房主可见，点击走 OnClickReadyButton。
+        /// </summary>
+        /// <remarks>
+        /// 0.1.18c UI_GameScene.cs:51 枚举；绑定见 :599，F5 准备分支见 :4804。
+        /// 不要用 RoomCodeButton（枚举值 32，UI_GameScene.cs:53）判定房主：大厅所有人都可见。
+        /// </remarks>
+        private const int ReadyButtonIndex = 30;
+
         public static void Run()
         {
             float delay = Mathf.Max(0f, AutoReadyModule.DelaySeconds);
@@ -41,17 +59,16 @@ namespace DT_Tools.Automation.AutoReady
                 return;
             }
 
-            // GetObject 为 UI_Base protected（0.1.18c UI_Base.cs:93）；绑定器
-            // 32 = 房主开局按钮、31 = 准备按钮（绑定 UI_GameScene.cs:612，F5 判定 :4878-4884）
+            // GetObject 为 UI_Base protected（0.1.18c UI_Base.cs:93），经 Traverse 调用。
             var t = HarmonyLib.Traverse.Create(scene);
-            GameObject startBtn = t.Method("GetObject", new object[] { 32 }).GetValue<GameObject>();
+            GameObject startBtn = t.Method("GetObject", new object[] { StartButtonIndex }).GetValue<GameObject>();
             if (startBtn != null && startBtn.activeInHierarchy)
             {
                 AutoReadyState.MarkLeft();
                 Log.Info<AutoReadyModule>("自己是房主，无需准备");
                 return;
             }
-            GameObject readyBtn = t.Method("GetObject", new object[] { 31 }).GetValue<GameObject>();
+            GameObject readyBtn = t.Method("GetObject", new object[] { ReadyButtonIndex }).GetValue<GameObject>();
             if (readyBtn == null || !readyBtn.activeInHierarchy)
             {
                 ScheduleRetry();
