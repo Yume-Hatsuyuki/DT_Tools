@@ -203,6 +203,7 @@ namespace DT_Tools.WebConsole.Api
             isDead = l.IsDead,
             text = l.Text,
             photoKey = l.PhotoKey,
+            round = l.Round,
         };
 
         private static object ToClueDto(WebTabletClue c) => new
@@ -220,6 +221,7 @@ namespace DT_Tools.WebConsole.Api
             sentence = c.Sentence,
             destroyed = c.Destroyed,
             time = c.Time,
+            round = c.Round,
         };
 
         private static void WriteMain(HttpListenerContext ctx, Func<CommandResult> work)

@@ -1,5 +1,7 @@
 <script setup>
+import { computed } from 'vue';
 import { avatarSrc, personalColor } from './tabletAvatars.js';
+import { groupByRound } from './tabletFormat.js';
 import { API } from '../../api.js';
 
 /**
@@ -7,9 +9,11 @@ import { API } from '../../api.js';
  * 本机消息靠右，他人消息靠左；死亡者气泡为灰色；阶段标记为黄字居中。
  * 照片下方提供「复制」「另存为」，操作由父组件完成。
  */
-defineProps({
+const props = defineProps({
   lines: { type: Array, default: () => [] },
+  numbering: { type: Map, default: () => new Map() },
 });
+const groups = computed(() => groupByRound(props.lines, props.numbering));
 const emit = defineEmits(['copy-photo', 'save-photo']);
 
 function bubbleStyle(l) {
@@ -24,7 +28,9 @@ function photoUrl(key) {
 
 <template>
   <div class="chat-list">
-    <template v-for="l in lines" :key="l.seq">
+    <template v-for="g in groups" :key="g.round">
+      <div class="round-sep">—— 第 {{ g.no }} 局 ——</div>
+      <template v-for="l in g.items" :key="l.seq">
       <div v-if="l.kind === 'state'" class="state-line">—— {{ l.text }} ——</div>
       <div v-else class="msg" :class="{ mine: l.isMine }">
         <img class="avatar" :class="{ dead: l.isDead }" :src="avatarSrc(l.avatar)" alt="" draggable="false" />
@@ -49,11 +55,13 @@ function photoUrl(key) {
           >{{ l.text }}</div>
         </div>
       </div>
+      </template>
     </template>
   </div>
 </template>
 
 <style scoped>
+.round-sep { text-align: center; font-size: 12px; font-weight: 600; color: var(--accent-amber); padding: 4px 0; letter-spacing: 0.02em; }
 .chat-list { display: flex; flex-direction: column; gap: 12px; padding: 10px 12px; }
 .state-line { text-align: center; font-size: 12px; font-weight: 600; color: var(--accent-amber); padding: 4px 0; letter-spacing: 0.02em; }
 .msg { display: flex; align-items: flex-start; gap: 8px; }

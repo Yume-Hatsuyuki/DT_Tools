@@ -4,7 +4,7 @@
  * 画布不读取 CSS 变量，因此颜色按 styles/tokens.css 的同值写在 C 中。
  */
 import { avatarSrc, personalColor } from './tabletAvatars.js';
-import { chatBody, orderClues, singleLine } from './tabletFormat.js';
+import { chatBody, groupByRound, orderClues, singleLine } from './tabletFormat.js';
 import { API } from '../../api.js';
 
 const W = 760;
@@ -340,7 +340,7 @@ function chatStateBlock(l) {
 }
 
 /** 聊天记录分段渲染为 PNG Blob 列表。左右气泡与游戏一致：头像与名字在两侧，颜色取人物色。 */
-export async function renderChatParts(lines, title) {
+export async function renderChatParts(lines, title, numbering = new Map()) {
   const photoKeys = lines.filter((l) => l.kind === 'photo').map((l) => l.photoKey);
   const avatarKeys = [...new Set(lines.map((l) => l.avatar).filter(Boolean))];
   const [avatarImgs, photoImgs] = await Promise.all([
@@ -351,9 +351,15 @@ export async function renderChatParts(lines, title) {
   const photoMap = new Map(photoKeys.map((k, i) => [k, photoImgs[i]]));
   const measure = document.createElement('canvas').getContext('2d');
 
-  const blocks = lines.map((l) => (l.kind === 'state'
-    ? chatStateBlock(l)
-    : chatMessageBlock(l, avatarMap, photoMap, measure)));
+  const blocks = [];
+  for (const g of groupByRound(lines, numbering)) {
+    blocks.push(roundHeaderBlock(g.no));
+    for (const l of g.items) {
+      blocks.push(l.kind === 'state'
+        ? chatStateBlock(l)
+        : chatMessageBlock(l, avatarMap, photoMap, measure));
+    }
+  }
   if (!blocks.length) blocks.push(blank(40));
 
   const parts = paginate(blocks);
@@ -498,15 +504,39 @@ function clueCardBlock(c, avatarMap, measure) {
   };
 }
 
-/** 线索分段渲染为 PNG Blob 列表。卡片与界面一致：命题在前，线索按时间从晚到早。 */
-export async function renderClueParts(clues, title) {
+/** 局段首标题：与界面的「—— 第 N 局 ——」一致。 */
+function roundHeaderBlock(no) {
+  return {
+    h: 34,
+    draw(ctx, y) {
+      setFont(ctx, 12, 600);
+      ctx.fillStyle = C.amber;
+      ctx.textBaseline = 'top';
+      ctx.textAlign = 'center';
+      ctx.fillText(`—— 第 ${no} 局 ——`, W / 2, y + 6);
+      ctx.textAlign = 'left';
+    },
+  };
+}
+
+/**
+ * 线索分段渲染为 PNG Blob 列表。卡片与界面一致：按局分段（段首标题），局内命题在前，线索按时间从晚到早。
+ * @param {object[]} clues 要导出的线索。
+ * @param {string} title 标题。
+ * @param {Map<number, number>} numbering 局号到显示编号的对照表（由全量线索计算）。
+ */
+export async function renderClueParts(clues, title, numbering = new Map()) {
   const ordered = orderClues(clues);
   const avatarKeys = [...new Set(ordered.flatMap((c) => [c.ownerAvatar, c.whoAvatar]).filter(Boolean))];
   const avatarImgs = await Promise.all(avatarKeys.map((k) => loadImage(avatarSrc(k))));
   const avatarMap = new Map(avatarKeys.map((k, i) => [k, avatarImgs[i]]));
   const measure = document.createElement('canvas').getContext('2d');
 
-  const blocks = ordered.map((c) => clueCardBlock(c, avatarMap, measure));
+  const blocks = [];
+  for (const g of groupByRound(ordered, numbering)) {
+    blocks.push(roundHeaderBlock(g.no));
+    for (const c of g.items) blocks.push(clueCardBlock(c, avatarMap, measure));
+  }
   if (!blocks.length) {
     blocks.push({
       h: 60,
