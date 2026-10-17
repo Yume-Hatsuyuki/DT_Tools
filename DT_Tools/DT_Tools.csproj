@@ -27,6 +27,20 @@
     <Exec WorkingDirectory="$(WebUISrc)" Command="npm run build" />
   </Target>
 
+  <!--
+    WebUI 产物拷贝（AGENTS.md §3）。在 Build 之后、目标内展开文件列表：
+    项目级 None Include 在求值阶段展开，首次构建时 WebUI 尚未生成会漏拷。
+  -->
+  <Target Name="DT_CopyWebUI" AfterTargets="Build"
+          Condition="Exists('$(MSBuildProjectDirectory)\WebUI')">
+    <ItemGroup>
+      <_DtWebUIFile Include="$(MSBuildProjectDirectory)\WebUI\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_DtWebUIFile)"
+          DestinationFiles="@(_DtWebUIFile->'$(OutDir)WebUI\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
@@ -122,10 +136,6 @@
       <Private>false</Private>
       <SpecificVersion>false</SpecificVersion>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="WebUI/**" CopyToOutputDirectory="PreserveNewest" Link="WebUI/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- 可坐椅子（SitOnChairs）：岛屿地图数据（原版+11条椅子设备）内嵌进 dll，运行时注入，无需外部 data 文件夹 -->
