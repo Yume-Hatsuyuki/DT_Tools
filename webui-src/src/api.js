@@ -126,6 +126,12 @@ export const API = {
   gamepadBind: (layer, button, output) => post('/api/gamepad/bind', { layer, button, output }),
   gamepadToggle: (button) => post('/api/gamepad/toggle', { button }),
   gamepadReset: () => post('/api/gamepad/reset'),
+  // 平板电脑应用（实验性）：增量拉取（since 为已收到的最大序号）、发言、照片上传与读取、清理
+  tabletState: (since) => request('/api/tablet/state?since=' + since),
+  tabletSend: (text) => post('/api/tablet/send', { text }),
+  tabletPhoto: (data) => post('/api/tablet/photo', { data }),
+  tabletPhotoUrl: (key) => '/api/tablet/photo?key=' + key,
+  tabletClear: () => post('/api/tablet/clear'),
 };
 
 /**

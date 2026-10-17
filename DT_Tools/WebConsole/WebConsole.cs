@@ -189,6 +189,12 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/gamepad/bind", Api.GamepadApi.HandleBind);
             router.Add("POST", "/api/gamepad/toggle", Api.GamepadApi.HandleToggle);
             router.Add("POST", "/api/gamepad/reset", Api.GamepadApi.HandleReset);
+            // 平板电脑应用（实验性）：状态轮询、发言、照片上传与下载、清理
+            router.Add("GET", "/api/tablet/state", Api.WebTabletApi.HandleState);
+            router.Add("POST", "/api/tablet/send", Api.WebTabletApi.HandleSend);
+            router.Add("POST", "/api/tablet/photo", Api.WebTabletApi.HandlePhotoUpload);
+            router.Add("GET", "/api/tablet/photo", Api.WebTabletApi.HandlePhotoGet);
+            router.Add("POST", "/api/tablet/clear", Api.WebTabletApi.HandleClear);
             router.Add("GET", "/api/mp3/state", Api.Mp3Api.HandleState);
             router.Add("POST", "/api/mp3/play", Api.Mp3Api.HandlePlay);
             router.Add("POST", "/api/mp3/index", Api.Mp3Api.HandleIndex);

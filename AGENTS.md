@@ -627,6 +627,9 @@ public sealed class XxxModule { }
 | `/api/mp3/lists/create`、`rename`、`delete`、`select` | POST | 歌单管理（多歌单） |
 | `/api/gamepad/state` | GET | 手柄：功能状态、实时读数、映射表、可选输出 |
 | `/api/gamepad/bind`、`toggle`、`reset` | POST | 手柄：设置按钮输出（光标层可传 `inherit`，恢复为跟随普通层）/ 光标切换键 / 恢复默认 |
+| `/api/tablet/state?since=N` | GET | 平板电脑：阶段、版本号、序号大于 N 的聊天增量与全部线索（见 §12.4） |
+| `/api/tablet/send`、`photo`、`clear` | POST | 平板电脑：发言 / 上传 JPEG（base64）照片 / 清理本地记录 |
+| `/api/tablet/photo?key=N` | GET | 平板电脑：照片原始 JPEG |
 | `/api/fs/list?path=目录` | GET | 只读目录浏览（见下） |
 | `/api/meta` | GET | 能力发现。返回 `{ok, wsPort}` |
 | `/login` | POST | 鉴权（见下） |
@@ -706,7 +709,7 @@ public sealed class XxxModule { }
 #### 目录
 
 - 桌面壳在 `src/desktop/`。
-- 应用在 `src/apps/`。共 8 个：
+- 应用在 `src/apps/`。共 9 个：
 
 | 目录 | 应用 |
 | --- | --- |
@@ -718,6 +721,7 @@ public sealed class XxxModule { }
 | `dummy` | 假人管理 |
 | `mp3` | 随身MP3 |
 | `gamepad` | 手柄。只配置键位（映射）并实时显示读数；手柄只控制游戏，不操作 WebUI |
+| `tablet` | 平板电脑（实验性）。左侧聊天、右侧线索；导出文本或图片；大厅与学级裁判可发言（见 §12.4） |
 
 - 跨应用共享组件在 `apps/common/`，共 6 个：`SuggestPopup`、`FolderGrid`、`LogPanel`、`EntryList`、`CropperHost`、`FileBrowser`。
 - `FileBrowser` 是本机文件选择弹窗。数据源是 `/api/fs/list`。
@@ -782,6 +786,18 @@ public sealed class XxxModule { }
 
 - 图标库：unplugin-icons + tabler。
 - tabler 没有 `brand-kali`。Kali 风图标用 `dragon`。
+
+### 12.4 平板电脑（实验性）
+
+- 功能：`Features/WebTablet/`，标签 `UiTablet | UiChat`，作者梦初雪。应用：`webui-src/src/apps/tablet/`。
+- 采集是被动的：补丁挂在 `VoiceManager.EnqueueNormalChat`、`UI_GameTablet.AddClue`、`UI_GameTablet.AddPropositionMessage`、`UI_GameTablet.AddPhotoMessage`（私有，字符串定位）与 `GameManagerEX.State` 的 setter。每个补丁第一行是开关检查，只把数据转给 `Game/WebTablet/WebTabletBridge`。
+- 存储：`Game/WebTablet/WebTabletStore` 为纯内存、加锁、不依赖 Unity。写入在主线程，读取在 HTTP 线程，快照只复制列表。上限：聊天 1000 条，线索 500 条，照片 30 张（每张不超过 160KB）。功能关闭时 `Reset`（清空并忘记阶段）；界面的「清理」只 `Clear`（保留阶段，递增 `epoch`）。
+- 增量拉取：`GET /api/tablet/state?since=N` 返回序号大于 N 的聊天条目与全部线索，前端每 0.8 秒拉取一次。`epoch` 变化或 `seq` 回退时，前端丢弃本地列表并重新同步。
+- 文本规则：线索对象、地点、时间与头像按 0.1.18c `UI_ClueSubItem.FillText` 同源生成（`GetWhoText`、`FormatWhen`）；命题句调用 `Util.FormatProposition` 后去掉富文本标签。游戏升级后按这些行号复核。
+- 头像：Madeline 与 Mastermind 共用资源，头像键统一为 `Mastermind`（`WebTabletAvatar`）。SD 原图裁切框为 760×760，左上角 (644, 260)，缩放为 192px，文件在 `apps/tablet/avatars/`。
+- 发言：仅允许 `Lobby` 与 `Trial`（`WebTabletText.CanTypeInState`）。游戏服务端 `RelayNormalChat` 还放行 `PickCharacter` 与 `TotalResult`，平板有意不开放。发送经 `Managers.Voice.SendChatMessage`，必须在 `WebConsole.RunOnMain` 中执行。
+- 照片：仅在 `Trial` 且 `ETrialState.Discuss` 时发送。以 `C_CHAT_PHOTO{SlotIndex=-1}` 发出，不占用本机相册槽位（`PhotoManager.Receive` 只在 `SlotIndex >= 0` 时写映射）。服务端校验 JPEG 魔数与 160KB 上限（`Server.Game/HostPacketHandler.cs` 的 `Handle_C_CHAT_PHOTO`）。
+- 不做：不改变游戏状态、不写配置文件、不持久化。导出在浏览器内完成（文本为 `.txt`，图片为分页 `.png`）。
 
 ## 13. MCP 桥接
 

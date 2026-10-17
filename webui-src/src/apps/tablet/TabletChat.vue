@@ -1,0 +1,84 @@
+<script setup>
+import { avatarSrc, personalColor } from './tabletAvatars.js';
+import { API } from '../../api.js';
+
+/**
+ * 平板电脑的聊天流。头像、名字、气泡与游戏内一致：双方都显示头像与名字，
+ * 本机消息靠右，他人消息靠左；死亡者气泡为灰色；阶段标记为黄字居中。
+ */
+defineProps({
+  lines: { type: Array, default: () => [] },
+});
+
+function bubbleStyle(l) {
+  if (l.kind === 'proposition' || l.isDead) return undefined;
+  return { background: personalColor(l.avatar) };
+}
+
+function photoUrl(key) {
+  return API.tabletPhotoUrl(key);
+}
+</script>
+
+<template>
+  <div class="chat-list">
+    <template v-for="l in lines" :key="l.seq">
+      <div v-if="l.kind === 'state'" class="state-line">—— {{ l.text }} ——</div>
+      <div v-else class="msg" :class="{ mine: l.isMine }">
+        <img class="avatar" :class="{ dead: l.isDead }" :src="avatarSrc(l.avatar)" alt="" draggable="false" />
+        <div class="col">
+          <div class="meta">
+            <span class="name">{{ l.name }}</span>
+            <span v-if="l.isDead" class="dead-tag">已死亡</span>
+            <span class="time">{{ l.time }}</span>
+          </div>
+          <div v-if="l.kind === 'photo'" class="bubble photo" :class="{ dead: l.isDead }">
+            <img :src="photoUrl(l.photoKey)" alt="照片" loading="lazy" draggable="false" />
+          </div>
+          <div
+            v-else
+            class="bubble"
+            :class="[l.kind, { dead: l.isDead }]"
+            :style="bubbleStyle(l)"
+          >{{ l.text }}</div>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
+
+<style scoped>
+.chat-list { display: flex; flex-direction: column; gap: 12px; padding: 10px 12px; }
+.state-line { text-align: center; font-size: 12px; font-weight: 600; color: var(--accent-amber); padding: 4px 0; letter-spacing: 0.02em; }
+.msg { display: flex; align-items: flex-start; gap: 8px; }
+.msg.mine { flex-direction: row-reverse; }
+.avatar { width: 40px; height: 40px; flex: none; border-radius: 10px; background: rgba(255, 255, 255, 0.05); object-fit: contain; }
+.avatar.dead { opacity: 0.45; filter: grayscale(1); }
+.col { display: flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 72%; }
+.msg.mine .col { align-items: flex-end; }
+.meta { display: flex; align-items: baseline; gap: 6px; font-size: 11px; color: var(--text-2); }
+.msg.mine .meta { flex-direction: row-reverse; }
+.name { color: var(--text-1); font-weight: 500; }
+.dead-tag { color: var(--accent-red); }
+.time { font-family: var(--font-mono); font-size: 10px; }
+.bubble {
+  padding: 7px 11px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1d1d1d;
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 100%;
+}
+.bubble.dead { background: #4b4f5c; color: #d0d0d0; }
+.bubble.proposition {
+  background: #3a2238;
+  color: #ffe6ee;
+  border: 1px solid #ff97ab;
+  font-weight: 500;
+}
+.bubble.photo { padding: 4px; background: rgba(255, 255, 255, 0.06); }
+.bubble.photo img { display: block; max-width: 260px; max-height: 260px; border-radius: 8px; }
+</style>
