@@ -22,7 +22,7 @@ namespace DT_Tools.Features.DeathResist
             _active && Engine.Enabled<DeathResistFeature>();
 
         /// <summary>
-        /// 0.1.18c（待核对） GameManagerEX.Dead：先 IsAlive=false / CanControl=false，
+        /// 0.1.18c GameManagerEX.Dead（GameManagerEX.cs:334）：先 IsAlive=false / CanControl=false，
         /// 再 HidePlayer、CancelAllInteract、HideAll 等。Postfix 在整段之后改标志。
         /// </summary>
         [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
@@ -70,7 +70,7 @@ namespace DT_Tools.Features.DeathResist
         }
 
         /// <summary>
-        /// 0.1.18c（待核对） MyPlayer.IsGhostView：原版 return !Managers.Game.IsAlive。
+        /// 0.1.18c MyPlayer.IsGhostView（MyPlayer.cs:1884-1886）：原版 return !Managers.Game.IsAlive。
         /// 假活后若不强制，会失去幽灵渲染。
         /// </summary>
         [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.IsGhostView))]
@@ -85,7 +85,7 @@ namespace DT_Tools.Features.DeathResist
         }
 
         /// <summary>
-        /// 0.1.18c（待核对） MyPlayer.FixedUpdate：!IsAlive 时走 FixedUpdateGhostMove。
+        /// 0.1.18c MyPlayer.FixedUpdate（MyPlayer.cs:1703-1714）：!IsAlive 时走 FixedUpdateGhostMove。
         /// 假活后默认走活人移动；KeepGhostMove 时改为继续幽灵移动。
         /// </summary>
         [HarmonyPatch(typeof(MyPlayer), "FixedUpdate")]

@@ -6,10 +6,10 @@ namespace DT_Tools.Features.TabletQol
 {
     /// <summary>
     /// ① 滚动条：给平板列表挂滚动条（重复调用安全）。两个挂点：
-    /// 1. Init() 的 Postfix：两个 ScrollRect（_chatScroll、ClueSrollRect）都在这里取到，最早可用时机（0.1.17a 单文件转储（待核对） :51880、:51974）。
-    /// 2. Section setter 的 Postfix：每次切页签（含 Clear 后的 StartSection）都重跑，因为列表内容与可滚动轴是后来才变的（同一 ClueSrollRect 会议阶段有条、调查阶段没条）（转储 :51472-51476、:54084）。
-    /// 取法：ClueSrollRect 为公开属性（转储 :51556）；_chatScroll 为私有字段（:51270），用 Traverse。
-    /// ⚠️ 行号口径：上面的 :NNNN 行号来自 0.1.17a 单文件转储 .tmps/decomp/Assembly-CSharp-0.1.17a.decompiled.cs，尚未按 0.1.18c 拆分源码重新核对；定方法以方法名为准。
+    /// 1. Init() 的 Postfix：两个 ScrollRect（_chatScroll、ClueSrollRect）都在这里取到，最早可用时机（UI_GameTablet.cs:815 Init）。
+    /// 2. Section setter 的 Postfix：每次切页签（含 Clear 后的 StartSection）都重跑，因为列表内容与可滚动轴是后来才变的（同一 ClueSrollRect 会议阶段有条、调查阶段没条）（UI_GameTablet.cs:411 Section setter）。
+    /// 取法：ClueSrollRect 为公开属性（UI_GameTablet.cs:501）；_chatScroll 为私有字段（:219），用 Traverse。
+    /// 行号口径：以上行号均为 0.1.18c 拆分源码（已核对）；定方法以方法名为准。
     /// </summary>
     [HarmonyPatch(typeof(UI_GameTablet), nameof(UI_GameTablet.Init))]
     internal static class PatchTabletQolScrollbar

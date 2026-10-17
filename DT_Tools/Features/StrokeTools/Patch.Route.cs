@@ -12,8 +12,8 @@ namespace DT_Tools.Features.StrokeTools
     /// </summary>
     /// <remarks>
     /// Prefix 在 _active 置空（DrawingManager.cs:397）前读取笔画；该方法只由本地画布调用，远端笔画不经此处。
-    /// 坐标换算同测速：Stroke.Points 为平板局部坐标，世界→平板比例 = MapData.MinimapScale（0.1.18c UI_TutorialTablet.cs:2146），兜底 0.094（0.1.18c Util.cs:887（待核对））；世界坐标 = 局部坐标 ÷ scale。
-    /// 房间识别（与官方一致）：格子 = 世界坐标 ÷ 224 − MapData.MapOffset（0.1.18c Server.Game/AreaManager.cs:82 GetArea，ValidPosition :89 含边界）；格子值 = Managers.Data.MapArray[x][y]（DataManager.cs:28，byte 即 ERoomType，Protocol/ERoomType.cs），0 为 DefaultRoom。房间名 = Managers.GetText(枚举名)（0.1.18c UI_ChatDevicePopup.cs:475）。
+    /// 坐标换算同测速：Stroke.Points 为平板局部坐标，世界→平板比例 = MapData.MinimapScale（0.1.18c UI_TutorialTablet.cs:2146），兜底 0.094（0.1.18c Util.cs:893）；世界坐标 = 局部坐标 ÷ scale。
+    /// 房间识别（与官方一致）：格子 = 世界坐标 ÷ 224 − MapData.MapOffset（0.1.18c Server.Game/AreaManager.cs:74 GetArea，ValidPosition :82，边界 :89）；格子值 = Managers.Data.MapArray[x][y]（DataManager.cs:28，byte 即 ERoomType，Protocol/ERoomType.cs），0 为 DefaultRoom。房间名 = Managers.GetText(枚举名)（0.1.18c UI_ChatDevicePopup.cs:475）。
     /// 沿线按 SampleStep 细分采样，连续同房间合并，走廊可按配置过滤。结果经聊天广播（Managers.Voice.SendChatMessage）全房可见。
     /// </remarks>
     [HarmonyPatch(typeof(DrawingManager), nameof(DrawingManager.EndLocalStroke))]

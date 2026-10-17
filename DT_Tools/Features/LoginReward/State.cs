@@ -6,7 +6,7 @@ namespace DT_Tools.Features.LoginReward
     internal static class LoginRewardState
     {
         /// <summary>
-        /// 等待掉落批次完成的兜底超时。0.1.18c（待核对） FreeCurrencyDrops 串行 TriggerItemDrop：
+        /// 等待掉落批次完成的兜底超时。0.1.18c FreeCurrencyDrops 串行 TriggerItemDrop（FreeCurrencyDrops.cs:240）：
         /// 单次结果 20s、空结果复查 65s、失败指数退避至 60s；25 单位批量可能数分钟。
         /// 正常成功/耗尽都会经 OnProgress + FreeDropPendingUnits 回落终结。
         /// </summary>

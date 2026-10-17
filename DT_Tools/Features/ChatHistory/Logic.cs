@@ -122,7 +122,7 @@ namespace DT_Tools.Features.ChatHistory
             }
             foreach (var tablet in UnityEngine.Object.FindObjectsByType<UI_GameTablet>(UnityEngine.FindObjectsSortMode.None))
             {
-                // 与 BindInputField 同源查找（0.1.18c UI_GameTablet.cs:161（待核对） 枚举名 ChatInputField，Util.cs:302 FindChild<T>）
+                // 与 BindInputField 同源查找（UI_GameTablet.cs:160 枚举成员 ChatInputField，UI_Base.cs:53 BindInputField，Util.cs:302 FindChild<T>）
                 var input = Util.FindChild<TMP_InputField>(tablet.gameObject, "ChatInputField", recursive: true);
                 Ensure(input, ChatHistorySource.Tablet, ChatHistoryChannel.GlobalChat);
             }

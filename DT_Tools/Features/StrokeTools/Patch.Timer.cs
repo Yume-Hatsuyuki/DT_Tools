@@ -10,7 +10,7 @@ namespace DT_Tools.Features.StrokeTools
     /// </summary>
     /// <remarks>
     /// 该方法只由本地画布（UI_DrawSurface）调用，远端笔画走网络通道，天然只测自己画的线。与路线解读（Patch.Route.cs）同钩同方法，各自 Prefix 互不干扰。
-    /// 坐标换算：Stroke.Points 是平板画布（对象88 MapBoundsRect）的局部坐标（0.1.18c UI_DrawSurface.cs:43）。官方世界→平板比例 = MapData.MinimapScale（每图配置，0.1.18c UI_TutorialTablet.cs:2146 _mapScale），兜底 0.094（0.1.18c Util.cs:887（待核对）、UI_GameTablet.cs:1189 世界×0.094）。
+    /// 坐标换算：Stroke.Points 是平板画布（对象87 MapBoundsRect）的局部坐标（0.1.18c UI_DrawSurface.cs:43）。官方世界→平板比例 = MapData.MinimapScale（每图配置，0.1.18c UI_TutorialTablet.cs:2146 _mapScale），兜底 0.094（0.1.18c Util.cs:893 GetMinimapPosition、UI_GameTablet.cs:2065 世界×0.094）。
     /// 因此世界线长 = Σ|相邻点局部差| ÷ scale，平移（pivot/原点）不影响长度。速度基准：活人走路 560、奔跑 560×1.3=728（0.1.18c Server.Game/BuffComponent.cs:171-180，RefreshSpeed），840 是幽灵速度。结果经聊天广播（Managers.Voice.SendChatMessage）全房可见。
     /// </remarks>
     [HarmonyPatch(typeof(DrawingManager), nameof(DrawingManager.EndLocalStroke))]
@@ -95,7 +95,7 @@ namespace DT_Tools.Features.StrokeTools
         }
 
         /// <summary>
-        /// 取平板地图画布 RectTransform（0.1.18c UI_GameTablet.cs:442-451（待核对） MapBoundsRect → GetObject(88)）。
+        /// 取平板地图画布 RectTransform（0.1.18c UI_GameTablet.cs:442 MapBoundsRect → GetObject(87)）。
         /// </summary>
         /// <remarks>
         /// 平板未打开时 Managers.Tablet.Tablet 为空，跳过本次测速。

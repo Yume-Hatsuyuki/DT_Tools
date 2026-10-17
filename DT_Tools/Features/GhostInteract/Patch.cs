@@ -6,7 +6,7 @@ using Protocol;
 namespace DT_Tools.Features.GhostInteract
 {
     /// <summary>
-    /// 幽灵交互（0.1.18c（待核对））：设备交互 + 对话 + 拖尸 + 销毁证据 + 杀人。
+    /// 幽灵交互（0.1.18c）：设备交互 + 对话 + 拖尸 + 销毁证据 + 杀人。
     /// </summary>
     /// <remarks>
     /// 阵营：ExitPlayer 不改 Color，死后仍为 White/Black/Dark；本功能在「全能」模式下

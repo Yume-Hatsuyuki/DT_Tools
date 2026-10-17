@@ -5,7 +5,7 @@ namespace DT_Tools.Features.TabletQol
 {
     /// <summary>
     /// ② 拦下「提交线索」按钮的点击，改成先弹确认栏；确认后由 <see cref="TabletQolConfirm"/> 调用原版提交函数。
-    /// 目标：UI_ClueSubItem.OnClickPropositionButton(PointerEventData)（私有，0.1.17a 单文件转储（待核对） :86488，绑定处 :86135，GetObject(3) 即卡片上的 PropositionButton），故私有方法用字符串名定位。
+    /// 目标：UI_ClueSubItem.OnClickPropositionButton(PointerEventData)（私有，UI_ClueSubItem.cs:351，绑定处 :55，GetObject(3) 即卡片上的 PropositionButton），故私有方法用字符串名定位。
     /// 内嵌在确认栏里的那张卡片只作展示，它的提交按钮已被关掉（SetActive(false)），点不到，也不会再弹一次确认栏。不拦的两种情况：功能没开（或 ConfirmSubmit 关了）；Suppress（确认后的重入）。
     /// </summary>
     [HarmonyPatch(typeof(UI_ClueSubItem), "OnClickPropositionButton")]

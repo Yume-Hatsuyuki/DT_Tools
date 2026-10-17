@@ -9,8 +9,8 @@ namespace DT_Tools.Features.ChatHistory
     /// </summary>
     /// <remarks>
     /// 覆盖聊天快捷条全部实例——大厅（Lobby 场景预制体挂载
-    /// UI_DirectChat_Lobby）、对局昼夜（0.1.18c UI_GameScene.cs:577（待核对））与庭审
-    /// （0.1.18c UI_TrialEvent.cs:333)；子类不重写 Init，基类方法每次实例化都会命中。
+    /// UI_DirectChat_Lobby）、对局（0.1.18c UI_GameScene.cs:565，GetComponent&lt;UI_DirectChat_Lobby>）与庭审
+    /// （0.1.18c UI_TrialEvent.cs:392，GetComponent&lt;UI_DirectChat>)；子类不重写 Init，基类方法每次实例化都会命中。
     /// _input 为私有字段（0.1.18c UI_DirectChat.cs:26），按 AGENTS.md §10 反射定位。
     /// </remarks>
     [HarmonyPatch(typeof(UI_DirectChat), nameof(UI_DirectChat.Init))]

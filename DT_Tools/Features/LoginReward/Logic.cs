@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DT_Tools.Features.LoginReward
 {
     /// <summary>
-    /// 发放与弹窗流程（0.1.18c（待核对））：TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）→ SteamInventorySource.GrantFreeFromStars（:964）→ FreeCurrencyDrops.Enqueue → 串行 SteamInventory.TriggerItemDrop。
+    /// 发放与弹窗流程（0.1.18c）：TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）→ SteamInventorySource.GrantFreeFromStars（:964）→ FreeCurrencyDrops.Enqueue → 串行 SteamInventory.TriggerItemDrop。
     /// </summary>
     /// <remarks>
     /// OnProgress 可能多次中间回调；终态为 FreeDropPendingUnits 回落到请求前基线后读 LastRevealEarned，再 TryShowPopup。
