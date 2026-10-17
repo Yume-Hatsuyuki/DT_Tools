@@ -15,7 +15,7 @@
 
   <!--
     前端增量构建（AGENTS.md §3）：源码晚于产物时经 npm 重建，产物直出 DT_Tools/WebUI，
-    再随下方 None 项拷进输出目录。SkipWebUIBuild=true 整体跳过（CI 已显式构建前端、
+    产物拷贝由下方 DT_CopyWebUI 目标完成。SkipWebUIBuild=true 整体跳过（CI 已显式构建前端、
     或多代理并行作业禁止构建时使用）。需要 Node/npm 环境。
   -->
   <Target Name="BuildWebUI"
