@@ -131,7 +131,14 @@ export const API = {
   tabletSend: (text) => post('/api/tablet/send', { text }),
   tabletPhoto: (data) => post('/api/tablet/photo', { data }),
   tabletPhotoUrl: (key) => '/api/tablet/photo?key=' + key,
-  tabletClear: () => post('/api/tablet/clear'),
+  /** scope：chat（聊天与照片）| clues（线索）| all（全部）。 */
+  tabletClear: (scope) => post('/api/tablet/clear', { scope }),
+  /** 照片原始 JPEG（用于复制与另存为）；失败时抛错。 */
+  tabletPhotoBlob: async (key) => {
+    const res = await fetch('/api/tablet/photo?key=' + key);
+    if (!res.ok) throw new Error('照片读取失败');
+    return res.blob();
+  },
 };
 
 /**

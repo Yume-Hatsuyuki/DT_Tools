@@ -627,8 +627,9 @@ public sealed class XxxModule { }
 | `/api/mp3/lists/create`、`rename`、`delete`、`select` | POST | 歌单管理（多歌单） |
 | `/api/gamepad/state` | GET | 手柄：功能状态、实时读数、映射表、可选输出 |
 | `/api/gamepad/bind`、`toggle`、`reset` | POST | 手柄：设置按钮输出（光标层可传 `inherit`，恢复为跟随普通层）/ 光标切换键 / 恢复默认 |
-| `/api/tablet/state?since=N` | GET | 平板电脑：阶段、版本号、序号大于 N 的聊天增量与全部线索（见 §12.4） |
-| `/api/tablet/send`、`photo`、`clear` | POST | 平板电脑：发言 / 上传 JPEG（base64）照片 / 清理本地记录 |
+| `/api/tablet/state?since=N` | GET | 平板电脑：阶段、版本号、序号大于 N 的聊天增量、全部线索，以及 `photoCooldownMs`（照片剩余冷却毫秒，见 §12.4） |
+| `/api/tablet/send`、`photo` | POST | 平板电脑：发言 / 上传 JPEG（base64）照片（冷却中拒绝） |
+| `/api/tablet/clear` | POST | 平板电脑：按范围清理本地记录。body `{scope}`：`chat`（聊天与照片）/ `clues` / `all`，缺省或未知值拒绝 |
 | `/api/tablet/photo?key=N` | GET | 平板电脑：照片原始 JPEG |
 | `/api/fs/list?path=目录` | GET | 只读目录浏览（见下） |
 | `/api/meta` | GET | 能力发现。返回 `{ok, wsPort}` |
@@ -721,7 +722,7 @@ public sealed class XxxModule { }
 | `dummy` | 假人管理 |
 | `mp3` | 随身MP3 |
 | `gamepad` | 手柄。只配置键位（映射）并实时显示读数；手柄只控制游戏，不操作 WebUI |
-| `tablet` | 平板电脑（实验性）。左侧聊天、右侧线索；导出文本或图片；大厅与学级裁判可发言（见 §12.4） |
+| `tablet` | 平板电脑（实验性）。左侧聊天、右侧线索；导出文本或图片；粘贴图片发照片；照片复制与另存；按范围清理；大厅与学级裁判可发言（见 §12.4） |
 
 - 跨应用共享组件在 `apps/common/`，共 6 个：`SuggestPopup`、`FolderGrid`、`LogPanel`、`EntryList`、`CropperHost`、`FileBrowser`。
 - `FileBrowser` 是本机文件选择弹窗。数据源是 `/api/fs/list`。
@@ -798,6 +799,11 @@ public sealed class XxxModule { }
 - 发言：仅允许 `Lobby` 与 `Trial`（`WebTabletText.CanTypeInState`）。游戏服务端 `RelayNormalChat` 还放行 `PickCharacter` 与 `TotalResult`，平板有意不开放。发送经 `Managers.Voice.SendChatMessage`，必须在 `WebConsole.RunOnMain` 中执行。
 - 照片：仅在 `Trial` 且 `ETrialState.Discuss` 时发送。以 `C_CHAT_PHOTO{SlotIndex=-1}` 发出，不占用本机相册槽位（`PhotoManager.Receive` 只在 `SlotIndex >= 0` 时写映射）。服务端校验 JPEG 魔数与 160KB 上限（`Server.Game/HostPacketHandler.cs` 的 `Handle_C_CHAT_PHOTO`）。
 - 不做：不改变游戏状态、不写配置文件、不持久化。导出在浏览器内完成（文本为 `.txt`，图片为分页 `.png`）。
+- 照片冷却：服务端 `GameRoom.TryConsumePhotoBudget` 为每人一格令牌、每秒回 0.2 格（5 秒一张），超出时直接丢弃照片、不报错。客户端 `PhotoManager` 有同算法的预算，仅用于游戏内界面。平板发图前检查冷却（`WebTabletBridge.SendPhoto`），发送后经 `PhotoManager.ConsumeBudget`（private，0.1.18c `PhotoManager.cs:715`）扣减，使游戏内发图与平板发图共用一份客户端预算。`Features/WebTablet/Patch.PhotoBudget.cs` 后缀该方法，据 `_budgetTokens`（:49）与 `_budgetTickMs`（:51）计算冷却截止时刻，存入 `WebTabletStore`；`/api/tablet/state` 以剩余毫秒下发。冷却无法被客户端察觉的服务端丢弃，只能尽量避免。
+- 清理：`WebTabletStore.ClearChat`（递增 `epoch`，丢弃聊天与照片）、`ClearClues`（不递增 `epoch`）、`Clear`（两者都做）。界面「清理」为下拉菜单，三项均需确认。
+- 导出：文本为单行命题（句内换行合并为空格，`tabletFormat.js` 的 `singleLine`）。图片（`tabletImage.js`）按 CSS 数值绘制，颜色取 `tokens.css` 同值，与界面保持一致；导出画布不读取 CSS 变量，改样式时两处要同步。导出弹窗的计数与全选只基于当前可见条目，聊天栏满员挤掉旧消息时不计入已不存在的 key。
+- 粘贴：平板区域内 Ctrl+V 粘贴纯图片即发送照片（纯文字粘贴照常进入输入框）。焦点在平板根节点时才会收到粘贴事件，点击面板空白处会把焦点移到根节点。
+- 复制与另存：照片下方「复制」「另存为」。复制需要安全上下文（localhost 或 HTTPS），局域网 HTTP 访问时只能另存为。
 
 ## 13. MCP 桥接
 

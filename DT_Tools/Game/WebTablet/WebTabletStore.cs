@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace DT_Tools.Game.WebTablet
@@ -31,6 +32,7 @@ namespace DT_Tools.Game.WebTablet
         private static int _epoch = 1;
         private static string _stateCode = "";
         private static string _stateLabel = "";
+        private static int _photoReadyTick;
 
         /// <summary>
         /// 追加一条聊天条目。传入 dedupeKey 时，同一键只会入库一次（用于命题气泡可能被重复上报的情况）。
@@ -118,18 +120,63 @@ namespace DT_Tools.Game.WebTablet
         }
 
         /// <summary>
+        /// 清空聊天流与照片，并递增 Epoch（前端据此丢弃本地聊天列表）。线索与阶段保留。
+        /// </summary>
+        public static void ClearChat()
+        {
+            lock (_sync)
+            {
+                ClearChatLocked();
+                _epoch++;
+            }
+        }
+
+        /// <summary>
+        /// 清空线索表。聊天与阶段保留，Epoch 不变。
+        /// </summary>
+        public static void ClearClues()
+        {
+            lock (_sync)
+            {
+                ClearCluesLocked();
+            }
+        }
+
+        /// <summary>
         /// 清空聊天、线索与照片，并递增 Epoch。阶段信息保留，避免清理后重复出现当前阶段标记。
         /// </summary>
         public static void Clear()
         {
             lock (_sync)
             {
-                _lines.Clear();
-                _clues.Clear();
-                _keys.Clear();
-                _photos.Clear();
-                _photoOrder.Clear();
+                ClearChatLocked();
+                ClearCluesLocked();
                 _epoch++;
+            }
+        }
+
+        /// <summary>
+        /// 记录照片冷却的截止时刻（Environment.TickCount 基准）。由主线程在照片预算被消耗后写入。
+        /// </summary>
+        /// <param name="readyTick">冷却结束的 TickCount。</param>
+        public static void SetPhotoReadyTick(int readyTick)
+        {
+            lock (_sync)
+            {
+                _photoReadyTick = readyTick;
+            }
+        }
+
+        /// <summary>
+        /// 距离下一次可发照片还需的毫秒数，0 表示可以发送。
+        /// </summary>
+        /// <returns>剩余冷却毫秒数，已结束时为 0。</returns>
+        public static int PhotoCooldownMs()
+        {
+            lock (_sync)
+            {
+                int left = unchecked(_photoReadyTick - Environment.TickCount);
+                return left > 0 ? left : 0;
             }
         }
 
@@ -143,6 +190,7 @@ namespace DT_Tools.Game.WebTablet
                 Clear();
                 _stateCode = "";
                 _stateLabel = "";
+                _photoReadyTick = 0;
             }
         }
 
@@ -169,6 +217,20 @@ namespace DT_Tools.Game.WebTablet
                     Clues = new List<WebTabletClue>(_clues),
                 };
             }
+        }
+
+        private static void ClearChatLocked()
+        {
+            _lines.Clear();
+            _photos.Clear();
+            _photoOrder.Clear();
+            _keys.RemoveWhere(k => k.StartsWith("line:", StringComparison.Ordinal));
+        }
+
+        private static void ClearCluesLocked()
+        {
+            _clues.Clear();
+            _keys.RemoveWhere(k => k.StartsWith("clue:", StringComparison.Ordinal));
         }
 
         private static bool TryAddKey(string key)

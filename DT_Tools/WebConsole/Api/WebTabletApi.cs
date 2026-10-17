@@ -44,6 +44,7 @@ namespace DT_Tools.WebConsole.Api
                 epoch = snap.Epoch,
                 seq = snap.Seq,
                 state = new { code = snap.StateCode, label = snap.StateLabel },
+                photoCooldownMs = WebTabletStore.PhotoCooldownMs(),
                 canType = WebTabletText.CanTypeInState(snap.StateCode),
                 typeReason = WebTabletText.TypeBlockReason(snap.StateCode, snap.StateLabel),
                 lines = snap.Lines.Select(ToLineDto).ToList(),
@@ -86,6 +87,13 @@ namespace DT_Tools.WebConsole.Api
         /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandlePhotoUpload(HttpListenerContext ctx)
         {
+            // 冷却只在功能启用时由补丁同步；功能关闭时冷却无从得知，直接拒绝以免绕过节流
+            if (!Engine.Enabled<WebTabletFeature>())
+            {
+                HttpServer.WriteJson(ctx.Response, CommandResult.Fail("disabled", new { message = "平板电脑未启用" }));
+                return;
+            }
+
             JObject body = ApiUtil.ParseBody(ctx);
             if (body == null)
             {
@@ -154,13 +162,33 @@ namespace DT_Tools.WebConsole.Api
         }
 
         /// <summary>
-        /// POST /api/tablet/clear — 清空本地记录（聊天、线索、照片）。游戏内容不受影响。
+        /// POST /api/tablet/clear {scope} — 按范围清理本地记录：chat 聊天（含照片）、clues 线索、all 全部。游戏内容不受影响。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleClear(HttpListenerContext ctx)
         {
-            WebTabletStore.Clear();
-            HttpServer.WriteJson(ctx.Response, CommandResult.Success(new { message = "已清理" }));
+            JObject body = ApiUtil.ParseBody(ctx);
+            string scope = body?.Value<string>("scope") ?? "";
+            string message;
+            switch (scope)
+            {
+                case "chat":
+                    WebTabletStore.ClearChat();
+                    message = "已清理聊天记录";
+                    break;
+                case "clues":
+                    WebTabletStore.ClearClues();
+                    message = "已清理线索";
+                    break;
+                case "all":
+                    WebTabletStore.Clear();
+                    message = "已清理全部";
+                    break;
+                default:
+                    HttpServer.WriteJson(ctx.Response, CommandResult.Fail("invalid scope", new { message = "清理范围无效" }));
+                    return;
+            }
+            HttpServer.WriteJson(ctx.Response, CommandResult.Success(new { message, scope }));
         }
 
         private static object ToLineDto(WebTabletLine l) => new

@@ -16,9 +16,13 @@ function keyOf(item) {
   return props.kind === 'chat' ? item.seq : item.key;
 }
 
+/**
+ * 选中状态只记录被勾选的 key；计数与全选框一律按当前可见的条目计算。
+ * 聊天栏满员时最旧的条目会被挤掉，若直接用 Set 的大小计数，会把已不存在的 key 算进去。
+ */
 const selected = ref(new Set(props.items.map(keyOf)));
-const allChecked = computed(() => props.items.length > 0 && selected.value.size === props.items.length);
-const count = computed(() => selected.value.size);
+const count = computed(() => props.items.reduce((n, i) => n + (selected.value.has(keyOf(i)) ? 1 : 0), 0));
+const allChecked = computed(() => props.items.length > 0 && count.value === props.items.length);
 const title = computed(() => `导出${props.kind === 'chat' ? '聊天记录' : '线索'}（${props.format === 'text' ? '文本' : '图片'}）`);
 
 function isChecked(item) {

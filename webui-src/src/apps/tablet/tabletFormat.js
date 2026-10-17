@@ -28,11 +28,16 @@ export function orderClues(clues) {
   return [...propositions, ...plain];
 }
 
-/** 聊天条目的正文（不含名字与时间）。 */
+/** 把文本压成一行：换行与其周围的空白合并为一个空格（命题句在游戏内可能含换行）。 */
+export function singleLine(text) {
+  return String(text ?? '').replace(/\s*\n\s*/g, ' ').trim();
+}
+
+/** 聊天条目的正文（不含名字与时间）。命题保持单行。 */
 export function chatBody(line) {
   if (line.kind === 'photo') return '[图片]';
   if (line.kind === 'state') return `—— ${line.text} ——`;
-  if (line.kind === 'proposition') return `【命题】${line.text}`;
+  if (line.kind === 'proposition') return `【命题】${singleLine(line.text)}`;
   return line.text || '';
 }
 
@@ -57,8 +62,7 @@ export function formatClueText(clues, exportedAt = new Date()) {
     const fields = `对象：${c.who}　地点：${c.where}　时间：${c.when}`;
     const tail = c.destroyed ? '（已销毁）' : '';
     if (c.isProposition) {
-      out.push(`[命题] ${c.ownerName}：${c.sentence || ''}${tail}`);
-      out.push(`    ${fields}`);
+      out.push(`[命题] ${c.ownerName}：${singleLine(c.sentence)}${tail}　${fields}`);
     } else {
       out.push(`[线索] ${fields}${tail}`);
     }
@@ -68,7 +72,7 @@ export function formatClueText(clues, exportedAt = new Date()) {
 
 /** 选择列表里一条线索的简短预览。 */
 export function clueSummary(c) {
-  if (c.isProposition) return `${c.ownerName}：${c.sentence || ''}`;
+  if (c.isProposition) return `${c.ownerName}：${singleLine(c.sentence)}`;
   return `${c.who} · ${c.where} · ${c.when}`;
 }
 

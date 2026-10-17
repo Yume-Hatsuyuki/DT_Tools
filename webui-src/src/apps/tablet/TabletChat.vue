@@ -5,10 +5,12 @@ import { API } from '../../api.js';
 /**
  * 平板电脑的聊天流。头像、名字、气泡与游戏内一致：双方都显示头像与名字，
  * 本机消息靠右，他人消息靠左；死亡者气泡为灰色；阶段标记为黄字居中。
+ * 照片下方提供「复制」「另存为」，操作由父组件完成。
  */
 defineProps({
   lines: { type: Array, default: () => [] },
 });
+const emit = defineEmits(['copy-photo', 'save-photo']);
 
 function bubbleStyle(l) {
   if (l.kind === 'proposition' || l.isDead) return undefined;
@@ -34,6 +36,10 @@ function photoUrl(key) {
           </div>
           <div v-if="l.kind === 'photo'" class="bubble photo" :class="{ dead: l.isDead }">
             <img :src="photoUrl(l.photoKey)" alt="照片" loading="lazy" draggable="false" />
+            <div class="photo-actions">
+              <button type="button" @click="emit('copy-photo', l)">复制</button>
+              <button type="button" @click="emit('save-photo', l)">另存为</button>
+            </div>
           </div>
           <div
             v-else
@@ -81,4 +87,15 @@ function photoUrl(key) {
 }
 .bubble.photo { padding: 4px; background: rgba(255, 255, 255, 0.06); }
 .bubble.photo img { display: block; max-width: 260px; max-height: 260px; border-radius: 8px; }
+.photo-actions { display: flex; justify-content: flex-end; gap: 6px; padding: 4px 2px 2px; }
+.photo-actions button {
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text-1);
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.photo-actions button:hover { color: var(--text-0); border-color: var(--line-strong); }
 </style>

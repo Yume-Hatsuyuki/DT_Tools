@@ -1,7 +1,9 @@
 using System;
 using System.Globalization;
+using System.Reflection;
 using Data;
 using Google.Protobuf;
+using HarmonyLib;
 using Protocol;
 
 namespace DT_Tools.Game.WebTablet
@@ -20,6 +22,18 @@ namespace DT_Tools.Game.WebTablet
         /// 「Black」对应的虚拟玩家编号（0.1.18c UI_ClueSubItem.cs:232 与 Util.cs:804 同源常量）。
         /// </summary>
         private const int BlackClueId = 66613;
+
+        /// <summary>
+        /// 照片节流预算的恢复速率（每毫秒）：0.1.18c PhotoManager.cs:110 的 num * 0.2f，每秒回 0.2 格，即 5 秒一张。
+        /// 服务端 GameRoom.TryConsumePhotoBudget 使用同一参数，超出时服务端静默丢弃照片。
+        /// </summary>
+        private const float PhotoRefillPerMs = 0.2f / 1000f;
+
+        /// <summary>
+        /// PhotoManager.ConsumeBudget（private，字符串定位）：0.1.18c PhotoManager.cs:715-719。
+        /// 平板发图与游戏内发图共用这一份客户端预算，发送后经此方法扣减，保证两条路径的冷却一致。
+        /// </summary>
+        private static readonly MethodInfo ConsumePhotoBudgetMethod = AccessTools.Method(typeof(PhotoManager), "ConsumeBudget");
 
         /// <summary>
         /// 记录一条普通聊天（S_CHAT_MESSAGE 的 NormalChat 分支，经 VoiceManager.EnqueueNormalChat 进入）。
@@ -156,6 +170,8 @@ namespace DT_Tools.Game.WebTablet
             if (Managers.Game != null && Managers.Game.IsSpectator) return "观战中不能发送照片";
             var trial = (Managers.UI?.SceneUI as UI_GameScene)?.TrialUI;
             if (trial == null || trial.State != ETrialState.Discuss) return "只能在讨论阶段发送照片";
+            int cooldown = WebTabletStore.PhotoCooldownMs();
+            if (cooldown > 0) return $"照片冷却中，{(cooldown + 999) / 1000} 秒后可再发";
             var sink = Managers.Network?.GameServer;
             if (sink == null) return "未连接到游戏服务器";
             sink.Send(new C_CHAT_PHOTO
@@ -163,7 +179,33 @@ namespace DT_Tools.Game.WebTablet
                 SlotIndex = -1,
                 Data = ByteString.CopyFrom(jpeg),
             });
+            ConsumePhotoBudget();
             return null;
+        }
+
+        /// <summary>
+        /// 照片节流预算被扣减后（PhotoManager.ConsumeBudget 后缀）记录冷却截止时刻。
+        /// </summary>
+        /// <remarks>
+        /// 读取 PhotoManager 的 _budgetTokens（0.1.18c PhotoManager.cs:49）与 _budgetTickMs（:51）：
+        /// 两者在 RefillBudget（:100-111）中一起更新，因此可以据此算出回满一格所需的时间。须主线程调用。
+        /// </remarks>
+        /// <param name="photo">游戏的照片管理器。</param>
+        public static void RecordPhotoBudget(PhotoManager photo)
+        {
+            if (photo == null) return;
+            var traverse = Traverse.Create(photo);
+            float tokens = traverse.Field("_budgetTokens").GetValue<float>();
+            int tickMs = traverse.Field("_budgetTickMs").GetValue<int>();
+            float missing = Math.Max(0f, 1f - tokens);
+            int waitMs = (int)Math.Ceiling(missing / PhotoRefillPerMs);
+            WebTabletStore.SetPhotoReadyTick(unchecked(tickMs + waitMs));
+        }
+
+        private static void ConsumePhotoBudget()
+        {
+            if (ConsumePhotoBudgetMethod == null || Managers.Photo == null) return;
+            ConsumePhotoBudgetMethod.Invoke(Managers.Photo, null);
         }
 
         /// <summary>

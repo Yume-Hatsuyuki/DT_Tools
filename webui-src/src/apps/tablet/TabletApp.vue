@@ -6,16 +6,21 @@ import TabletChat from './TabletChat.vue';
 import TabletClues from './TabletClues.vue';
 import TabletExportDialog from './TabletExportDialog.vue';
 import { orderClues, formatChatText, formatClueText, fileStampOf } from './tabletFormat.js';
-import { renderChatParts, renderClueParts, downloadBlob, downloadText, fileToJpegBase64 } from './tabletImage.js';
+import { renderChatParts, renderClueParts, downloadBlob, downloadText, fileToJpegBase64, imageBlobToPng } from './tabletImage.js';
 
 /**
  * 平板电脑（实验性）：左侧聊天、右侧线索。数据由后端在游戏内采集，前端每 0.8 秒增量拉取。
- * 发言只在大厅与学级裁判可用；照片只在学级裁判的讨论阶段可用（均由后端与游戏双重校验）。
+ * 发言只在大厅与学级裁判可用；照片只在学级裁判的讨论阶段可用，并受照片冷却约束（均由后端与游戏双重校验）。
  */
 
 const POLL_MS = 800;
 const PHOTO_LIMIT = 163840;
 const LINE_CAP = 1000;
+const CLEAR_TEXT = {
+  chat: '清空本地聊天记录（含照片）？线索保留，游戏内容不受影响。',
+  clues: '清空本地线索？聊天记录保留，游戏内容不受影响。',
+  all: '清空本地全部记录（聊天、线索、照片）？游戏内容不受影响。',
+};
 
 const enabled = ref(null);
 const epoch = ref(null);
@@ -31,17 +36,31 @@ const toast = ref({ text: '', error: false });
 let toastTimer = null;
 
 const chatEl = ref(null);
+const rootEl = ref(null);
 let stickBottom = true;
 
 const input = ref('');
 const sending = ref(false);
 const photoBusy = ref(false);
+const cooldownUntil = ref(0);
+const tick = ref(Date.now());
 const menu = ref('');
 const exportDialog = ref(null);
-const confirmClear = ref(false);
+const confirmScope = ref('');
 
 const clueList = computed(() => orderClues(clues.value));
 const canSendPhoto = computed(() => stateCode.value === 'Trial' && canType.value);
+const photoWait = computed(() => Math.max(0, Math.ceil((cooldownUntil.value - tick.value) / 1000)));
+const photoButtonText = computed(() => {
+  if (photoBusy.value) return '处理中…';
+  if (photoWait.value > 0) return `图片 ${photoWait.value}s`;
+  return '图片';
+});
+const photoTitle = computed(() => {
+  if (!canSendPhoto.value) return '仅学级裁判的讨论阶段可以发送照片';
+  if (photoWait.value > 0) return `照片冷却中，${photoWait.value} 秒后可再发（与游戏内相同，每 5 秒一张）`;
+  return '发送照片（也可直接粘贴剪贴板中的图片）';
+});
 const placeholder = computed(() => (canType.value ? '输入消息，回车发送' : (typeReason.value || '当前阶段不可发言')));
 const stateText = computed(() => {
   if (!stateCode.value) return '等待阶段同步';
@@ -83,6 +102,8 @@ async function poll() {
   canType.value = !!d.canType;
   typeReason.value = d.typeReason || '';
   clues.value = d.clues || [];
+  const cool = Number(d.photoCooldownMs) || 0;
+  cooldownUntil.value = cool > 0 ? Date.now() + cool : 0;
 
   // 存储被清理或后端重启（代数变化、序号回退）：丢弃本地列表，从头同步一次
   if ((epoch.value !== null && d.epoch !== epoch.value) || d.seq < cursor.value) {
@@ -104,6 +125,7 @@ async function poll() {
 }
 
 const poller = createPoller(poll, POLL_MS);
+let clock = null;
 
 async function send() {
   const text = input.value.trim();
@@ -127,10 +149,17 @@ function onEnter(e) {
   send();
 }
 
-async function pickPhoto() {
-  if (!canSendPhoto.value || photoBusy.value) return;
-  const file = await pickImageFile('image/*');
-  if (!file) return;
+/** 发送一张照片：压缩、校验阶段与冷却，成功后立即拉取一次状态以刷新冷却。 */
+async function sendPhotoFile(file) {
+  if (photoBusy.value) return;
+  if (!canSendPhoto.value) {
+    flash('仅学级裁判的讨论阶段可以发送照片', true);
+    return;
+  }
+  if (photoWait.value > 0) {
+    flash(`照片冷却中，${photoWait.value} 秒后可再发`, true);
+    return;
+  }
   photoBusy.value = true;
   try {
     const data = await fileToJpegBase64(file, PHOTO_LIMIT);
@@ -147,6 +176,61 @@ async function pickPhoto() {
     flash(e.message || '照片处理失败', true);
   } finally {
     photoBusy.value = false;
+  }
+}
+
+async function pickPhoto() {
+  if (!canSendPhoto.value || photoBusy.value) return;
+  if (photoWait.value > 0) {
+    flash(`照片冷却中，${photoWait.value} 秒后可再发`, true);
+    return;
+  }
+  const file = await pickImageFile('image/*');
+  if (file) sendPhotoFile(file);
+}
+
+/**
+ * 粘贴剪贴板中的图片即发送为照片。纯文字粘贴保持原样，交给输入框处理。
+ */
+function onPaste(e) {
+  const data = e.clipboardData;
+  if (!data) return;
+  const item = [...data.items].find((i) => i.kind === 'file' && i.type.startsWith('image/'));
+  if (!item) return;
+  if (data.getData('text/plain')) return;
+  e.preventDefault();
+  const file = item.getAsFile();
+  if (file) sendPhotoFile(file);
+}
+
+/** 点击面板空白处时把焦点移到根节点，使 Ctrl+V 的粘贴事件落在平板上。输入框与按钮保持原有焦点行为。 */
+function focusRoot(e) {
+  if (e.target.closest?.('input, textarea, select, button, a')) return;
+  rootEl.value?.focus({ preventScroll: true });
+}
+
+async function copyPhoto(l) {
+  if (!navigator.clipboard || typeof ClipboardItem === 'undefined' || !window.isSecureContext) {
+    flash('当前不是安全连接（需 localhost 或 HTTPS），无法写入剪贴板，请使用「另存为」', true);
+    return;
+  }
+  try {
+    const blob = await API.tabletPhotoBlob(l.photoKey);
+    const png = await imageBlobToPng(blob);
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+    flash('图片已复制');
+  } catch (e) {
+    flash(`复制失败：${e.message || e}`, true);
+  }
+}
+
+async function savePhoto(l) {
+  try {
+    const blob = await API.tabletPhotoBlob(l.photoKey);
+    downloadBlob(blob, `照片_${fileStampOf(new Date())}_${l.photoKey}.jpg`);
+    flash('已开始保存');
+  } catch (e) {
+    flash(`保存失败：${e.message || e}`, true);
   }
 }
 
@@ -186,27 +270,42 @@ async function runExport(selected) {
   }
 }
 
+function askClear(scope) {
+  menu.value = '';
+  confirmScope.value = scope;
+}
+
 async function doClear() {
-  confirmClear.value = false;
-  const j = await API.tabletClear();
+  const scope = confirmScope.value;
+  confirmScope.value = '';
+  if (!scope) return;
+  const j = await API.tabletClear(scope);
   if (j.unauthorized) return;
   if (!j.ok) {
-    flash(j.error || '清理失败', true);
+    flash(j.data?.message || j.error || '清理失败', true);
     return;
   }
-  lines.value = [];
-  clues.value = [];
-  cursor.value = 0;
-  flash('已清理');
+  if (scope !== 'clues') {
+    lines.value = [];
+    cursor.value = 0;
+  }
+  if (scope !== 'chat') clues.value = [];
+  flash(j.data?.message || '已清理');
   poll();
 }
 
-onMounted(() => poller.start());
-onUnmounted(() => poller.stop());
+onMounted(() => {
+  poller.start();
+  clock = setInterval(() => { tick.value = Date.now(); }, 250);
+});
+onUnmounted(() => {
+  poller.stop();
+  clearInterval(clock);
+});
 </script>
 
 <template>
-  <div class="tablet-app">
+  <div ref="rootEl" class="tablet-app" tabindex="-1" @mousedown="focusRoot" @paste="onPaste">
     <header class="top">
       <div class="state" :class="{ on: canType }">
         <span class="dot"></span>
@@ -228,13 +327,20 @@ onUnmounted(() => poller.stop());
             <button @click="openExport('clue', 'image')">导出图片</button>
           </div>
         </div>
-        <button class="tb-btn danger" @click="confirmClear = true">清理</button>
+        <div class="menu-wrap">
+          <button class="tb-btn danger" @click="toggleMenu('clear')">清理 ▾</button>
+          <div v-if="menu === 'clear'" class="menu">
+            <button class="danger" @click="askClear('chat')">清理聊天记录</button>
+            <button class="danger" @click="askClear('clues')">清理线索</button>
+            <button class="danger" @click="askClear('all')">清理所有</button>
+          </div>
+        </div>
       </div>
     </header>
 
-    <div v-if="confirmClear" class="confirm">
-      <span>清空本地记录（聊天、线索、照片）？游戏内容不受影响。</span>
-      <button class="tb-btn" @click="confirmClear = false">取消</button>
+    <div v-if="confirmScope" class="confirm">
+      <span>{{ CLEAR_TEXT[confirmScope] }}</span>
+      <button class="tb-btn" @click="confirmScope = ''">取消</button>
       <button class="tb-btn danger" @click="doClear">确认清理</button>
     </div>
 
@@ -246,16 +352,16 @@ onUnmounted(() => poller.stop());
     <div class="panes">
       <section class="pane chat-pane">
         <div ref="chatEl" class="chat-scroll" @scroll="onChatScroll">
-          <TabletChat :lines="lines" />
+          <TabletChat :lines="lines" @copy-photo="copyPhoto" @save-photo="savePhoto" />
           <div v-if="!lines.length" class="empty">暂无聊天记录</div>
         </div>
         <div class="input-bar">
           <button
             class="tb-btn"
-            :disabled="!canSendPhoto || photoBusy"
-            :title="canSendPhoto ? '发送照片' : '仅学级裁判的讨论阶段可以发送照片'"
+            :disabled="!canSendPhoto || photoBusy || photoWait > 0"
+            :title="photoTitle"
             @click="pickPhoto"
-          >{{ photoBusy ? '处理中…' : '图片' }}</button>
+          >{{ photoButtonText }}</button>
           <input
             v-model="input"
             class="chat-input"
@@ -289,7 +395,7 @@ onUnmounted(() => poller.stop());
 </template>
 
 <style scoped>
-.tablet-app { position: relative; display: flex; flex-direction: column; gap: 8px; height: 100%; box-sizing: border-box; padding: 10px 12px; background: var(--surface-0); color: var(--text-1); overflow: hidden; }
+.tablet-app { position: relative; display: flex; flex-direction: column; gap: 8px; height: 100%; box-sizing: border-box; padding: 10px 12px; background: var(--surface-0); color: var(--text-1); overflow: hidden; outline: none; }
 .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .state { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-1); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; }
 .state .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-2); }
@@ -300,8 +406,9 @@ onUnmounted(() => poller.stop());
 .actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .menu-wrap { position: relative; }
 .menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; display: flex; flex-direction: column; min-width: 120px; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); box-shadow: var(--menu-shadow); overflow: hidden; }
-.menu button { text-align: left; background: none; border: none; color: var(--text-1); font-size: 12px; padding: 7px 12px; cursor: pointer; }
+.menu button { text-align: left; background: none; border: none; color: var(--text-1); font-size: 12px; padding: 7px 12px; cursor: pointer; white-space: nowrap; }
 .menu button:hover { background: rgba(140, 180, 255, 0.08); color: var(--text-0); }
+.menu button.danger { color: var(--accent-red); }
 .tb-btn { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--text-1); font-size: 11.5px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
 .tb-btn:disabled { opacity: 0.45; cursor: default; }
 .tb-btn.primary { background: var(--accent-blue-btn); border-color: transparent; color: #fff; }
