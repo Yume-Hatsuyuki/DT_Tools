@@ -187,7 +187,9 @@ onUnmounted(() => poller.stop());
 </template>
 
 <style scoped>
-.gp-app { position: relative; display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 12px 14px; box-sizing: border-box; background: var(--surface-0); color: var(--text-1); overflow: auto; }
+.gp-app { position: relative; display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 12px 14px; box-sizing: border-box; background: var(--surface-0); color: var(--text-1); overflow-x: hidden; overflow-y: auto; }
+/* 子块不参与压缩：窗口变矮时由 .gp-app 出现滚动条，而不是把 overflow:hidden 的映射表裁掉 */
+.gp-app > * { flex-shrink: 0; }
 .status-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 11px; color: var(--text-2); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
 .chip.on { color: var(--accent-cyan); border-color: var(--accent-cyan-dim); }
