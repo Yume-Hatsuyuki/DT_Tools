@@ -46,6 +46,7 @@ namespace DT_Tools.Game.WebTablet
             lock (_sync)
             {
                 if (dedupeKey != null && !TryAddKey($"line:{_round}:{dedupeKey}")) return;
+                line.Round = _round;
                 line.Seq = ++_seq;
                 _lines.Add(line);
                 while (_lines.Count > MaxLines) _lines.RemoveAt(0);

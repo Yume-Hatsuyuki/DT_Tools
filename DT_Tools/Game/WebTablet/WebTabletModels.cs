@@ -28,6 +28,8 @@ namespace DT_Tools.Game.WebTablet
     {
         /// <summary>单调递增序号，由存储分配，前端用于增量拉取。</summary>
         public long Seq;
+        /// <summary>所属局号（由存储在入库时写入），与线索的局号共用同一计数。</summary>
+        public int Round;
         /// <summary>条目类型，取值见 WebTabletKind。</summary>
         public string Kind;
         /// <summary>接收时的本机时间（HH:mm:ss），只用于导出。</summary>

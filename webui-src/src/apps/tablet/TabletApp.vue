@@ -49,7 +49,8 @@ const exportDialog = ref(null);
 const confirmScope = ref('');
 
 const clueList = computed(() => orderClues(clues.value));
-const clueNumbering = computed(() => roundNumbering(clues.value));
+/** 局编号由聊天与线索共同计算，同一局在两边的编号一致。 */
+const roundNo = computed(() => roundNumbering([...lines.value, ...clues.value]));
 const canSendPhoto = computed(() => stateCode.value === 'Trial' && canType.value);
 const photoWait = computed(() => Math.max(0, Math.ceil((cooldownUntil.value - tick.value) / 1000)));
 const photoButtonText = computed(() => {
@@ -252,15 +253,17 @@ async function runExport(selected) {
   const stamp = fileStampOf(new Date());
   try {
     if (format === 'text') {
-      const text = kind === 'chat' ? formatChatText(selected) : formatClueText(selected, new Date(), clueNumbering.value);
+      const text = kind === 'chat'
+        ? formatChatText(selected, new Date(), roundNo.value)
+        : formatClueText(selected, new Date(), roundNo.value);
       downloadText(text, `${title}_${stamp}.txt`);
       flash(`已导出 ${selected.length} 条`);
       return;
     }
     flash('正在生成图片…');
     const blobs = kind === 'chat'
-      ? await renderChatParts(selected, title)
-      : await renderClueParts(selected, title, clueNumbering.value);
+      ? await renderChatParts(selected, title, roundNo.value)
+      : await renderClueParts(selected, title, roundNo.value);
     blobs.forEach((blob, i) => {
       const part = blobs.length > 1 ? `_${i + 1}` : '';
       downloadBlob(blob, `${title}_${stamp}${part}.png`);
@@ -353,7 +356,7 @@ onUnmounted(() => {
     <div class="panes">
       <section class="pane chat-pane">
         <div ref="chatEl" class="chat-scroll" @scroll="onChatScroll">
-          <TabletChat :lines="lines" @copy-photo="copyPhoto" @save-photo="savePhoto" />
+          <TabletChat :lines="lines" :numbering="roundNo" @copy-photo="copyPhoto" @save-photo="savePhoto" />
           <div v-if="!lines.length" class="empty">暂无聊天记录</div>
         </div>
         <div class="input-bar">
@@ -377,7 +380,7 @@ onUnmounted(() => {
 
       <section class="pane clue-pane">
         <div class="clue-scroll">
-          <TabletClues :clues="clueList" :numbering="clueNumbering" />
+          <TabletClues :clues="clueList" :numbering="roundNo" />
         </div>
       </section>
     </div>
@@ -389,6 +392,7 @@ onUnmounted(() => {
       :kind="exportDialog.kind"
       :format="exportDialog.format"
       :items="exportItems"
+      :numbering="roundNo"
       @cancel="exportDialog = null"
       @confirm="runExport"
     />

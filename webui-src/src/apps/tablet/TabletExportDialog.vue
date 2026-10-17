@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { chatSummary, clueId, clueSummary } from './tabletFormat.js';
+import { chatSummary, clueId, clueSummary, groupByRound } from './tabletFormat.js';
 
 /**
  * 导出前的选择框：逐条打勾（默认全选），支持全选 / 全不选。确认后只返回选中的条目，保持原顺序。
@@ -9,6 +9,7 @@ const props = defineProps({
   kind: { type: String, required: true },   // 'chat' | 'clue'
   format: { type: String, required: true }, // 'text' | 'image'
   items: { type: Array, default: () => [] },
+  numbering: { type: Map, default: () => new Map() },
 });
 const emit = defineEmits(['cancel', 'confirm']);
 
@@ -23,6 +24,7 @@ function keyOf(item) {
 const selected = ref(new Set(props.items.map(keyOf)));
 const count = computed(() => props.items.reduce((n, i) => n + (selected.value.has(keyOf(i)) ? 1 : 0), 0));
 const allChecked = computed(() => props.items.length > 0 && count.value === props.items.length);
+const groups = computed(() => groupByRound(props.items, props.numbering));
 const title = computed(() => `导出${props.kind === 'chat' ? '聊天记录' : '线索'}（${props.format === 'text' ? '文本' : '图片'}）`);
 
 function isChecked(item) {
@@ -67,10 +69,13 @@ function confirm() {
 
       <div class="dlist">
         <div v-if="!items.length" class="empty">没有可导出的内容</div>
-        <label v-for="item in items" :key="keyOf(item)" class="row" :class="{ on: isChecked(item) }">
-          <input type="checkbox" :checked="isChecked(item)" @change="toggle(item)" />
-          <span class="row-text">{{ summary(item) }}</span>
-        </label>
+        <template v-for="g in groups" :key="g.round">
+          <div class="round-sep">—— 第 {{ g.no }} 局 ——</div>
+          <label v-for="item in g.items" :key="keyOf(item)" class="row" :class="{ on: isChecked(item) }">
+            <input type="checkbox" :checked="isChecked(item)" @change="toggle(item)" />
+            <span class="row-text">{{ summary(item) }}</span>
+          </label>
+        </template>
       </div>
 
       <footer class="dfoot">
@@ -82,6 +87,7 @@ function confirm() {
 </template>
 
 <style scoped>
+.round-sep { text-align: center; font-size: 12px; font-weight: 600; color: var(--accent-amber); padding: 6px 0 2px; letter-spacing: 0.02em; }
 .mask { position: absolute; inset: 0; z-index: 30; background: rgba(4, 8, 14, 0.55); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; }
 .dialog { width: min(520px, 100%); max-height: 100%; display: flex; flex-direction: column; background: var(--surface-1); border: 1px solid var(--line-strong); border-radius: var(--radius-md); box-shadow: var(--menu-shadow); overflow: hidden; }
 .dhead { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--line); }

@@ -19,11 +19,11 @@ export function fileStampOf(date = new Date()) {
 }
 
 /**
- * 线索栏的排序：按局分组，最新一局在前；局内命题在前（保持到达顺序），线索按游戏内时间从晚到早。
- * 同一局的线索在结果中连续出现，供 groupClueRounds 分段。
+ * 线索栏的排序：按局分组，较早的局在前（与聊天一致）；局内命题在前（保持到达顺序），线索按游戏内时间从晚到早。
+ * 同一局的线索在结果中连续出现，供 groupByRound 分段。
  */
 export function orderClues(clues) {
-  const rounds = [...new Set(clues.map((c) => c.round))].sort((a, b) => b - a);
+  const rounds = [...new Set(clues.map((c) => c.round))].sort((a, b) => a - b);
   return rounds.flatMap((r) => orderWithinRound(clues.filter((c) => c.round === r)));
 }
 
@@ -51,17 +51,17 @@ export function clueId(c) {
 }
 
 /**
- * 把已排序的线索按连续的同一局分组。
- * @returns {Array<{ round: number, no: number, clues: object[] }>} no 为 numbering 中的编号。
+ * 把已排序的条目按连续的同一局分组（聊天与线索通用，条目需带 round 字段）。
+ * @returns {Array<{ round: number, no: number, items: object[] }>} no 为 numbering 中的编号。
  */
-export function groupClueRounds(clues, numbering) {
+export function groupByRound(items, numbering) {
   const groups = [];
-  for (const c of clues) {
+  for (const it of items) {
     const last = groups[groups.length - 1];
-    if (last && last.round === c.round) {
-      last.clues.push(c);
+    if (last && last.round === it.round) {
+      last.items.push(it);
     } else {
-      groups.push({ round: c.round, no: numbering.get(c.round) ?? 0, clues: [c] });
+      groups.push({ round: it.round, no: numbering.get(it.round) ?? 0, items: [it] });
     }
   }
   return groups;
@@ -81,25 +81,30 @@ export function chatBody(line) {
 }
 
 /** 聊天记录的纯文本。每行一条，附本机时间与发言人。 */
-export function formatChatText(lines, exportedAt = new Date()) {
+export function formatChatText(lines, exportedAt = new Date(), numbering = new Map()) {
   const out = [`【聊天记录】导出于 ${stampOf(exportedAt)}，共 ${lines.length} 条`, ''];
-  for (const l of lines) {
-    if (l.kind === 'state') {
-      out.push(`[${l.time}] ${chatBody(l)}`);
-      continue;
+  for (const g of groupByRound(lines, numbering)) {
+    out.push(`—— 第 ${g.no} 局 ——`);
+    for (const l of g.items) {
+      if (l.kind === 'state') {
+        out.push(`[${l.time}] ${chatBody(l)}`);
+        continue;
+      }
+      const dead = l.isDead ? '（已死亡）' : '';
+      out.push(`[${l.time}] ${l.name}${dead}：${chatBody(l)}`);
     }
-    const dead = l.isDead ? '（已死亡）' : '';
-    out.push(`[${l.time}] ${l.name}${dead}：${chatBody(l)}`);
+    out.push('');
   }
+  while (out.length && out[out.length - 1] === '') out.pop();
   return `${out.join('\n')}\n`;
 }
 
 /** 线索的纯文本。命题写出提交者与句子，线索写出对象、地点与时间。 */
 export function formatClueText(clues, exportedAt = new Date(), numbering = new Map()) {
   const out = [`【线索】导出于 ${stampOf(exportedAt)}，共 ${clues.length} 条`, ''];
-  for (const g of groupClueRounds(clues, numbering)) {
+  for (const g of groupByRound(clues, numbering)) {
     out.push(`—— 第 ${g.no} 局 ——`);
-    for (const c of g.clues) {
+    for (const c of g.items) {
       const fields = `对象：${c.who}　地点：${c.where}　时间：${c.when}`;
       const tail = c.destroyed ? '（已销毁）' : '';
       if (c.isProposition) {

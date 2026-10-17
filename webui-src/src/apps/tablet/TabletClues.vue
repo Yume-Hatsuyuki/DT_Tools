@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { avatarSrc } from './tabletAvatars.js';
-import { clueId, groupClueRounds } from './tabletFormat.js';
+import { clueId, groupByRound } from './tabletFormat.js';
 
 /**
  * 平板电脑的线索栏。按局分段（最新一局在前，段首为「第 N 局」），局内命题在前，线索按时间从晚到早。
@@ -12,7 +12,7 @@ const props = defineProps({
   numbering: { type: Map, default: () => new Map() },
 });
 
-const groups = computed(() => groupClueRounds(props.clues, props.numbering));
+const groups = computed(() => groupByRound(props.clues, props.numbering));
 </script>
 
 <template>
@@ -21,7 +21,7 @@ const groups = computed(() => groupClueRounds(props.clues, props.numbering));
     <template v-for="g in groups" :key="g.round">
       <div class="round-sep">—— 第 {{ g.no }} 局 ——</div>
       <div
-        v-for="c in g.clues"
+        v-for="c in g.items"
         :key="clueId(c)"
         class="card"
         :class="{ proposition: c.isProposition, destroyed: c.destroyed }"

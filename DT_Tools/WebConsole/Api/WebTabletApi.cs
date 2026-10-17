@@ -203,6 +203,7 @@ namespace DT_Tools.WebConsole.Api
             isDead = l.IsDead,
             text = l.Text,
             photoKey = l.PhotoKey,
+            round = l.Round,
         };
 
         private static object ToClueDto(WebTabletClue c) => new

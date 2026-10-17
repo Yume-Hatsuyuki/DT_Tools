@@ -4,7 +4,7 @@
  * 画布不读取 CSS 变量，因此颜色按 styles/tokens.css 的同值写在 C 中。
  */
 import { avatarSrc, personalColor } from './tabletAvatars.js';
-import { chatBody, groupClueRounds, orderClues, singleLine } from './tabletFormat.js';
+import { chatBody, groupByRound, orderClues, singleLine } from './tabletFormat.js';
 import { API } from '../../api.js';
 
 const W = 760;
@@ -340,7 +340,7 @@ function chatStateBlock(l) {
 }
 
 /** 聊天记录分段渲染为 PNG Blob 列表。左右气泡与游戏一致：头像与名字在两侧，颜色取人物色。 */
-export async function renderChatParts(lines, title) {
+export async function renderChatParts(lines, title, numbering = new Map()) {
   const photoKeys = lines.filter((l) => l.kind === 'photo').map((l) => l.photoKey);
   const avatarKeys = [...new Set(lines.map((l) => l.avatar).filter(Boolean))];
   const [avatarImgs, photoImgs] = await Promise.all([
@@ -351,9 +351,15 @@ export async function renderChatParts(lines, title) {
   const photoMap = new Map(photoKeys.map((k, i) => [k, photoImgs[i]]));
   const measure = document.createElement('canvas').getContext('2d');
 
-  const blocks = lines.map((l) => (l.kind === 'state'
-    ? chatStateBlock(l)
-    : chatMessageBlock(l, avatarMap, photoMap, measure)));
+  const blocks = [];
+  for (const g of groupByRound(lines, numbering)) {
+    blocks.push(roundHeaderBlock(g.no));
+    for (const l of g.items) {
+      blocks.push(l.kind === 'state'
+        ? chatStateBlock(l)
+        : chatMessageBlock(l, avatarMap, photoMap, measure));
+    }
+  }
   if (!blocks.length) blocks.push(blank(40));
 
   const parts = paginate(blocks);
@@ -527,9 +533,9 @@ export async function renderClueParts(clues, title, numbering = new Map()) {
   const measure = document.createElement('canvas').getContext('2d');
 
   const blocks = [];
-  for (const g of groupClueRounds(ordered, numbering)) {
+  for (const g of groupByRound(ordered, numbering)) {
     blocks.push(roundHeaderBlock(g.no));
-    for (const c of g.clues) blocks.push(clueCardBlock(c, avatarMap, measure));
+    for (const c of g.items) blocks.push(clueCardBlock(c, avatarMap, measure));
   }
   if (!blocks.length) {
     blocks.push({
