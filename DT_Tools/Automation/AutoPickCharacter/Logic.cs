@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Data;
 using DT_Tools.Core;
+using DT_Tools.Game;
 
 namespace DT_Tools.Automation.AutoPickCharacter
 {
@@ -17,9 +18,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
     internal static class AutoPickCharacterLogic
     {
         public const int RandomId = -2;
-        public const int MadelineId = 101;
 
-        private const string MadelineEnglishName = "Madeline";
         private static readonly string[] MadelineTextKeys = { "Madeline", "Medelin" };
 
         public sealed class Entry
@@ -32,9 +31,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
         public static string GetEnglishName(int dataId)
         {
             if (dataId == RandomId) return "Random";
-            if (dataId == MadelineId) return MadelineEnglishName;
-            if (TryGetRawName(dataId, out string raw)) return raw;
-            return $"#{dataId}";
+            return CharacterNames.EnglishNameOf(dataId);
         }
 
         public static string GetDisplayName(int dataId)
@@ -45,7 +42,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             string eng = GetEnglishName(dataId);
             string zh = eng;
 
-            TryGetRawName(dataId, out string raw);
+            CharacterNames.TryGetRawName(dataId, out string raw);
             foreach (string key in TextKeys(dataId, raw))
             {
                 if (TryLookupText(key, out string text))
@@ -133,29 +130,6 @@ namespace DT_Tools.Automation.AutoPickCharacter
         }
 
         /// <summary>
-        /// 角色表里该 DataId 的原始 Name（未做任何修正）。
-        /// </summary>
-        /// <param name="dataId">角色 DataId。</param>
-        /// <param name="name">角色表中的原始 Name，未做修正；查不到时为 null。</param>
-        /// <returns>角色表中存在该 DataId 时为 true，否则为 false。</returns>
-        private static bool TryGetRawName(int dataId, out string name)
-        {
-            name = null;
-            try
-            {
-                if (Managers.Data?.CharacterDic != null &&
-                    Managers.Data.CharacterDic.TryGetValue(dataId, out CharacterData d) &&
-                    d != null && !string.IsNullOrEmpty(d.Name))
-                {
-                    name = d.Name;
-                    return true;
-                }
-            }
-            catch { /* data not ready */ }
-            return false;
-        }
-
-        /// <summary>
         /// 查文本表用的候选 key，按优先级：表内 Name → （仅 101）Madeline / Medelin。
         /// </summary>
         /// <param name="dataId">角色 DataId。仅 101 会追加 Madeline、Medelin 两个候选。</param>
@@ -166,7 +140,7 @@ namespace DT_Tools.Automation.AutoPickCharacter
             if (!string.IsNullOrEmpty(rawName))
                 yield return rawName;
 
-            if (dataId != MadelineId)
+            if (dataId != CharacterNames.MadelineId)
                 yield break;
 
             foreach (string key in MadelineTextKeys)

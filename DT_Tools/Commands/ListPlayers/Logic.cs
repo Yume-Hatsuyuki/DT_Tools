@@ -24,6 +24,16 @@ namespace DT_Tools.Commands.ListPlayers
             public ulong SteamId;
 
             /// <summary>
+            /// 玩家当前选择的角色 DataId（PublicPlayerInfo.CharacterId）；未选角为 0。
+            /// </summary>
+            public int CharacterId;
+
+            /// <summary>
+            /// 角色英文名（如 Rin）。未选角或角色表未就绪时为 null。
+            /// </summary>
+            public string Character;
+
+            /// <summary>
             /// Steam 账号昵称（persona name），数据未就绪/不可查为 null。
             /// </summary>
             public string SteamName;
@@ -108,10 +118,13 @@ namespace DT_Tools.Commands.ListPlayers
                 {
                     ulong steamId = Managers.Player.GetRosterSteamId(p.PublicInfo.PlayerId);
                     TryResolveConnection(steamId, out string ip, out bool? relayed, out int ping);
+                    int characterId = p.PublicInfo.CharacterId;
                     return new Entry
                     {
                         Pid = p.PublicInfo.PlayerId,
                         Name = p.Name ?? "(未命名)",
+                        CharacterId = characterId,
+                        Character = CharacterNames.IsKnown(characterId) ? CharacterNames.EnglishNameOf(characterId) : null,
                         SteamId = steamId,
                         SteamName = SteamNameOf(steamId),
                         IsHost = p.PublicInfo.PlayerId == hostId,

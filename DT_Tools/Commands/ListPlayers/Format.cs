@@ -9,35 +9,95 @@ namespace DT_Tools.Commands.ListPlayers
     /// </summary>
     internal static class ListPlayersFormat
     {
-        public static string Reply(List<ListPlayersLogic.Entry> players, int hostId)
+        /// <summary>
+        /// 参数说明（不带参数时的输出）。
+        /// </summary>
+        /// <returns>多行中文说明，列出全部参数与示例。</returns>
+        public static string Help()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("用法: /list_players [参数…]");
+            sb.AppendLine("每个参数显示一条信息，多个参数按写入顺序拼接；不带参数时显示本说明。");
+            foreach (var row in ListPlayersArgs.Table)
+                sb.AppendLine($"  {row.Token,-11}{row.Description}");
+            sb.AppendLine($"  {ListPlayersArgs.AllToken,-11}以上全部");
+            sb.Append("示例: /list_players id name character   →   #2 LUE Rin");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 参数说明的 JSON 结果：列出全部参数名。
+        /// </summary>
+        /// <returns>含 help 标记与参数名列表的结果对象。</returns>
+        public static object HelpResult()
+            => new
+            {
+                help = true,
+                modules = ListPlayersArgs.Table.Select(r => r.Token).ToArray(),
+            };
+
+        /// <summary>
+        /// 按模块拼接的文本输出：每个玩家一行，各模块的片段以空格连接。
+        /// </summary>
+        /// <param name="players">按 PlayerId 排序的玩家条目。</param>
+        /// <param name="hostId">房主的 PlayerId，识别失败为 0。</param>
+        /// <param name="modules">要显示的模块，按拼接顺序排列，不为空。</param>
+        /// <returns>多行文本，末行为人数。</returns>
+        public static string Reply(List<ListPlayersLogic.Entry> players, int hostId, IReadOnlyList<ListPlayersModule> modules)
         {
             var sb = new StringBuilder();
             sb.AppendLine("━━━ 玩家列表 ━━━");
 
             foreach (var e in players)
             {
-                string steamStr = e.SteamId != 0 ? e.SteamId.ToString() : "未知";
-                string steamName = string.IsNullOrEmpty(e.SteamName) ? "未知" : e.SteamName;
-
-                string tag = "";
-                if (e.IsHost && e.IsSelf) tag = "  ← 房主·你";
-                else if (e.IsHost)        tag = "  ← 房主";
-                else if (e.IsSelf)        tag = "  ← 你";
-
-                // #1 Alice [direct]ip_src=x.x.x.x:port steam_id=... steam_name=...
-                string transport = e.Relayed == null ? "unknown" : (e.Relayed.Value ? "relay" : "direct");
-                string ipStr = string.IsNullOrEmpty(e.RemoteIp) ? "—" : e.RemoteIp;
-                string pingStr = e.PingMs >= 0 ? $" ping={e.PingMs}ms" : "";
-
-                sb.AppendLine(
-                    $"  #{e.Pid} {e.Name} [{transport}]ip_src={ipStr} steam_id={steamStr} steam_name={steamName}{pingStr}{tag}");
+                string line = string.Join(" ", modules
+                    .Select(m => Fragment(m, e))
+                    .Where(f => !string.IsNullOrEmpty(f)));
+                sb.AppendLine("  " + (line.Length > 0 ? line : "（无标注）"));
             }
 
-            if (hostId == 0)
+            if (modules.Contains(ListPlayersModule.Role) && hostId == 0)
                 sb.AppendLine("（未能识别房主）");
 
             sb.Append($"共 {players.Count} 名玩家");
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// 单个模块对应的文本片段。内容为空时返回空串，该模块在这一行不显示。
+        /// </summary>
+        /// <param name="module">信息模块。</param>
+        /// <param name="e">玩家条目，房主与自身标注已由 IsHost、IsSelf 给出。</param>
+        /// <returns>该模块的文本片段。</returns>
+        private static string Fragment(ListPlayersModule module, ListPlayersLogic.Entry e)
+        {
+            switch (module)
+            {
+                case ListPlayersModule.Id:
+                    return $"#{e.Pid}";
+                case ListPlayersModule.Name:
+                    return e.Name ?? "(未命名)";
+                case ListPlayersModule.Character:
+                    return e.Character ?? "未选角";
+                case ListPlayersModule.Role:
+                    if (e.IsHost && e.IsSelf) return "← 房主·你";
+                    if (e.IsHost) return "← 房主";
+                    if (e.IsSelf) return "← 你";
+                    return "";
+                case ListPlayersModule.Transport:
+                    string transport = e.Relayed == null ? "unknown" : (e.Relayed.Value ? "relay" : "direct");
+                    return $"[{transport}]";
+                case ListPlayersModule.Ip:
+                    return $"ip_src={(string.IsNullOrEmpty(e.RemoteIp) ? "—" : e.RemoteIp)}";
+                case ListPlayersModule.SteamId:
+                    return $"steam_id={(e.SteamId != 0 ? e.SteamId.ToString() : "未知")}";
+                case ListPlayersModule.SteamName:
+                    return $"steam_name={(string.IsNullOrEmpty(e.SteamName) ? "未知" : e.SteamName)}";
+                case ListPlayersModule.Ping:
+                    return $"ping={(e.PingMs >= 0 ? $"{e.PingMs}ms" : "—")}";
+                default:
+                    return "";
+            }
         }
 
         public static object Result(List<ListPlayersLogic.Entry> players, int hostId, int myId)
@@ -50,6 +110,8 @@ namespace DT_Tools.Commands.ListPlayers
                 {
                     playerId = e.Pid,
                     name = e.Name ?? "",
+                    characterId = e.CharacterId,
+                    character = e.Character ?? "",
                     steamId = e.SteamId != 0 ? e.SteamId.ToString() : "",
                     steamName = e.SteamName ?? "",
                     ip = e.RemoteIp ?? "",
