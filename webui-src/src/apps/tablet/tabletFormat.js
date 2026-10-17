@@ -18,14 +18,53 @@ export function fileStampOf(date = new Date()) {
     + `${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 }
 
-/** 线索栏的排序：命题在前（保持到达顺序），线索按游戏内时间从晚到早。 */
+/**
+ * 线索栏的排序：按局分组，最新一局在前；局内命题在前（保持到达顺序），线索按游戏内时间从晚到早。
+ * 同一局的线索在结果中连续出现，供 groupClueRounds 分段。
+ */
 export function orderClues(clues) {
+  const rounds = [...new Set(clues.map((c) => c.round))].sort((a, b) => b - a);
+  return rounds.flatMap((r) => orderWithinRound(clues.filter((c) => c.round === r)));
+}
+
+function orderWithinRound(clues) {
   const propositions = clues.filter((c) => c.isProposition);
   const plain = clues.filter((c) => !c.isProposition)
     .map((c, i) => ({ c, i }))
     .sort((a, b) => (b.c.time - a.c.time) || (a.i - b.i))
     .map((x) => x.c);
   return [...propositions, ...plain];
+}
+
+/**
+ * 局的显示编号：按局号从小到大编为第 1、2… 局。传入的线索决定编号范围，界面与导出都用同一份全量线索计算。
+ * @returns {Map<number, number>} 局号 → 编号。
+ */
+export function roundNumbering(clues) {
+  const rounds = [...new Set(clues.map((c) => c.round))].sort((a, b) => a - b);
+  return new Map(rounds.map((r, i) => [r, i + 1]));
+}
+
+/** 线索的稳定标识。局内 key 唯一，跨局可能重复，所以带上局号。 */
+export function clueId(c) {
+  return `${c.round}|${c.key}`;
+}
+
+/**
+ * 把已排序的线索按连续的同一局分组。
+ * @returns {Array<{ round: number, no: number, clues: object[] }>} no 为 numbering 中的编号。
+ */
+export function groupClueRounds(clues, numbering) {
+  const groups = [];
+  for (const c of clues) {
+    const last = groups[groups.length - 1];
+    if (last && last.round === c.round) {
+      last.clues.push(c);
+    } else {
+      groups.push({ round: c.round, no: numbering.get(c.round) ?? 0, clues: [c] });
+    }
+  }
+  return groups;
 }
 
 /** 把文本压成一行：换行与其周围的空白合并为一个空格（命题句在游戏内可能含换行）。 */
@@ -56,17 +95,22 @@ export function formatChatText(lines, exportedAt = new Date()) {
 }
 
 /** 线索的纯文本。命题写出提交者与句子，线索写出对象、地点与时间。 */
-export function formatClueText(clues, exportedAt = new Date()) {
+export function formatClueText(clues, exportedAt = new Date(), numbering = new Map()) {
   const out = [`【线索】导出于 ${stampOf(exportedAt)}，共 ${clues.length} 条`, ''];
-  for (const c of clues) {
-    const fields = `对象：${c.who}　地点：${c.where}　时间：${c.when}`;
-    const tail = c.destroyed ? '（已销毁）' : '';
-    if (c.isProposition) {
-      out.push(`[命题] ${c.ownerName}：${singleLine(c.sentence)}${tail}　${fields}`);
-    } else {
-      out.push(`[线索] ${fields}${tail}`);
+  for (const g of groupClueRounds(clues, numbering)) {
+    out.push(`—— 第 ${g.no} 局 ——`);
+    for (const c of g.clues) {
+      const fields = `对象：${c.who}　地点：${c.where}　时间：${c.when}`;
+      const tail = c.destroyed ? '（已销毁）' : '';
+      if (c.isProposition) {
+        out.push(`[命题] ${c.ownerName}：${singleLine(c.sentence)}${tail}　${fields}`);
+      } else {
+        out.push(`[线索] ${fields}${tail}`);
+      }
     }
+    out.push('');
   }
+  while (out.length && out[out.length - 1] === '') out.pop();
   return `${out.join('\n')}\n`;
 }
 

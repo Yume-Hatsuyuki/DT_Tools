@@ -82,6 +82,8 @@ namespace DT_Tools.Game.WebTablet
         public bool Destroyed;
         /// <summary>游戏内时间（分钟），前端用于排序。</summary>
         public int Time;
+        /// <summary>所属局号（由存储在入库时写入）。同一局的线索共用一个值，回到大厅即递增。</summary>
+        public int Round;
     }
 
     /// <summary>

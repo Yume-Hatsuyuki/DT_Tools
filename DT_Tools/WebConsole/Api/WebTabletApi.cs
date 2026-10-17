@@ -220,6 +220,7 @@ namespace DT_Tools.WebConsole.Api
             sentence = c.Sentence,
             destroyed = c.Destroyed,
             time = c.Time,
+            round = c.Round,
         };
 
         private static void WriteMain(HttpListenerContext ctx, Func<CommandResult> work)

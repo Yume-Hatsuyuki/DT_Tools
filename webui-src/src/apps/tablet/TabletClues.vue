@@ -1,45 +1,54 @@
 <script setup>
+import { computed } from 'vue';
 import { avatarSrc } from './tabletAvatars.js';
+import { clueId, groupClueRounds } from './tabletFormat.js';
 
 /**
- * 平板电脑的线索栏。命题在前（显示提交者与句子），线索按时间从晚到早（显示对象、地点、时间）。
- * 数据已由 orderClues 排好序。
+ * 平板电脑的线索栏。按局分段（最新一局在前，段首为「第 N 局」），局内命题在前，线索按时间从晚到早。
+ * 数据已由 orderClues 排好序；numbering 为局号到显示编号的对照表。
  */
-defineProps({
+const props = defineProps({
   clues: { type: Array, default: () => [] },
+  numbering: { type: Map, default: () => new Map() },
 });
+
+const groups = computed(() => groupClueRounds(props.clues, props.numbering));
 </script>
 
 <template>
   <div class="clue-list">
     <div v-if="!clues.length" class="empty">暂无线索与命题</div>
-    <div
-      v-for="c in clues"
-      :key="c.key"
-      class="card"
-      :class="{ proposition: c.isProposition, destroyed: c.destroyed }"
-    >
-      <div v-if="c.isProposition" class="head">
-        <img class="avatar-sm" :src="avatarSrc(c.ownerAvatar)" alt="" draggable="false" />
-        <span class="owner">{{ c.ownerName }}</span>
-        <span class="tag hot">命题</span>
+    <template v-for="g in groups" :key="g.round">
+      <div class="round-sep">—— 第 {{ g.no }} 局 ——</div>
+      <div
+        v-for="c in g.clues"
+        :key="clueId(c)"
+        class="card"
+        :class="{ proposition: c.isProposition, destroyed: c.destroyed }"
+      >
+        <div v-if="c.isProposition" class="head">
+          <img class="avatar-sm" :src="avatarSrc(c.ownerAvatar)" alt="" draggable="false" />
+          <span class="owner">{{ c.ownerName }}</span>
+          <span class="tag hot">命题</span>
+        </div>
+        <div v-else class="head">
+          <span class="tag">线索</span>
+        </div>
+        <p v-if="c.isProposition" class="sentence">{{ c.sentence }}</p>
+        <div class="fields">
+          <span class="who"><img class="avatar-xs" :src="avatarSrc(c.whoAvatar)" alt="" draggable="false" />{{ c.who }}</span>
+          <span>{{ c.where }}</span>
+          <span>{{ c.when }}</span>
+        </div>
+        <span v-if="c.destroyed" class="destroyed-tag">已销毁</span>
       </div>
-      <div v-else class="head">
-        <span class="tag">线索</span>
-      </div>
-      <p v-if="c.isProposition" class="sentence">{{ c.sentence }}</p>
-      <div class="fields">
-        <span class="who"><img class="avatar-xs" :src="avatarSrc(c.whoAvatar)" alt="" draggable="false" />{{ c.who }}</span>
-        <span>{{ c.where }}</span>
-        <span>{{ c.when }}</span>
-      </div>
-      <span v-if="c.destroyed" class="destroyed-tag">已销毁</span>
-    </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
 .clue-list { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.round-sep { text-align: center; font-size: 12px; font-weight: 600; color: var(--accent-amber); padding: 4px 0; letter-spacing: 0.02em; }
 .empty { text-align: center; font-size: 12px; color: var(--text-2); padding: 30px 0; }
 .card {
   position: relative;

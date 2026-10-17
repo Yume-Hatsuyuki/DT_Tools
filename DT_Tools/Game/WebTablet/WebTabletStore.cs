@@ -33,9 +33,11 @@ namespace DT_Tools.Game.WebTablet
         private static string _stateCode = "";
         private static string _stateLabel = "";
         private static int _photoReadyTick;
+        private static int _round = 1;
 
         /// <summary>
         /// 追加一条聊天条目。传入 dedupeKey 时，同一键只会入库一次（用于命题气泡可能被重复上报的情况）。
+        /// 去重键带上局号：游戏内时间每局从零开始，不同局可能出现相同的键。
         /// </summary>
         /// <param name="line">要追加的条目；Seq 由本方法分配。</param>
         /// <param name="dedupeKey">去重键，可为 null 表示不去重。</param>
@@ -43,7 +45,7 @@ namespace DT_Tools.Game.WebTablet
         {
             lock (_sync)
             {
-                if (dedupeKey != null && !TryAddKey($"line:{dedupeKey}")) return;
+                if (dedupeKey != null && !TryAddKey($"line:{_round}:{dedupeKey}")) return;
                 line.Seq = ++_seq;
                 _lines.Add(line);
                 while (_lines.Count > MaxLines) _lines.RemoveAt(0);
@@ -51,15 +53,16 @@ namespace DT_Tools.Game.WebTablet
         }
 
         /// <summary>
-        /// 追加一条线索。同一 Key 只入库一次。
+        /// 追加一条线索，并记入当前局。同一局内同一 Key 只入库一次；不同局允许相同的 Key。
         /// </summary>
-        /// <param name="clue">线索条目，Key 必须已填写。</param>
-        /// <returns>true 表示新入库；false 表示已存在被忽略。</returns>
+        /// <param name="clue">线索条目，Key 必须已填写；Round 由本方法写入。</param>
+        /// <returns>true 表示新入库；false 表示本局内已存在被忽略。</returns>
         public static bool AddClue(WebTabletClue clue)
         {
             lock (_sync)
             {
-                if (!TryAddKey($"clue:{clue.Key}")) return false;
+                clue.Round = _round;
+                if (!TryAddKey($"clue:{_round}:{clue.Key}")) return false;
                 _clues.Add(clue);
                 while (_clues.Count > MaxClues) _clues.RemoveAt(0);
                 return true;
@@ -108,6 +111,8 @@ namespace DT_Tools.Game.WebTablet
             {
                 if (code == _stateCode) return;
                 _stateCode = code ?? "";
+                // 回到大厅即一局结束（与游戏 GameManagerEX.StartLobby 清空线索的时机一致）：之后的线索归入新的一局
+                if (_stateCode == "Lobby") _round++;
                 _stateLabel = label ?? "";
                 if (_stateLabel.Length == 0) return;
                 AddLine(new WebTabletLine
@@ -191,6 +196,7 @@ namespace DT_Tools.Game.WebTablet
                 _stateCode = "";
                 _stateLabel = "";
                 _photoReadyTick = 0;
+                _round = 1;
             }
         }
 

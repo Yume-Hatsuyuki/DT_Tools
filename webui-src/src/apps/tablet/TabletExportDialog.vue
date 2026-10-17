@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { chatSummary, clueSummary } from './tabletFormat.js';
+import { chatSummary, clueId, clueSummary } from './tabletFormat.js';
 
 /**
  * 导出前的选择框：逐条打勾（默认全选），支持全选 / 全不选。确认后只返回选中的条目，保持原顺序。
@@ -13,7 +13,7 @@ const props = defineProps({
 const emit = defineEmits(['cancel', 'confirm']);
 
 function keyOf(item) {
-  return props.kind === 'chat' ? item.seq : item.key;
+  return props.kind === 'chat' ? item.seq : clueId(item);
 }
 
 /**

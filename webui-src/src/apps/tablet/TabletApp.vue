@@ -5,7 +5,7 @@ import { pickImageFile } from '../../composables/pickImage.js';
 import TabletChat from './TabletChat.vue';
 import TabletClues from './TabletClues.vue';
 import TabletExportDialog from './TabletExportDialog.vue';
-import { orderClues, formatChatText, formatClueText, fileStampOf } from './tabletFormat.js';
+import { orderClues, roundNumbering, formatChatText, formatClueText, fileStampOf } from './tabletFormat.js';
 import { renderChatParts, renderClueParts, downloadBlob, downloadText, fileToJpegBase64, imageBlobToPng } from './tabletImage.js';
 
 /**
@@ -49,6 +49,7 @@ const exportDialog = ref(null);
 const confirmScope = ref('');
 
 const clueList = computed(() => orderClues(clues.value));
+const clueNumbering = computed(() => roundNumbering(clues.value));
 const canSendPhoto = computed(() => stateCode.value === 'Trial' && canType.value);
 const photoWait = computed(() => Math.max(0, Math.ceil((cooldownUntil.value - tick.value) / 1000)));
 const photoButtonText = computed(() => {
@@ -251,7 +252,7 @@ async function runExport(selected) {
   const stamp = fileStampOf(new Date());
   try {
     if (format === 'text') {
-      const text = kind === 'chat' ? formatChatText(selected) : formatClueText(selected);
+      const text = kind === 'chat' ? formatChatText(selected) : formatClueText(selected, new Date(), clueNumbering.value);
       downloadText(text, `${title}_${stamp}.txt`);
       flash(`已导出 ${selected.length} 条`);
       return;
@@ -259,7 +260,7 @@ async function runExport(selected) {
     flash('正在生成图片…');
     const blobs = kind === 'chat'
       ? await renderChatParts(selected, title)
-      : await renderClueParts(selected, title);
+      : await renderClueParts(selected, title, clueNumbering.value);
     blobs.forEach((blob, i) => {
       const part = blobs.length > 1 ? `_${i + 1}` : '';
       downloadBlob(blob, `${title}_${stamp}${part}.png`);
@@ -376,7 +377,7 @@ onUnmounted(() => {
 
       <section class="pane clue-pane">
         <div class="clue-scroll">
-          <TabletClues :clues="clueList" />
+          <TabletClues :clues="clueList" :numbering="clueNumbering" />
         </div>
       </section>
     </div>
