@@ -19,7 +19,9 @@ export function fileStampOf(date = new Date()) {
 }
 
 /**
- * 线索栏的排序：按局分组，较早的局在前（与聊天一致）；局内命题在前（保持到达顺序），线索按游戏内时间从晚到早。
+ * 线索栏的排序：按局分组，较早的局在前（与聊天一致）；局内按游戏内时间从早到晚，
+ * 与游戏 UI_GameTablet.RefreshClueList 的 orderby 完全一致：
+ * 时间 → 命题在前 → 对象玩家编号 → 房间编号；仍相同的按到达顺序。
  * 同一局的线索在结果中连续出现，供 groupByRound 分段。
  */
 export function orderClues(clues) {
@@ -28,12 +30,14 @@ export function orderClues(clues) {
 }
 
 function orderWithinRound(clues) {
-  const propositions = clues.filter((c) => c.isProposition);
-  const plain = clues.filter((c) => !c.isProposition)
+  return clues
     .map((c, i) => ({ c, i }))
-    .sort((a, b) => (b.c.time - a.c.time) || (a.i - b.i))
+    .sort((a, b) => (a.c.time - b.c.time)
+      || (Number(!a.c.isProposition) - Number(!b.c.isProposition))
+      || ((a.c.targetId ?? 0) - (b.c.targetId ?? 0))
+      || ((a.c.roomId ?? 0) - (b.c.roomId ?? 0))
+      || (a.i - b.i))
     .map((x) => x.c);
-  return [...propositions, ...plain];
 }
 
 /**

@@ -106,6 +106,8 @@ namespace DT_Tools.Game.WebTablet
                 Sentence = sentence,
                 Destroyed = info.Destroyed,
                 Time = info.Time,
+                TargetId = info.PlayerId,
+                RoomId = info.RoomId,
             });
         }
 

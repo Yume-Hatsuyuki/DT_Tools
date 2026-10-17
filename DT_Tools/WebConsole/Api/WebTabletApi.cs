@@ -222,6 +222,8 @@ namespace DT_Tools.WebConsole.Api
             destroyed = c.Destroyed,
             time = c.Time,
             round = c.Round,
+            targetId = c.TargetId,
+            roomId = c.RoomId,
         };
 
         private static void WriteMain(HttpListenerContext ctx, Func<CommandResult> work)
