@@ -613,6 +613,7 @@ public sealed class XxxModule { }
 | `/api/automation/modules/{id}/log` | GET / POST | 查询或清空模块日志 |
 | `/api/game/exit` | POST | 在主线程调用 `Application.Quit()`。确认步骤在前端做 |
 | `/api/steam/players` | GET | Steam 在线人数 |
+| `/api/steam/news?lang=` | GET | 游戏新闻挂件：Steam 新闻 RSS 代理，按语言缓存 50 秒（挂件每 1 分钟轮询）；语言须在白名单（`SteamNewsApi.Languages`，与前端 `desktop/newsLanguages.js` 同步）；所选语言无公告时回退英文并标注 `fallback` |
 | `/api/update/status` | GET | 更新检测状态（GitHub Releases latest，后端缓存 3 分钟；含当前版本、最新版本、下载进度） |
 | `/api/update/check` | POST | 手动检查更新。绕过缓存立即请求 GitHub |
 | `/api/update/download` | POST | 启动新版 zip 后台下载（专用线程；进度经 status 轮询） |
@@ -753,6 +754,16 @@ public sealed class XxxModule { }
 - 顶栏更新徽标/气泡（TopBar）、关于弹窗的"检查更新"按钮、`UpdateModal` 更新信息弹窗，共用同一份状态。
 - 手动检查走 `/api/update/check`（后端绕过缓存）。下载激活期间前端切 1 秒快轮询读进度。
 - 后端当前版本来自 csproj 的 `<Version>`（编译期注入 `MyPluginInfo.PLUGIN_VERSION`），前端不自持版本号。
+
+#### 桌面挂件（组件，不是应用）
+
+- 挂件放在 `src/desktop/`，不进 `src/apps/`，不占窗口：固定定位、可拖动、可关闭，经底部 Dock 或顶栏「小组件」菜单再开。
+- 现有挂件：`SteamWidget`（Steam 在线人数）、`McpWidget`（MCP 桥接）、`NewsWidget`（游戏新闻）。
+  每个挂件的开关与位置各存一个 localStorage 键（`dt_*_widget_v1`），在 `Desktop.vue` 的 `widgets` 数组登记，顶栏「小组件」菜单也要同步加行。
+- `NewsWidget`：Steam 新闻 RSS（AppID 取游戏常量 `Define.STEAM_RELEASE_APP_ID`，即 3088400）。浏览器直连受 CORS 限制，由后端 `SteamNewsApi` 中转；RSS 解析在 `SteamNewsParser`（纯函数，可独立测试）。
+- 多语言：语言表在 `desktop/newsLanguages.js`，`code` 即 Steam 的 `l=` 参数。默认语言按 `navigator.language` 选择，选择结果存 `dt_news_widget_v1`（仅本浏览器）。
+  挂件自身文字当前提供 zh/en/ja/ko/ru，其余语言回退英文。Steam 在某语言下是否有公告由 Steam 决定，无公告时后端回退英文并在前端提示。
+- 新增语言时必须同时改后端白名单与前端语言表，两边不一致会出现前端可选、后端 400 的情况。
 
 #### 前端铁律
 

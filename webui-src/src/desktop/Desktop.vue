@@ -5,6 +5,7 @@ import Dock from './Dock.vue';
 import ParticleFlow from './ParticleFlow.vue';
 import SteamWidget from './SteamWidget.vue';
 import McpWidget from './McpWidget.vue';
+import NewsWidget from './NewsWidget.vue';
 import Window from './Window.vue';
 import UpdateModal from './UpdateModal.vue';
 import CropperHost from '../apps/common/CropperHost.vue';
@@ -47,6 +48,7 @@ import IconDeviceAudioTape from '~icons/tabler/device-audio-tape';
 import IconDeviceGamepad2 from '~icons/tabler/device-gamepad-2';
 import IconDeviceTablet from '~icons/tabler/device-tablet';
 import IconBrandSteam from '~icons/tabler/brand-steam';
+import IconNews from '~icons/tabler/news';
 import IconModelAi from '~icons/tabler/model-ai';
 
 /**
@@ -107,28 +109,33 @@ const showUpdate = ref(false);           // 软件更新弹窗（顶栏徽标/�
 
 const WIDGET_STORE_KEY = 'dt_steam_widget_v1';
 const MCP_STORE_KEY = 'dt_mcp_widget_v1';
+const NEWS_STORE_KEY = 'dt_news_widget_v1';
 function widgetClosedAtStart(key) {
   try { return !!(JSON.parse(localStorage.getItem(key)) || {}).closed; }
   catch { return false; }
 }
 const steamWidgetOpen = ref(!widgetClosedAtStart(WIDGET_STORE_KEY));
 const mcpWidgetOpen = ref(!widgetClosedAtStart(MCP_STORE_KEY));
+const newsWidgetOpen = ref(!widgetClosedAtStart(NEWS_STORE_KEY));
 
 /** Dock 小组件定义（与应用图标同列，运行点表示弹窗开着）。 */
 const widgets = [
   { id: 'steam', title: 'Steam 当前（全球）玩家数统计', icon: markRaw(IconBrandSteam) },
   { id: 'mcp', title: 'MCP 桥接（AI 接入）', icon: markRaw(IconModelAi) },
+  { id: 'news', title: '游戏新闻（Steam 公告）', icon: markRaw(IconNews) },
 ];
 
 function toggleWidget(id) {
   if (id === 'steam') steamWidgetOpen.value = !steamWidgetOpen.value;
   else if (id === 'mcp') mcpWidgetOpen.value = !mcpWidgetOpen.value;
+  else if (id === 'news') newsWidgetOpen.value = !newsWidgetOpen.value;
 }
 
 /** 当前打开的挂件 id 集合（Dock 运行指示点）。 */
 const openWidgets = computed(() => [
   ...(steamWidgetOpen.value ? ['steam'] : []),
   ...(mcpWidgetOpen.value ? ['mcp'] : []),
+  ...(newsWidgetOpen.value ? ['news'] : []),
 ]);
 
 /** 多实例：每次启动都开新窗口（Dock 指示点/顶栏标签负责找回已开窗口）。 */
@@ -353,6 +360,7 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
 
     <SteamWidget v-if="steamWidgetOpen" @close="steamWidgetOpen = false" />
     <McpWidget v-if="mcpWidgetOpen" @close="mcpWidgetOpen = false" />
+    <NewsWidget v-if="newsWidgetOpen" @close="newsWidgetOpen = false" />
 
     <CropperHost />
 

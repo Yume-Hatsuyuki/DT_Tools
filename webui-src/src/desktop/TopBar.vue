@@ -181,6 +181,8 @@ const kmItems = computed(() => {
       rows.push({ kind: 'widget', id: 'steam', label: 'Steam 在线', icon: IconPuzzle, tag: '小组件' });
     if ('mcp 桥接 ai 接入'.toLowerCase().includes(q) || 'mcp'.includes(q) || '小组件'.includes(q))
       rows.push({ kind: 'widget', id: 'mcp', label: 'MCP 桥接（AI 接入）', icon: IconPuzzle, tag: '小组件' });
+    if ('游戏新闻 steam 公告 news'.includes(q) || '小组件'.includes(q))
+      rows.push({ kind: 'widget', id: 'news', label: '游戏新闻（Steam 公告）', icon: IconPuzzle, tag: '小组件' });
     for (const s of SYSTEM_ITEMS)
       if (s.label.toLowerCase().includes(q)) rows.push({ kind: 'system', id: s.id, label: s.label, icon: s.icon, tag: '系统' });
     return rows;
@@ -189,6 +191,7 @@ const kmItems = computed(() => {
   if (activeCat.value === 'widget') {
     rows.push({ kind: 'widget', id: 'steam', label: 'Steam 在线', icon: IconPuzzle });
     rows.push({ kind: 'widget', id: 'mcp', label: 'MCP 桥接（AI 接入）', icon: IconPuzzle });
+    rows.push({ kind: 'widget', id: 'news', label: '游戏新闻（Steam 公告）', icon: IconPuzzle });
   }
   if (activeCat.value === 'system')
     for (const s of SYSTEM_ITEMS) rows.push({ kind: 'system', id: s.id, label: s.label, icon: s.icon });

@@ -53,6 +53,8 @@ export const API = {
     + '/api/log/ws',
   commands: () => request('/api/commands'),
   steamPlayers: () => request('/api/steam/players'),
+  /** 游戏新闻（Steam 新闻 RSS，后端中转）。lang 须为白名单内的 Steam 语言代码。 */
+  steamNews: (lang) => request('/api/steam/news?lang=' + encodeURIComponent(lang)),
 
   // 更新检测与下载（数据源 GitHub Releases latest；status 走后端 3 分钟缓存，
   // check 手动绕过缓存，download 启动后台下载、进度经 status 轮询）
