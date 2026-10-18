@@ -1,4 +1,5 @@
 <script>
+import { t } from '../i18n/index.js';
 import { h } from 'vue';
 import { parseMarkdown } from './markdownParse.mjs';
 
@@ -29,7 +30,7 @@ function renderInline(nodes) {
       case 'link':
         return h('a', { href: n.href, target: '_blank', rel: 'noopener noreferrer' }, renderInline(n.children));
       case 'image': {
-        const label = '图片：' + (n.alt || n.href || '');
+        const label = t('markdown.image') + (n.alt || n.href || '');
         if (!n.href) return label;
         return h('a', { class: 'md-img', href: n.href, target: '_blank', rel: 'noopener noreferrer' }, label);
       }

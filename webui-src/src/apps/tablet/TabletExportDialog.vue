@@ -25,6 +25,26 @@ const selected = ref(new Set(props.items.map(keyOf)));
 const count = computed(() => props.items.reduce((n, i) => n + (selected.value.has(keyOf(i)) ? 1 : 0), 0));
 const allChecked = computed(() => props.items.length > 0 && count.value === props.items.length);
 const groups = computed(() => groupByRound(props.items, props.numbering));
+
+/** 某局的勾选状态：全选 / 半选（部分勾选）/ 已选条数。 */
+function roundState(g) {
+  const n = g.items.filter((i) => selected.value.has(keyOf(i))).length;
+  return { all: n === g.items.length, some: n > 0 && n < g.items.length, n };
+}
+
+/**
+ * 点击分局标题：该局已全选则整局取消；否则（未选或半选）整局选中。
+ * 只作用于本局的条目，不影响其他局。
+ */
+function toggleRound(g) {
+  const all = roundState(g).all;
+  const next = new Set(selected.value);
+  for (const i of g.items) {
+    if (all) next.delete(keyOf(i));
+    else next.add(keyOf(i));
+  }
+  selected.value = next;
+}
 const title = computed(() => `导出${props.kind === 'chat' ? '聊天记录' : '线索'}（${props.format === 'text' ? '文本' : '图片'}）`);
 
 function isChecked(item) {
@@ -70,7 +90,16 @@ function confirm() {
       <div class="dlist">
         <div v-if="!items.length" class="empty">没有可导出的内容</div>
         <template v-for="g in groups" :key="g.round">
-          <div class="round-sep">—— 第 {{ g.no }} 局 ——</div>
+          <label class="round-head" :class="{ on: roundState(g).all }">
+            <input
+              type="checkbox"
+              :checked="roundState(g).all"
+              :indeterminate.prop="roundState(g).some"
+              @change="toggleRound(g)"
+            />
+            <span>—— 第 {{ g.no }} 局 ——</span>
+            <em>{{ roundState(g).n }} / {{ g.items.length }}</em>
+          </label>
           <label v-for="item in g.items" :key="keyOf(item)" class="row" :class="{ on: isChecked(item) }">
             <input type="checkbox" :checked="isChecked(item)" @change="toggle(item)" />
             <span class="row-text">{{ summary(item) }}</span>
@@ -87,7 +116,8 @@ function confirm() {
 </template>
 
 <style scoped>
-.round-sep { text-align: center; font-size: 12px; font-weight: 600; color: var(--accent-amber); padding: 6px 0 2px; letter-spacing: 0.02em; }
+.round-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: var(--accent-amber); letter-spacing: 0.02em; cursor: pointer; user-select: none; }
+.round-head em { margin-left: auto; font-style: normal; font-weight: 400; font-family: var(--font-mono); font-size: 10.5px; color: var(--text-2); }
 .mask { position: absolute; inset: 0; z-index: 30; background: rgba(4, 8, 14, 0.55); display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; }
 .dialog { width: min(520px, 100%); max-height: 100%; display: flex; flex-direction: column; background: var(--surface-1); border: 1px solid var(--line-strong); border-radius: var(--radius-md); box-shadow: var(--menu-shadow); overflow: hidden; }
 .dhead { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--line); }

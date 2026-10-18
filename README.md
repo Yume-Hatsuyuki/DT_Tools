@@ -21,8 +21,7 @@
 
 ## 界面展示
 
-<img src="images/屏幕截图_6-10-2026_12224_127.0.0.1.jpeg" width="850">
-<img src="images/屏幕截图_13-10-2026_21537_127.0.0.1.jpeg" width="850">
+<img src="images/屏幕截图_18-10-2026_174425_127.0.0.1.jpeg" width="850">
 
 ---
 
@@ -36,6 +35,8 @@
 
 - [MonoMod.Backports](https://www.nuget.org/packages/MonoMod.Backports)
 - [MonoMod.ILHelpers](https://www.nuget.org/packages/MonoMod.ILHelpers)
+
+---
 
 ### 2. 本插件
 
@@ -65,6 +66,8 @@ Deadly Trick/BepInEx/config/DT_Tools/
 > 2.0.0.0 起不兼容旧版配置。旧的 `BepInEx/config/DT_Tools.cfg` 与 `DT_Tools_Mp3Playlist.json` 不再读取，可以删除。
 
 按需开启功能即可。
+
+---
 
 #### 什么？你还是不会？
 
@@ -102,7 +105,7 @@ https://github.com/Yume-Hatsuyuki/DT_Tools/blob/main/README.md
 
 ##### 什么？DeepSeek也教不会你？
 
-没事，咱们玩得明白 MOD就玩，玩不明白就去睡觉。
+没事，咱们玩得明白 MOD就玩，玩不明白就去睡觉。  
 或者说正常游戏也挺好玩的，没 MOD 一样可以玩。
 
 ### 3. Web 控制台（可选）
@@ -123,7 +126,8 @@ https://github.com/Yume-Hatsuyuki/DT_Tools/blob/main/README.md
 
 ## 更新
 
-删除 `/plugins/DT_Tools` 文件夹，并进行全量替换即可。用户数据在 `config/DT_Tools/` 下，替换插件目录不会影响它。
+删除 `plugins/DT_Tools` 文件夹，并进行全量替换即可。  
+用户数据在 `config/DT_Tools/` 下，替换插件目录不会影响它。
 
 ---
 
@@ -138,7 +142,7 @@ Deadly Trick/doorstop_config.ini
 Deadly Trick/winhttp.dll
 ```
 
-然后在 steam 中做个**完整性验证**。
+然后在 Steam 中做个**完整性验证**。
 
 ---
 

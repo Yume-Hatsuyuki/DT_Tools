@@ -613,6 +613,7 @@ public sealed class XxxModule { }
 | `/api/automation/modules/{id}/log` | GET / POST | 查询或清空模块日志 |
 | `/api/game/exit` | POST | 在主线程调用 `Application.Quit()`。确认步骤在前端做 |
 | `/api/steam/players` | GET | Steam 在线人数 |
+| `/api/steam/news?lang=` | GET | 游戏新闻挂件：Steam 新闻 RSS 代理，按语言缓存 50 秒（挂件每 1 分钟轮询）；语言须在白名单（`SteamNewsApi.Languages`，9 种游戏语言对应的 Steam 代码，与前端 `i18n/index.js` 的 `LOCALES.steam` 同步）；所选语言无公告时回退英文并标注 `fallback` |
 | `/api/update/status` | GET | 更新检测状态（GitHub Releases latest，后端缓存 3 分钟；含当前版本、最新版本、下载进度） |
 | `/api/update/check` | POST | 手动检查更新。绕过缓存立即请求 GitHub |
 | `/api/update/download` | POST | 启动新版 zip 后台下载（专用线程；进度经 status 轮询） |
@@ -754,6 +755,24 @@ public sealed class XxxModule { }
 - 手动检查走 `/api/update/check`（后端绕过缓存）。下载激活期间前端切 1 秒快轮询读进度。
 - 后端当前版本来自 csproj 的 `<Version>`（编译期注入 `MyPluginInfo.PLUGIN_VERSION`），前端不自持版本号。
 
+#### 桌面挂件（组件，不是应用）
+
+- 挂件放在 `src/desktop/`，不进 `src/apps/`，不占窗口：固定定位、可拖动、可关闭，经底部 Dock 或顶栏「小组件」菜单再开。
+- 现有挂件：`SteamWidget`（Steam 在线人数）、`McpWidget`（MCP 桥接）、`NewsWidget`（游戏新闻）。
+  每个挂件的开关与位置各存一个 localStorage 键（`dt_*_widget_v1`），在 `Desktop.vue` 的 `widgets` 数组登记，顶栏「小组件」菜单也要同步加行。
+- `NewsWidget`：Steam 新闻 RSS（AppID 取游戏常量 `Define.STEAM_RELEASE_APP_ID`，即 3088400）。浏览器直连受 CORS 限制，由后端 `SteamNewsApi` 中转；RSS 解析在 `SteamNewsParser`（纯函数，可独立测试）。
+- 语言跟随全局界面语言（见下方「界面语言（i18n）」），不再单独选择。
+
+#### 界面语言（i18n）
+
+- 语言集合 9 种，与游戏一致（JsonData 的 CHS、CHT、ENG、ESL、FRA、JPN、KOR、PTB、RUS）。`LOCALES` 在 `webui-src/src/i18n/index.js`：`game` 为游戏代码，`steam` 为新闻 RSS 的 `l=` 参数，须与后端 `SteamNewsApi.Languages` 一致。
+- 默认跟随浏览器：依次匹配 `navigator.languages`，都不匹配则英文。顶栏系统菜单「设置」可手动选择，偏好存 `localStorage` 键 `dt_locale_v1`（`auto` 或语言代码），仅本浏览器，不进后端配置。
+- 文字总表在 `i18n/messages.js`：每行一个键，9 列依次为 zh-CN、zh-TW、en、es、fr、ja、ko、pt-BR、ru。新增键必须填满 9 列；占位符写 `{name}`。
+- 组件里用 `t('键名')`，在模板或计算属性中调用即响应式刷新。`t()` 的回退顺序：当前语言 → 英文 → 中文源文 → 键名本身。
+- 游戏已有官方译法的词直接沿用游戏文本，不另起译名：设置（SETTINGS / Opciones / OPTIONS）、平板电脑（Tablet）、线索（Clue）、命题（statement）、学级裁判（Class Trial）、语言（Language）、取消（Cancel）、确定（Confirm）。
+- 日期与星期用 `Intl` 并跟随当前语言。
+- 覆盖范围：桌面壳（顶栏、Dock、桌面右键菜单、关于、软件更新、窗口按钮、设置）与小组件（Steam 在线、MCP 桥接、游戏新闻）。应用内部（平板、手柄、配置、自动化等）与命令输出尚未国际化，仍为中文，属于后续阶段。
+
 #### 前端铁律
 
 - 视图禁止裸 fetch。
@@ -774,7 +793,7 @@ public sealed class XxxModule { }
 #### 本地状态
 
 - 桌面壳的本地状态，全存浏览器 localStorage。
-- 本地状态含：备忘录、图标、壁纸、粒子开关、用户名头像、文件夹视图模式（`dt_foldergrid_view_v1`）、平铺模式（`dt_desktop_tile_v1`）。
+- 本地状态含：备忘录、图标、壁纸、粒子开关、用户名头像、文件夹视图模式（`dt_foldergrid_view_v1`）、平铺模式（`dt_desktop_tile_v1`）、界面语言（`dt_locale_v1`）。
 - 本地状态不进后端配置。
 
 #### 图片导入
@@ -802,6 +821,7 @@ public sealed class XxxModule { }
 - 照片冷却：服务端 `GameRoom.TryConsumePhotoBudget` 为每人一格令牌、每秒回 0.2 格（5 秒一张），超出时直接丢弃照片、不报错。客户端 `PhotoManager` 有同算法的预算，仅用于游戏内界面。平板发图前检查冷却（`WebTabletBridge.SendPhoto`），发送后经 `PhotoManager.ConsumeBudget`（private，0.1.18c `PhotoManager.cs:715`）扣减，使游戏内发图与平板发图共用一份客户端预算。`Features/WebTablet/Patch.PhotoBudget.cs` 后缀该方法，据 `_budgetTokens`（:49）与 `_budgetTickMs`（:51）计算冷却截止时刻，存入 `WebTabletStore`；`/api/tablet/state` 以剩余毫秒下发。冷却无法被客户端察觉的服务端丢弃，只能尽量避免。
 - 分局：`WebTabletStore` 在阶段切换到 `Lobby` 时递增局号，与游戏 `GameManagerEX.StartLobby` 清空线索的边界一致。线索与命题的去重键都带局号（游戏内时间 `SurviveTime` 每局从零开始，跨局同键会被静默丢弃）。局号只用于分段，不删除数据：旧局线索保留，便于结算后复盘与导出。前端 `orderClues` 按局分组，较早的局在前（与聊天一致）；局内与游戏 `UI_GameTablet.RefreshClueList` 的 `orderby` 完全一致：时间从早到晚 → 命题在前 → 对象玩家编号 → 房间编号 → 到达顺序。线索 DTO 带 `targetId`、`roomId` 供此排序使用。聊天条目同样带 `round`。局编号由聊天与线索共同计算（`roundNumbering([...lines, ...clues])`），段首「—— 第 N 局 ——」在聊天栏、线索栏、导出弹窗、导出文本与导出图片中一致插入。
 - 清理：`WebTabletStore.ClearChat`（递增 `epoch`，丢弃聊天与照片）、`ClearClues`（不递增 `epoch`）、`Clear`（两者都做）。界面「清理」为下拉菜单，三项均需确认。
+- 导出弹窗的分局勾选：每局标题有勾选框，全选关闭后点击标题即选中该局全部条目；该局已部分选中时点击同样补齐整局；标题框显示半选状态与「已选/总数」。
 - 导出：文本为单行命题（句内换行合并为空格，`tabletFormat.js` 的 `singleLine`）。图片（`tabletImage.js`）按 CSS 数值绘制，颜色取 `tokens.css` 同值，与界面保持一致；导出画布不读取 CSS 变量，改样式时两处要同步。导出弹窗的计数与全选只基于当前可见条目，聊天栏满员挤掉旧消息时不计入已不存在的 key。
 - 粘贴：平板区域内 Ctrl+V 粘贴纯图片即发送照片（纯文字粘贴照常进入输入框）。焦点在平板根节点时才会收到粘贴事件，点击面板空白处会把焦点移到根节点。
 - 复制与另存：照片下方「复制」「另存为」。复制需要安全上下文（localhost 或 HTTPS），局域网 HTTP 访问时只能另存为。

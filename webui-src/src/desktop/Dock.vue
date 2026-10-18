@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n/index.js';
 import { ref, computed } from 'vue';
 import { useSectionMeta } from '../composables/useSectionMeta.js';
 import { pickImageFile } from '../composables/pickImage.js';
@@ -135,19 +136,19 @@ const menuItems = computed(() => {
   const app = props.apps.find(a => a.id === appId);
   const key = appMetaKey(appId);
   const items = [
-    { label: '打开', action: () => { closeMenu(); emit('launch', appId); } },
-    { label: '重命名…', action: () => renameApp(app) },
+    { label: t('menu.open'), action: () => { closeMenu(); emit('launch', appId); } },
+    { label: t('menu.rename'), action: () => renameApp(app) },
   ];
-  if (metaStore.displayName(key)) items.push({ label: '恢复原名', action: () => { metaStore.setName(key, ''); closeMenu(); } });
-  items.push({ label: '自定义图标…', action: () => changeAppIcon(app) });
-  if (appIconSrc(app)) items.push({ label: '恢复默认图标', action: () => { metaStore.clearIcon(key); closeMenu(); } });
+  if (metaStore.displayName(key)) items.push({ label: t('menu.restoreName'), action: () => { metaStore.setName(key, ''); closeMenu(); } });
+  items.push({ label: t('menu.customIcon'), action: () => changeAppIcon(app) });
+  if (appIconSrc(app)) items.push({ label: t('menu.restoreIcon'), action: () => { metaStore.clearIcon(key); closeMenu(); } });
   return items;
 });
 
 async function renameApp(app) {
   closeMenu();
   const key = appMetaKey(app.id);
-  const name = prompt('重命名（仅 WebUI 备忘，留空恢复原名）：', metaStore.displayName(key) || '');
+  const name = prompt(t('dock.renamePrompt'), metaStore.displayName(key) || '');
   if (name === null) return;
   metaStore.setName(key, name);
 }
@@ -156,7 +157,7 @@ async function changeAppIcon(app) {
   closeMenu();
   const file = await pickImageFile();
   if (!file) return;
-  const dataUrl = await cropper.open(file, { title: '裁切应用图标', shape: 'square' });
+  const dataUrl = await cropper.open(file, { title: t('crop.icon'), shape: 'square' });
   if (!dataUrl) return;
   const err = metaStore.setIcon(appMetaKey(app.id), dataUrl);
   if (err) alert(err);

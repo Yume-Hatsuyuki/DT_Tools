@@ -167,6 +167,7 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/automation/host", Api.AutomationApi.HandleHost);
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
+            router.Add("GET", "/api/steam/news", Api.SteamNewsApi.Handle);
             // 更新检测与下载（GitHub Releases latest）：状态轮询 / 手动检查 / 后台下载 / 定位文件
             router.Add("GET", "/api/update/status", Api.UpdateApi.HandleStatus);
             router.Add("POST", "/api/update/check", Api.UpdateApi.HandleCheck);
