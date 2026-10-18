@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n/index.js';
 import { computed } from 'vue';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
 import IconDownload from '~icons/tabler/download';
@@ -50,29 +51,29 @@ function fmtDate(text) {
   <div class="upd-mask" @click.self="emit('close')" @contextmenu.prevent>
     <div class="upd-box">
       <div class="upd-head">
-        <div class="upd-title"><IconDownload class="upd-title-icon" /> 软件更新</div>
-        <button class="upd-close" title="关闭" @click="emit('close')"><IconX /></button>
+        <div class="upd-title"><IconDownload class="upd-title-icon" /> {{ t('update.title') }}</div>
+        <button class="upd-close" :title="t('common.close')" @click="emit('close')"><IconX /></button>
       </div>
 
       <!-- 版本对照 -->
       <div class="upd-versions">
-        <span class="upd-ver">当前版本 <b>v{{ s.current || '…' }}</b></span>
+        <span class="upd-ver">{{ t('update.current') }} <b>v{{ s.current || '…' }}</b></span>
         <template v-if="hasUpdate">
           <span class="upd-arrow">→</span>
-          <span class="upd-ver new">最新版本 <b>{{ latest.tag }}</b></span>
+          <span class="upd-ver new">{{ t('update.latest') }} <b>{{ latest.tag }}</b></span>
         </template>
       </div>
       <div v-if="hasUpdate" class="upd-newline">
-        发现新版本！发布于 {{ fmtDate(latest.publishedAt) }}
+        {{ t('update.newFound', { date: fmtDate(latest.publishedAt) }) }}
       </div>
-      <div v-else-if="s.checking" class="upd-idle">正在检查更新…</div>
-      <div v-else-if="latest" class="upd-idle ok">当前已是最新版本。</div>
-      <div v-else-if="s.error" class="upd-idle err">检查失败：{{ s.error }}</div>
-      <div v-else class="upd-idle">尚未检测过更新，点下方"重新检查"。</div>
+      <div v-else-if="s.checking" class="upd-idle">{{ t('common.checking') }}</div>
+      <div v-else-if="latest" class="upd-idle ok">{{ t('update.isLatest') }}</div>
+      <div v-else-if="s.error" class="upd-idle err">{{ t('update.checkFailed', { msg: s.error }) }}</div>
+      <div v-else class="upd-idle">{{ t('update.notChecked') }}</div>
 
       <!-- 更新说明（GitHub Release 正文，Markdown） -->
       <div v-if="latest" class="upd-notes">
-        <div class="upd-notes-title">更新说明</div>
+        <div class="upd-notes-title">{{ t('update.notes') }}</div>
         <div class="upd-notes-body">
           <MarkdownBody :source="latest.notes || ''" />
         </div>
@@ -87,7 +88,7 @@ function fmtDate(text) {
             :disabled="download && download.active"
             @click="upd.startDownload()"
           >
-            <IconDownload /> {{ download && download.active ? '下载中…' : '下载新版本' }}
+            <IconDownload /> {{ download && download.active ? t('update.downloading') : t('update.download') }}
           </button>
         </div>
 
@@ -99,20 +100,20 @@ function fmtDate(text) {
 
         <!-- 完成态：保存路径 + 定位 -->
         <template v-if="download && download.done && download.savePath && !download.error">
-          <div class="upd-done-path">已保存到：{{ download.savePath }}</div>
+          <div class="upd-done-path">{{ t('update.savedTo', { path: download.savePath }) }}</div>
           <div class="upd-done-row">
-            <button class="upd-mini-btn" @click="upd.revealDownload()"><IconFolderOpen /> 打开所在文件夹</button>
+            <button class="upd-mini-btn" @click="upd.revealDownload()"><IconFolderOpen /> {{ t('update.openFolder') }}</button>
             <span v-if="s.revealError" class="upd-inline-err">{{ s.revealError }}</span>
           </div>
         </template>
-        <div v-if="download && download.error" class="upd-inline-err">下载失败：{{ download.error }}</div>
+        <div v-if="download && download.error" class="upd-inline-err">{{ t('update.downloadFailed', { msg: download.error }) }}</div>
         <div v-if="s.downloadError" class="upd-inline-err">{{ s.downloadError }}</div>
       </div>
 
       <!-- 底部操作 -->
       <div class="upd-foot">
         <button class="upd-mini-btn" :disabled="s.checking" @click="upd.manualCheck()">
-          <IconRefresh :class="{ spin: s.checking }" /> {{ s.checking ? '检查中…' : '重新检查' }}
+          <IconRefresh :class="{ spin: s.checking }" /> {{ s.checking ? t('common.checking') : t('update.recheck') }}
         </button>
         <a
           v-if="latest && latest.url"
@@ -121,12 +122,12 @@ function fmtDate(text) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <IconExternalLink /> 前往发布页
+          <IconExternalLink /> {{ t('update.releasePage') }}
         </a>
         <span class="upd-foot-grow" />
-        <button class="upd-close-btn" @click="emit('close')">关闭</button>
+        <button class="upd-close-btn" @click="emit('close')">{{ t('common.close') }}</button>
       </div>
-      <div v-if="s.lastChecked" class="upd-lastcheck">上次检测：{{ fmtDate(s.lastChecked) }}（每 3 分钟自动检测一次）</div>
+      <div v-if="s.lastChecked" class="upd-lastcheck">{{ t('update.lastChecked', { date: fmtDate(s.lastChecked) }) }}</div>
     </div>
   </div>
 </template>

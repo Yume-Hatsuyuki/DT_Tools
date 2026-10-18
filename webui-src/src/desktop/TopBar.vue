@@ -1,4 +1,5 @@
 <script setup>
+import { t, intlLocale } from '../i18n/index.js';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useConnectionStatus } from '../composables/useConnectionStatus.js';
 import { useShellUser } from '../composables/useShellUser.js';
@@ -47,7 +48,7 @@ const props = defineProps({
   /** 平铺模式是否开启（tray 的切换按钮据此换图标与高亮）。 */
   tileMode: { type: Boolean, default: false },
 });
-const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch', 'toggle-tile']);
+const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch', 'toggle-tile', 'open-settings']);
 
 const conn = useConnectionStatus();
 const shell = useShellUser();
@@ -62,11 +63,10 @@ let timer = null;
 onMounted(() => { timer = setInterval(() => { now.value = new Date(); }, 1000); });
 onUnmounted(() => clearInterval(timer));
 
-const WEEK = '日一二三四五六';
 const clock = computed(() => {
   const d = now.value;
   const p = (n) => String(n).padStart(2, '0');
-  return `${d.getMonth() + 1}月${d.getDate()}日周${WEEK[d.getDay()]} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return new Intl.DateTimeFormat(intlLocale(), { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
 });
 
 // ---- 菜单开合（Kali 面板 / 面板底部账户菜单；外点关闭）----
@@ -131,19 +131,19 @@ const winMenuItems = computed(() => {
   const w = menuWindow.value;
   if (!w) return [];
   return [
-    { label: '切换前置', icon: IconArrowBarToUp, action: () => { closeWinMenu(); wm.focus(w.id); } },
-    { label: w.maximized ? '还原' : '最大化', icon: w.maximized ? IconMinimize : IconMaximize, action: () => { closeWinMenu(); wm.toggleMaximize(w.id); } },
-    { label: '最小化', icon: IconArrowBarToDown, action: () => { closeWinMenu(); wm.minimize(w.id); } },
-    { label: '关闭窗口', icon: IconX, danger: true, action: () => { closeWinMenu(); wm.close(w.id); } },
+    { label: t('window.focus'), icon: IconArrowBarToUp, action: () => { closeWinMenu(); wm.focus(w.id); } },
+    { label: w.maximized ? t('common.restore') : t('common.maximize'), icon: w.maximized ? IconMinimize : IconMaximize, action: () => { closeWinMenu(); wm.toggleMaximize(w.id); } },
+    { label: t('common.minimize'), icon: IconArrowBarToDown, action: () => { closeWinMenu(); wm.minimize(w.id); } },
+    { label: t('window.closeWindow'), icon: IconX, danger: true, action: () => { closeWinMenu(); wm.close(w.id); } },
   ];
 });
 
 // ---- Kali 风面板：分类 + 搜索 + 功能列表 ----
 
 const CATS = [
-  { id: 'app', label: '应用', icon: IconLayoutGrid },
-  { id: 'widget', label: '小组件', icon: IconPuzzle },
-  { id: 'system', label: '系统', icon: IconSettings },
+  { id: 'app', get label() { return t('cat.app'); }, icon: IconLayoutGrid },
+  { id: 'widget', get label() { return t('cat.widget'); }, icon: IconPuzzle },
+  { id: 'system', get label() { return t('cat.system'); }, icon: IconSettings },
 ];
 const activeCat = ref('app');
 const kmQuery = ref('');
@@ -158,10 +158,11 @@ function runApp(appId) {
 }
 
 const SYSTEM_ITEMS = [
-  { id: 'wallpaper', label: '更换壁纸…', icon: IconPhoto },
-  { id: 'wallpaper-reset', label: '恢复默认壁纸', icon: IconPhotoOff },
-  { id: 'about', label: '关于 DT_Tools…', icon: IconInfoCircle },
-  { id: 'exit', label: '退出游戏', icon: IconPower },
+  { id: 'settings', get label() { return t('common.settings'); }, icon: IconSettings },
+  { id: 'wallpaper', get label() { return t('menu.wallpaper'); }, icon: IconPhoto },
+  { id: 'wallpaper-reset', get label() { return t('menu.resetWallpaper'); }, icon: IconPhotoOff },
+  { id: 'about', get label() { return t('about.menu'); }, icon: IconInfoCircle },
+  { id: 'exit', get label() { return t('menu.exitGame'); }, icon: IconPower },
 ];
 
 const kmItems = computed(() => {
@@ -178,20 +179,20 @@ const kmItems = computed(() => {
     // 搜索：跨类过滤（结果行右侧带分类标注）
     pushApps(true);
     if ('steam 在线'.toLowerCase().includes(q) || 'steam'.includes(q) || '小组件'.includes(q))
-      rows.push({ kind: 'widget', id: 'steam', label: 'Steam 在线', icon: IconPuzzle, tag: '小组件' });
+      rows.push({ kind: 'widget', id: 'steam', label: t('widget.steamShort'), icon: IconPuzzle, tag: t('cat.widget') });
     if ('mcp 桥接 ai 接入'.toLowerCase().includes(q) || 'mcp'.includes(q) || '小组件'.includes(q))
-      rows.push({ kind: 'widget', id: 'mcp', label: 'MCP 桥接（AI 接入）', icon: IconPuzzle, tag: '小组件' });
+      rows.push({ kind: 'widget', id: 'mcp', label: t('widget.mcp'), icon: IconPuzzle, tag: t('cat.widget') });
     if ('游戏新闻 steam 公告 news'.includes(q) || '小组件'.includes(q))
-      rows.push({ kind: 'widget', id: 'news', label: '游戏新闻（Steam 公告）', icon: IconPuzzle, tag: '小组件' });
+      rows.push({ kind: 'widget', id: 'news', label: t('widget.news'), icon: IconPuzzle, tag: t('cat.widget') });
     for (const s of SYSTEM_ITEMS)
-      if (s.label.toLowerCase().includes(q)) rows.push({ kind: 'system', id: s.id, label: s.label, icon: s.icon, tag: '系统' });
+      if (s.label.toLowerCase().includes(q)) rows.push({ kind: 'system', id: s.id, label: s.label, icon: s.icon, tag: t('cat.system') });
     return rows;
   }
   if (activeCat.value === 'app') pushApps(false);
   if (activeCat.value === 'widget') {
-    rows.push({ kind: 'widget', id: 'steam', label: 'Steam 在线', icon: IconPuzzle });
-    rows.push({ kind: 'widget', id: 'mcp', label: 'MCP 桥接（AI 接入）', icon: IconPuzzle });
-    rows.push({ kind: 'widget', id: 'news', label: '游戏新闻（Steam 公告）', icon: IconPuzzle });
+    rows.push({ kind: 'widget', id: 'steam', label: t('widget.steamShort'), icon: IconPuzzle });
+    rows.push({ kind: 'widget', id: 'mcp', label: t('widget.mcp'), icon: IconPuzzle });
+    rows.push({ kind: 'widget', id: 'news', label: t('widget.news'), icon: IconPuzzle });
   }
   if (activeCat.value === 'system')
     for (const s of SYSTEM_ITEMS) rows.push({ kind: 'system', id: s.id, label: s.label, icon: s.icon });
@@ -199,8 +200,8 @@ const kmItems = computed(() => {
 });
 
 function widgetStateText(id) {
-  if (id === 'steam') return props.steamWidgetOpen ? '已开启' : '已关闭';
-  if (id === 'mcp') return props.mcpWidgetOpen ? '已开启' : '已关闭';
+  if (id === 'steam') return props.steamWidgetOpen ? t('state.on') : t('state.off');
+  if (id === 'mcp') return props.mcpWidgetOpen ? t('state.on') : t('state.off');
   return '';
 }
 
@@ -211,6 +212,7 @@ function runItem(item) {
   if (item.id === 'wallpaper') emit('change-wallpaper');
   else if (item.id === 'wallpaper-reset') emit('reset-wallpaper');
   else if (item.id === 'about') emit('about');
+  else if (item.id === 'settings') emit('open-settings');
   else if (item.id === 'exit') exitGame();
 }
 
@@ -218,7 +220,7 @@ function runItem(item) {
 
 async function renameUser() {
   closeMenus();
-  const name = prompt('修改用户名（终端提示符同步更新）：', shell.state.user);
+  const name = prompt(t('prompt.username'), shell.state.user);
   if (name === null) return;
   const r = shell.setUser(name);
   if (!r.ok) alert(r.error);
@@ -228,7 +230,7 @@ async function changeAvatar() {
   closeMenus();
   const file = await pickImageFile();
   if (!file) return;
-  const dataUrl = await cropper.open(file, { title: '裁切头像', shape: 'circle' });
+  const dataUrl = await cropper.open(file, { title: t('crop.avatar'), shape: 'circle' });
   if (dataUrl) shell.setAvatar(dataUrl);
 }
 function resetAvatar() {
@@ -238,10 +240,10 @@ function resetAvatar() {
 
 async function exitGame() {
   closeMenus();
-  if (!confirm('确定退出游戏？未保存的配置将丢失（可在退出前先点"保存"）。')) return;
+  if (!confirm(t('confirm.exit'))) return;
   const j = await API.gameExit();
   if (!j || !j.ok) {
-    alert('退出指令发送失败：' + ((j && j.error) || '未知错误'));
+    alert(t('error.exitFailed', { msg: (j && j.error) || t('error.unknown') }));
   }
 }
 </script>
@@ -250,7 +252,7 @@ async function exitGame() {
   <div class="topbar" @click="closeMenus">
     <!-- 左：龙标 + 静态品牌名（图3，无菜单） -->
     <div class="topbar-left">
-      <button class="brand" :class="{ open: logoOpen }" title="应用菜单" @click.stop="toggleLogo">
+      <button class="brand" :class="{ open: logoOpen }" :title="t('common.appMenu')" @click.stop="toggleLogo">
         <IconDragon />
       </button>
       <span class="brand-name">DT_Tools</span>
@@ -266,8 +268,8 @@ async function exitGame() {
 
       <!-- 更新气泡：徽标出现后从品牌名下方弹出，说明有新版本；点开弹窗或 × 关闭 -->
       <div v-if="upd.state.hasUpdate && !upd.state.bubbleDismissed" class="upd-bubble" @click.stop="openUpdate">
-        <span class="upd-bubble-text">发现新版本 <b>{{ latestTag }}</b>，点击查看更新内容</span>
-        <button class="upd-bubble-x" title="知道了" @click.stop="upd.dismissBubble()"><IconX /></button>
+        <span class="upd-bubble-text">{{ t('upd.bubble', { tag: latestTag }) }}</span>
+        <button class="upd-bubble-x" :title="t('upd.dismiss')" @click.stop="upd.dismissBubble()"><IconX /></button>
       </div>
     </div>
 
@@ -275,7 +277,7 @@ async function exitGame() {
     <div v-if="logoOpen" class="topbar-menu kali-panel" @click.stop="acctOpen = false">
       <div class="km-search">
         <IconSearch class="km-search-icon" />
-        <input v-model="kmQuery" type="search" placeholder="搜索应用 / 功能…" @keydown.esc="closeMenus">
+        <input v-model="kmQuery" type="search" :placeholder="t('search.placeholder')" @keydown.esc="closeMenus">
       </div>
       <div class="km-body">
         <div class="km-side">
@@ -292,17 +294,17 @@ async function exitGame() {
           <div class="km-side-grow" />
           <!-- 底部用户栏：用户行点开账户菜单（图2），右侧独立退出按钮（Kali 电源键位） -->
           <div class="km-user">
-            <button class="km-user-btn" :class="{ open: acctOpen }" title="账户" @click.stop="toggleAcct">
+            <button class="km-user-btn" :class="{ open: acctOpen }" :title="t('menu.account')" @click.stop="toggleAcct">
               <img v-if="shell.state.avatar" :src="shell.state.avatar" alt="" class="km-user-avatar">
               <IconUser v-else class="km-user-fallback" />
               <span class="km-user-name">{{ shell.state.user }}@{{ shell.state.hostname }}</span>
             </button>
-            <button class="km-exit" title="退出游戏" @click.stop="exitGame"><IconPower /></button>
+            <button class="km-exit" :title="t('menu.exitGame')" @click.stop="exitGame"><IconPower /></button>
 
             <div v-if="acctOpen" class="km-acct-menu" @click.stop>
-              <button @click="renameUser"><IconUserEdit /> 修改用户名…</button>
-              <button @click="changeAvatar"><IconPhoto /> 更换头像…</button>
-              <button v-if="shell.state.avatar" @click="resetAvatar"><IconPhotoOff /> 恢复默认头像</button>
+              <button @click="renameUser"><IconUserEdit /> {{ t('menu.changeUser') }}</button>
+              <button @click="changeAvatar"><IconPhoto /> {{ t('menu.changeAvatar') }}</button>
+              <button v-if="shell.state.avatar" @click="resetAvatar"><IconPhotoOff /> {{ t('menu.resetAvatar') }}</button>
             </div>
           </div>
         </div>
@@ -316,7 +318,7 @@ async function exitGame() {
             <span v-if="item.kind === 'widget'" class="km-item-state" :class="{ on: item.id === 'steam' ? steamWidgetOpen : mcpWidgetOpen }">{{ widgetStateText(item.id) }}</span>
             <span v-else-if="item.tag" class="km-item-state">{{ item.tag }}</span>
           </button>
-          <div v-if="!kmItems.length" class="km-empty">无匹配项。</div>
+          <div v-if="!kmItems.length" class="km-empty">{{ t('search.empty') }}</div>
         </div>
       </div>
     </div>
@@ -366,13 +368,13 @@ async function exitGame() {
       <button
         class="tray-item tray-btn"
         :class="{ on: tileMode }"
-        :title="tileMode ? '平铺模式已开启：点此回到可拖动窗口' : '平铺模式：窗口铺满工作区，标签页式切换'"
+        :title="tileMode ? t('tile.on') : t('tile.off')"
         @click.stop="emit('toggle-tile')"
       >
         <IconLayoutGrid v-if="tileMode" />
         <IconMaximize v-else />
       </button>
-      <div class="tray-item conn" :class="{ ok: conn.online }" :title="conn.online ? '已连接' : '连接中…'">
+      <div class="tray-item conn" :class="{ ok: conn.online }" :title="conn.online ? t('conn.online') : t('conn.connecting')">
         <IconWifi />
       </div>
       <div class="tray-item clock">{{ clock }}</div>

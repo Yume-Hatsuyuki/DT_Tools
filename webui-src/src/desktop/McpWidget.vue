@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n/index.js';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { API } from '../api.js';
 import IconCheck from '~icons/tabler/check';
@@ -136,47 +137,47 @@ function onUp() {
 <template>
   <div ref="rootEl" class="mcp-widget" :class="enabled ? 'ok' : 'off'" :style="posStyle">
     <div class="mw-head" @pointerdown="onHeadDown">
-      <span class="mw-title">MCP 桥接（AI 接入）</span>
-      <button class="mw-close" title="关闭（可从底部 Dock 再次打开）" @click="close"><IconX /></button>
+      <span class="mw-title">{{ t('widget.mcp') }}</span>
+      <button class="mw-close" :title="t('common.closeHint')" @click="close"><IconX /></button>
     </div>
     <div class="mw-body">
       <div class="mw-row">
-        <span class="mw-state" :class="{ on: enabled }">{{ enabled ? '运行中' : '已停用' }}</span>
-        <button class="mw-toggle" @click="toggle">{{ enabled ? '停用' : '启用' }}</button>
+        <span class="mw-state" :class="{ on: enabled }">{{ enabled ? t('mcp.running') : t('mcp.disabled') }}</span>
+        <button class="mw-toggle" @click="toggle">{{ enabled ? t('mcp.stop') : t('mcp.start') }}</button>
       </div>
       <div class="mw-sub">{{ status?.url || 'http://127.0.0.1:19452/mcp' }}</div>
       <button class="mw-copy" @click="copySnippet">
-        <IconCheck v-if="copied" /><IconCopy v-else />{{ copied ? '已复制' : '复制接入配置' }}
+        <IconCheck v-if="copied" /><IconCopy v-else />{{ copied ? t('mcp.copied') : t('mcp.copy') }}
       </button>
 
-      <div class="mw-cfg-title">监听配置（与「DT 配置」页同步）</div>
+      <div class="mw-cfg-title">{{ t('mcp.cfgTitle') }}</div>
       <div class="mw-cfg">
         <label class="mw-field mw-field-port">
-          <span>端口</span>
+          <span>{{ t('mcp.port') }}</span>
           <input
             v-model="cfg.port" type="text" inputmode="numeric"
             @focus="focusedKey = 'port'" @blur="onBlur('port')" @keyup.enter="$event.target.blur()">
         </label>
         <label class="mw-field">
-          <span>监听 IP</span>
+          <span>{{ t('mcp.listenIp') }}</span>
           <input
             v-model="cfg.listenIp" type="text" spellcheck="false"
             @focus="focusedKey = 'listenIp'" @blur="onBlur('listenIp')" @keyup.enter="$event.target.blur()">
         </label>
         <label class="mw-field">
-          <span>密码</span>
+          <span>{{ t('mcp.password') }}</span>
           <input
-            v-model="cfg.password" type="password" spellcheck="false" placeholder="空=免密"
+            v-model="cfg.password" type="password" spellcheck="false" :placeholder="t('mcp.passwordPh')"
             @focus="focusedKey = 'password'" @blur="onBlur('password')" @keyup.enter="$event.target.blur()">
         </label>
       </div>
-      <div v-if="restartHint" class="mw-hint">监听参数已改，重启游戏后生效</div>
-      <div v-if="listenerOff" class="mw-hint">监听未拉起（启动时已停用）：可经 WebConsole 端口 /mcp 接入，或重启游戏</div>
+      <div v-if="restartHint" class="mw-hint">{{ t('mcp.restartHint') }}</div>
+      <div v-if="listenerOff" class="mw-hint">{{ t('mcp.listenerOff') }}</div>
 
       <div class="mw-stats">
-        <div class="mw-line">工具 {{ toolCount }} 个 · 调用 {{ status?.callCount ?? 0 }} 次</div>
+        <div class="mw-line">{{ t('mcp.toolsLine', { tools: toolCount, calls: status?.callCount ?? 0 }) }}</div>
         <div class="mw-log">
-          <div v-if="!(status?.calls?.length)" class="mw-log-empty">暂无调用（AI 每次工具调用都会记录在此）</div>
+          <div v-if="!(status?.calls?.length)" class="mw-log-empty">{{ t('mcp.logEmpty') }}</div>
           <div
             v-for="(c, i) in status?.calls || []" :key="status?.callCount + '-' + i"
             class="mw-call" :class="{ fail: !c.ok }" :title="c.args || c.name">

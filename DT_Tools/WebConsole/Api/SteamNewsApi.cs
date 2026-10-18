@@ -15,17 +15,17 @@ namespace DT_Tools.WebConsole.Api
     /// </summary>
     /// <remarks>
     /// 浏览器直连 Steam 受 CORS 限制，因此由后端中转。工作线程上同步请求，按语言缓存 50 秒（短于挂件 1 分钟的轮询间隔）；
-    /// 失败时重试 3 次，仍失败则降级返回该语言的旧缓存。语言白名单须与前端 desktop/newsLanguages.js 保持一致。
+    /// 失败时重试 3 次，仍失败则降级返回该语言的旧缓存。语言白名单须与前端 i18n/index.js 的 LOCALES.steam 保持一致。
     /// 所选语言没有公告时回退英文，并在结果中标注 fallback。
     /// </remarks>
     public static class SteamNewsApi
     {
-        /// <summary>允许的语言代码（Steam 新闻 RSS 的 l= 参数）。</summary>
+        /// <summary>
+        /// 允许的语言代码（Steam 新闻 RSS 的 l= 参数）。与游戏的 9 种语言一一对应，须与前端 i18n/index.js 的 LOCALES.steam 一致。
+        /// </summary>
         public static readonly string[] Languages =
         {
-            "schinese", "tchinese", "english", "japanese", "koreana", "russian", "spanish", "latam",
-            "french", "german", "portuguese", "brazilian", "italian", "polish", "turkish", "thai",
-            "vietnamese", "ukrainian", "indonesian",
+            "schinese", "tchinese", "english", "spanish", "french", "japanese", "koreana", "brazilian", "russian",
         };
 
         private const string DefaultLanguage = "english";

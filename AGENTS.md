@@ -613,7 +613,7 @@ public sealed class XxxModule { }
 | `/api/automation/modules/{id}/log` | GET / POST | 查询或清空模块日志 |
 | `/api/game/exit` | POST | 在主线程调用 `Application.Quit()`。确认步骤在前端做 |
 | `/api/steam/players` | GET | Steam 在线人数 |
-| `/api/steam/news?lang=` | GET | 游戏新闻挂件：Steam 新闻 RSS 代理，按语言缓存 50 秒（挂件每 1 分钟轮询）；语言须在白名单（`SteamNewsApi.Languages`，与前端 `desktop/newsLanguages.js` 同步）；所选语言无公告时回退英文并标注 `fallback` |
+| `/api/steam/news?lang=` | GET | 游戏新闻挂件：Steam 新闻 RSS 代理，按语言缓存 50 秒（挂件每 1 分钟轮询）；语言须在白名单（`SteamNewsApi.Languages`，9 种游戏语言对应的 Steam 代码，与前端 `i18n/index.js` 的 `LOCALES.steam` 同步）；所选语言无公告时回退英文并标注 `fallback` |
 | `/api/update/status` | GET | 更新检测状态（GitHub Releases latest，后端缓存 3 分钟；含当前版本、最新版本、下载进度） |
 | `/api/update/check` | POST | 手动检查更新。绕过缓存立即请求 GitHub |
 | `/api/update/download` | POST | 启动新版 zip 后台下载（专用线程；进度经 status 轮询） |
@@ -761,9 +761,17 @@ public sealed class XxxModule { }
 - 现有挂件：`SteamWidget`（Steam 在线人数）、`McpWidget`（MCP 桥接）、`NewsWidget`（游戏新闻）。
   每个挂件的开关与位置各存一个 localStorage 键（`dt_*_widget_v1`），在 `Desktop.vue` 的 `widgets` 数组登记，顶栏「小组件」菜单也要同步加行。
 - `NewsWidget`：Steam 新闻 RSS（AppID 取游戏常量 `Define.STEAM_RELEASE_APP_ID`，即 3088400）。浏览器直连受 CORS 限制，由后端 `SteamNewsApi` 中转；RSS 解析在 `SteamNewsParser`（纯函数，可独立测试）。
-- 多语言：语言表在 `desktop/newsLanguages.js`，`code` 即 Steam 的 `l=` 参数。默认语言按 `navigator.language` 选择，选择结果存 `dt_news_widget_v1`（仅本浏览器）。
-  挂件自身文字当前提供 zh/en/ja/ko/ru，其余语言回退英文。Steam 在某语言下是否有公告由 Steam 决定，无公告时后端回退英文并在前端提示。
-- 新增语言时必须同时改后端白名单与前端语言表，两边不一致会出现前端可选、后端 400 的情况。
+- 语言跟随全局界面语言（见下方「界面语言（i18n）」），不再单独选择。
+
+#### 界面语言（i18n）
+
+- 语言集合 9 种，与游戏一致（JsonData 的 CHS、CHT、ENG、ESL、FRA、JPN、KOR、PTB、RUS）。`LOCALES` 在 `webui-src/src/i18n/index.js`：`game` 为游戏代码，`steam` 为新闻 RSS 的 `l=` 参数，须与后端 `SteamNewsApi.Languages` 一致。
+- 默认跟随浏览器：依次匹配 `navigator.languages`，都不匹配则英文。顶栏系统菜单「设置」可手动选择，偏好存 `localStorage` 键 `dt_locale_v1`（`auto` 或语言代码），仅本浏览器，不进后端配置。
+- 文字总表在 `i18n/messages.js`：每行一个键，9 列依次为 zh-CN、zh-TW、en、es、fr、ja、ko、pt-BR、ru。新增键必须填满 9 列；占位符写 `{name}`。
+- 组件里用 `t('键名')`，在模板或计算属性中调用即响应式刷新。`t()` 的回退顺序：当前语言 → 英文 → 中文源文 → 键名本身。
+- 游戏已有官方译法的词直接沿用游戏文本，不另起译名：设置（SETTINGS / Opciones / OPTIONS）、平板电脑（Tablet）、线索（Clue）、命题（statement）、学级裁判（Class Trial）、语言（Language）、取消（Cancel）、确定（Confirm）。
+- 日期与星期用 `Intl` 并跟随当前语言。
+- 覆盖范围：桌面壳（顶栏、Dock、桌面右键菜单、关于、软件更新、窗口按钮、设置）与小组件（Steam 在线、MCP 桥接、游戏新闻）。应用内部（平板、手柄、配置、自动化等）与命令输出尚未国际化，仍为中文，属于后续阶段。
 
 #### 前端铁律
 
@@ -785,7 +793,7 @@ public sealed class XxxModule { }
 #### 本地状态
 
 - 桌面壳的本地状态，全存浏览器 localStorage。
-- 本地状态含：备忘录、图标、壁纸、粒子开关、用户名头像、文件夹视图模式（`dt_foldergrid_view_v1`）、平铺模式（`dt_desktop_tile_v1`）。
+- 本地状态含：备忘录、图标、壁纸、粒子开关、用户名头像、文件夹视图模式（`dt_foldergrid_view_v1`）、平铺模式（`dt_desktop_tile_v1`）、界面语言（`dt_locale_v1`）。
 - 本地状态不进后端配置。
 
 #### 图片导入

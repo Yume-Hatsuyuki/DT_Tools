@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n/index.js';
 import { computed, provide } from 'vue';
 import IconX from '~icons/tabler/x';
 import IconMinus from '~icons/tabler/minus';
@@ -133,9 +134,9 @@ function onResizePointerDown(dir, e) {
          要关闭应用：右键顶栏标签或 Dock 图标，或切回窗口模式。 -->
     <div v-if="!tiled" class="win-titlebar" @pointerdown="onTitlebarPointerDown" @dblclick="emit('toggle-maximize')">
       <div class="traffic">
-        <button class="tl tl-close" title="关闭" @click="emit('close')"><IconX /></button>
-        <button class="tl tl-min" title="最小化" @click="emit('minimize')"><IconMinus /></button>
-        <button class="tl tl-max" :title="win.maximized ? '还原' : '最大化'" @click="emit('toggle-maximize')">
+        <button class="tl tl-close" :title="t('common.close')" @click="emit('close')"><IconX /></button>
+        <button class="tl tl-min" :title="t('common.minimize')" @click="emit('minimize')"><IconMinus /></button>
+        <button class="tl tl-max" :title="win.maximized ? t('common.restore') : t('common.maximize')" @click="emit('toggle-maximize')">
           <IconPlus />
         </button>
       </div>

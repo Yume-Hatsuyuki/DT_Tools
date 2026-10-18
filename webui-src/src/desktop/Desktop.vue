@@ -1,4 +1,7 @@
 <script setup>
+import { t } from '../i18n/index.js';
+import SettingsModal from './SettingsModal.vue';
+import IconSettings from '~icons/tabler/settings';
 import { ref, markRaw, computed, onMounted, onUnmounted } from 'vue';
 import TopBar from './TopBar.vue';
 import Dock from './Dock.vue';
@@ -60,15 +63,15 @@ import IconModelAi from '~icons/tabler/model-ai';
  * 关窗=同步销毁音乐（引擎会话销毁、语音管线还原）；未声明的应用零联动。
  */
 const apps = [
-  { id: 'terminal', title: '控制台', icon: markRaw(IconDragon), component: markRaw(TerminalApp), defaults: { x: 60, y: 50, w: 760, h: 520 } },
-  { id: 'console', title: '控制台（旧版）', icon: markRaw(IconTerminal2), component: markRaw(ConsoleApp), defaults: { x: 90, y: 80, w: 760, h: 520 } },
-  { id: 'config', title: 'DT 配置', icon: markRaw(IconAdjustmentsHorizontal), component: markRaw(ConfigApp), defaults: { x: 140, y: 110, w: 860, h: 580 } },
-  { id: 'automation', title: '自动化', icon: markRaw(IconRobot), component: markRaw(AutomationApp), defaults: { x: 180, y: 140, w: 720, h: 520 } },
-  { id: 'dummy', title: '假人管理', icon: markRaw(IconUsersGroup), component: markRaw(DummyApp), defaults: { x: 220, y: 170, w: 780, h: 480 } },
-  { id: 'mp3', title: '随身MP3', icon: markRaw(IconDeviceAudioTape), component: markRaw(Mp3App), defaults: { x: 300, y: 230, w: 620, h: 560 }, onClose: () => API.mp3Stop() },
-  { id: 'gamepad', title: '手柄', icon: markRaw(IconDeviceGamepad2), component: markRaw(GamepadApp), defaults: { x: 340, y: 260, w: 720, h: 580 } },
-  { id: 'tablet', title: '平板电脑', icon: markRaw(IconDeviceTablet), component: markRaw(TabletApp), defaults: { x: 240, y: 150, w: 980, h: 620 } },
-  { id: 'log', title: '日志', icon: markRaw(IconListDetails), component: markRaw(LogApp), defaults: { x: 260, y: 200, w: 820, h: 560 } },
+  { id: 'terminal', get title() { return t('app.terminal'); }, icon: markRaw(IconDragon), component: markRaw(TerminalApp), defaults: { x: 60, y: 50, w: 760, h: 520 } },
+  { id: 'console', get title() { return t('app.console'); }, icon: markRaw(IconTerminal2), component: markRaw(ConsoleApp), defaults: { x: 90, y: 80, w: 760, h: 520 } },
+  { id: 'config', get title() { return t('app.config'); }, icon: markRaw(IconAdjustmentsHorizontal), component: markRaw(ConfigApp), defaults: { x: 140, y: 110, w: 860, h: 580 } },
+  { id: 'automation', get title() { return t('app.automation'); }, icon: markRaw(IconRobot), component: markRaw(AutomationApp), defaults: { x: 180, y: 140, w: 720, h: 520 } },
+  { id: 'dummy', get title() { return t('app.dummy'); }, icon: markRaw(IconUsersGroup), component: markRaw(DummyApp), defaults: { x: 220, y: 170, w: 780, h: 480 } },
+  { id: 'mp3', get title() { return t('app.mp3'); }, icon: markRaw(IconDeviceAudioTape), component: markRaw(Mp3App), defaults: { x: 300, y: 230, w: 620, h: 560 }, onClose: () => API.mp3Stop() },
+  { id: 'gamepad', get title() { return t('app.gamepad'); }, icon: markRaw(IconDeviceGamepad2), component: markRaw(GamepadApp), defaults: { x: 340, y: 260, w: 720, h: 580 } },
+  { id: 'tablet', get title() { return t('app.tablet'); }, icon: markRaw(IconDeviceTablet), component: markRaw(TabletApp), defaults: { x: 240, y: 150, w: 980, h: 620 } },
+  { id: 'log', get title() { return t('app.log'); }, icon: markRaw(IconListDetails), component: markRaw(LogApp), defaults: { x: 260, y: 200, w: 820, h: 560 } },
 ];
 
 useLogStream();
@@ -103,7 +106,8 @@ const tiledActiveId = computed(() => {
 const desktopMenu = ref(null);           // { x, y } —— 桌面右键菜单
 const dockMenu = ref(null);              // { x, y } —— Dock（任务栏）右键菜单
 const busyInfo = ref(false);
-const showUpdate = ref(false);           // 软件更新弹窗（顶栏徽标/气泡、关于弹窗均可打开）
+const showUpdate = ref(false);
+const showSettings = ref(false);   // 设置弹窗（语言等界面偏好）           // 软件更新弹窗（顶栏徽标/气泡、关于弹窗均可打开）
 
 // ---- 挂件（Dock 可开可关，位置/关闭态由各自组件自持）----
 
@@ -120,9 +124,9 @@ const newsWidgetOpen = ref(!widgetClosedAtStart(NEWS_STORE_KEY));
 
 /** Dock 小组件定义（与应用图标同列，运行点表示弹窗开着）。 */
 const widgets = [
-  { id: 'steam', title: 'Steam 当前（全球）玩家数统计', icon: markRaw(IconBrandSteam) },
-  { id: 'mcp', title: 'MCP 桥接（AI 接入）', icon: markRaw(IconModelAi) },
-  { id: 'news', title: '游戏新闻（Steam 公告）', icon: markRaw(IconNews) },
+  { id: 'steam', get title() { return t('widget.steam'); }, icon: markRaw(IconBrandSteam) },
+  { id: 'mcp', get title() { return t('widget.mcp'); }, icon: markRaw(IconModelAi) },
+  { id: 'news', get title() { return t('widget.news'); }, icon: markRaw(IconNews) },
 ];
 
 function toggleWidget(id) {
@@ -196,7 +200,7 @@ async function changeWallpaper() {
   // 与头像同款裁切流程：选区比例取当前视口（裁出来即铺满桌面所见），
   // 输出 ≤1920px JPEG——落 localStorage 的体积与旧压缩管线一致
   const dataUrl = await cropper.open(file, {
-    title: '裁切壁纸',
+    title: t('crop.wallpaper'),
     shape: 'free',
     aspect: window.innerWidth / Math.max(1, window.innerHeight),
     output: { longEdge: 1920, mime: 'image/jpeg', quality: 0.82 },
@@ -226,11 +230,11 @@ function toggleParticles() {
 // ---- Dock 右键快捷菜单（动作全部在 Desktop 收口：launchApp / 窗口管理 / 关于）----
 
 const dockMenuItems = [
-  { label: '打开终端', icon: IconTerminal, action: () => { closeMenus(); launchApp('terminal'); } },
-  { label: '显示桌面', icon: IconLayoutBottombarCollapse, action: () => { closeMenus(); showDesktop(); } },
-  { label: '最小化所有进程', icon: IconArrowBarToDown, action: () => { closeMenus(); minimizeAll(); } },
-  { label: '关闭所有进程', icon: IconSquareX, danger: true, action: () => { closeMenus(); closeAllWindows(); } },
-  { label: '关于', icon: IconInfoCircle, action: () => { closeMenus(); busyInfo.value = true; } },
+  { get label() { return t('menu.openTerminal'); }, icon: IconTerminal, action: () => { closeMenus(); launchApp('terminal'); } },
+  { get label() { return t('menu.showDesktop'); }, icon: IconLayoutBottombarCollapse, action: () => { closeMenus(); showDesktop(); } },
+  { get label() { return t('menu.minimizeAll'); }, icon: IconArrowBarToDown, action: () => { closeMenus(); minimizeAll(); } },
+  { get label() { return t('menu.closeAll'); }, icon: IconSquareX, danger: true, action: () => { closeMenus(); closeAllWindows(); } },
+  { get label() { return t('common.about'); }, icon: IconInfoCircle, action: () => { closeMenus(); busyInfo.value = true; } },
 ];
 
 // ---- 窗口内容屏蔽浏览器右键菜单（输入框/文本域除外，保留粘贴菜单）----
@@ -288,14 +292,14 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       @click.stop
       @contextmenu.prevent
     >
-      <button type="button" @click="launchApp('terminal'); closeMenus()"><IconTerminal /> 打开终端</button>
-      <button type="button" @click="changeWallpaper"><IconPhoto /> 更换壁纸…</button>
-      <button type="button" @click="resetWallpaper"><IconPhotoOff /> 恢复默认壁纸</button>
+      <button type="button" @click="launchApp('terminal'); closeMenus()"><IconTerminal /> {{ t('menu.openTerminal') }}</button>
+      <button type="button" @click="changeWallpaper"><IconPhoto /> {{ t('menu.wallpaper') }}</button>
+      <button type="button" @click="resetWallpaper"><IconPhotoOff /> {{ t('menu.resetWallpaper') }}</button>
       <button type="button" @click="toggleParticles">
-        <IconSparkles /> 粒子效果
-        <span class="ctx-state" :class="{ on: particlesOn }">{{ particlesOn ? '已开启' : '已关闭' }}</span>
+        <IconSparkles /> {{ t('menu.particles') }}
+        <span class="ctx-state" :class="{ on: particlesOn }">{{ particlesOn ? t('state.on') : t('state.off') }}</span>
       </button>
-      <button type="button" :disabled="busyInfo" @click="busyInfo = true; closeMenus()"><IconInfoCircle /> 关于</button>
+      <button type="button" :disabled="busyInfo" @click="busyInfo = true; closeMenus()"><IconInfoCircle /> {{ t('common.about') }}</button>
     </div>
 
     <!-- Dock（任务栏）右键快捷菜单：与桌面菜单同款造型、实例独立 -->
@@ -341,6 +345,7 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       @toggle-tile="toggleTileMode"
       @focus-window="toggleFocus"
       @about="busyInfo = true"
+      @open-settings="showSettings = true"
       @show-update="showUpdate = true"
       @change-wallpaper="changeWallpaper"
       @reset-wallpaper="resetWallpaper"
@@ -361,36 +366,37 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
     <SteamWidget v-if="steamWidgetOpen" @close="steamWidgetOpen = false" />
     <McpWidget v-if="mcpWidgetOpen" @close="mcpWidgetOpen = false" />
     <NewsWidget v-if="newsWidgetOpen" @close="newsWidgetOpen = false" />
+    <SettingsModal v-if="showSettings" @close="showSettings = false" />
 
     <CropperHost />
 
     <div v-if="busyInfo" class="about-mask" @click.self="busyInfo = false" @contextmenu.prevent>
       <div class="about-box">
         <div class="about-title">DT_Tools WebUI</div>
-        <div class="about-line">Deadly Trick 游戏工具插件</div>
-        <div class="about-line mono">当前版本 v{{ upd.state.current || '…' }}</div>
+        <div class="about-line">{{ t('about.product') }}</div>
+        <div class="about-line mono">{{ t('about.version', { v: upd.state.current || '…' }) }}</div>
 
         <!-- 检查更新：手动触发（绕过后端缓存），结果直接显示在关于框内 -->
         <div class="about-check-row">
           <button type="button" class="about-check" :disabled="upd.state.checking" @click="upd.manualCheck()">
             <IconRefresh :class="{ spin: upd.state.checking }" />
-            {{ upd.state.checking ? '检查中…' : '检查更新' }}
+            {{ upd.state.checking ? t('common.checking') : t('about.check') }}
           </button>
         </div>
-        <div v-if="!upd.state.checking && upd.state.error" class="about-upd err">检查失败：{{ upd.state.error }}</div>
+        <div v-if="!upd.state.checking && upd.state.error" class="about-upd err">{{ t('about.checkFailed', { msg: upd.state.error }) }}</div>
         <div v-else-if="!upd.state.checking && upd.state.hasUpdate" class="about-upd new">
-          发现新版本 {{ upd.state.latest && upd.state.latest.tag }}
-          <button type="button" class="about-upd-link" @click="busyInfo = false; showUpdate = true">查看详情</button>
+          {{ t('about.newVersion', { tag: upd.state.latest && upd.state.latest.tag }) }}
+          <button type="button" class="about-upd-link" @click="busyInfo = false; showUpdate = true">{{ t('about.viewDetails') }}</button>
         </div>
-        <div v-else-if="!upd.state.checking && upd.state.lastChecked" class="about-upd ok">已是最新版本</div>
+        <div v-else-if="!upd.state.checking && upd.state.lastChecked" class="about-upd ok">{{ t('about.upToDate') }}</div>
 
-        <div class="about-line">所有配置 / 重命名 / 壁纸 / 图标仅存于本浏览器。</div>
+        <div class="about-line">{{ t('about.storage') }}</div>
         <div class="about-refs">
-          <div class="about-refs-title">主题参考：</div>
+          <div class="about-refs-title">{{ t('about.themeRefs') }}</div>
           <a href="https://0l1v3rr.github.io/" target="_blank" rel="noopener noreferrer">https://0l1v3rr.github.io/</a>
           <a href="https://os.inori.ai/" target="_blank" rel="noopener noreferrer">https://os.inori.ai/</a>
         </div>
-        <button type="button" class="about-close" @click="busyInfo = false">关闭</button>
+        <button type="button" class="about-close" @click="busyInfo = false">{{ t('common.close') }}</button>
       </div>
     </div>
 

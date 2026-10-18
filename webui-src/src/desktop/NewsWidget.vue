@@ -1,21 +1,21 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { API, createPoller } from '../api.js';
-import { NEWS_LANGUAGES, defaultNewsLang, newsLangOf, newsUiOf } from './newsLanguages.js';
+import { t, locale, localeInfo, intlLocale } from '../i18n/index.js';
 import IconX from '~icons/tabler/x';
 import IconRefresh from '~icons/tabler/refresh';
 
 /**
  * 游戏新闻挂件（桌面挂件，不是应用）：读取 Steam 新闻 RSS，经后端 /api/steam/news 中转。
- * 可拖动、可关闭（经底部 Dock 再开）、可切换语言。语言与位置记在 localStorage（仅本浏览器）。
- * 语言默认按浏览器语言选择；挂件自身的文字随所选语言切换（未提供的语言回退英文）。
+ * 语言跟随全局界面语言（i18n），映射到 Steam 的 l= 参数；不再单独选择语言。
+ * 可拖动、可关闭（经底部 Dock 再开）。位置记在 localStorage（仅本浏览器）。
  */
 const emit = defineEmits(['close']);
 
 const STORE_KEY = 'dt_news_widget_v1';
 // 与 Window.vue 的 TOPBAR_H / tokens.css --topbar-h 同步：挂件不拖进顶栏之下
 const TOPBAR_H = 32;
-const POLL_MS = 60000;    // 每 1 分钟拉取一次（与在线人数同频）；后端缓存短于此间隔，保证每次轮询都拿到新数据
+const POLL_MS = 60000;   // 每 1 分钟拉取一次（与在线人数同频）；后端缓存短于此间隔
 
 function readStore() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; }
@@ -23,14 +23,12 @@ function readStore() {
 
 const saved = readStore();
 const pos = ref(saved.pos || null);   // {left, top}；null=默认停靠在 Dock 之上的右下角
-const lang = ref(NEWS_LANGUAGES.some((l) => l.code === saved.lang) ? saved.lang : defaultNewsLang(navigator.language));
 const items = ref([]);
 const status = ref('loading');        // loading | ok | error
 const fallback = ref(false);
 const rootEl = ref(null);
 
-const ui = computed(() => newsUiOf(lang.value));
-const dateFmt = computed(() => new Intl.DateTimeFormat(newsLangOf(lang.value).locale, { year: 'numeric', month: 'short', day: 'numeric' }));
+const dateFmt = computed(() => new Intl.DateTimeFormat(intlLocale(), { year: 'numeric', month: 'short', day: 'numeric' }));
 
 function fmtDate(iso) {
   const d = new Date(iso);
@@ -39,14 +37,14 @@ function fmtDate(iso) {
 
 function persist(closed) {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ closed, pos: pos.value, lang: lang.value }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({ closed, pos: pos.value }));
   } catch { /* 隐私模式忽略 */ }
 }
 
 // 序号防竞态：切换语言后，旧语言的响应到达时直接丢弃
 let seq = 0;
 async function fetchNews() {
-  const requested = lang.value;
+  const requested = localeInfo.value.steam;
   const mine = ++seq;
   if (!items.value.length) status.value = 'loading';
   const d = await API.steamNews(requested);
@@ -62,10 +60,10 @@ async function fetchNews() {
 
 const poller = createPoller(fetchNews, POLL_MS);
 
-watch(lang, () => {
+// 全局语言变化：清空旧列表并按新语言重新拉取
+watch(locale, () => {
   items.value = [];
   fallback.value = false;
-  persist(false);
   fetchNews();
 });
 
@@ -90,7 +88,7 @@ function close() {
 let drag = null;
 
 function onHeadDown(e) {
-  if (e.target.closest('button, select')) return;
+  if (e.target.closest('button')) return;
   const r = rootEl.value.getBoundingClientRect();
   drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
   window.addEventListener('pointermove', onMove);
@@ -119,18 +117,15 @@ const posStyle = computed(() => (pos.value
 <template>
   <div ref="rootEl" class="news-widget" :style="posStyle">
     <div class="nw-head" @pointerdown="onHeadDown">
-      <span class="nw-title">《Deadly Trick》{{ ui.title }}</span>
-      <select v-model="lang" class="nw-lang" :title="ui.lang" :aria-label="ui.lang">
-        <option v-for="l in NEWS_LANGUAGES" :key="l.code" :value="l.code">{{ l.name }}</option>
-      </select>
-      <button class="nw-icon" :title="ui.refresh" @click="fetchNews"><IconRefresh /></button>
-      <button class="nw-icon nw-close" :title="ui.close" @click="close"><IconX /></button>
+      <span class="nw-title">《Deadly Trick》{{ t('news.short') }}</span>
+      <button class="nw-icon" :title="t('common.refresh')" @click="fetchNews"><IconRefresh /></button>
+      <button class="nw-icon nw-close" :title="t('common.closeHint')" @click="close"><IconX /></button>
     </div>
 
     <div class="nw-body">
-      <div v-if="status === 'loading' && !items.length" class="nw-state">{{ ui.loading }}</div>
-      <div v-else-if="status === 'error' && !items.length" class="nw-state err">{{ ui.error }}</div>
-      <div v-else-if="!items.length" class="nw-state">{{ ui.empty }}</div>
+      <div v-if="status === 'loading' && !items.length" class="nw-state">{{ t('common.loading') }}</div>
+      <div v-else-if="status === 'error' && !items.length" class="nw-state err">{{ t('news.error') }}</div>
+      <div v-else-if="!items.length" class="nw-state">{{ t('news.empty') }}</div>
       <ul v-else class="nw-list">
         <li v-for="it in items" :key="it.url" class="nw-item">
           <img v-if="it.image" class="nw-thumb" :src="it.image" alt="" loading="lazy" draggable="false" />
@@ -144,8 +139,8 @@ const posStyle = computed(() => (pos.value
     </div>
 
     <div class="nw-foot">
-      <span v-if="fallback" class="nw-note">{{ ui.fallback }}</span>
-      <span class="nw-src">{{ ui.source }}</span>
+      <span v-if="fallback" class="nw-note">{{ t('news.fallback') }}</span>
+      <span class="nw-src">{{ t('news.source') }}</span>
     </div>
   </div>
 </template>

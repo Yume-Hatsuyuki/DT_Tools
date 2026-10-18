@@ -1,4 +1,5 @@
 <script setup>
+import { t } from '../i18n/index.js';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useSteamPlayers } from '../composables/useSteamPlayers.js';
 import IconX from '~icons/tabler/x';
@@ -75,12 +76,12 @@ const countText = computed(() =>
 <template>
   <div ref="rootEl" class="steam-widget" :class="ok ? 'ok' : 'err'" :style="posStyle">
     <div class="sw-head" @pointerdown="onHeadDown">
-      <span class="sw-title">《Deadly Trick》在线</span>
-      <button class="sw-close" title="关闭（可从底部 Dock 再次打开）" @click="close"><IconX /></button>
+      <span class="sw-title">{{ t('steam.title') }}</span>
+      <button class="sw-close" :title="t('common.closeHint')" @click="close"><IconX /></button>
     </div>
     <div class="sw-body">
       <div class="sw-count">{{ countText }}</div>
-      <div class="sw-sub">Steam 全球在线玩家 · 每分钟刷新</div>
+      <div class="sw-sub">{{ t('steam.sub') }}</div>
     </div>
   </div>
 </template>
