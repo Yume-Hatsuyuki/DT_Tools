@@ -766,12 +766,12 @@ public sealed class XxxModule { }
 #### 界面语言（i18n）
 
 - 语言集合 9 种，与游戏一致（JsonData 的 CHS、CHT、ENG、ESL、FRA、JPN、KOR、PTB、RUS）。`LOCALES` 在 `webui-src/src/i18n/index.js`：`game` 为游戏代码，`steam` 为新闻 RSS 的 `l=` 参数，须与后端 `SteamNewsApi.Languages` 一致。
-- 默认跟随浏览器：依次匹配 `navigator.languages`，都不匹配则英文。顶栏系统菜单「设置」可手动选择，偏好存 `localStorage` 键 `dt_locale_v1`（`auto` 或语言代码），仅本浏览器，不进后端配置。
+- 默认跟随浏览器：依次匹配 `navigator.languages`，都不匹配则英文。顶栏系统菜单「语言」可手动选择，偏好存 `localStorage` 键 `dt_locale_v1`（`auto` 或语言代码），仅本浏览器，不进后端配置。
 - 文字总表在 `i18n/messages.js`：每行一个键，9 列依次为 zh-CN、zh-TW、en、es、fr、ja、ko、pt-BR、ru。新增键必须填满 9 列；占位符写 `{name}`。
 - 组件里用 `t('键名')`，在模板或计算属性中调用即响应式刷新。`t()` 的回退顺序：当前语言 → 英文 → 中文源文 → 键名本身。
 - 游戏已有官方译法的词直接沿用游戏文本，不另起译名：设置（SETTINGS / Opciones / OPTIONS）、平板电脑（Tablet）、线索（Clue）、命题（statement）、学级裁判（Class Trial）、语言（Language）、取消（Cancel）、确定（Confirm）。
 - 日期与星期用 `Intl` 并跟随当前语言。
-- 覆盖范围：桌面壳（顶栏、Dock、桌面右键菜单、关于、软件更新、窗口按钮、设置）与小组件（Steam 在线、MCP 桥接、游戏新闻）。配置页的功能标签（标签栏的分组名、标签名、悬停说明、状态与作用面筛选、标签栏控件、段说明的标签前缀、搜索框占位）已国际化。平板电脑的照片确认层与查看器文字已国际化（`tablet.photo.*`、`tablet.viewer.*`）；平板的其余文字仍为中文。配置页其余部分（工具栏、段详情、条目描述）、手柄、自动化等应用内部与命令输出尚未国际化，属于后续阶段。
+- 覆盖范围：桌面壳（顶栏、Dock、桌面右键菜单、关于、软件更新、窗口按钮、语言）与小组件（Steam 在线、MCP 桥接、游戏新闻）。配置页的功能标签（标签栏的分组名、标签名、悬停说明、状态与作用面筛选、标签栏控件、段说明的标签前缀、搜索框占位）已国际化。平板电脑的照片确认层与查看器文字已国际化（`tablet.photo.*`、`tablet.viewer.*`）；平板的其余文字仍为中文。配置页其余部分（工具栏、段详情、条目描述）、手柄、自动化等应用内部与命令输出尚未国际化，属于后续阶段。
 
 #### 功能标签（配置页）
 

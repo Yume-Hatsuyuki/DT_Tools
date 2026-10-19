@@ -5,7 +5,7 @@ import IconX from '~icons/tabler/x';
 import IconCheck from '~icons/tabler/check';
 
 /**
- * 设置弹窗：界面语言。默认「跟随浏览器」；选择某个语言后立即生效并保存在本浏览器。
+ * 语言弹窗：界面语言。默认「跟随浏览器」；选择某个语言后立即生效并保存在本浏览器。
  * 语言切换是响应式的，整个界面（包括本弹窗）会即时刷新。
  */
 const emit = defineEmits(['close']);
@@ -29,12 +29,11 @@ function pick(code) {
 
 <template>
   <div class="sm-mask" @click.self="emit('close')">
-    <div class="sm-panel" role="dialog" aria-modal="true" :aria-label="t('common.settings')">
+    <div class="sm-panel" role="dialog" aria-modal="true" :aria-label="t('common.language')">
       <div class="sm-head">
-        <span class="sm-title">{{ t('common.settings') }}</span>
+        <span class="sm-title">{{ t('common.language') }}</span>
         <button class="sm-x" :title="t('common.close')" @click="emit('close')"><IconX /></button>
       </div>
-      <div class="sm-section">{{ t('common.language') }}</div>
       <ul class="sm-list">
         <li v-for="o in options" :key="o.code">
           <button type="button" class="sm-opt" :class="{ on: pref === o.code }" @click="pick(o.code)">
@@ -87,7 +86,6 @@ function pick(code) {
 }
 .sm-x:hover { background: rgba(140, 180, 255, 0.12); color: var(--text-0); }
 .sm-x svg { width: 13px; height: 13px; }
-.sm-section { font-size: 11px; color: var(--text-2); margin: 4px 2px 6px; letter-spacing: 0.04em; }
 .sm-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .sm-opt {
   width: 100%;

@@ -21,6 +21,7 @@ import IconSearch from '~icons/tabler/search';
 import IconLayoutGrid from '~icons/tabler/layout-grid';
 import IconPuzzle from '~icons/tabler/puzzle';
 import IconSettings from '~icons/tabler/settings';
+import IconLanguage from '~icons/tabler/language';
 import IconArrowBarToUp from '~icons/tabler/arrow-bar-to-up';
 import IconArrowBarToDown from '~icons/tabler/arrow-bar-to-down';
 import IconMaximize from '~icons/tabler/maximize';
@@ -48,7 +49,7 @@ const props = defineProps({
   /** 平铺模式是否开启（tray 的切换按钮据此换图标与高亮）。 */
   tileMode: { type: Boolean, default: false },
 });
-const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch', 'toggle-tile', 'open-settings']);
+const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch', 'toggle-tile', 'open-language']);
 
 const conn = useConnectionStatus();
 const shell = useShellUser();
@@ -158,7 +159,7 @@ function runApp(appId) {
 }
 
 const SYSTEM_ITEMS = [
-  { id: 'settings', get label() { return t('common.settings'); }, icon: IconSettings },
+  { id: 'language', get label() { return t('common.language'); }, icon: IconLanguage },
   { id: 'wallpaper', get label() { return t('menu.wallpaper'); }, icon: IconPhoto },
   { id: 'wallpaper-reset', get label() { return t('menu.resetWallpaper'); }, icon: IconPhotoOff },
   { id: 'about', get label() { return t('about.menu'); }, icon: IconInfoCircle },
@@ -212,7 +213,7 @@ function runItem(item) {
   if (item.id === 'wallpaper') emit('change-wallpaper');
   else if (item.id === 'wallpaper-reset') emit('reset-wallpaper');
   else if (item.id === 'about') emit('about');
-  else if (item.id === 'settings') emit('open-settings');
+  else if (item.id === 'language') emit('open-language');
   else if (item.id === 'exit') exitGame();
 }
 
