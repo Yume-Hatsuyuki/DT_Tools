@@ -90,6 +90,11 @@
       <HintPath>$(GameManaged)\UnityEngine.AudioModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- 大厅屏幕视频（LobbyScreenVideo）：Unity VideoPlayer / VideoClip -->
+    <Reference Include="UnityEngine.VideoModule">
+      <HintPath>$(GameManaged)\UnityEngine.VideoModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>$(GameManaged)\UnityEngine.UIModule.dll</HintPath>
       <Private>false</Private>
