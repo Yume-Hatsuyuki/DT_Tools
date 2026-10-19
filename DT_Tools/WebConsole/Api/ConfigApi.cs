@@ -22,7 +22,8 @@ namespace DT_Tools.WebConsole.Api
         /// 功能标签字典（分组、键、中文名、说明）。
         /// </summary>
         /// <remarks>
-        /// WebUI 据此渲染标签筛选，标签文字不在前端写死。
+        /// WebUI 据此渲染标签筛选。成员、键与中文名由后端给出；译文在 WebUI 的 i18n 总表，
+        /// 以 key / groupKey 查找，缺译时回退到 label / description / group。
         /// </remarks>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleTags(HttpListenerContext ctx)
@@ -30,6 +31,7 @@ namespace DT_Tools.WebConsole.Api
             {
                 key = e.Key,
                 group = e.Group,
+                groupKey = e.GroupKey,
                 label = e.Label,
                 description = e.Description,
             }).ToArray());

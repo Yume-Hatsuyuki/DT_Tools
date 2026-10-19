@@ -18,6 +18,21 @@ namespace DT_Tools.Core.Attributes
         /// </summary>
         public const int MaxPerUnit = 3;
 
+        /// <summary>
+        /// 分组中文名 → 稳定的分组键。WebUI 按键取译文，中文名只在缺译时回退。
+        /// </summary>
+        /// <remarks>
+        /// 新增分组时在此追加一条。未登记的分组名原样作为键，不会崩溃，但 WebUI 找不到对应译文。
+        /// </remarks>
+        private static readonly Dictionary<string, string> GroupKeys = new Dictionary<string, string>
+        {
+            { "玩家", "player" },
+            { "界面", "ui" },
+            { "玩法", "game" },
+            { "系统", "sys" },
+            { "外设", "peripheral" },
+        };
+
         public sealed class Entry
         {
             public FeatureTag Tag;
@@ -25,6 +40,14 @@ namespace DT_Tools.Core.Attributes
             public string Group;
             public string Label;
             public string Description;
+
+            /// <summary>
+            /// 分组的稳定键（如 player、ui），由 Group 经 GroupKeys 映射得到。
+            /// </summary>
+            /// <remarks>
+            /// 映射缺失时回退为 Group 本身。
+            /// </remarks>
+            public string GroupKey => GroupKeys.TryGetValue(Group, out var k) ? k : Group;
         }
 
         public static readonly IReadOnlyList<Entry> Entries = new[]
