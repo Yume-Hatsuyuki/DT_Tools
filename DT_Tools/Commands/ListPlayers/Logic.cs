@@ -117,7 +117,15 @@ namespace DT_Tools.Commands.ListPlayers
                 .Select(p =>
                 {
                     ulong steamId = Managers.Player.GetRosterSteamId(p.PublicInfo.PlayerId);
-                    TryResolveConnection(steamId, out string ip, out bool? relayed, out int ping);
+                    TryResolveConnection(steamId, out string ip, out bool? relayed, out int sessionPing);
+                    ulong hostSteamId = Managers.Network?.GameHostSteamId.m_SteamID ?? 0;
+                    bool isHostRow = steamId != 0 && steamId == hostSteamId;
+                    int ping = ResolveRosterPing(
+                        iAmHost: HostGuard.IsHost,
+                        isHostRow: isHostRow,
+                        sessionPingMs: sessionPing,
+                        rosterPingMs: Managers.Player.GetRosterPing(p.PublicInfo.PlayerId),
+                        hostPingMs: isHostRow ? (Managers.Network?.GetHostPingMs() ?? -1) : -1);
                     int characterId = p.PublicInfo.CharacterId;
                     return new Entry
                     {
@@ -135,6 +143,31 @@ namespace DT_Tools.Commands.ListPlayers
                     };
                 })
                 .ToList();
+        }
+
+        /// <summary>
+        /// 选出一名玩家的实时 ping，与游戏设置界面的花名册行规则一致。
+        /// </summary>
+        /// <remarks>
+        /// 客机之间没有 P2P 句柄，只能看到到房主的会话，其他玩家的 ping 必须取房主广播的花名册值。
+        /// 依据：UI_RosterSubItem.cs:153（房主行用 GetHostPingMs，其余行用 GetRosterPing）；
+        /// PlayerManager.cs:81 GetRosterPing、:48 花名册 3 秒内有效、:343-351 ApplyRoster 只保存 PingMs &gt; 0；
+        /// Server.Game/GameRoom.cs:353 房主用各客人的会话测量 ping 写入花名册。
+        /// 房主本机时各客人的会话就在本机，直接用会话 ping，与房主生成花名册时的测量来源相同。
+        /// </remarks>
+        /// <param name="iAmHost">本机是否为房主。</param>
+        /// <param name="isHostRow">该玩家是否为房主（Steam ID 与游戏房主 ID 相同）。</param>
+        /// <param name="sessionPingMs">本机到该玩家的 P2P 会话 ping，单位毫秒；无会话时为 -1。</param>
+        /// <param name="rosterPingMs">花名册广播的 ping，单位毫秒；无数据或超过 3 秒未更新时为 -1。</param>
+        /// <param name="hostPingMs">本机到房主的会话 ping，单位毫秒；无会话时为 -1。仅 isHostRow 为 true 时使用。</param>
+        /// <returns>实时 ping，单位毫秒；-1 表示不可用。</returns>
+        public static int ResolveRosterPing(bool iAmHost, bool isHostRow, int sessionPingMs, int rosterPingMs, int hostPingMs)
+        {
+            if (iAmHost)
+                return sessionPingMs;
+            if (isHostRow)
+                return hostPingMs;
+            return rosterPingMs;
         }
 
         /// <summary>
