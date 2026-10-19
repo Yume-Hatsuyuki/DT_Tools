@@ -258,6 +258,28 @@ const ROWS = {
   'config.tags.itemTitle': ['{label}：{desc}', '{label}：{desc}', '{label}: {desc}', '{label}: {desc}', '{label} : {desc}', '{label}：{desc}', '{label}: {desc}', '{label}: {desc}', '{label}: {desc}'],
   'config.tags.linePrefix': ['【{tags}】{text}', '【{tags}】{text}', '[{tags}] {text}', '[{tags}] {text}', '[{tags}] {text}', '【{tags}】{text}', '[{tags}] {text}', '[{tags}] {text}', '[{tags}] {text}'],
   'config.searchPlaceholder': ['搜索功能 / 标签 / 字段…', '搜尋功能 / 標籤 / 欄位…', 'Search features / tags / fields…', 'Buscar funciones / etiquetas / campos…', 'Rechercher fonctions / tags / champs…', '機能・タグ・項目を検索…', '기능 / 태그 / 필드 검색…', 'Pesquisar recursos / tags / campos…', 'Поиск функций / тегов / полей…'],
+
+  // ---- 平板电脑：照片确认与查看器 ----
+  'tablet.photo.confirmTitle': ['发送图片？', '傳送圖片？', 'Send this photo?', '¿Enviar esta foto?', 'Envoyer cette photo ?', '写真を送信しますか？', '사진을 보낼까요?', 'Enviar esta foto?', 'Отправить фото?'],
+  'tablet.photo.confirmHint': ['发送后所有人都能看到，无法撤回。', '傳送後所有人都能看到，無法撤回。', 'Everyone can see it after sending. It can’t be recalled.', 'Todos podrán verla al enviarla y no se puede retirar.', 'Tout le monde pourra la voir après l’envoi ; elle ne peut pas être retirée.', '送信後は全員に表示され、取り消すことはできません。', '보내면 모두에게 보이며 취소할 수 없습니다.', 'Todos poderão vê-la após o envio. Não é possível desfazer.', 'После отправки её увидят все. Отозвать нельзя.'],
+  'tablet.photo.notAllowed': ['当前阶段不能发送照片。', '目前階段不能傳送照片。', 'Photos can’t be sent in the current phase.', 'No se pueden enviar fotos en esta fase.', 'Les photos ne peuvent pas être envoyées à cette phase.', '現在のフェーズでは写真を送信できません。', '현재 단계에서는 사진을 보낼 수 없습니다.', 'Não é possível enviar fotos nesta fase.', 'На этом этапе отправлять фото нельзя.'],
+  'tablet.photo.send': ['发送', '傳送', 'Send', 'Enviar', 'Envoyer', '送信', '전송', 'Enviar', 'Отправить'],
+  'tablet.photo.sending': ['发送中…', '傳送中…', 'Sending…', 'Enviando…', 'Envoi…', '送信中…', '보내는 중…', 'Enviando…', 'Отправка…'],
+  'tablet.photo.waitSec': ['{n} 秒后可发', '{n} 秒後可傳送', 'Available in {n}s', 'Disponible en {n} s', 'Disponible dans {n} s', '{n} 秒後に送信可能', '{n}초 후 보내기 가능', 'Disponível em {n} s', 'Через {n} с'],
+  'tablet.photo.pendingBlocked': ['请先确认或取消当前图片', '請先確認或取消目前的圖片', 'Confirm or cancel the current photo first', 'Confirma o cancela primero la foto actual', 'Confirmez ou annulez d’abord la photo en cours', '先に現在の画像を送信するかキャンセルしてください', '먼저 현재 사진을 보내거나 취소하세요', 'Confirme ou cancele a foto atual primeiro', 'Сначала подтвердите или отмените текущее фото'],
+  'tablet.photo.processing': ['图片处理中，请稍候', '圖片處理中，請稍候', 'Processing photo, please wait', 'Procesando la foto, espera un momento', 'Traitement de la photo, patientez', '画像を処理中です。しばらくお待ちください', '사진 처리 중입니다. 잠시만 기다려 주세요', 'Processando a foto, aguarde', 'Обработка фото, подождите'],
+  'tablet.photo.open': ['查看大图', '查看大圖', 'View full size', 'Ver en tamaño completo', 'Voir en grand', '拡大して表示', '크게 보기', 'Ver em tamanho grande', 'Открыть в полном размере'],
+  'tablet.photo.zoom': ['点击放大查看', '點擊放大查看', 'Click to enlarge', 'Haz clic para ampliar', 'Cliquer pour agrandir', 'クリックして拡大', '클릭하여 확대', 'Clique para ampliar', 'Нажмите, чтобы увеличить'],
+  'tablet.photo.alt': ['照片', '照片', 'Photo', 'Foto', 'Photo', '写真', '사진', 'Foto', 'Фото'],
+  'tablet.photo.copy': ['复制', '複製', 'Copy', 'Copiar', 'Copier', 'コピー', '복사', 'Copiar', 'Копировать'],
+  'tablet.photo.saveAs': ['另存为', '另存新檔', 'Save as', 'Guardar como', 'Enregistrer sous', '名前を付けて保存', '다른 이름으로 저장', 'Salvar como', 'Сохранить как'],
+  'tablet.viewer.label': ['照片查看器', '照片檢視器', 'Photo viewer', 'Visor de fotos', 'Visionneuse de photos', '写真ビューアー', '사진 뷰어', 'Visualizador de fotos', 'Просмотр фото'],
+  'tablet.viewer.prev': ['上一张', '上一張', 'Previous', 'Anterior', 'Précédente', '前へ', '이전', 'Anterior', 'Предыдущее'],
+  'tablet.viewer.next': ['下一张', '下一張', 'Next', 'Siguiente', 'Suivante', '次へ', '다음', 'Próxima', 'Следующее'],
+  'tablet.viewer.zoomIn': ['放大', '放大', 'Zoom in', 'Ampliar', 'Zoom avant', '拡大', '확대', 'Ampliar', 'Увеличить'],
+  'tablet.viewer.zoomOut': ['缩小', '縮小', 'Zoom out', 'Reducir', 'Zoom arrière', '縮小', '축소', 'Reduzir', 'Уменьшить'],
+  'tablet.viewer.fit': ['适应窗口', '適應視窗', 'Fit', 'Ajustar', 'Ajuster', 'ウィンドウに合わせる', '창에 맞춤', 'Ajustar', 'По размеру окна'],
+  'tablet.viewer.actual': ['原始大小', '原始大小', '100%', '100 %', '100 %', '100%', '100%', '100%', '100%'],
 };
 
 /** 按列构建每个语言的词典：{ 'zh-CN': { key: text }, ... }。 */

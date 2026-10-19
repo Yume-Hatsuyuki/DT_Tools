@@ -1,10 +1,13 @@
 <script setup>
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue';
 import { API, createPoller } from '../../api.js';
 import { pickImageFile } from '../../composables/pickImage.js';
 import TabletChat from './TabletChat.vue';
 import TabletClues from './TabletClues.vue';
 import TabletExportDialog from './TabletExportDialog.vue';
+import TabletPhotoConfirm from './TabletPhotoConfirm.vue';
+import TabletPhotoViewer from './TabletPhotoViewer.vue';
+import { t } from '../../i18n/index.js';
 import { orderClues, roundNumbering, formatChatText, formatClueText, fileStampOf } from './tabletFormat.js';
 import { renderChatParts, renderClueParts, downloadBlob, downloadText, fileToJpegBase64, imageBlobToPng } from './tabletImage.js';
 
@@ -15,6 +18,8 @@ import { renderChatParts, renderClueParts, downloadBlob, downloadText, fileToJpe
 
 const POLL_MS = 800;
 const PHOTO_LIMIT = 163840;
+/** 待确认照片在查看器中的占位键，不与任何聊天照片的 photoKey 冲突。 */
+const PENDING_KEY = '__pending__';
 const LINE_CAP = 1000;
 const CLEAR_TEXT = {
   chat: '清空本地聊天记录（含照片）？线索保留，游戏内容不受影响。',
@@ -47,12 +52,28 @@ const tick = ref(Date.now());
 const menu = ref('');
 const exportDialog = ref(null);
 const confirmScope = ref('');
+/** 待确认发送的照片：压缩后的 JPEG（base64）与预览地址，确认前不会发出。 */
+const pendingPhoto = ref(null);
+/** 照片查看器：{ key, pending }。pending 为 true 时查看的是待确认照片。 */
+const viewer = ref(null);
 
 const clueList = computed(() => orderClues(clues.value));
 /** 局编号由聊天与线索共同计算，同一局在两边的编号一致。 */
 const roundNo = computed(() => roundNumbering([...lines.value, ...clues.value]));
 const canSendPhoto = computed(() => stateCode.value === 'Trial' && canType.value);
 const photoWait = computed(() => Math.max(0, Math.ceil((cooldownUntil.value - tick.value) / 1000)));
+/** 聊天中的全部照片，供查看器左右切换（与聊天顺序一致）。 */
+const photoItems = computed(() => lines.value
+  .filter((l) => l.kind === 'photo')
+  .map((l) => ({ key: l.photoKey, src: API.tabletPhotoUrl(l.photoKey), name: l.name, time: l.time, line: l })));
+const viewerItems = computed(() => (viewer.value?.pending
+  ? [{ key: PENDING_KEY, src: pendingPhoto.value?.url || '', name: '', time: '', line: null }]
+  : photoItems.value));
+const viewerKey = computed(() => (viewer.value?.pending ? PENDING_KEY : viewer.value?.key || ''));
+watch(photoItems, (items) => {
+  // 查看的照片因聊天容量被挤掉时，关闭查看器，避免显示空白
+  if (viewer.value && !viewer.value.pending && !items.some((p) => p.key === viewer.value.key)) viewer.value = null;
+});
 const photoButtonText = computed(() => {
   if (photoBusy.value) return '处理中…';
   if (photoWait.value > 0) return `图片 ${photoWait.value}s`;
@@ -151,9 +172,19 @@ function onEnter(e) {
   send();
 }
 
-/** 发送一张照片：压缩、校验阶段与冷却，成功后立即拉取一次状态以刷新冷却。 */
-async function sendPhotoFile(file) {
-  if (photoBusy.value) return;
+/**
+ * 取得一张待发送的照片：压缩为发送时的同一份 JPEG，弹出确认层。
+ * 真正发送只在用户确认后发生（见 confirmPhoto），避免误触粘贴就直接发出。
+ */
+async function preparePhoto(file) {
+  if (pendingPhoto.value) {
+    flash(t('tablet.photo.pendingBlocked'), true);
+    return;
+  }
+  if (photoBusy.value) {
+    flash(t('tablet.photo.processing'), true);
+    return;
+  }
   if (!canSendPhoto.value) {
     flash('仅学级裁判的讨论阶段可以发送照片', true);
     return;
@@ -165,7 +196,39 @@ async function sendPhotoFile(file) {
   photoBusy.value = true;
   try {
     const data = await fileToJpegBase64(file, PHOTO_LIMIT);
-    const j = await API.tabletPhoto(data);
+    pendingPhoto.value = { data, url: `data:image/jpeg;base64,${data}` };
+  } catch (e) {
+    flash(e.message || '照片处理失败', true);
+  } finally {
+    photoBusy.value = false;
+  }
+}
+
+/** 取消待发送的照片（取消按钮、Esc 或点击遮罩）。若正在查看它，一并关闭查看器。 */
+function cancelPhoto() {
+  pendingPhoto.value = null;
+  if (viewer.value?.pending) viewer.value = null;
+}
+
+/**
+ * 用户确认后才真正发送。确认时若已不可发（阶段变化），取消并提示；
+ * 仍在冷却则保留确认层，等冷却结束再点「发送」。发送结束（成功或失败）都关闭确认层。
+ */
+async function confirmPhoto() {
+  const p = pendingPhoto.value;
+  if (!p || photoBusy.value) return;
+  if (!canSendPhoto.value) {
+    flash('当前阶段不能发送照片', true);
+    cancelPhoto();
+    return;
+  }
+  if (photoWait.value > 0) {
+    flash(`照片冷却中，${photoWait.value} 秒后可再发`, true);
+    return;
+  }
+  photoBusy.value = true;
+  try {
+    const j = await API.tabletPhoto(p.data);
     if (j.unauthorized) return;
     if (!j.ok) {
       flash(j.data?.message || j.error || '照片发送失败', true);
@@ -175,34 +238,53 @@ async function sendPhotoFile(file) {
     stickBottom = true;
     poll();
   } catch (e) {
-    flash(e.message || '照片处理失败', true);
+    flash(e.message || '照片发送失败', true);
   } finally {
     photoBusy.value = false;
+    cancelPhoto();
   }
 }
 
 async function pickPhoto() {
   if (!canSendPhoto.value || photoBusy.value) return;
+  if (pendingPhoto.value) {
+    flash(t('tablet.photo.pendingBlocked'), true);
+    return;
+  }
   if (photoWait.value > 0) {
     flash(`照片冷却中，${photoWait.value} 秒后可再发`, true);
     return;
   }
   const file = await pickImageFile('image/*');
-  if (file) sendPhotoFile(file);
+  if (file) preparePhoto(file);
 }
 
 /**
- * 粘贴剪贴板中的图片即发送为照片。纯文字粘贴保持原样，交给输入框处理。
+ * 粘贴剪贴板中的图片：先进入发送确认，不直接发送。纯文字粘贴保持原样，交给输入框处理。
+ * 查看器打开时不响应粘贴。
  */
 function onPaste(e) {
   const data = e.clipboardData;
   if (!data) return;
   const item = [...data.items].find((i) => i.kind === 'file' && i.type.startsWith('image/'));
-  if (!item) return;
+  if (!item || viewer.value) return;
   if (data.getData('text/plain')) return;
   e.preventDefault();
   const file = item.getAsFile();
-  if (file) sendPhotoFile(file);
+  if (file) preparePhoto(file);
+}
+
+function openViewer(l) {
+  viewer.value = { key: l.photoKey, pending: false };
+}
+function openPendingViewer() {
+  if (pendingPhoto.value) viewer.value = { key: PENDING_KEY, pending: true };
+}
+function closeViewer() {
+  viewer.value = null;
+}
+function onViewerSelect(key) {
+  viewer.value = { key, pending: false };
 }
 
 /** 点击面板空白处时把焦点移到根节点，使 Ctrl+V 的粘贴事件落在平板上。输入框与按钮保持原有焦点行为。 */
@@ -356,7 +438,7 @@ onUnmounted(() => {
     <div class="panes">
       <section class="pane chat-pane">
         <div ref="chatEl" class="chat-scroll" @scroll="onChatScroll">
-          <TabletChat :lines="lines" :numbering="roundNo" @copy-photo="copyPhoto" @save-photo="savePhoto" />
+          <TabletChat :lines="lines" :numbering="roundNo" @copy-photo="copyPhoto" @save-photo="savePhoto" @open-photo="openViewer" />
           <div v-if="!lines.length" class="empty">暂无聊天记录</div>
         </div>
         <div class="input-bar">
@@ -387,6 +469,25 @@ onUnmounted(() => {
 
     <div v-if="toast.text" class="toast" :class="{ error: toast.error }">{{ toast.text }}</div>
 
+    <TabletPhotoConfirm
+      v-if="pendingPhoto"
+      :src="pendingPhoto.url"
+      :can-send="canSendPhoto"
+      :wait-sec="photoWait"
+      :busy="photoBusy"
+      @cancel="cancelPhoto"
+      @confirm="confirmPhoto"
+      @zoom="openPendingViewer"
+    />
+    <TabletPhotoViewer
+      v-if="viewer"
+      :photos="viewerItems"
+      :current-key="viewerKey"
+      @select="onViewerSelect"
+      @close="closeViewer"
+      @copy="copyPhoto"
+      @save="savePhoto"
+    />
     <TabletExportDialog
       v-if="exportDialog"
       :kind="exportDialog.kind"
