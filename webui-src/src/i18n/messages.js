@@ -18,7 +18,6 @@ const ROWS = {
   'common.refresh': ['刷新', '重新整理', 'Refresh', 'Actualizar', 'Actualiser', '更新', '새로고침', 'Atualizar', 'Обновить'],
   'common.loading': ['加载中…', '載入中…', 'Loading…', 'Cargando…', 'Chargement…', '読み込み中…', '불러오는 중…', 'Carregando…', 'Загрузка…'],
   'common.checking': ['检查中…', '檢查中…', 'Checking…', 'Comprobando…', 'Vérification…', '確認中…', '확인 중…', 'Verificando…', 'Проверка…'],
-  'common.settings': ['设置', '設置', 'Settings', 'Opciones', 'Options', 'オプション', '옵션', 'Opções', 'Настройки'],
   'common.language': ['语言', '語言', 'Language', 'Idioma', 'Langue', '言語', '언어', 'Idioma', 'Язык'],
   'common.about': ['关于', '關於', 'About', 'Acerca de', 'À propos', '情報', '정보', 'Sobre', 'О программе'],
   'common.appMenu': ['应用菜单', '應用程式選單', 'App menu', 'Menú de aplicaciones', 'Menu des applications', 'アプリメニュー', '앱 메뉴', 'Menu de apps', 'Меню приложений'],
