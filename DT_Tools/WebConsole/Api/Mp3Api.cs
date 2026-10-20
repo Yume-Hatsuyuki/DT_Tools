@@ -4,6 +4,9 @@ using DT_Tools.Commands;
 using DT_Tools.Core;
 using DT_Tools.Game;
 using Newtonsoft.Json.Linq;
+using System.Collections;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DT_Tools.WebConsole.Api
 {
@@ -26,6 +29,9 @@ namespace DT_Tools.WebConsole.Api
 
         // 当前播放曲目（原始路径，非 file:/// URI）及其所属歌单；会话空闲时无意义
         private static string _currentPath;
+        private static long _resolveToken;
+        private static CancellationTokenSource _resolveCts;
+        private static int _resolveFailStreak;
         private static string _playingListId;
 
         // 暂停书签（暂停=销毁引擎会话，恢复=PlayTrack 重建+起始偏移）。
@@ -168,7 +174,7 @@ namespace DT_Tools.WebConsole.Api
                 _pausedListId = _playingListId;
                 _pausedPosition = engine.Position;
                 _pausedDuration = engine.Duration;
-                MicBroadcast.Stop();
+                CancelPendingResolve(); MicBroadcast.Stop();
                 Log.Info(Tag, $"已暂停：{System.IO.Path.GetFileName(_pausedPath)} @ {_pausedPosition:0.#}s（会话已销毁）");
                 return CommandResult.Success(new { message = "已暂停" });
             });
@@ -331,7 +337,7 @@ namespace DT_Tools.WebConsole.Api
         public static void HandleStop(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
-                MicBroadcast.Stop();
+                CancelPendingResolve(); MicBroadcast.Stop();
                 _currentPath = null;
                 _playingListId = null;
                 _pausedPath = null;
@@ -346,21 +352,242 @@ namespace DT_Tools.WebConsole.Api
         public static void HandlePlaylistAdd(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
-            string path = (body.Value<string>("path") ?? "").Trim();
-            if (path.Length == 0)
-            {
-                HttpServer.WriteJson(ctx.Response, CommandResult.Fail("missing path"));
-                return;
-            }
+            string kind = (body.Value<string>("kind") ?? string.Empty).Trim().ToLowerInvariant();
+            string input = (body.Value<string>("path") ?? body.Value<string>("input") ?? string.Empty).Trim();
+            string name = (body.Value<string>("name") ?? string.Empty).Trim();
             string listId = body.Value<string>("listId");
+            if (kind.Length == 0)
+                kind = Mp3Playlist.InferKind(input);   // 旧客户端只传 path
+
+            string path;
+            string label;
+            if (kind == "netease")
+            {
+                if (!NeteaseMusic.TryParseSongId(input, out string songId))
+                {
+                    HttpServer.WriteJson(ctx.Response, CommandResult.Fail("invalid netease link", new { message = "无法识别网易云歌曲链接或 ID" }));
+                    return;
+                }
+                path = "netease:" + songId;
+                label = name.Length > 0 ? name : "网易云 " + songId;
+            }
+            else if (kind == "https")
+            {
+                if (!Uri.TryCreate(input, UriKind.Absolute, out Uri uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                {
+                    HttpServer.WriteJson(ctx.Response, CommandResult.Fail("invalid url", new { message = "请输入 http(s) 链接" }));
+                    return;
+                }
+                if (name.Length == 0)
+                {
+                    HttpServer.WriteJson(ctx.Response, CommandResult.Fail("missing name", new { message = "请填写名字" }));
+                    return;
+                }
+                path = input;
+                label = name;
+            }
+            else
+            {
+                if (input.Length == 0)
+                {
+                    HttpServer.WriteJson(ctx.Response, CommandResult.Fail("missing path"));
+                    return;
+                }
+                kind = "local";
+                path = input;
+                label = null;
+            }
+
             WriteMain(ctx, () =>
             {
                 var list = Mp3Playlist.Resolve(listId);
                 if (list == null)
                     return ListError("歌单不存在");
-                int index = Mp3Playlist.Ensure(list.Id, path);
+                int index = Mp3Playlist.Ensure(list.Id, path, kind, label);
                 return CommandResult.Success(new { index, message = "已在歌单中" });
             });
+        }
+
+        /// <summary>
+        /// POST /api/mp3/netease/info {input, ipMode?, fallbackIp?} — 解析网易云链接并返回歌曲信息（用于预填名字）。在 HTTP 线程执行网络请求。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文。</param>
+        public static void HandleNeteaseInfo(HttpListenerContext ctx)
+        {
+            if (!ParseBody(ctx, out var body)) return;
+            string input = (body.Value<string>("input") ?? string.Empty).Trim();
+            if (!NeteaseMusic.TryParseSongId(input, out string songId))
+            {
+                HttpServer.WriteJson(ctx.Response, CommandResult.Fail("invalid netease link", new { message = "无法识别网易云歌曲链接或 ID" }));
+                return;
+            }
+            string mode = body.Value<string>("ipMode") ?? NeteaseMusic.IpModeIpinfo;
+            string fallback = body.Value<string>("fallbackIp") ?? NeteaseMusic.DefaultFallbackIp;
+            try
+            {
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(25)))
+                {
+                    string ip = NeteaseMusic.ResolveRequestIpAsync(mode, fallback, cts.Token).GetAwaiter().GetResult();
+                    var info = NeteaseMusic.GetSongInfoAsync(songId, ip, cts.Token).GetAwaiter().GetResult();
+                    HttpServer.WriteJson(ctx.Response, CommandResult.Success(new { id = songId, name = info.Name, singer = info.Singer, duration = info.Duration }));
+                }
+            }
+            catch (Exception e)
+            {
+                HttpServer.WriteJson(ctx.Response, CommandResult.Fail("netease info failed", new { message = "获取歌曲信息失败：" + e.Message }));
+            }
+        }
+
+        /// <summary>
+        /// GET /api/mp3/netease/settings — 读取网易云设置（IP 模式、回退/自定义 IP、音质、UA）。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文。</param>
+        public static void HandleNeteaseSettings(HttpListenerContext ctx)
+            => WriteMain(ctx, () =>
+            {
+                var s = Mp3Playlist.Get();
+                return CommandResult.Success(new
+                {
+                    ipMode = s.NeteaseIpMode,
+                    fallbackIp = s.NeteaseFallbackIp,
+                    level = s.NeteaseLevel,
+                    userAgent = s.NeteaseUserAgent,
+                    levels = NeteaseMusic.Levels,
+                    defaultFallbackIp = NeteaseMusic.DefaultFallbackIp,
+                    defaultUserAgent = NeteaseMusic.DefaultUserAgent,
+                });
+            });
+
+        /// <summary>
+        /// POST /api/mp3/netease/settings {ipMode?, fallbackIp?, level?, userAgent?} — 保存网易云设置。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文。</param>
+        public static void HandleNeteaseSettingsSet(HttpListenerContext ctx)
+        {
+            if (!ParseBody(ctx, out var body)) return;
+            string mode = body.Value<string>("ipMode");
+            string fallback = body.Value<string>("fallbackIp");
+            string level = body.Value<string>("level");
+            string ua = body.Value<string>("userAgent");
+            WriteMain(ctx, () =>
+            {
+                if (fallback != null && !NeteaseMusic.IsValidIp(fallback))
+                    return CommandResult.Fail("invalid ip", new { message = "IP 格式不正确" });
+                var s = Mp3Playlist.Get();
+                if (mode != null) s.NeteaseIpMode = NeteaseMusic.NormalizeIpMode(mode);
+                if (fallback != null) s.NeteaseFallbackIp = fallback.Trim();
+                if (level != null) s.NeteaseLevel = NeteaseMusic.NormalizeLevel(level);
+                if (ua != null) s.NeteaseUserAgent = ua.Trim().Length > 0 ? ua.Trim() : NeteaseMusic.DefaultUserAgent;
+                Mp3Playlist.Save();
+                return CommandResult.Success(new { message = "网易云设置已保存" });
+            });
+        }
+
+        /// <summary>
+        /// POST /api/mp3/playlist/alias {listId?, index, alias} — 设置曲目的自定义标签（不改文件名）。
+        /// </summary>
+        /// <param name="ctx">HTTP 请求上下文。</param>
+        public static void HandlePlaylistAlias(HttpListenerContext ctx)
+        {
+            if (!ParseBody(ctx, out var body)) return;
+            string listId = body.Value<string>("listId");
+            int index = body.Value<int?>("index") ?? -1;
+            string alias = body.Value<string>("alias") ?? string.Empty;
+            WriteMain(ctx, () =>
+            {
+                if (!Mp3Playlist.SetAlias(listId, index, alias, out string error))
+                    return ListError(error);
+                return CommandResult.Success(new { message = "标签已更新" });
+            });
+        }
+
+        /// <summary>
+        /// 网易云条目的播放：后台线程解析直链，结果回到主线程后再交给引擎播放（不阻塞主线程）。
+        /// </summary>
+        /// <param name="listId">曲目所属歌单的 id。</param>
+        /// <param name="path">netease:&lt;id&gt;。</param>
+        /// <param name="index">曲目下标。</param>
+        /// <param name="startSeconds">起播位置，单位秒。</param>
+        /// <returns>已开始解析的结果。</returns>
+        private static CommandResult StartNeteaseTrack(string listId, string path, int index, float startSeconds)
+        {
+            var store = Mp3Playlist.Get();
+            string songId = path.Substring("netease:".Length);
+            string ipMode = store.NeteaseIpMode;
+            string fallback = store.NeteaseFallbackIp;
+            string level = store.NeteaseLevel;
+            long token = ++_resolveToken;
+            _resolveCts?.Cancel();
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            _resolveCts = cts;
+            Task<NeteaseMusic.SongUrl> task = Task.Run(async () =>
+            {
+                string ip = await NeteaseMusic.ResolveRequestIpAsync(ipMode, fallback, cts.Token).ConfigureAwait(false);
+                return await NeteaseMusic.GetSongUrlAsync(songId, ip, level, cts.Token).ConfigureAwait(false);
+            });
+            CoroutineHost.Start(CoAwaitNetease(task, token, listId, path, startSeconds));
+            return CommandResult.Success(new { message = $"正在解析网易云音乐 {songId}…", index });
+        }
+
+        private static IEnumerator CoAwaitNetease(Task<NeteaseMusic.SongUrl> task, long token, string listId, string path, float startSeconds)
+        {
+            while (!task.IsCompleted)
+                yield return null;
+            if (token != _resolveToken)
+                yield break;   // 已被停止或被新的播放取代
+            if (task.IsFaulted || task.IsCanceled)
+            {
+                string reason = task.IsFaulted ? task.Exception?.GetBaseException().Message : "超时";
+                Log.Warn(Tag, $"网易云解析失败（{path}）：{reason}");
+                ContinueAfterFailure(listId, path);
+                yield break;
+            }
+            var url = task.Result;
+            var store = Mp3Playlist.Get();
+            if (!MicBroadcast.PlayTrack(url.Url, store.Volume, store.Mic, startSeconds, store.NeteaseUserAgent))
+            {
+                Log.Warn(Tag, $"网易云直链无法播放（{path}）");
+                ContinueAfterFailure(listId, path);
+                yield break;
+            }
+            _resolveFailStreak = 0;
+            _currentPath = path;
+            _playingListId = listId;
+            _pausedPath = null;
+            _pausedListId = null;
+            MicBroadcast.TrackFinished = OnTrackFinished;
+            MicBroadcast.SetLocalAudible(store.Local);
+            Log.Info(Tag, $"网易云直链已就绪：{path}（{url.Level}，{url.Bitrate / 1000} kbps）");
+        }
+
+        /// <summary>
+        /// 解析或播放失败后跳过这一首继续连播；连续失败数达到歌单长度时停止，防止死循环。
+        /// </summary>
+        /// <param name="listId">歌单 id。</param>
+        /// <param name="path">失败的曲目路径。</param>
+        private static void ContinueAfterFailure(string listId, string path)
+        {
+            var list = Mp3Playlist.Find(listId);
+            _resolveFailStreak++;
+            if (list == null || _resolveFailStreak >= list.Items.Count)
+            {
+                _resolveFailStreak = 0;
+                Log.Warn(Tag, "连续解析失败，已停止自动连播。");
+                return;
+            }
+            _currentPath = path;
+            _playingListId = listId;
+            OnTrackFinished();
+        }
+
+        /// <summary>
+        /// 取消未完成的网易云解析：令牌递增，过期结果会被丢弃。
+        /// </summary>
+        private static void CancelPendingResolve()
+        {
+            _resolveToken++;
+            _resolveCts?.Cancel();
+            _resolveCts = null;
         }
 
         /// <summary>
@@ -463,7 +690,7 @@ namespace DT_Tools.WebConsole.Api
                     return ListError(error);
                 if (playingHere)
                 {
-                    MicBroadcast.Stop();
+                    CancelPendingResolve(); MicBroadcast.Stop();
                     _currentPath = null;
                     _playingListId = null;
                 }
@@ -506,6 +733,9 @@ namespace DT_Tools.WebConsole.Api
         /// <returns>命令执行结果。</returns>
         private static CommandResult PlayInternal(string listId, string path, int index, float startSeconds = 0f)
         {
+            CancelPendingResolve();
+            if (Mp3Playlist.InferKind(path) == "netease")
+                return StartNeteaseTrack(listId, path, index, startSeconds);
             var store = Mp3Playlist.Get();
             if (!MicBroadcast.PlayTrack(path, store.Volume, store.Mic, startSeconds))
                 return CommandResult.Fail("invalid source", new { message = "播放失败：音频来源无效（文件不存在/路径非法，原因见 MicBroadcast 日志）" });

@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
 import { API, createPoller } from '../../api.js';
 import FileBrowser from '../common/FileBrowser.vue';
+import Mp3AddPanel from './Mp3AddPanel.vue';
 import IconPlayerPlay from '~icons/tabler/player-play';
 import IconPlayerPause from '~icons/tabler/player-pause';
 import IconPlayerTrackPrev from '~icons/tabler/player-track-prev';
@@ -49,6 +50,7 @@ const toast = reactive({ text: '', error: false });
 let toastTimer = null;
 const busy = ref(false);        // 传输操作进行中（防重复点击）
 const browsing = ref(false);
+const addOpen = ref(false);   // 添加面板（本地 / https / 网易云）
 const lastPath = ref(localStorage.getItem('dt_mp3_last') || '');
 
 // 拖动进度/响度期间暂停轮询回写，松手提交
@@ -158,6 +160,30 @@ const modeToggle = () => {
   return act(() => API.mp3Mode(next.id));
 };
 
+const aliasEditing = ref(-1);
+const aliasDraft = ref('');
+function displayName(item) { return (item.alias || '').trim() || item.label; }
+function startAlias(i, item) { aliasEditing.value = i; aliasDraft.value = item.alias || ''; }
+function cancelAlias() { aliasEditing.value = -1; }
+async function saveAlias(i) {
+  if (aliasEditing.value !== i) return;   // 回车/Esc 已结束编辑，blur 不再重复提交
+  const draft = aliasDraft.value;
+  aliasEditing.value = -1;
+  const r = await API.mp3PlaylistAlias(i, draft, activeId.value);
+  if (!r.ok) showToast(r.data?.message || r.error || '保存失败', true);
+  await reload();
+}
+async function onAdded(added) {
+  addOpen.value = false;
+  if (phase.value === 'idle') {
+    const r = await API.mp3Index(added, activeId.value);
+    if (!r.ok) showToast(r.data?.message || r.error || '播放失败', true);
+  } else {
+    showToast('已加入歌单');
+  }
+  await reload();
+}
+
 async function onPicked(path) {
   browsing.value = false;
   lastPath.value = path;
@@ -265,7 +291,7 @@ const visibleRows = computed(() => {
   const rows = playlist.value.map((item, i) => ({ item, i }));
   if (!filtering.value) return rows;
   const q = filterKeyword.value.toLowerCase();
-  return rows.filter(({ item }) => (item.label || '').toLowerCase().includes(q));
+  return rows.filter(({ item }) => displayName(item).toLowerCase().includes(q));
 });
 const listHeadText = computed(() => {
   const name = activeList.value?.name || '歌单';
@@ -379,7 +405,7 @@ onUnmounted(() => {
           <IconArrowsShuffle v-else />
           {{ modeMeta.label }}
         </button>
-        <button class="tb-btn" :disabled="busy" title="浏览本机文件并加入当前歌单" @click="browsing = true">
+        <button class="tb-btn" :disabled="busy" title="添加本地文件、https 链接或网易云音乐" @click="addOpen = true">
           <IconFolderPlus /> 添加歌曲
         </button>
         <button class="tb-btn" :disabled="busy || !playlist.length" title="清空当前歌单（不影响当前播放）" @click="clearAll">
@@ -557,7 +583,14 @@ onUnmounted(() => {
           <IconGripVertical />
         </span>
         <span class="no">{{ i + 1 }}</span>
-        <span class="label" :title="item.path">{{ item.label }}</span>
+        <template v-if="aliasEditing === i">
+              <input class="alias-input" v-model="aliasDraft" maxlength="60" placeholder="标签（留空恢复原名）"
+                @keydown.enter.prevent="saveAlias(i)" @keydown.esc="cancelAlias" @blur="saveAlias(i)" />
+            </template>
+            <template v-else>
+              <span class="label" :title="item.path">{{ displayName(item) }}</span>
+              <button class="icon-btn alias-btn" title="编辑标签（不改文件名）" @click.stop="startAlias(i, item)"><IconPencil /></button>
+            </template>
         <button
           class="mini-btn"
           :class="{ active: i === highlightIndex && playingSomewhere }"
@@ -576,6 +609,7 @@ onUnmounted(() => {
 
     <div v-if="toast.text" class="toast" :class="{ error: toast.error }">{{ toast.text }}</div>
 
+    <Mp3AddPanel v-if="addOpen" :list-id="activeId" @close="addOpen = false" @pick-local="addOpen = false; browsing = true" @added="onAdded" @error="(m) => showToast(m, true)" />
     <FileBrowser
       v-if="browsing"
       :start-path="lastPath"
@@ -737,4 +771,7 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius
   display: flex; align-items: center; gap: 6px;
 }
 .foot-err { color: var(--accent-red); }
+.alias-btn { opacity: 0.6; }
+.alias-btn:hover { opacity: 1; }
+.alias-input { flex: 1; min-width: 0; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.25); color: inherit; font-size: 12.5px; }
 </style>

@@ -154,12 +154,13 @@ namespace DT_Tools.Game
         /// <param name="volume">音量，范围 0 到 1。</param>
         /// <param name="micMix">是否混入麦克风广播；为 false 时只在本地播放。</param>
         /// <param name="startSeconds">起播位置，单位秒，默认从头开始。</param>
+        /// <param name="userAgent">请求头 User-Agent；null 时使用引擎默认值（mic_music 等旧路径传 null，行为不变）。</param>
         /// <returns>开始播放时为 true。</returns>
         /// <remarks>
         /// micMix=true 但语音未连接或麦克风采集未运行时，本曲降级为纯本地播放，不取消曲目；
         /// 混入只是叠加在本地播放之上，本地出声不依赖语音系统。
         /// </remarks>
-        public static bool PlayTrack(string rawSource, float volume, bool micMix, float startSeconds = 0f)
+        public static bool PlayTrack(string rawSource, float volume, bool micMix, float startSeconds = 0f, string userAgent = null)
         {
             string uri = AudioMix.ResolveSource(rawSource, AudioPlaybackSource.Auto, Tag);
             if (string.IsNullOrEmpty(uri))
@@ -173,7 +174,7 @@ namespace DT_Tools.Game
             _pendingStart = Mathf.Max(0f, startSeconds);
             _loadGeneration++;
             _loading = true;
-            _loadCo = CoroutineHost.Start(CoLoadAndBroadcast(uri));
+            _loadCo = CoroutineHost.Start(CoLoadAndBroadcast(uri, userAgent));
             return true;
         }
 
@@ -197,7 +198,7 @@ namespace DT_Tools.Game
             _pendingMaxSeconds = maxSeconds;
             _loadGeneration++;
             _loading = true;
-            _loadCo = CoroutineHost.Start(CoLoadAndBroadcast(uri));
+            _loadCo = CoroutineHost.Start(CoLoadAndBroadcast(uri, null));
         }
 
         /// <summary>
@@ -362,10 +363,12 @@ namespace DT_Tools.Game
             };
         }
 
-        private static IEnumerator CoLoadAndBroadcast(string uri)
+        private static IEnumerator CoLoadAndBroadcast(string uri, string userAgent)
         {
             long generation = _loadGeneration;
             var request = UnityWebRequestMultimedia.GetAudioClip(uri, AudioType.UNKNOWN);
+            if (!string.IsNullOrEmpty(userAgent))
+                request.SetRequestHeader("User-Agent", userAgent);
             yield return request.SendWebRequest();
             if (generation != _loadGeneration)
                 yield break;   // 加载期间来了新点播/停止：本次结果作废
