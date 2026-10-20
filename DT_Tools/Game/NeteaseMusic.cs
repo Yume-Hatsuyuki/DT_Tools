@@ -236,6 +236,9 @@ namespace DT_Tools.Game
             string url = data.Value<string>("url");
             if (string.IsNullOrEmpty(url))
                 throw new InvalidOperationException("接口未返回可用直链（歌曲可能无版权、不可用，或该音质不支持）。");
+            // 网易 CDN 直链常带 ?vuutv=… 等签名参数；UnityWebRequest 对部分编码/超长 query 加载失败。
+            // 实测去掉 query 后路径仍可播，与用户反馈一致。
+            url = StripUrlQuery(url);
             return new SongUrl
             {
                 Url = url,
@@ -305,6 +308,22 @@ namespace DT_Tools.Game
                 return DefaultFallbackIp;
             }
             return await ResolvePublicIpAsync(fallbackIp, ct);
+        }
+
+        /// <summary>
+        /// 去掉 URL 的 query/fragment，仅保留 scheme://host/path。
+        /// 网易云 m*.music.126.net 直链的 vuutv 等参数会导致引擎侧加载失败。
+        /// </summary>
+        internal static string StripUrlQuery(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return url;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
+            {
+                int q = url.IndexOfAny(new[] { '?', '#' });
+                return q >= 0 ? url.Substring(0, q) : url;
+            }
+            return uri.GetLeftPart(UriPartial.Path);
         }
 
         private static HttpClient CreateClient()

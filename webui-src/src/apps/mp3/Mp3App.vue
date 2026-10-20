@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { API, createPoller } from '../../api.js';
 import FileBrowser from '../common/FileBrowser.vue';
 import Mp3AddPanel from './Mp3AddPanel.vue';
@@ -160,18 +160,101 @@ const modeToggle = () => {
   return act(() => API.mp3Mode(next.id));
 };
 
-const aliasEditing = ref(-1);
-const aliasDraft = ref('');
 function displayName(item) { return (item.alias || '').trim() || item.label; }
-function startAlias(i, item) { aliasEditing.value = i; aliasDraft.value = item.alias || ''; }
-function cancelAlias() { aliasEditing.value = -1; }
-async function saveAlias(i) {
-  if (aliasEditing.value !== i) return;   // 回车/Esc 已结束编辑，blur 不再重复提交
-  const draft = aliasDraft.value;
-  aliasEditing.value = -1;
-  const r = await API.mp3PlaylistAlias(i, draft, activeId.value);
-  if (!r.ok) showToast(r.data?.message || r.error || '保存失败', true);
+function itemKind(item) { return (item.kind || '').toLowerCase() || 'local'; }
+
+/** 曲目编辑对话框：按类型提供名字 / 链接 / 音质 */
+const editOpen = ref(false);
+const editIndex = ref(-1);
+const editKind = ref('local');
+const editName = ref('');
+const editPath = ref('');   // https 链接或网易云链接/ID（展示用，不含 netease: 前缀时也可）
+const editLevel = ref('');  // 空 = 跟随全局
+const editLevelOptions = ref([
+  { value: '', label: '跟随全局设置' },
+  { value: 'standard', label: '标准音质' },
+  { value: 'higher', label: '较高音质' },
+  { value: 'exhigh', label: '极高音质' },
+  { value: 'lossless', label: '无损音质' },
+  { value: 'hires', label: 'Hi-Res音质' },
+  { value: 'sky', label: '沉浸环绕声' },
+  { value: 'jyeffect', label: '高清环绕声' },
+  { value: 'jymaster', label: '超清母带' },
+  { value: 'dolby', label: '杜比全景声' },
+]);
+const globalNeteaseLevel = ref('standard');
+
+async function loadLevelOptions() {
+  try {
+    const j = await API.mp3NeteaseSettings();
+    if (j.ok && j.data) {
+      globalNeteaseLevel.value = j.data.level || 'standard';
+      if (Array.isArray(j.data.levelOptions) && j.data.levelOptions.length) {
+        editLevelOptions.value = [
+          { value: '', label: `跟随全局（${j.data.levelOptions.find(o => o.value === j.data.level)?.label || j.data.level || '标准'}）` },
+          ...j.data.levelOptions,
+        ];
+      }
+    }
+  } catch { /* ignore */ }
+}
+
+function startEdit(i, item) {
+  editIndex.value = i;
+  editKind.value = itemKind(item);
+  editName.value = (item.alias || '').trim() || item.label || '';
+  if (editKind.value === 'netease') {
+    const p = item.path || '';
+    editPath.value = p.startsWith('netease:') ? p.slice('netease:'.length) : p;
+    editLevel.value = item.level || '';
+    loadLevelOptions();
+  } else if (editKind.value === 'https') {
+    editPath.value = item.path || '';
+    editLevel.value = '';
+  } else {
+    editPath.value = item.path || '';
+    editLevel.value = '';
+  }
+  editOpen.value = true;
+}
+
+function cancelEdit() {
+  editOpen.value = false;
+  editIndex.value = -1;
+}
+
+async function saveEdit() {
+  const i = editIndex.value;
+  if (i < 0) return;
+  const fields = {
+    name: editName.value.trim(),
+    alias: editName.value.trim(), // 展示优先 alias；与 label 同步便于列表
+  };
+  if (editKind.value === 'netease') {
+    fields.path = editPath.value.trim();
+    fields.level = editLevel.value; // 可空串 = 跟随全局
+  } else if (editKind.value === 'https') {
+    fields.path = editPath.value.trim();
+  }
+  // local：只改名字（alias/label），不改路径
+  const r = await API.mp3PlaylistUpdate(i, activeId.value, fields);
+  if (!r.ok) {
+    showToast(r.data?.message || r.error || '保存失败', true);
+    return;
+  }
+  editOpen.value = false;
+  editIndex.value = -1;
+  showToast('曲目已更新');
   await reload();
+}
+
+function levelBadge(item) {
+  if (itemKind(item) !== 'netease') return '';
+  if (item.level) {
+    const opt = editLevelOptions.value.find(o => o.value === item.level);
+    return opt ? opt.label : item.level;
+  }
+  return '';
 }
 async function onAdded(added) {
   addOpen.value = false;
@@ -184,14 +267,41 @@ async function onAdded(added) {
   await reload();
 }
 
-async function onPicked(path) {
+/** 本地选文件后的可选重命名：不填则保持文件名 */
+const localNameOpen = ref(false);
+const localNamePath = ref('');
+const localNameDraft = ref('');
+const localNameDefault = computed(() => {
+  const path = localNamePath.value || '';
+  const base = path.split(/[/\\]/).pop() || path;
+  return base;
+});
+
+function onPicked(path) {
   browsing.value = false;
   lastPath.value = path;
   try { localStorage.setItem('dt_mp3_last', path); } catch { /* 隐私模式忽略 */ }
+  localNamePath.value = path;
+  localNameDraft.value = '';
+  localNameOpen.value = true;
+}
+
+function cancelLocalName() {
+  localNameOpen.value = false;
+  localNamePath.value = '';
+  localNameDraft.value = '';
+}
+
+async function confirmLocalName() {
+  const path = localNamePath.value;
+  if (!path) { cancelLocalName(); return; }
+  const name = localNameDraft.value.trim(); // 空 = 后端用文件名
+  localNameOpen.value = false;
   if (busy.value) return;
   busy.value = true;
   try {
-    const j = await API.mp3PlaylistAdd(path, activeId.value);
+    const extra = name ? { kind: 'local', name } : { kind: 'local' };
+    const j = await API.mp3PlaylistAdd(path, activeId.value, extra);
     if (j.unauthorized) return;
     if (!j.ok) { showToast(j.data?.message || j.error || '添加失败', true); return; }
     const added = j.data?.index ?? -1;
@@ -206,6 +316,8 @@ async function onPicked(path) {
     await reload();
   } finally {
     busy.value = false;
+    localNamePath.value = '';
+    localNameDraft.value = '';
   }
 }
 
@@ -232,7 +344,23 @@ const renamingId = ref('');
 const renameText = ref('');
 
 // 输入框出现时自动聚焦并全选（重命名失败回填时同样生效）
-const vFocus = { mounted: (el) => { el.focus(); el.select?.(); } };
+const vFocus = {
+  mounted(el) {
+    // 下一帧再聚焦：避免「点铅笔 → 输入框挂载」同一次点击把焦点立刻夺走
+    nextTick(() => { el.focus(); el.select?.(); });
+  },
+};
+
+/** 歌单重命名 / 新建进行中时，点输入框外任意处提交（输入框未获焦时 blur 不会触发） */
+function onDocPointerDown(e) {
+  if (!renamingId.value && !creating.value) return;
+  const el = e.target;
+  if (el && typeof el.closest === 'function' && el.closest('.list-rename')) return;
+  if (renamingId.value) commitRename();
+  else if (creating.value) commitCreate();
+}
+onMounted(() => document.addEventListener('pointerdown', onDocPointerDown, true));
+onUnmounted(() => document.removeEventListener('pointerdown', onDocPointerDown, true));
 
 function selectList(id) {
   if (id === activeId.value) return;
@@ -583,14 +711,13 @@ onUnmounted(() => {
           <IconGripVertical />
         </span>
         <span class="no">{{ i + 1 }}</span>
-        <template v-if="aliasEditing === i">
-              <input class="alias-input" v-model="aliasDraft" maxlength="60" placeholder="标签（留空恢复原名）"
-                @keydown.enter.prevent="saveAlias(i)" @keydown.esc="cancelAlias" @blur="saveAlias(i)" />
-            </template>
-            <template v-else>
-              <span class="label" :title="item.path">{{ displayName(item) }}</span>
-              <button class="icon-btn alias-btn" title="编辑标签（不改文件名）" @click.stop="startAlias(i, item)"><IconPencil /></button>
-            </template>
+        <span class="label" :title="item.path">
+          {{ displayName(item) }}
+          <em v-if="levelBadge(item)" class="level-tag">{{ levelBadge(item) }}</em>
+          <em v-else-if="itemKind(item) === 'netease'" class="level-tag muted">全局音质</em>
+          <em v-else-if="itemKind(item) === 'https'" class="level-tag muted">链接</em>
+        </span>
+        <button class="icon-btn alias-btn" title="编辑曲目" @click.stop="startEdit(i, item)"><IconPencil /></button>
         <button
           class="mini-btn"
           :class="{ active: i === highlightIndex && playingSomewhere }"
@@ -617,6 +744,63 @@ onUnmounted(() => {
       @select="onPicked"
       @close="browsing = false"
     />
+
+    <div v-if="localNameOpen" class="local-name-mask" @click.self="cancelLocalName">
+      <div class="local-name-dialog" role="dialog" aria-modal="true" aria-label="本地文件名字">
+        <header class="local-name-head">
+          <span class="local-name-title">添加本地文件</span>
+          <button type="button" class="local-name-x" title="取消" @click="cancelLocalName">×</button>
+        </header>
+        <p class="local-name-path" :title="localNamePath">{{ localNamePath }}</p>
+        <label class="local-name-field">
+          <span>显示名字（可留空，留空则用文件名）</span>
+          <input
+            v-model="localNameDraft"
+            v-focus
+            maxlength="60"
+            spellcheck="false"
+            :placeholder="localNameDefault"
+            @keydown.enter.prevent="confirmLocalName"
+            @keydown.esc.prevent="cancelLocalName"
+          />
+        </label>
+        <div class="local-name-actions">
+          <button type="button" class="tb-btn" @click="cancelLocalName">取消</button>
+          <button type="button" class="tb-btn primary" :disabled="busy" @click="confirmLocalName">添加</button>
+        </div>
+      </div>
+    </div>
+
+
+    <div v-if="editOpen" class="local-name-mask" @click.self="cancelEdit">
+      <div class="local-name-dialog" role="dialog" aria-modal="true" aria-label="编辑曲目">
+        <header class="local-name-head">
+          <span class="local-name-title">编辑曲目</span>
+          <button type="button" class="local-name-x" title="取消" @click="cancelEdit">×</button>
+        </header>
+        <div class="edit-body">
+          <label class="local-name-field">
+            <span>显示名字</span>
+            <input v-model="editName" maxlength="60" spellcheck="false" placeholder="显示在列表中的名字" />
+          </label>
+          <label v-if="editKind === 'https' || editKind === 'netease'" class="local-name-field">
+            <span>{{ editKind === 'netease' ? '歌曲链接或 ID' : '音频链接' }}</span>
+            <input v-model="editPath" spellcheck="false" :placeholder="editKind === 'netease' ? 'https://music.163.com/#/song?id=… 或纯数字 ID' : 'https://…'" />
+          </label>
+          <label v-if="editKind === 'netease'" class="local-name-field">
+            <span>音质（本曲；不选则跟随全局设置）</span>
+            <select v-model="editLevel">
+              <option v-for="opt in editLevelOptions" :key="String(opt.value)" :value="opt.value">{{ opt.label }}</option>
+            </select>
+          </label>
+          <p v-if="editKind === 'local'" class="edit-hint">本地文件只改显示名，不改磁盘路径。</p>
+        </div>
+        <div class="local-name-actions">
+          <button type="button" class="tb-btn" @click="cancelEdit">取消</button>
+          <button type="button" class="tb-btn primary" :disabled="busy" @click="saveEdit">保存</button>
+        </div>
+      </div>
+    </div>
 
     <div class="foot">
       <span v-if="loadError" class="foot-err">{{ loadError }}</span>
@@ -774,4 +958,70 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius
 .alias-btn { opacity: 0.6; }
 .alias-btn:hover { opacity: 1; }
 .alias-input { flex: 1; min-width: 0; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.25); color: inherit; font-size: 12.5px; }
+
+.local-name-mask {
+  position: absolute; inset: 0; z-index: 45;
+  background: rgba(4, 8, 14, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; box-sizing: border-box;
+}
+.local-name-dialog {
+  width: min(420px, 100%);
+  background: var(--surface-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--menu-shadow);
+  padding: 0;
+  overflow: hidden;
+}
+.local-name-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--line);
+}
+.local-name-title { font-size: 13.5px; font-weight: 600; color: var(--text-0); }
+.local-name-x {
+  width: 26px; height: 26px; border: none; background: transparent;
+  color: var(--text-2); cursor: pointer; border-radius: var(--radius-sm); font-size: 16px; line-height: 1;
+}
+.local-name-x:hover { background: rgba(140, 180, 255, 0.12); color: var(--text-0); }
+.local-name-path {
+  margin: 10px 14px 0; font-size: 11px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.local-name-field {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 10px 14px 0; font-size: 11.5px; color: var(--text-2);
+}
+.local-name-field input {
+  padding: 7px 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--surface-0);
+  color: var(--text-0); font-size: 12.5px; outline: none;
+}
+.local-name-field input:focus { border-color: var(--accent-cyan-dim); }
+.local-name-actions {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 12px 14px 14px;
+}
+.tb-btn.primary {
+  background: var(--accent-blue-btn); border-color: transparent; color: #fff;
+}
+.tb-btn.primary:hover:not(:disabled) { filter: brightness(1.08); color: #fff; }
+
+.level-tag {
+  display: inline-block; margin-left: 6px; font-style: normal;
+  font-size: 10px; padding: 1px 6px; border-radius: 999px;
+  border: 1px solid var(--accent-cyan-dim); color: var(--accent-cyan);
+  vertical-align: middle;
+}
+.level-tag.muted {
+  border-color: var(--line); color: var(--text-2);
+}
+.edit-body { padding: 4px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.edit-hint { margin: 0 14px; font-size: 11.5px; color: var(--text-2); }
+.local-name-field select {
+  padding: 7px 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--surface-0);
+  color: var(--text-0); font-size: 12.5px; outline: none; cursor: pointer;
+}
+.local-name-field select:focus { border-color: var(--accent-cyan-dim); }
 </style>

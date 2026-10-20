@@ -181,6 +181,7 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/mp3/playlist/move", Api.Mp3Api.HandlePlaylistMove);
             router.Add("POST", "/api/mp3/playlist/clear", Api.Mp3Api.HandlePlaylistClear);
             router.Add("POST", "/api/mp3/playlist/alias", Api.Mp3Api.HandlePlaylistAlias);
+            router.Add("POST", "/api/mp3/playlist/update", Api.Mp3Api.HandlePlaylistUpdate);
             router.Add("POST", "/api/mp3/netease/info", Api.Mp3Api.HandleNeteaseInfo);
             router.Add("GET", "/api/mp3/netease/settings", Api.Mp3Api.HandleNeteaseSettings);
             router.Add("POST", "/api/mp3/netease/settings", Api.Mp3Api.HandleNeteaseSettingsSet);

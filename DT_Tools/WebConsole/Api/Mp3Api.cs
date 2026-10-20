@@ -395,7 +395,8 @@ namespace DT_Tools.WebConsole.Api
                 }
                 kind = "local";
                 path = input;
-                label = null;
+                // 可选名字：不填则 Ensure 内用文件名；填写则作为展示 Label
+                label = name.Length > 0 ? name : null;
             }
 
             WriteMain(ctx, () =>
@@ -403,7 +404,8 @@ namespace DT_Tools.WebConsole.Api
                 var list = Mp3Playlist.Resolve(listId);
                 if (list == null)
                     return ListError("歌单不存在");
-                int index = Mp3Playlist.Ensure(list.Id, path, kind, label);
+                string level = (body.Value<string>("level") ?? string.Empty).Trim();
+                int index = Mp3Playlist.Ensure(list.Id, path, kind, label, level);
                 return CommandResult.Success(new { index, message = "已在歌单中" });
             });
         }
@@ -507,6 +509,76 @@ namespace DT_Tools.WebConsole.Api
         }
 
         /// <summary>
+        /// POST /api/mp3/playlist/update {listId?, index, name?, alias?, path?, level?}
+        /// 编辑曲目：名字/标签；https 可改链接；网易云可改链接或 ID 与音质。
+        /// </summary>
+        public static void HandlePlaylistUpdate(HttpListenerContext ctx)
+        {
+            if (!ParseBody(ctx, out var body)) return;
+            string listId = body.Value<string>("listId");
+            int index = body.Value<int?>("index") ?? -1;
+            // null = 本次不改该字段；缺省字段在 JSON 里为 null
+            bool hasName = body["name"] != null;
+            bool hasAlias = body["alias"] != null;
+            bool hasPath = body["path"] != null || body["input"] != null;
+            bool hasLevel = body["level"] != null;
+            string name = hasName ? (body.Value<string>("name") ?? "") : null;
+            string alias = hasAlias ? (body.Value<string>("alias") ?? "") : null;
+            string level = hasLevel ? (body.Value<string>("level") ?? "") : null;
+            string newPath = null;
+            if (hasPath)
+            {
+                string input = (body.Value<string>("path") ?? body.Value<string>("input") ?? "").Trim();
+                // 根据当前曲目类型或输入推断；网易云输入可写链接或 ID
+                WriteMain(ctx, () =>
+                {
+                    var list = Mp3Playlist.Resolve(listId);
+                    if (list == null)
+                        return ListError("歌单不存在");
+                    if (index < 0 || index >= list.Items.Count)
+                        return ListError("曲目下标无效");
+                    var item = list.Items[index];
+                    string kind = string.IsNullOrEmpty(item.Kind) ? Mp3Playlist.InferKind(item.Path) : item.Kind;
+                    string pathToSet = null;
+                    if (input.Length > 0)
+                    {
+                        if (kind == "netease" || NeteaseMusic.TryParseSongId(input, out _))
+                        {
+                            if (!NeteaseMusic.TryParseSongId(input, out string songId))
+                                return CommandResult.Fail("invalid netease link", new { message = "无法识别网易云歌曲链接或 ID" });
+                            pathToSet = "netease:" + songId;
+                        }
+                        else if (kind == "https" || input.StartsWith("http://", System.StringComparison.OrdinalIgnoreCase) || input.StartsWith("https://", System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (!System.Uri.TryCreate(input, System.UriKind.Absolute, out var uri) ||
+                                (uri.Scheme != System.Uri.UriSchemeHttp && uri.Scheme != System.Uri.UriSchemeHttps))
+                                return CommandResult.Fail("invalid url", new { message = "请输入有效的 http(s) 链接" });
+                            pathToSet = input;
+                        }
+                        else if (kind == "local")
+                        {
+                            pathToSet = input; // 一般不改本地路径，但允许
+                        }
+                        else
+                        {
+                            return CommandResult.Fail("invalid path", new { message = "无法识别的路径或链接" });
+                        }
+                    }
+                    if (!Mp3Playlist.UpdateItem(list.Id, index, name, alias, pathToSet, level, out string error))
+                        return ListError(error);
+                    return CommandResult.Success(new { message = "曲目已更新" });
+                });
+                return;
+            }
+            WriteMain(ctx, () =>
+            {
+                if (!Mp3Playlist.UpdateItem(listId, index, name, alias, null, level, out string error))
+                    return ListError(error);
+                return CommandResult.Success(new { message = "曲目已更新" });
+            });
+        }
+
+        /// <summary>
         /// 网易云条目的播放：后台线程解析直链，结果回到主线程后再交给引擎播放（不阻塞主线程）。
         /// </summary>
         /// <param name="listId">曲目所属歌单的 id。</param>
@@ -520,7 +592,10 @@ namespace DT_Tools.WebConsole.Api
             string songId = path.Substring("netease:".Length);
             string ipMode = store.NeteaseIpMode;
             string fallback = store.NeteaseFallbackIp;
-            string level = store.NeteaseLevel;
+            var list = Mp3Playlist.Find(listId);
+            var item = (list != null && index >= 0 && index < list.Items.Count) ? list.Items[index] : null;
+            // 曲目级音质优先，空则回退全局 NeteaseLevel
+            string level = Mp3Playlist.ResolvePlayLevel(item, store);
             long token = ++_resolveToken;
             _resolveCts?.Cancel();
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
