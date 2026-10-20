@@ -14,6 +14,9 @@ import IconRepeat from '~icons/tabler/repeat';
 import IconRepeatOnce from '~icons/tabler/repeat-once';
 import IconArrowsShuffle from '~icons/tabler/arrows-shuffle';
 import IconFolderPlus from '~icons/tabler/folder-plus';
+import IconFolderOpen from '~icons/tabler/folder-open';
+import IconLink from '~icons/tabler/link';
+import IconCaretDown from '~icons/tabler/caret-down';
 import IconTrash from '~icons/tabler/trash';
 import IconPlaylistX from '~icons/tabler/playlist-x';
 import IconArrowUp from '~icons/tabler/arrow-up';
@@ -22,7 +25,6 @@ import IconGripVertical from '~icons/tabler/grip-vertical';
 import IconPencil from '~icons/tabler/pencil';
 import IconPlus from '~icons/tabler/plus';
 import IconMusic from '~icons/tabler/music';
-import IconDownload from '~icons/tabler/download';
 
 /**
  * 随身MP3：游戏机本机播放器（服务端播放，非浏览器播放）。选文件（WebUI 内置
@@ -52,22 +54,44 @@ const busy = ref(false);        // 传输操作进行中（防重复点击）
 const browsing = ref(false);
 const lastPath = ref(localStorage.getItem('dt_mp3_last') || '');
 
-// 网易云歌单一键导入：输入歌单链接/ID → 异步导入到当前歌单 → 轮询状态
+// 网易云导入：输入单曲/歌单链接或 ID → 异步解析并加入当前歌单 → 轮询状态。
+// 曲目以 netease://{id} 标记入歌单（不落盘），播放时经 nextmusic 实时解析直链。
 const netImportOpen = ref(false);
 const netUrl = ref('');
 const netImporting = ref(false);
 let netTimer = null;
 
+// 添加音乐下拉：本地文件 / https 链接 / 网易云（自动解析）
+const addMenu = ref(false);
+const httpsOpen = ref(false);
+const httpsUrl = ref('');
+
+function pickLocal() { addMenu.value = false; browsing.value = true; }
+function openHttps() { addMenu.value = false; httpsUrl.value = ''; httpsOpen.value = true; }
+function openNet() { addMenu.value = false; netUrl.value = ''; netImportOpen.value = true; }
+
+async function startHttps() {
+  const u = httpsUrl.value.trim();
+  if (!/^https?:\/\//i.test(u)) { showToast('请输入 http(s):// 开头的音频链接', true); return; }
+  const j = await API.mp3PlaylistAdd(u, activeId.value);
+  if (j.unauthorized) return;
+  if (!j.ok) { showToast(j.data?.message || j.error || '添加失败', true); return; }
+  httpsOpen.value = false;
+  httpsUrl.value = '';
+  showToast('已添加 https 音乐');
+  await reload();
+}
+
 async function startNetImport() {
   const u = netUrl.value.trim();
-  if (!u) { showToast('请粘贴网易云歌单链接或 ID', true); return; }
+  if (!u) { showToast('请粘贴网易云链接（单曲或歌单）或 ID', true); return; }
   const j = await API.mp3NeteaseImport(u);
   if (j.unauthorized) return;
   if (!j.ok) { showToast(j.data?.message || j.error || '导入失败', true); return; }
   netImportOpen.value = false;
   netUrl.value = '';
   netImporting.value = true;
-  showToast('正在导入网易云歌单…（大歌单需要一点时间）');
+  showToast('正在解析网易云…');
   pollNetStatus();
 }
 
@@ -412,17 +436,27 @@ onUnmounted(() => {
         <span class="chip" :class="{ on: mic }">{{ micChip }}</span>
       </div>
       <div class="toolbar-right">
-        <button class="tb-btn" :disabled="busy || netImporting" title="一键导入网易云歌单到当前歌单（自动取播放链接并开始播放）" @click="netImportOpen = true">
-          <IconDownload /> {{ netImporting ? '导入中…' : '网易云导入' }}
-        </button>
+        <div class="add-wrap">
+          <button class="tb-btn" :disabled="busy" title="添加音乐到当前歌单" @click="addMenu = !addMenu">
+            <IconFolderPlus /> 添加音乐 <IconCaretDown />
+          </button>
+          <div v-if="addMenu" class="add-menu" @click.stop>
+            <button class="add-item" :disabled="busy" title="从游戏所在机器选择音频文件（mp3/ogg/wav…）" @click="pickLocal">
+              <IconFolderOpen /> 本地音乐
+            </button>
+            <button class="add-item" :disabled="busy" title="粘贴 http(s):// 音频链接加入歌单" @click="openHttps">
+              <IconLink /> https 音乐
+            </button>
+            <button class="add-item" :disabled="busy || netImporting" title="粘贴网易云单曲/歌单链接，自动解析并播放（无需 Cookie）" @click="openNet">
+              <IconMusic /> 网易云音乐（自动解析）
+            </button>
+          </div>
+        </div>
         <button class="tb-btn" :disabled="busy" :title="modeMeta.title" @click="modeToggle">
           <IconRepeat v-if="mode === 'list'" />
           <IconRepeatOnce v-else-if="mode === 'single'" />
           <IconArrowsShuffle v-else />
           {{ modeMeta.label }}
-        </button>
-        <button class="tb-btn" :disabled="busy" title="浏览本机文件并加入当前歌单" @click="browsing = true">
-          <IconFolderPlus /> 添加歌曲
         </button>
         <button class="tb-btn" :disabled="busy || !playlist.length" title="清空当前歌单（不影响当前播放）" @click="clearAll">
           <IconPlaylistX /> 清空
@@ -620,17 +654,34 @@ onUnmounted(() => {
 
     <div v-if="netImportOpen" class="net-overlay" @click.self="netImportOpen = false">
       <div class="net-box">
-        <div class="net-title">导入网易云歌单</div>
+        <div class="net-title">导入网易云音乐</div>
         <input
           v-model="netUrl"
           class="net-input"
-          placeholder="粘贴歌单链接或 ID，如 https://music.163.com/playlist?id=3778678"
+          placeholder="粘贴网易云链接或 ID，如 song?id=459139737 或 playlist?id=3778678"
           @keyup.enter="startNetImport"
         >
-        <div class="net-hint">导入到当前歌单。需要先在「配置 → Netease」填写网易云网页版 Cookie，否则网易风控会拦截播放链接（只能拉歌名、无法播放）。</div>
+        <div class="net-hint">支持单曲与歌单，无需 Cookie：自动解析曲目加入当前歌单并播放。曲目不落盘（直链有时效），播放时现场解析。</div>
         <div class="net-actions">
           <button class="net-btn" @click="netImportOpen = false">取消</button>
-          <button class="net-btn primary" @click="startNetImport">导入并播放</button>
+          <button class="net-btn primary" @click="startNetImport">{{ netImporting ? '导入中…' : '导入并播放' }}</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="httpsOpen" class="net-overlay" @click.self="httpsOpen = false">
+      <div class="net-box">
+        <div class="net-title">添加 https 音乐</div>
+        <input
+          v-model="httpsUrl"
+          class="net-input"
+          placeholder="粘贴音频直链，如 https://example.com/music.mp3"
+          @keyup.enter="startHttps"
+        >
+        <div class="net-hint">链接直接加入当前歌单（http/https 均可），随歌单落盘。</div>
+        <div class="net-actions">
+          <button class="net-btn" @click="httpsOpen = false">取消</button>
+          <button class="net-btn primary" @click="startHttps">添加</button>
         </div>
       </div>
     </div>
@@ -677,6 +728,22 @@ onUnmounted(() => {
 .tb-btn svg { width: 13px; height: 13px; }
 .tb-btn:hover:not(:disabled) { color: var(--text-0); border-color: var(--line-strong); }
 .tb-btn:disabled { opacity: 0.45; cursor: default; }
+
+.add-wrap { position: relative; display: inline-flex; }
+.add-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 30;
+  display: flex; flex-direction: column; min-width: 190px;
+  background: var(--surface-2); border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm); box-shadow: 0 6px 20px rgba(0,0,0,.35); overflow: hidden;
+}
+.add-item {
+  display: flex; align-items: center; gap: 8px;
+  background: transparent; border: none; color: var(--text-1);
+  font-size: 12px; padding: 9px 12px; cursor: pointer; text-align: left; white-space: nowrap;
+}
+.add-item svg { width: 14px; height: 14px; color: var(--text-2); flex-shrink: 0; }
+.add-item:hover:not(:disabled) { background: var(--surface-1); color: var(--text-0); }
+.add-item:disabled { opacity: 0.45; cursor: default; }
 
 .player { padding: 14px 16px 10px; flex-shrink: 0; border-bottom: 1px solid var(--line); background: var(--surface-1); }
 

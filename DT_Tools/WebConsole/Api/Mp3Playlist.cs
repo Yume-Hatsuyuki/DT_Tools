@@ -274,12 +274,14 @@ namespace DT_Tools.WebConsole.Api
         }
 
         /// <summary>
-        /// 批量入歌单（按路径去重，一次落盘）：网易云歌单导入专用。
+        /// 批量入歌单（按路径去重）：网易云导入专用。
         /// </summary>
         /// <param name="listId">目标歌单 id，为空时取当前歌单。</param>
         /// <param name="entries">(路径/链接, 展示名) 列表。</param>
+        /// <param name="persist">是否写入磁盘；网易云曲目为 netease://{id} 标记（直链现场解析、不落盘），
+        /// 传 false 只进内存（重启后消失，重新导入即可）。</param>
         /// <returns>实际新增数量。</returns>
-        internal static int ImportRange(string listId, IReadOnlyList<(string Path, string Label)> entries)
+        internal static int ImportRange(string listId, IReadOnlyList<(string Path, string Label)> entries, bool persist = true)
         {
             var list = Resolve(listId);
             if (list == null)
@@ -295,7 +297,7 @@ namespace DT_Tools.WebConsole.Api
                 list.Items.Add(new Item { Path = e.Path, Label = e.Label });
                 added++;
             }
-            if (added > 0)
+            if (added > 0 && persist)
                 Save();
             return added;
         }

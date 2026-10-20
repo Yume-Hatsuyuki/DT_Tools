@@ -37,19 +37,20 @@ namespace DT_Tools.WebConsole.Api
         private static float _pausedPosition;
         private static float _pausedDuration;
 
-        // 网易云歌单导入状态（协程在主线程跑，字段只碰主线程，无需加锁）。
+        // 网易云导入状态（协程在主线程跑，字段只碰主线程，无需加锁）。
         // phase: idle=空闲 | importing=导入中 | done=结束（error 非空=失败）。
         private static string _netPhase = "idle";
         private static string _netPlaylistName = "";
-        private static int _netTotal;        // 歌单曲目总数（含无权限跳过的）
-        private static int _netImported;     // 成功导入并拿到播放链接的
-        private static int _netSkipped;      // 无播放链接跳过的（VIP/需登录）
+        private static int _netTotal;        // 曲目总数（单曲=1）
+        private static int _netImported;     // 成功加入歌单的
+        private static int _netSkipped;      // 重复/无效跳过的
         private static string _netMessage = "";
 
         /// <summary>
-        /// POST /api/mp3/netease/import {url} — 一键导入网易云歌单到当前歌单：拉取歌曲列表 →
-        /// 批量取播放链接（需 Cookie）→ 批量入歌单 → 自动播放第一首。异步执行（协程），
-        /// 立即返回 {importing:true}，进度/结果经 /api/mp3/netease/status 轮询。
+        /// POST /api/mp3/netease/import {url} — 一键导入网易云到当前歌单：单曲或歌单链接 →
+        /// 拉取曲目（歌单用官方详情接口；直链不落盘）→ 加入歌单（netease://{id} 标记，不写盘）→
+        /// 自动播放第一首（播放时经 nextmusic 实时解析直链）。异步执行（协程），立即返回
+        /// {importing:true}，进度/结果经 /api/mp3/netease/status 轮询。
         /// </summary>
         /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleNeteaseImport(HttpListenerContext ctx)
@@ -64,12 +65,12 @@ namespace DT_Tools.WebConsole.Api
             WriteMain(ctx, () =>
             {
                 if (_netPhase == "importing")
-                    return CommandResult.Fail("importing", new { message = "已有歌单正在导入，请稍候" });
+                    return CommandResult.Fail("importing", new { message = "已有导入正在进行，请稍候" });
                 StartNeteaseImport(url);
                 return CommandResult.Success(new
                 {
                     importing = true,
-                    message = "开始导入网易云歌单（拉取歌曲与播放链接，稍候刷新歌单）",
+                    message = "开始解析网易云链接…",
                 });
             });
         }
@@ -95,9 +96,9 @@ namespace DT_Tools.WebConsole.Api
             });
 
         /// <summary>
-        /// 启动网易云歌单导入协程（协程完成回调在主线程更新状态并落盘/播放）。
+        /// 启动网易云导入协程（协程完成回调在主线程更新状态并播放）。
         /// </summary>
-        /// <param name="urlOrId">用户输入的网易云歌单链接或 ID。</param>
+        /// <param name="urlOrId">用户输入的网易云链接（单曲/歌单）或 ID。</param>
         private static void StartNeteaseImport(string urlOrId)
         {
             _netPhase = "importing";
@@ -105,73 +106,86 @@ namespace DT_Tools.WebConsole.Api
             _netTotal = 0;
             _netImported = 0;
             _netSkipped = 0;
-            _netMessage = "正在解析歌单…";
-            Log.Info(Tag, $"网易云歌单导入开始: {urlOrId}");
+            _netMessage = "正在解析链接…";
+            Log.Info(Tag, $"网易云导入开始: {urlOrId}");
             CoroutineHost.Start(CoNeteaseImport(urlOrId));
         }
 
         private static IEnumerator CoNeteaseImport(string urlOrId)
         {
-            // 1) 解析歌单 ID（支持链接/纯数字/分享短链跟随跳转）
-            string playlistId = null;
-            yield return NeteaseCloud.ResolvePlaylistId(urlOrId, id => playlistId = id);
-            if (playlistId == null)
+            // 1) 解析链接：单曲（song）/ 歌单（playlist）+ ID
+            NeteaseCloud.SongRef songRef = null;
+            yield return NeteaseCloud.ResolveInput(urlOrId, r => songRef = r);
+            if (songRef == null)
             {
-                FinishNeteaseImport(false, "歌单链接解析失败（支持 https://music.163.com/playlist?id=… 或纯数字 ID）");
-                yield break;
-            }
-            _netMessage = "正在拉取歌曲列表…";
-
-            // 2) 拉取歌曲列表
-            NeteaseCloud.PlaylistResult detail = null;
-            yield return NeteaseCloud.FetchPlaylist(playlistId, r => detail = r);
-            if (detail == null || detail.Tracks.Count == 0)
-            {
-                FinishNeteaseImport(false, "歌单拉取失败或为空（可能歌单过大超过 1000 首）");
-                yield break;
-            }
-            _netPlaylistName = detail.Name;
-            _netTotal = detail.Tracks.Count;
-
-            // 3) 批量取播放链接（需要 Cookie；无权限/未登录的返回 null 自动跳过）
-            Dictionary<long, string> urls = null;
-            yield return NeteaseCloud.FetchPlayUrls(
-                detail.Tracks.ConvertAll(t => t.Id), list => urls = list);
-            if (urls == null || urls.Count == 0)
-            {
-                FinishNeteaseImport(false, "未获取到可播放链接（网易风控）：请先在「配置 → Netease」里填写网易云 Cookie");
+                FinishNeteaseImport(false, "链接解析失败（支持 song?id=… 单曲、playlist?id=… 歌单、分享短链或纯数字 ID）");
                 yield break;
             }
 
-            // 4) 批量入当前歌单（Label=歌名 - 歌手）并落盘
-            var entries = new List<(string Path, string Label)>();
-            foreach (var t in detail.Tracks)
+            // 2) 拉取曲目列表
+            List<NeteaseCloud.NetTrack> tracks = null;
+            if (songRef.Kind == "playlist")
             {
-                if (urls.TryGetValue(t.Id, out var link))
+                _netMessage = "正在拉取歌单歌曲…";
+                NeteaseCloud.PlaylistResult detail = null;
+                yield return NeteaseCloud.FetchPlaylist(songRef.Id, r => detail = r);
+                if (detail == null || detail.Tracks.Count == 0)
                 {
-                    entries.Add((link, string.IsNullOrEmpty(t.Artist)
-                        ? t.Name
-                        : $"{t.Name} - {t.Artist}"));
+                    FinishNeteaseImport(false, "歌单拉取失败或为空（可能歌单过大超过 1000 首）");
+                    yield break;
                 }
+                _netPlaylistName = detail.Name;
+                tracks = detail.Tracks;
+            }
+            else
+            {
+                _netMessage = "正在解析歌曲信息…";
+                NeteaseCloud.NetTrack info = null;
+                yield return NeteaseCloud.FetchSongInfo(long.Parse(songRef.Id), t => info = t);
+                if (info == null || info.Name.Length == 0)
+                {
+                    FinishNeteaseImport(false, "歌曲信息解析失败");
+                    yield break;
+                }
+                _netPlaylistName = info.Name;
+                tracks = new List<NeteaseCloud.NetTrack> { info };
+            }
+            _netTotal = tracks.Count;
+
+            // 3) 加入当前歌单：路径为 netease://{id} 标记（直链不落盘，播放时现场解析）
+            var entries = new List<(string Path, string Label)>();
+            foreach (var t in tracks)
+            {
+                if (t.Id == 0L)
+                    continue;
+                entries.Add(("netease://" + t.Id,
+                    string.IsNullOrEmpty(t.Artist) ? t.Name : $"{t.Name} - {t.Artist}"));
+            }
+            _netSkipped = _netTotal - entries.Count;
+            if (entries.Count == 0)
+            {
+                FinishNeteaseImport(false, "没有可导入的曲目");
+                yield break;
             }
             string listId = Mp3Playlist.Active().Id;
-            _netImported = Mp3Playlist.ImportRange(listId, entries);
-            _netSkipped = _netTotal - entries.Count;
-            Log.Info(Tag, $"网易云歌单「{_netPlaylistName}」导入完成: 新增 {_netImported} 首，跳过 {_netSkipped} 首");
+            _netImported = Mp3Playlist.ImportRange(listId, entries, persist: false);
+            Log.Info(Tag, $"网易云「{_netPlaylistName}」导入完成: 新增 {_netImported} 首，跳过 {_netSkipped} 首");
 
             if (_netImported == 0)
             {
-                FinishNeteaseImport(false, $"歌单共 {_netTotal} 首，但全部没有可播放链接（VIP 或无权限），已跳过");
+                FinishNeteaseImport(false, "曲目已都在歌单中（或导入失败）");
                 yield break;
             }
 
-            // 5) 自动播放第一首
+            // 4) 自动播放第一首（netease:// 标记在播放时解析直链）
             var list = Mp3Playlist.Find(listId);
             string first = entries[0].Path;
             int index = list == null ? 0 : list.Items.FindIndex(i =>
                 string.Equals(i.Path, first, StringComparison.OrdinalIgnoreCase));
             PlayInternal(listId, first, index < 0 ? 0 : index);
-            FinishNeteaseImport(true, $"歌单「{_netPlaylistName}」已导入 {_netImported} 首并开始播放（跳过 {_netSkipped} 首无权限/需登录）");
+            FinishNeteaseImport(true, _netSkipped > 0
+                ? $"「{_netPlaylistName}」已加入 {_netImported} 首并开始播放（跳过 {_netSkipped} 首）"
+                : $"「{_netPlaylistName}」已加入 {_netImported} 首并开始播放");
         }
 
         /// <summary>
@@ -657,6 +671,10 @@ namespace DT_Tools.WebConsole.Api
         /// <returns>命令执行结果。</returns>
         private static CommandResult PlayInternal(string listId, string path, int index, float startSeconds = 0f)
         {
+            // 网易云曲目：路径是 netease://{id} 标记，直链不落盘，播放时经 nextmusic 实时解析
+            if (path.StartsWith("netease://", StringComparison.OrdinalIgnoreCase))
+                return PlayNetease(listId, path, index, startSeconds);
+
             var store = Mp3Playlist.Get();
             if (!MicBroadcast.PlayTrack(path, store.Volume, store.Mic, startSeconds))
                 return CommandResult.Fail("invalid source", new { message = "播放失败：音频来源无效（文件不存在/路径非法，原因见 MicBroadcast 日志）" });
@@ -671,6 +689,54 @@ namespace DT_Tools.WebConsole.Api
                 message = store.Mic ? "开始播放（语音已连接时混入麦克风，否则仅本地）" : "开始播放（仅本地）",
                 index,
             });
+        }
+
+        /// <summary>
+        /// 播放网易云曲目：netease://{id} → 实时解析直链（getSongUrl，约 1~2 秒）→ 播放。
+        /// 直链带签名且约 25 分钟有效，不可落盘，所以解析与播放之间不留中间态；
+        /// 解析失败只记日志（音源服务偶发不可达，不影响歌单本身）。
+        /// </summary>
+        /// <param name="listId">曲目所属歌单的 id。</param>
+        /// <param name="path">netease://{id} 路径。</param>
+        /// <param name="index">曲目在该歌单中的下标。</param>
+        /// <param name="startSeconds">起播位置，单位秒。</param>
+        /// <returns>命令执行结果。</returns>
+        private static CommandResult PlayNetease(string listId, string path, int index, float startSeconds)
+        {
+            string idText = path.Substring("netease://".Length).Trim();
+            if (!long.TryParse(idText, out long songId))
+                return CommandResult.Fail("invalid source", new { message = "网易云曲目标记无效: " + path });
+            Log.Info(Tag, $"网易云音源解析开始: {path}");
+            CoroutineHost.Start(CoResolveAndPlay(listId, path, songId, index, startSeconds));
+            return CommandResult.Success(new
+            {
+                message = "正在解析网易云音源（约 1~2 秒）…",
+                index,
+            });
+        }
+
+        private static IEnumerator CoResolveAndPlay(string listId, string path, long songId, int index, float startSeconds)
+        {
+            string url = null;
+            yield return NeteaseCloud.FetchSongUrl(songId, u => url = u);
+            if (string.IsNullOrEmpty(url))
+            {
+                Log.Warn(Tag, $"网易云音源解析失败: {path}（nextmusic 服务不可达或该曲无 standard 音质）");
+                yield break;
+            }
+            var store = Mp3Playlist.Get();
+            if (!MicBroadcast.PlayTrack(url, store.Volume, store.Mic, startSeconds))
+            {
+                Log.Warn(Tag, $"网易云直链播放失败: {path}");
+                yield break;
+            }
+            _currentPath = path;          // 保留 netease:// 标记，歌单索引/连播按它查表
+            _playingListId = listId;
+            _pausedPath = null;
+            _pausedListId = null;
+            MicBroadcast.TrackFinished = OnTrackFinished;
+            MicBroadcast.SetLocalAudible(store.Local);
+            Log.Info(Tag, $"网易云音源解析成功并开始播放: {path}");
         }
 
         /// <summary>
