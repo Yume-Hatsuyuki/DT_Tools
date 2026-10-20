@@ -274,6 +274,33 @@ namespace DT_Tools.WebConsole.Api
         }
 
         /// <summary>
+        /// 批量入歌单（按路径去重，一次落盘）：网易云歌单导入专用。
+        /// </summary>
+        /// <param name="listId">目标歌单 id，为空时取当前歌单。</param>
+        /// <param name="entries">(路径/链接, 展示名) 列表。</param>
+        /// <returns>实际新增数量。</returns>
+        internal static int ImportRange(string listId, IReadOnlyList<(string Path, string Label)> entries)
+        {
+            var list = Resolve(listId);
+            if (list == null)
+                return 0;
+            int added = 0;
+            foreach (var e in entries)
+            {
+                if (string.IsNullOrEmpty(e.Path))
+                    continue;
+                if (list.Items.Exists(i =>
+                        string.Equals(i.Path, e.Path, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+                list.Items.Add(new Item { Path = e.Path, Label = e.Label });
+                added++;
+            }
+            if (added > 0)
+                Save();
+            return added;
+        }
+
+        /// <summary>
         /// 移除歌单中的一首。
         /// </summary>
         /// <param name="listId">歌单 id，为空时取当前歌单。</param>

@@ -175,7 +175,9 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/update/reveal", Api.UpdateApi.HandleReveal);
             router.Add("GET", "/api/fs/list", Api.FsApi.HandleList);   // WebUI 内置文件选择器（只读目录浏览）
             // 随身MP3：全部端点经 RunOnMain 主线程执行。playlist/* 必须注册在 play 之前——
-            // Router 前缀匹配，/api/mp3/play 会截走 /api/mp3/playlist/*
+            // Router 前缀匹配，/api/mp3/play 会截走 /api/mp3/playlist/*（netease/* 同样要避开 play 前缀）
+            router.Add("POST", "/api/mp3/netease/import", Api.Mp3Api.HandleNeteaseImport);
+            router.Add("GET", "/api/mp3/netease/status", Api.Mp3Api.HandleNeteaseStatus);
             router.Add("POST", "/api/mp3/playlist/add", Api.Mp3Api.HandlePlaylistAdd);
             router.Add("POST", "/api/mp3/playlist/remove", Api.Mp3Api.HandlePlaylistRemove);
             router.Add("POST", "/api/mp3/playlist/move", Api.Mp3Api.HandlePlaylistMove);

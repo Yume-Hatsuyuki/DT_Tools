@@ -123,6 +123,9 @@ export const API = {
   mp3ListCreate: (name) => post('/api/mp3/lists/create', { name }),
   mp3ListRename: (id, name) => post('/api/mp3/lists/rename', { id, name }),
   mp3ListDelete: (id) => post('/api/mp3/lists/delete', { id }),
+  // 网易云歌单一键导入（异步：导入中经 status 轮询，导入到当前歌单）
+  mp3NeteaseImport: (urlOrId) => post('/api/mp3/netease/import', { url: urlOrId }),
+  mp3NeteaseStatus: () => request('/api/mp3/netease/status'),
   // 手柄应用：只做配置与实时显示（手柄本身由后台线程处理，只控制游戏）
   gamepadState: () => request('/api/gamepad/state'),
   gamepadBind: (layer, button, output) => post('/api/gamepad/bind', { layer, button, output }),

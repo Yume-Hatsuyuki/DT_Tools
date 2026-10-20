@@ -22,6 +22,7 @@ import IconGripVertical from '~icons/tabler/grip-vertical';
 import IconPencil from '~icons/tabler/pencil';
 import IconPlus from '~icons/tabler/plus';
 import IconMusic from '~icons/tabler/music';
+import IconDownload from '~icons/tabler/download';
 
 /**
  * 随身MP3：游戏机本机播放器（服务端播放，非浏览器播放）。选文件（WebUI 内置
@@ -50,6 +51,43 @@ let toastTimer = null;
 const busy = ref(false);        // 传输操作进行中（防重复点击）
 const browsing = ref(false);
 const lastPath = ref(localStorage.getItem('dt_mp3_last') || '');
+
+// 网易云歌单一键导入：输入歌单链接/ID → 异步导入到当前歌单 → 轮询状态
+const netImportOpen = ref(false);
+const netUrl = ref('');
+const netImporting = ref(false);
+let netTimer = null;
+
+async function startNetImport() {
+  const u = netUrl.value.trim();
+  if (!u) { showToast('请粘贴网易云歌单链接或 ID', true); return; }
+  const j = await API.mp3NeteaseImport(u);
+  if (j.unauthorized) return;
+  if (!j.ok) { showToast(j.data?.message || j.error || '导入失败', true); return; }
+  netImportOpen.value = false;
+  netUrl.value = '';
+  netImporting.value = true;
+  showToast('正在导入网易云歌单…（大歌单需要一点时间）');
+  pollNetStatus();
+}
+
+// 导入是后台协程：轮询 status 直到结束，完成后刷新歌单并提示结果
+function pollNetStatus() {
+  clearTimeout(netTimer);
+  netTimer = setTimeout(async () => {
+    const j = await API.mp3NeteaseStatus();
+    if (j.unauthorized) return;
+    if (j.ok && j.data?.phase === 'importing') { pollNetStatus(); return; }
+    netImporting.value = false;
+    if (j.ok) {
+      const d = j.data || {};
+      showToast(d.message || '导入完成');
+      if (d.imported > 0) await reload();
+    } else {
+      showToast(j.error || '状态读取失败', true);
+    }
+  }, 1200);
+}
 
 // 拖动进度/响度期间暂停轮询回写，松手提交
 const seeking = ref(false);
@@ -362,6 +400,7 @@ onMounted(() => {
 onUnmounted(() => {
   poller.stop();
   stopDrag();
+  clearTimeout(netTimer);
 });
 </script>
 
@@ -373,6 +412,9 @@ onUnmounted(() => {
         <span class="chip" :class="{ on: mic }">{{ micChip }}</span>
       </div>
       <div class="toolbar-right">
+        <button class="tb-btn" :disabled="busy || netImporting" title="一键导入网易云歌单到当前歌单（自动取播放链接并开始播放）" @click="netImportOpen = true">
+          <IconDownload /> {{ netImporting ? '导入中…' : '网易云导入' }}
+        </button>
         <button class="tb-btn" :disabled="busy" :title="modeMeta.title" @click="modeToggle">
           <IconRepeat v-if="mode === 'list'" />
           <IconRepeatOnce v-else-if="mode === 'single'" />
@@ -576,6 +618,23 @@ onUnmounted(() => {
 
     <div v-if="toast.text" class="toast" :class="{ error: toast.error }">{{ toast.text }}</div>
 
+    <div v-if="netImportOpen" class="net-overlay" @click.self="netImportOpen = false">
+      <div class="net-box">
+        <div class="net-title">导入网易云歌单</div>
+        <input
+          v-model="netUrl"
+          class="net-input"
+          placeholder="粘贴歌单链接或 ID，如 https://music.163.com/playlist?id=3778678"
+          @keyup.enter="startNetImport"
+        >
+        <div class="net-hint">导入到当前歌单。需要先在「配置 → Netease」填写网易云网页版 Cookie，否则网易风控会拦截播放链接（只能拉歌名、无法播放）。</div>
+        <div class="net-actions">
+          <button class="net-btn" @click="netImportOpen = false">取消</button>
+          <button class="net-btn primary" @click="startNetImport">导入并播放</button>
+        </div>
+      </div>
+    </div>
+
     <FileBrowser
       v-if="browsing"
       :start-path="lastPath"
@@ -730,6 +789,33 @@ input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border-radius
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); max-width: 70%;
 }
 .toast.error { border-color: var(--accent-red); color: var(--accent-red); }
+
+.net-overlay {
+  position: absolute; inset: 0; z-index: 200;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid; place-items: center; padding: 20px;
+}
+.net-box {
+  width: min(480px, 100%); background: var(--surface-2);
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  padding: 16px; display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+}
+.net-title { font-size: 14px; font-weight: 600; color: var(--text-0); }
+.net-input {
+  width: 100%; box-sizing: border-box; background: var(--surface-1);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  color: var(--text-0); font-size: 12.5px; padding: 9px 11px; outline: none;
+}
+.net-input:focus { border-color: var(--accent-cyan); }
+.net-hint { font-size: 11.5px; color: var(--text-2); line-height: 1.5; }
+.net-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.net-btn {
+  background: var(--surface-1); border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  color: var(--text-1); font-size: 12px; padding: 7px 14px; cursor: pointer;
+}
+.net-btn.primary { background: var(--accent-blue-btn, var(--surface-2)); color: #fff; border-color: transparent; }
+.net-btn:hover:not(:disabled) { color: var(--text-0); border-color: var(--line-strong); }
 
 .foot {
   flex-shrink: 0; border-top: 1px solid var(--line); background: var(--surface-1);
