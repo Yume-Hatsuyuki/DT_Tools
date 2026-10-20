@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { avatarSrc, personalColor } from './tabletAvatars.js';
 import { groupByRound } from './tabletFormat.js';
 import { API } from '../../api.js';
+import { t } from '../../i18n/index.js';
 
 /**
  * 平板电脑的聊天流。头像、名字、气泡与游戏内一致：双方都显示头像与名字，
@@ -14,7 +15,7 @@ const props = defineProps({
   numbering: { type: Map, default: () => new Map() },
 });
 const groups = computed(() => groupByRound(props.lines, props.numbering));
-const emit = defineEmits(['copy-photo', 'save-photo']);
+const emit = defineEmits(['copy-photo', 'save-photo', 'open-photo']);
 
 function bubbleStyle(l) {
   if (l.kind === 'proposition' || l.isDead) return undefined;
@@ -41,7 +42,15 @@ function photoUrl(key) {
             <span class="time">{{ l.time }}</span>
           </div>
           <div v-if="l.kind === 'photo'" class="bubble photo" :class="{ dead: l.isDead }">
-            <img :src="photoUrl(l.photoKey)" alt="照片" loading="lazy" draggable="false" />
+            <button
+              type="button"
+              class="photo-open"
+              :title="t('tablet.photo.open')"
+              :aria-label="t('tablet.photo.open')"
+              @click="emit('open-photo', l)"
+            >
+              <img :src="photoUrl(l.photoKey)" alt="" loading="lazy" draggable="false" />
+            </button>
             <div class="photo-actions">
               <button type="button" @click="emit('copy-photo', l)">复制</button>
               <button type="button" @click="emit('save-photo', l)">另存为</button>
@@ -95,6 +104,8 @@ function photoUrl(key) {
 }
 .bubble.photo { padding: 4px; background: rgba(255, 255, 255, 0.06); }
 .bubble.photo img { display: block; max-width: 260px; max-height: 260px; border-radius: 8px; }
+.photo-open { display: block; padding: 0; margin: 0; border: 0; background: none; border-radius: 8px; cursor: zoom-in; }
+.photo-open:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
 .photo-actions { display: flex; justify-content: flex-end; gap: 6px; padding: 4px 2px 2px; }
 .photo-actions button {
   background: rgba(0, 0, 0, 0.28);

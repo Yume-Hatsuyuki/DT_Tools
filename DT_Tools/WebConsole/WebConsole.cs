@@ -180,6 +180,10 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/mp3/playlist/remove", Api.Mp3Api.HandlePlaylistRemove);
             router.Add("POST", "/api/mp3/playlist/move", Api.Mp3Api.HandlePlaylistMove);
             router.Add("POST", "/api/mp3/playlist/clear", Api.Mp3Api.HandlePlaylistClear);
+            router.Add("POST", "/api/mp3/playlist/alias", Api.Mp3Api.HandlePlaylistAlias);
+            router.Add("POST", "/api/mp3/netease/info", Api.Mp3Api.HandleNeteaseInfo);
+            router.Add("GET", "/api/mp3/netease/settings", Api.Mp3Api.HandleNeteaseSettings);
+            router.Add("POST", "/api/mp3/netease/settings", Api.Mp3Api.HandleNeteaseSettingsSet);
             // 歌单库：路径不以 /api/mp3/play 为前缀，注册顺序无冲突
             router.Add("POST", "/api/mp3/lists/create", Api.Mp3Api.HandleListCreate);
             router.Add("POST", "/api/mp3/lists/rename", Api.Mp3Api.HandleListRename);

@@ -229,14 +229,14 @@ Plugin.cs（装配根）
 
 标签是功能的分类方式。目录只用来放代码，不分类。一个单元可以同时属于几个领域。
 
-- 词表在 `Core/Attributes/FeatureTag.cs`（`[Flags]`，`ulong`，38 位）。
+- 词表在 `Core/Attributes/FeatureTag.cs`（`[Flags]`，`ulong`，39 位，bit 0–38）。
 - 字典在 `Core/Attributes/FeatureTagCatalog.cs`，给出分组、中文名、说明。
-- 四个分组：玩家、界面、玩法、系统。字典顺序即分组顺序。
+- 五个分组：玩家、界面、玩法、系统、外设。字典顺序即分组顺序。分组的稳定键由 `FeatureTagCatalog.GroupKeys` 给出（`player` / `ui` / `game` / `sys` / `peripheral`）。
 - 适用于四类单元：`[PatchFeature]`、`[AutomationModule]`、`[McpTool]`、`ICommand`（属性 `Tags`）。
 - 每个单元至少 1 个，最多 3 个。未定义的位、空标签、超过 3 个，加载时直接抛出。这和重名命名空间一样属于声明错误。
 - 新增标签：`FeatureTag` 末尾追加一位，`FeatureTagCatalog.Entries` 追加一条。两处同步。
 - 发布后的 bit 位不得重排或复用。标签会被 WebUI、清单和 API 引用。
-- 标签字典经 `/api/config/tags` 下发。WebUI 不写死任何标签文字。
+- 标签字典经 `/api/config/tags` 下发。成员、键与中文名由后端决定；WebUI 只持有译文（见 §12.3「界面语言」中的「功能标签」）。
 - 标签建议工具：`tools/suggest-tags`（开发期，不进插件）。它给建议和证据，不改源码。用法与指标见其 README。
   新增单元时先跑 `--unit`，再人工确认标签。
 
@@ -641,7 +641,7 @@ public sealed class XxxModule { }
 - 形状：`[{section, group, tags, enabledKey, entries:[…]}]`。
 - `group` 取 "automation" 或 "feature"。
 - `tags` = 功能标签键数组，由 `FeatureTagCatalog.Names(Engine.TagsOfSection(section))` 给出。基础设施段为空数组。
-- `GET /api/config/tags` 返回标签字典：`[{key, group, label, description}]`。
+- `GET /api/config/tags` 返回标签字典：`[{key, group, groupKey, label, description}]`。`key` 与 `groupKey` 是译文的查找键，`group` / `label` / `description` 是中文，缺译时回退用。
 - `reset` 带 key 时，后端拒绝跨段的同名重置。
 
 #### 假人 API
@@ -723,7 +723,7 @@ public sealed class XxxModule { }
 | `dummy` | 假人管理 |
 | `mp3` | 随身MP3 |
 | `gamepad` | 手柄。只配置键位（映射）并实时显示读数；手柄只控制游戏，不操作 WebUI |
-| `tablet` | 平板电脑（实验性）。左侧聊天、右侧线索；导出文本或图片；粘贴图片发照片；照片复制与另存；按范围清理；大厅与学级裁判可发言（见 §12.4） |
+| `tablet` | 平板电脑（实验性）。左侧聊天、右侧线索；导出文本或图片；粘贴图片先预览确认再发照片；点击照片放大查看；照片复制与另存；按范围清理；大厅与学级裁判可发言（见 §12.4） |
 
 - 跨应用共享组件在 `apps/common/`，共 6 个：`SuggestPopup`、`FolderGrid`、`LogPanel`、`EntryList`、`CropperHost`、`FileBrowser`。
 - `FileBrowser` 是本机文件选择弹窗。数据源是 `/api/fs/list`。
@@ -766,12 +766,20 @@ public sealed class XxxModule { }
 #### 界面语言（i18n）
 
 - 语言集合 9 种，与游戏一致（JsonData 的 CHS、CHT、ENG、ESL、FRA、JPN、KOR、PTB、RUS）。`LOCALES` 在 `webui-src/src/i18n/index.js`：`game` 为游戏代码，`steam` 为新闻 RSS 的 `l=` 参数，须与后端 `SteamNewsApi.Languages` 一致。
-- 默认跟随浏览器：依次匹配 `navigator.languages`，都不匹配则英文。顶栏系统菜单「设置」可手动选择，偏好存 `localStorage` 键 `dt_locale_v1`（`auto` 或语言代码），仅本浏览器，不进后端配置。
+- 默认跟随浏览器：依次匹配 `navigator.languages`，都不匹配则英文。顶栏系统菜单「语言」可手动选择，偏好存 `localStorage` 键 `dt_locale_v1`（`auto` 或语言代码），仅本浏览器，不进后端配置。
 - 文字总表在 `i18n/messages.js`：每行一个键，9 列依次为 zh-CN、zh-TW、en、es、fr、ja、ko、pt-BR、ru。新增键必须填满 9 列；占位符写 `{name}`。
 - 组件里用 `t('键名')`，在模板或计算属性中调用即响应式刷新。`t()` 的回退顺序：当前语言 → 英文 → 中文源文 → 键名本身。
 - 游戏已有官方译法的词直接沿用游戏文本，不另起译名：设置（SETTINGS / Opciones / OPTIONS）、平板电脑（Tablet）、线索（Clue）、命题（statement）、学级裁判（Class Trial）、语言（Language）、取消（Cancel）、确定（Confirm）。
 - 日期与星期用 `Intl` 并跟随当前语言。
-- 覆盖范围：桌面壳（顶栏、Dock、桌面右键菜单、关于、软件更新、窗口按钮、设置）与小组件（Steam 在线、MCP 桥接、游戏新闻）。应用内部（平板、手柄、配置、自动化等）与命令输出尚未国际化，仍为中文，属于后续阶段。
+- 覆盖范围：桌面壳（顶栏、Dock、桌面右键菜单、关于、软件更新、窗口按钮、语言）与小组件（Steam 在线、MCP 桥接、游戏新闻）。配置页的功能标签（标签栏的分组名、标签名、悬停说明、状态与作用面筛选、标签栏控件、段说明的标签前缀、搜索框占位）已国际化。平板电脑的照片确认层与查看器文字已国际化（`tablet.photo.*`、`tablet.viewer.*`）；平板的其余文字仍为中文。配置页其余部分（工具栏、段详情、条目描述）、手柄、自动化等应用内部与命令输出尚未国际化，属于后续阶段。
+
+#### 功能标签（配置页）
+
+- 键来源：标签键 = `FeatureTag` 枚举名（如 `PlayerMove`），分组键 = `FeatureTagCatalog.GroupKeys` 的值。两者都是稳定英文标识，译文以此为键。
+- 译文键：`tag.label.<标签键>`（名称）、`tag.desc.<标签键>`（悬停说明）、`tag.group.<分组键>`（分组名）。控件文字在 `config.tags.*`。
+- 新增标签：后端 `FeatureTag` 与 `FeatureTagCatalog` 各追加一处（§5）；WebUI 在 `messages.js` 补上 `tag.label.<键>` 与 `tag.desc.<键>` 共 9 列。
+- 新增分组：`FeatureTagCatalog.GroupKeys` 追加一条，并补 `tag.group.<分组键>`。
+- 缺译时，`ConfigApp.vue` 的 `localized()` 回退到后端给出的中文。这是安全网，不是替代品：新增标签必须补译文。
 
 #### 前端铁律
 
@@ -823,7 +831,8 @@ public sealed class XxxModule { }
 - 清理：`WebTabletStore.ClearChat`（递增 `epoch`，丢弃聊天与照片）、`ClearClues`（不递增 `epoch`）、`Clear`（两者都做）。界面「清理」为下拉菜单，三项均需确认。
 - 导出弹窗的分局勾选：每局标题有勾选框，全选关闭后点击标题即选中该局全部条目；该局已部分选中时点击同样补齐整局；标题框显示半选状态与「已选/总数」。
 - 导出：文本为单行命题（句内换行合并为空格，`tabletFormat.js` 的 `singleLine`）。图片（`tabletImage.js`）按 CSS 数值绘制，颜色取 `tokens.css` 同值，与界面保持一致；导出画布不读取 CSS 变量，改样式时两处要同步。导出弹窗的计数与全选只基于当前可见条目，聊天栏满员挤掉旧消息时不计入已不存在的 key。
-- 粘贴：平板区域内 Ctrl+V 粘贴纯图片即发送照片（纯文字粘贴照常进入输入框）。焦点在平板根节点时才会收到粘贴事件，点击面板空白处会把焦点移到根节点。
+- 粘贴：平板区域内 Ctrl+V 粘贴纯图片，先进入发送确认（`TabletPhotoConfirm`），用户点击「发送」才发出；取消、Esc 或点击遮罩均不发送。压缩后的 JPEG 即确认层展示与实际发送的同一份，确认前不占用照片冷却。纯文字粘贴照常进入输入框。确认层已打开时，再次粘贴会被拦截；查看器打开时不响应粘贴。图片按钮与粘贴走同一条确认流程。焦点在平板根节点时才会收到粘贴事件，点击面板空白处会把焦点移到根节点。
+- 查看：点击聊天中的照片（或确认层中的预览图）打开全屏查看器 `TabletPhotoViewer`。滚轮或双指缩放（以指针为锚）、双击在适应窗口与 2 倍之间切换、拖动平移、左右键或按钮切换聊天中的照片、Esc 或点击图片以外的空白处关闭。几何计算在 `tabletViewer.js`（纯函数，不依赖 DOM，可单元测试）。查看器只读，复制与另存沿用聊天中的同一对回调。待确认照片没有聊天条目，因此不显示复制与另存。
 - 复制与另存：照片下方「复制」「另存为」。复制需要安全上下文（localhost 或 HTTPS），局域网 HTTP 访问时只能另存为。
 
 ## 13. MCP 桥接

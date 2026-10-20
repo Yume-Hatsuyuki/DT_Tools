@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { API } from '../../api.js';
 import IconFolder from '~icons/tabler/folder';
 import IconMusic from '~icons/tabler/music';
+import IconVideo from '~icons/tabler/video';
 import IconFile from '~icons/tabler/file';
 import IconArrowUp from '~icons/tabler/arrow-up';
 import IconX from '~icons/tabler/x';
@@ -122,13 +123,14 @@ function fmtSize(bytes) {
               :key="e.path"
               class="fb-row"
               type="button"
-              :class="{ dir: e.isDir, audio: !e.isDir && e.audio, selected: sel === e.path }"
+              :class="{ dir: e.isDir, audio: !e.isDir && e.audio, video: !e.isDir && e.video, selected: sel === e.path }"
               :title="e.path"
               @click="pick(e)"
               @dblclick="!e.isDir && confirmSel()"
             >
               <IconFolder v-if="e.isDir" class="fb-ico dir" />
               <IconMusic v-else-if="e.audio" class="fb-ico audio" />
+              <IconVideo v-else-if="e.video" class="fb-ico video" />
               <IconFile v-else class="fb-ico other" />
               <span class="fb-name">{{ e.name }}</span>
               <span class="fb-size">{{ e.isDir ? '' : fmtSize(e.size) }}</span>
@@ -252,6 +254,7 @@ function fmtSize(bytes) {
 .fb-ico { flex-shrink: 0; width: 15px; height: 15px; }
 .fb-ico.dir { color: var(--accent-cyan); }
 .fb-ico.audio { color: var(--accent-green); }
+.fb-ico.video { color: var(--accent-cyan); }
 .fb-ico.other { color: var(--text-2); opacity: 0.7; }
 .fb-name {
   flex: 1;
@@ -263,6 +266,7 @@ function fmtSize(bytes) {
   white-space: nowrap;
 }
 .fb-row.audio .fb-name { color: var(--text-0); }
+.fb-row.video .fb-name { color: var(--text-0); }
 .fb-size { flex-shrink: 0; font-size: 10.5px; color: var(--text-2); font-family: var(--font-mono); }
 
 .fb-state { text-align: center; color: var(--text-2); padding: 32px 0; font-size: 12.5px; }

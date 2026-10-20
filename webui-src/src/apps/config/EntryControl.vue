@@ -24,6 +24,10 @@ const looksLikePathField = computed(() =>
   !isBool.value && !options.value && (props.entry.type || '').toLowerCase() === 'string'
   && /Track$/.test(props.entry.key || ''));
 
+// 视频路径字段（字段名含 Video 且为路径型）：文件浏览器标题显示"选择视频文件"
+const looksLikeVideoPath = computed(() =>
+  looksLikePathField.value && /Video/i.test(props.entry.key || ''));
+
 // 文件夹按钮 → WebUI 内置文件浏览器（原生对话框在游戏 Mono 里加载不了
 // System.Windows.Forms，改为浏览器内直接浏览本机目录；文本框手输路径始终可用）
 const browsing = ref(false);
@@ -79,7 +83,7 @@ function toggleBool() {
     <FileBrowser
       v-if="browsing"
       :start-path="local"
-      title="选择音频文件"
+      :title="looksLikeVideoPath ? '选择视频文件' : '选择音频文件'"
       @select="onPicked"
       @close="browsing = false"
     />

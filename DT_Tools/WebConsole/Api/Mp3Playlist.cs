@@ -24,6 +24,8 @@ namespace DT_Tools.WebConsole.Api
         {
             public string Path = "";    // 本地绝对路径或 http(s) 链接
             public string Label = "";   // 展示名（文件名），添加时推导
+            public string Kind = "local";   // 曲目类型：local | https | netease
+            public string Alias = "";   // 自定义标签（仅显示，不改文件名）
         }
 
         internal sealed class ListEntry
@@ -35,7 +37,7 @@ namespace DT_Tools.WebConsole.Api
 
         internal sealed class Store
         {
-            public int Version = 2;
+            public int Version = 3;
             public float Volume = 0.85f;
             public bool Mic = true;
             public bool Local = true;
@@ -49,6 +51,10 @@ namespace DT_Tools.WebConsole.Api
             /// 界面当前显示的歌单。与「正在播放的歌单」相互独立：浏览别的歌单不会打断播放上下文。
             /// </summary>
             public string ActiveId = "";
+            public string NeteaseLevel = DT_Tools.Game.NeteaseMusic.DefaultLevel;
+            public string NeteaseFallbackIp = DT_Tools.Game.NeteaseMusic.DefaultFallbackIp;
+            public string NeteaseIpMode = "ipinfo";   // ipinfo（默认）| custom
+            public string NeteaseUserAgent = DT_Tools.Game.NeteaseMusic.DefaultUserAgent;
 
             public List<ListEntry> Lists = new List<ListEntry>();
         }
@@ -260,7 +266,17 @@ namespace DT_Tools.WebConsole.Api
         /// <param name="listId">歌单 id，为空时取当前歌单。</param>
         /// <param name="path">曲目路径或链接。</param>
         /// <returns>下标；歌单不存在时为 -1。</returns>
-        internal static int Ensure(string listId, string path)
+        internal static int Ensure(string listId, string path) => Ensure(listId, path, InferKind(path), null);
+
+        /// <summary>
+        /// 入指定歌单（同一歌单内按路径去重）。label 为空时以文件名作为展示名。
+        /// </summary>
+        /// <param name="listId">歌单 id。</param>
+        /// <param name="path">曲目路径或链接（网易云为 netease:&lt;id&gt;）。</param>
+        /// <param name="kind">曲目类型：local | https | netease。</param>
+        /// <param name="label">展示名；为空时取文件名。</param>
+        /// <returns>曲目下标；歌单不存在时为 -1。</returns>
+        internal static int Ensure(string listId, string path, string kind, string label)
         {
             var list = Resolve(listId);
             if (list == null)
@@ -268,10 +284,39 @@ namespace DT_Tools.WebConsole.Api
             int index = list.Items.FindIndex(i => string.Equals(i.Path, path, StringComparison.OrdinalIgnoreCase));
             if (index >= 0)
                 return index;
-            list.Items.Add(new Item { Path = path, Label = System.IO.Path.GetFileName(path) });
+            string shown = string.IsNullOrWhiteSpace(label) ? System.IO.Path.GetFileName(path) : label.Trim();
+            list.Items.Add(new Item { Path = path, Label = shown, Kind = string.IsNullOrEmpty(kind) ? InferKind(path) : kind });
             Save();
             return list.Items.Count - 1;
         }
+
+        /// <summary>
+        /// 设置曲目的自定义标签（只改显示名，不改路径与文件名）。
+        /// </summary>
+        /// <param name="listId">歌单 id。</param>
+        /// <param name="index">曲目下标。</param>
+        /// <param name="alias">新标签，空串表示清除。</param>
+        /// <param name="error">失败时的中文原因。</param>
+        /// <returns>成功为 true。</returns>
+        internal static bool SetAlias(string listId, int index, string alias, out string error)
+        {
+            error = null;
+            var list = Resolve(listId);
+            if (list == null)
+            {
+                error = "歌单不存在";
+                return false;
+            }
+            if (index < 0 || index >= list.Items.Count)
+            {
+                error = "曲目下标无效";
+                return false;
+            }
+            list.Items[index].Alias = NormalizeAlias(alias);
+            Save();
+            return true;
+        }
+
 
         /// <summary>
         /// 移除歌单中的一首。
@@ -415,6 +460,33 @@ namespace DT_Tools.WebConsole.Api
             return store.Lists.Find(l => l.Id == id);
         }
 
+        /// <summary>自定义标签的最大长度（字符数）。</summary>
+        internal const int MaxAliasLength = 60;
+
+        /// <summary>
+        /// 由路径推断曲目类型：netease: 前缀为网易云，http(s) 为链接，其余为本地文件。
+        /// </summary>
+        /// <param name="path">曲目路径或链接。</param>
+        /// <returns>曲目类型。</returns>
+        internal static string InferKind(string path)
+        {
+            string p = (path ?? string.Empty).Trim();
+            if (p.StartsWith("netease:", StringComparison.OrdinalIgnoreCase)) return "netease";
+            if (p.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || p.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) return "https";
+            return "local";
+        }
+
+        /// <summary>
+        /// 规范化自定义标签：去首尾空白，超过 MaxAliasLength 时截断。
+        /// </summary>
+        /// <param name="alias">用户输入的标签。</param>
+        /// <returns>规范化后的标签，可能为空串。</returns>
+        internal static string NormalizeAlias(string alias)
+        {
+            string a = (alias ?? string.Empty).Trim();
+            return a.Length > MaxAliasLength ? a.Substring(0, MaxAliasLength) : a;
+        }
+
         /// <summary>
         /// 补齐并修正从磁盘读到的数据：去掉空项、补 id 与默认名、保证至少一个歌单、保证 ActiveId 有效。
         /// </summary>
@@ -437,6 +509,9 @@ namespace DT_Tools.WebConsole.Api
                 {
                     if (string.IsNullOrEmpty(item.Label))
                         item.Label = System.IO.Path.GetFileName(item.Path);
+                        if (string.IsNullOrEmpty(item.Kind))
+                            item.Kind = InferKind(item.Path);
+                        item.Alias = NormalizeAlias(item.Alias);
                 }
             }
             if (store.Lists.Count == 0)

@@ -1,6 +1,6 @@
 <script setup>
 import { t } from '../i18n/index.js';
-import SettingsModal from './SettingsModal.vue';
+import LanguageModal from './LanguageModal.vue';
 import IconSettings from '~icons/tabler/settings';
 import { ref, markRaw, computed, onMounted, onUnmounted } from 'vue';
 import TopBar from './TopBar.vue';
@@ -107,7 +107,7 @@ const desktopMenu = ref(null);           // { x, y } —— 桌面右键菜单
 const dockMenu = ref(null);              // { x, y } —— Dock（任务栏）右键菜单
 const busyInfo = ref(false);
 const showUpdate = ref(false);
-const showSettings = ref(false);   // 设置弹窗（语言等界面偏好）           // 软件更新弹窗（顶栏徽标/气泡、关于弹窗均可打开）
+const showLanguage = ref(false);   // 语言弹窗（界面语言）           // 软件更新弹窗（顶栏徽标/气泡、关于弹窗均可打开）
 
 // ---- 挂件（Dock 可开可关，位置/关闭态由各自组件自持）----
 
@@ -345,7 +345,7 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
       @toggle-tile="toggleTileMode"
       @focus-window="toggleFocus"
       @about="busyInfo = true"
-      @open-settings="showSettings = true"
+      @open-language="showLanguage = true"
       @show-update="showUpdate = true"
       @change-wallpaper="changeWallpaper"
       @reset-wallpaper="resetWallpaper"
@@ -366,7 +366,7 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
     <SteamWidget v-if="steamWidgetOpen" @close="steamWidgetOpen = false" />
     <McpWidget v-if="mcpWidgetOpen" @close="mcpWidgetOpen = false" />
     <NewsWidget v-if="newsWidgetOpen" @close="newsWidgetOpen = false" />
-    <SettingsModal v-if="showSettings" @close="showSettings = false" />
+    <LanguageModal v-if="showLanguage" @close="showLanguage = false" />
 
     <CropperHost />
 
