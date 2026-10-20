@@ -446,6 +446,10 @@ namespace DT_Tools.WebConsole.Api
             => WriteMain(ctx, () =>
             {
                 var s = Mp3Playlist.Get();
+                // levels：兼容旧前端；levelOptions：带中文显示名，与 nextmusic-dl.mjs 一致
+                var levelOptions = new System.Collections.Generic.List<object>();
+                foreach (string lv in NeteaseMusic.Levels)
+                    levelOptions.Add(new { value = lv, label = NeteaseMusic.LevelLabel(lv) });
                 return CommandResult.Success(new
                 {
                     ipMode = s.NeteaseIpMode,
@@ -453,6 +457,7 @@ namespace DT_Tools.WebConsole.Api
                     level = s.NeteaseLevel,
                     userAgent = s.NeteaseUserAgent,
                     levels = NeteaseMusic.Levels,
+                    levelOptions = levelOptions,
                     defaultFallbackIp = NeteaseMusic.DefaultFallbackIp,
                     defaultUserAgent = NeteaseMusic.DefaultUserAgent,
                 });

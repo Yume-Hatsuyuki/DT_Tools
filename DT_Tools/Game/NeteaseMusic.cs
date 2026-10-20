@@ -34,8 +34,40 @@ namespace DT_Tools.Game
         /// <summary>默认 User-Agent（用户可在界面中自定义）。</summary>
         public const string DefaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0";
 
-        /// <summary>可选音质。</summary>
-        public static readonly IReadOnlyList<string> Levels = new[] { "standard", "exhigh", "lossless" };
+        /// <summary>
+        /// 可选音质（与 tools/nextmusic-dl.mjs 对齐，接口实测可用）。
+        /// 值：standard / higher / exhigh / lossless / hires / sky / jyeffect / jymaster / dolby。
+        /// </summary>
+        public static readonly IReadOnlyList<string> Levels = new[]
+        {
+            "standard",
+            "higher",
+            "exhigh",
+            "lossless",
+            "hires",
+            "sky",
+            "jyeffect",
+            "jymaster",
+            "dolby",
+        };
+
+        /// <summary>音质显示名（界面下拉用）。</summary>
+        public static string LevelLabel(string level)
+        {
+            switch ((level ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "standard": return "标准音质";
+                case "higher": return "较高音质";
+                case "exhigh": return "极高音质";
+                case "lossless": return "无损音质";
+                case "hires": return "Hi-Res音质";
+                case "sky": return "沉浸环绕声";
+                case "jyeffect": return "高清环绕声";
+                case "jymaster": return "超清母带";
+                case "dolby": return "杜比全景声";
+                default: return level ?? DefaultLevel;
+            }
+        }
 
         private static readonly HttpClient Http = CreateClient();
 
