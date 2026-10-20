@@ -25,9 +25,6 @@ namespace DT_Tools.Features.LobbyScreenVideo
         private bool _errorPending;
         private bool _reportedReady;
         private int _readyFrames = -1;
-        private string _lastHostVideo = "";
-        private bool _hostVideoFailed;
-        private bool _playingHostVideo;
 
         /// <summary>
         /// 当前所属记分板（大厅屏幕）；房间重载后旧对象销毁，由 UnityEngine.Object 判空兜底。
@@ -56,23 +53,12 @@ namespace DT_Tools.Features.LobbyScreenVideo
         public void MarkDirty() => _dirty = true;
 
         /// <summary>
-        /// VideoPlayer 错误回调：
-        /// ① 正在播放房主视频且本机已配置自己的视频 → 本次会话内回退到自己视频；
-        /// ② 否则同一来源只记一次日志并挂起逐帧重试（避免坏路径每帧 Prepare 刷屏），
-        ///    换来源 / 配置变更后自动复位。
+        /// VideoPlayer 错误回调：同一来源只记一次日志，并挂起逐帧重试
+        /// （避免坏路径每帧 Prepare 刷屏）；换来源 / 配置变更后自动复位。
         /// </summary>
         /// <param name="message">VideoPlayer 报告的错误信息。</param>
         public void HandleVideoError(string message)
         {
-            if (_playingHostVideo
-                && !string.IsNullOrEmpty((LobbyScreenVideoFeature.VideoTrack ?? "").Trim()))
-            {
-                _hostVideoFailed = true;
-                _dirty = true;
-                Log.Warn<LobbyScreenVideoFeature>(
-                    $"无法播放房主视频: {message}（房主视频可能为其本机文件，其他玩家无法访问），已切换为你配置的视频");
-                return;
-            }
             _errorPending = true;
             Log.Warn<LobbyScreenVideoFeature>($"视频播放错误: {message}（请检查路径/格式；修改配置可重试）");
         }
@@ -104,35 +90,8 @@ namespace DT_Tools.Features.LobbyScreenVideo
                 return;
             }
 
-            bool isHost = LobbyScreenVideoLogic.IsHost();
-            if (isHost)
-                LobbyScreenVideoLogic.SyncLobbyData();
-
-            // 来源解析：房主开启功能并发布视频 → 客户端默认播房主视频；
-            // 房主未开启 / 房主视频不可用（本机文件跨机无法访问）→ 播自己配置的视频。
-            string hostVideo = isHost ? null : LobbyScreenVideoLogic.ReadHostVideo();
-            if (hostVideo != _lastHostVideo)
-            {
-                _lastHostVideo = hostVideo ?? "";
-                _hostVideoFailed = false;   // 房主更换了视频 → 重新尝试房主视频
-            }
-            string myTrack = (LobbyScreenVideoFeature.VideoTrack ?? "").Trim();
-
-            string source;
-            bool playingHostVideo = false;
-            if (!isHost && !string.IsNullOrEmpty(hostVideo) && !_hostVideoFailed)
-            {
-                source = hostVideo;
-                playingHostVideo = true;
-            }
-            else if (!string.IsNullOrEmpty(myTrack))
-            {
-                source = myTrack;
-            }
-            else
-            {
-                source = "";
-            }
+            // 仅本机配置生效：只播放本机 VideoTrack，不接收任何网络下发的媒体源。
+            string source = (LobbyScreenVideoFeature.VideoTrack ?? "").Trim();
 
             if (source.Length == 0)
             {
@@ -143,7 +102,7 @@ namespace DT_Tools.Features.LobbyScreenVideo
             if (!gameObject.activeSelf)
                 gameObject.SetActive(true);
 
-            ApplyConfigIfDirty(source, playingHostVideo);
+            ApplyConfigIfDirty(source);
 
             if (!_video.isPlaying && !_errorPending)
             {
@@ -221,13 +180,10 @@ namespace DT_Tools.Features.LobbyScreenVideo
         /// 循环 / 音量变化时直接应用；未变化时零成本返回。
         /// </summary>
         /// <param name="source">清洗后的视频来源（去首尾空白）。</param>
-        /// <param name="playingHostVideo">当前来源是否为房主视频（用于错误回退判定）。</param>
-        private void ApplyConfigIfDirty(string source, bool playingHostVideo)
+        private void ApplyConfigIfDirty(string source)
         {
             bool loop = LobbyScreenVideoFeature.Loop;
             float volume = Mathf.Clamp01(LobbyScreenVideoFeature.Volume);
-
-            _playingHostVideo = playingHostVideo;
 
             if (source != _loadedSource)
             {
@@ -241,7 +197,7 @@ namespace DT_Tools.Features.LobbyScreenVideo
                 _video.isLooping = loop;
                 _video.Prepare();
                 Log.Info<LobbyScreenVideoFeature>(
-                    $"已加载视频: {source} (source={(playingHostVideo ? "房主" : "本机")}, loop={loop}, volume={volume:0.##})");
+                    $"已加载视频: {source} (loop={loop}, volume={volume:0.##})");
             }
             else if (_dirty)
             {

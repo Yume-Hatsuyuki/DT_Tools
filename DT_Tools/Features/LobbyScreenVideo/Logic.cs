@@ -1,7 +1,6 @@
 using System;
 using DT_Tools.Core;
 using Protocol;
-using Steamworks;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
@@ -17,6 +16,7 @@ namespace DT_Tools.Features.LobbyScreenVideo
     /// PacketHandler.Handle_S_SCORE_BOARD 经 Managers.Map.GetWorldUI&lt;UI_ScoreBoard&gt;
     /// 更新，显示各玩家 Score/SilverStar 星星）。覆盖层作为最后兄弟节点铺满屏幕矩形，
     /// 不触碰原版内部对象；功能关闭或离开大厅时整体隐藏，星星显示自然还原。
+    /// 仅本机配置生效：每台机器各自播放自己配置的视频，不接收任何网络下发的媒体源。
     /// </remarks>
     internal static class LobbyScreenVideoLogic
     {
@@ -157,7 +157,7 @@ namespace DT_Tools.Features.LobbyScreenVideo
                 _controller = controller;
             }
 
-            // 激活后由 Update 按大厅状态裁决：非大厅/未配置路径/非房主时会立即隐藏。
+            // 激活后由 Update 按大厅状态裁决：非大厅 / 未配置路径时立即隐藏。
             controller.gameObject.SetActive(true);
         }
 
@@ -307,83 +307,6 @@ namespace DT_Tools.Features.LobbyScreenVideo
 
             raw.texture = rt2;
             return go;
-        }
-
-        /// <summary>
-        /// Steam 大厅数据键：房主发布的大厅视频来源（客户端据此播放房主视频）。
-        /// </summary>
-        public const string LobbyDataKey = "DT_LobbyVideo";
-
-        private static string _lastPublished = "";
-
-        /// <summary>
-        /// 房主把当前视频路径发布到 Steam 大厅数据（幂等：内容变化才写入；清空时移除）。
-        /// 客户端通过 <see cref="ReadHostVideo"/> 读取，实现"房主开启 → 全员播房主视频"。
-        /// </summary>
-        public static void SyncLobbyData()
-        {
-            try
-            {
-                var lobby = Managers.Network?.Lobby;
-                if (lobby == null || lobby.LobbyId == CSteamID.Nil || !lobby.IsHost)
-                    return;
-                string track = (LobbyScreenVideoFeature.VideoTrack ?? "").Trim();
-                if (track == _lastPublished)
-                    return;
-                _lastPublished = track;
-                if (track.Length == 0)
-                {
-                    SteamMatchmaking.DeleteLobbyData(lobby.LobbyId, LobbyDataKey);
-                    Log.Info<LobbyScreenVideoFeature>("已清除房间大厅视频（房主未配置路径）");
-                }
-                else
-                {
-                    SteamMatchmaking.SetLobbyData(lobby.LobbyId, LobbyDataKey, track);
-                    Log.Info<LobbyScreenVideoFeature>($"已同步大厅视频到房间: {track}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Debug<LobbyScreenVideoFeature>($"SyncLobbyData 失败: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// 读取房主发布的大厅视频路径（房主开启功能并配置路径时非空）。
-        /// </summary>
-        /// <returns>房主视频路径；房主未开启/未配置/未进大厅时返回空串。</returns>
-        public static string ReadHostVideo()
-        {
-            try
-            {
-                var lobby = Managers.Network?.Lobby;
-                if (lobby == null || lobby.LobbyId == CSteamID.Nil)
-                    return "";
-                return SteamMatchmaking.GetLobbyData(lobby.LobbyId, LobbyDataKey) ?? "";
-            }
-            catch (Exception ex)
-            {
-                Log.Debug<LobbyScreenVideoFeature>($"ReadHostVideo 失败: {ex.Message}");
-                return "";
-            }
-        }
-
-        /// <summary>
-        /// 当前是否为房主进程（大厅数据写入方）。非房主进程即使开启功能也不播放。
-        /// </summary>
-        /// <returns>是房主时为 true；尚无大厅或访问异常时为 false。</returns>
-        public static bool IsHost()
-        {
-            try
-            {
-                var lobby = Managers.Network?.Lobby;
-                return lobby != null && lobby.IsHost;
-            }
-            catch (Exception ex)
-            {
-                Log.Debug<LobbyScreenVideoFeature>($"IsHost 查询失败: {ex.Message}");
-                return false;
-            }
         }
 
         /// <summary>
