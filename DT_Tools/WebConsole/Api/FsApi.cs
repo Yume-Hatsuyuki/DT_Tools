@@ -23,6 +23,12 @@ namespace DT_Tools.WebConsole.Api
             { ".mp3", ".wav", ".ogg", ".flac", ".m4a", ".aac" };
 
         /// <summary>
+        /// 视频扩展名，前端据此高亮可播放的文件（大厅屏幕视频等功能）。
+        /// </summary>
+        private static readonly HashSet<string> VideoExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { ".mp4", ".webm", ".mkv", ".mov", ".m4v", ".avi" };
+
+        /// <summary>
         /// 单次列举上限：系统目录（如 C:\Windows）条目数以万计，截断防止响应过大。
         /// </summary>
         private const int MaxListEntries = 1000;
@@ -75,10 +81,10 @@ namespace DT_Tools.WebConsole.Api
             var dirs = items.Where(e => e is DirectoryInfo)
                 .Where(e => (SafeAttributes(e) & (FileAttributes.Hidden | FileAttributes.System)) == 0)
                 .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(e => (object)new { name = e.Name, path = e.FullName, isDir = true, audio = false, size = 0L });
+                .Select(e => (object)new { name = e.Name, path = e.FullName, isDir = true, audio = false, video = false, size = 0L });
             var files = items.Where(e => e is FileInfo)
                 .Where(e => (SafeAttributes(e) & (FileAttributes.Hidden | FileAttributes.System)) == 0)
-                .OrderBy(e => AudioExtensions.Contains(Path.GetExtension(e.Name)) ? 0 : 1)   // 音频排前
+                .OrderBy(e => AudioExtensions.Contains(Path.GetExtension(e.Name)) ? 0 : (VideoExtensions.Contains(Path.GetExtension(e.Name)) ? 1 : 2))   // 音频/视频排前
                 .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(e => (object)new
                 {
@@ -86,6 +92,7 @@ namespace DT_Tools.WebConsole.Api
                     path = e.FullName,
                     isDir = false,
                     audio = AudioExtensions.Contains(Path.GetExtension(e.Name)),
+                    video = VideoExtensions.Contains(Path.GetExtension(e.Name)),
                     size = ((FileInfo)e).Length,
                 });
 
