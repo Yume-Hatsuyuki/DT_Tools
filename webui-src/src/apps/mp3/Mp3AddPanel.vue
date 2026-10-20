@@ -120,7 +120,7 @@ function addHttp() {
 
 function addNetease() {
   if (!neteaseReady.value || busy.value) return;
-  return addAndClose(() => API.mp3PlaylistAdd(neteaseInput.value.trim(), props.listId, { kind: 'netease', name: neteaseName.value.trim() }));
+  return addAndClose(() => API.mp3PlaylistAdd(neteaseInput.value.trim(), props.listId, { kind: 'netease', name: neteaseName.value.trim(), level: settings.value.level || '' }));
 }
 </script>
 

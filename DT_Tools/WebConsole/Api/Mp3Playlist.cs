@@ -22,10 +22,12 @@ namespace DT_Tools.WebConsole.Api
 
         internal sealed class Item
         {
-            public string Path = "";    // 本地绝对路径或 http(s) 链接
+            public string Path = "";    // 本地绝对路径或 http(s) 链接；网易云为 netease:<id>
             public string Label = "";   // 展示名（文件名），添加时推导
             public string Kind = "local";   // 曲目类型：local | https | netease
             public string Alias = "";   // 自定义标签（仅显示，不改文件名）
+            /// <summary>网易云曲目音质；空则播放时回退全局 NeteaseLevel。</summary>
+            public string Level = "";
         }
 
         internal sealed class ListEntry
@@ -266,17 +268,25 @@ namespace DT_Tools.WebConsole.Api
         /// <param name="listId">歌单 id，为空时取当前歌单。</param>
         /// <param name="path">曲目路径或链接。</param>
         /// <returns>下标；歌单不存在时为 -1。</returns>
-        internal static int Ensure(string listId, string path) => Ensure(listId, path, InferKind(path), null);
+        internal static int Ensure(string listId, string path) => Ensure(listId, path, InferKind(path), null, null);
 
         /// <summary>
         /// 入指定歌单（同一歌单内按路径去重）。label 为空时以文件名作为展示名。
+        /// </summary>
+        internal static int Ensure(string listId, string path, string kind, string label)
+            => Ensure(listId, path, kind, label, null);
+
+        /// <summary>
+        /// 入指定歌单（同一歌单内按路径去重）。label 为空时以文件名作为展示名。
+        /// level 仅对网易云有效；空则播放时用全局 NeteaseLevel。
         /// </summary>
         /// <param name="listId">歌单 id。</param>
         /// <param name="path">曲目路径或链接（网易云为 netease:&lt;id&gt;）。</param>
         /// <param name="kind">曲目类型：local | https | netease。</param>
         /// <param name="label">展示名；为空时取文件名。</param>
+        /// <param name="level">网易云音质码；可空。</param>
         /// <returns>曲目下标；歌单不存在时为 -1。</returns>
-        internal static int Ensure(string listId, string path, string kind, string label)
+        internal static int Ensure(string listId, string path, string kind, string label, string level)
         {
             var list = Resolve(listId);
             if (list == null)
@@ -285,9 +295,103 @@ namespace DT_Tools.WebConsole.Api
             if (index >= 0)
                 return index;
             string shown = string.IsNullOrWhiteSpace(label) ? System.IO.Path.GetFileName(path) : label.Trim();
-            list.Items.Add(new Item { Path = path, Label = shown, Kind = string.IsNullOrEmpty(kind) ? InferKind(path) : kind });
+            string k = string.IsNullOrEmpty(kind) ? InferKind(path) : kind;
+            string lv = k == "netease" ? NormalizeItemLevel(level) : "";
+            list.Items.Add(new Item
+            {
+                Path = path,
+                Label = shown,
+                Kind = k,
+                Level = lv,
+            });
             Save();
             return list.Items.Count - 1;
+        }
+
+        /// <summary>
+        /// 编辑曲目：可改展示名、别名、路径（https/网易云）、音质（仅网易云）。
+        /// path 变更时按路径去重（与已有其它项冲突则失败）。
+        /// </summary>
+        internal static bool UpdateItem(string listId, int index, string label, string alias, string newPath, string level, out string error)
+        {
+            error = null;
+            var list = Resolve(listId);
+            if (list == null)
+            {
+                error = "歌单不存在";
+                return false;
+            }
+            if (index < 0 || index >= list.Items.Count)
+            {
+                error = "曲目下标无效";
+                return false;
+            }
+            var item = list.Items[index];
+            string kind = string.IsNullOrEmpty(item.Kind) ? InferKind(item.Path) : item.Kind;
+
+            if (newPath != null)
+            {
+                string path = newPath.Trim();
+                if (path.Length == 0)
+                {
+                    error = "路径不能为空";
+                    return false;
+                }
+                // 与其它条目冲突
+                int clash = list.Items.FindIndex(i =>
+                    !ReferenceEquals(i, item) &&
+                    string.Equals(i.Path, path, StringComparison.OrdinalIgnoreCase));
+                if (clash >= 0)
+                {
+                    error = "歌单里已有相同路径/链接的曲目";
+                    return false;
+                }
+                item.Path = path;
+                item.Kind = InferKind(path);
+                kind = item.Kind;
+            }
+
+            if (label != null)
+            {
+                string shown = label.Trim();
+                if (shown.Length > 0)
+                    item.Label = shown.Length > MaxNameLength ? shown.Substring(0, MaxNameLength) : shown;
+            }
+
+            if (alias != null)
+                item.Alias = NormalizeAlias(alias);
+
+            if (kind == "netease")
+            {
+                // level == null 表示本次不改；空串表示清除为跟随全局
+                if (level != null)
+                    item.Level = NormalizeItemLevel(level);
+            }
+            else
+            {
+                item.Level = "";
+            }
+
+            Save();
+            return true;
+        }
+
+        /// <summary>曲目音质：空或非法则空串（播放时回退全局）。</summary>
+        internal static string NormalizeItemLevel(string level)
+        {
+            if (string.IsNullOrWhiteSpace(level))
+                return "";
+            string n = DT_Tools.Game.NeteaseMusic.NormalizeLevel(level);
+            // NormalizeLevel 非法会回 default；若输入本就不是合法档且被打回 default，仍写入 default
+            return n;
+        }
+
+        /// <summary>解析播放用音质：曲目 Level 非空用曲目，否则全局。</summary>
+        internal static string ResolvePlayLevel(Item item, Store store)
+        {
+            if (item != null && !string.IsNullOrWhiteSpace(item.Level))
+                return DT_Tools.Game.NeteaseMusic.NormalizeLevel(item.Level);
+            return DT_Tools.Game.NeteaseMusic.NormalizeLevel(store != null ? store.NeteaseLevel : null);
         }
 
         /// <summary>
@@ -509,9 +613,13 @@ namespace DT_Tools.WebConsole.Api
                 {
                     if (string.IsNullOrEmpty(item.Label))
                         item.Label = System.IO.Path.GetFileName(item.Path);
-                        if (string.IsNullOrEmpty(item.Kind))
-                            item.Kind = InferKind(item.Path);
-                        item.Alias = NormalizeAlias(item.Alias);
+                    if (string.IsNullOrEmpty(item.Kind))
+                        item.Kind = InferKind(item.Path);
+                    item.Alias = NormalizeAlias(item.Alias);
+                    if (item.Kind == "netease")
+                        item.Level = NormalizeItemLevel(item.Level);
+                    else
+                        item.Level = "";
                 }
             }
             if (store.Lists.Count == 0)

@@ -117,6 +117,7 @@ export const API = {
   mp3Mode: (mode) => post('/api/mp3/mode', { mode }),
   mp3PlaylistAdd: (path, listId, extra = {}) => post('/api/mp3/playlist/add', { path, listId, ...extra }),
   mp3PlaylistAlias: (index, alias, listId) => post('/api/mp3/playlist/alias', { index, alias, listId }),
+  mp3PlaylistUpdate: (index, listId, fields = {}) => post('/api/mp3/playlist/update', { index, listId, ...fields }),
   mp3NeteaseInfo: (input, ipMode, fallbackIp) => post('/api/mp3/netease/info', { input, ipMode, fallbackIp }),
   mp3NeteaseSettings: () => request('/api/mp3/netease/settings'),
   mp3NeteaseSettingsSet: (settings) => post('/api/mp3/netease/settings', settings),
