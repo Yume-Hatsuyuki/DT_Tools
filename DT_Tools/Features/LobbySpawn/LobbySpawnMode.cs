@@ -7,20 +7,9 @@ namespace DT_Tools.Features.LobbySpawn
     {
         /// <summary>地图大厅点（原版，默认）。</summary>
         Map,
-        /// <summary>预设房间的中心（PresetRoom）。</summary>
+        /// <summary>预设房间的中心（PresetRoom，运行时从当前地图房间列表选取）。</summary>
         Preset,
         /// <summary>自定义坐标（PosX / PosY）。</summary>
         Custom,
-    }
-
-    /// <summary>
-    /// 预设房间。
-    /// </summary>
-    public enum LobbyPresetRoom
-    {
-        /// <summary>中央广场（ERoomType.CenterHall，同时也是 error 回退点所在区域）。</summary>
-        CenterHall,
-        /// <summary>教室（ERoomType.Classroom）。</summary>
-        Classroom,
     }
 }

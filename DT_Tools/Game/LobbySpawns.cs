@@ -145,35 +145,106 @@ namespace DT_Tools.Game
             return true;
         }
 
-        /// <summary>房间的中文名（供命令输出）。仅支持两种可选房间，其余返回枚举名。</summary>
+        /// <summary>
+        /// 房间显示名：优先 TextDic 本地化（与 RoomLabel / 自动化出生点同源），缺省回退枚举名。
+        /// 内置少量常用中文别名，避免 TextDic 未加载时只显示英文。
+        /// </summary>
         public static string RoomName(ERoomType room)
         {
+            string key = room.ToString();
+            var textDic = Managers.Data?.TextDic;
+            if (textDic != null && textDic.TryGetValue(key, out var text) && text != null && !string.IsNullOrEmpty(text.Text))
+                return text.Text;
+
+            // TextDic 未就绪时的兜底中文（与游戏常见译名一致）
             switch (room)
             {
                 case ERoomType.CenterHall: return "中央广场";
                 case ERoomType.Classroom: return "教室";
-                default: return room.ToString();
+                default: return key;
             }
         }
 
-        /// <summary>解析命令参数中的房间名。接受中文名与枚举名。</summary>
+        /// <summary>
+        /// 解析房间名：接受枚举名（CenterHall）、中文显示名（TextDic / 兜底）、以及少量别名。
+        /// </summary>
         public static bool TryParseRoomName(string text, out ERoomType room)
         {
-            switch ((text ?? string.Empty).Trim().ToLowerInvariant())
+            room = default;
+            string s = (text ?? string.Empty).Trim();
+            if (s.Length == 0)
+                return false;
+
+            // 1) 直接按枚举名（忽略大小写）
+            if (System.Enum.TryParse(s, ignoreCase: true, out ERoomType byEnum) && System.Enum.IsDefined(typeof(ERoomType), byEnum) && (byte)byEnum != 0)
             {
-                case "中央广场":
-                case "广场":
-                case "centerhall":
-                    room = ERoomType.CenterHall;
-                    return true;
-                case "教室":
-                case "classroom":
-                    room = ERoomType.Classroom;
-                    return true;
-                default:
-                    room = default;
-                    return false;
+                room = byEnum;
+                return true;
             }
+
+            // 2) 与 TextDic 本地化名 / RoomName 兜底名精确匹配（忽略大小写）
+            string lower = s.ToLowerInvariant();
+            foreach (ERoomType candidate in System.Enum.GetValues(typeof(ERoomType)))
+            {
+                if ((byte)candidate == 0)
+                    continue;
+                string zh = RoomName(candidate);
+                if (string.Equals(zh, s, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    room = candidate;
+                    return true;
+                }
+                // 别名：中央广场 / 广场
+                if (candidate == ERoomType.CenterHall && (lower == "广场" || lower == "中央广场"))
+                {
+                    room = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 当前地图 MapArray 上实际出现的房间类型（去重、按枚举值排序，排除 0=不可通行）。
+        /// 地图未加载时返回空列表。
+        /// </summary>
+        public static IReadOnlyList<ERoomType> RoomsOnMap()
+        {
+            var result = new List<ERoomType>();
+            var grid = Managers.Data?.MapArray;
+            if (grid == null || grid.Count == 0)
+                return result;
+
+            var seen = new HashSet<byte>();
+            for (int x = 0; x < grid.Count; x++)
+            {
+                List<byte> column = grid[x];
+                if (column == null) continue;
+                for (int y = 0; y < column.Count; y++)
+                {
+                    byte b = column[y];
+                    if (b == 0 || !seen.Add(b))
+                        continue;
+                    if (!System.Enum.IsDefined(typeof(ERoomType), (int)b))
+                        continue;
+                    result.Add((ERoomType)b);
+                }
+            }
+            result.Sort((a, b) => ((byte)a).CompareTo((byte)b));
+            return result;
+        }
+
+        /// <summary>
+        /// 供命令 help / list 使用：当前地图房间的「中文名」列表；地图未就绪时列出全部枚举中文名。
+        /// </summary>
+        public static string FormatRoomChoices()
+        {
+            var onMap = RoomsOnMap();
+            IEnumerable<ERoomType> source = onMap.Count > 0
+                ? (IEnumerable<ERoomType>)onMap
+                : System.Enum.GetValues(typeof(ERoomType)).Cast<ERoomType>().Where(r => (byte)r != 0);
+            return string.Join("、", source.Select(RoomName));
         }
     }
 }

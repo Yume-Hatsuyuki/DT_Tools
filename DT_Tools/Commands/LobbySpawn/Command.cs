@@ -15,8 +15,8 @@ namespace DT_Tools.Commands.LobbySpawn
     {
         public string Name => "lobby_spawn";
         public string[] Aliases => new[] { "大厅出生点" };
-        public string Usage => "lobby_spawn <玩家名|ID> <中央广场|教室|默认>  |  lobby_spawn list  |  lobby_spawn reset";
-        public string Description => "设置玩家进入大厅后的位置（中央广场或教室），默认为地图大厅点。下次进入大厅时生效。需先开启「大厅出生点」功能。";
+        public string Usage => "lobby_spawn <玩家名|ID> <房间名|默认>  |  lobby_spawn list  |  lobby_spawn rooms  |  lobby_spawn reset";
+        public string Description => "设置玩家进入大厅后的位置（房间中文名或枚举名，见 lobby_spawn rooms），默认为地图大厅点。下次进入大厅时生效。需先开启「大厅出生点」功能。";
         public string Author => "梦初雪";
         public FeatureTag Tags => FeatureTag.PlayerMove | FeatureTag.SysRoom;
         public bool RequireHost => true;
@@ -54,6 +54,23 @@ namespace DT_Tools.Commands.LobbySpawn
                 return CommandResult.Success(new { count = entries.Count, enabled });
             }
 
+            if (head == "rooms")
+            {
+                var onMap = LobbySpawns.RoomsOnMap();
+                if (onMap.Count > 0)
+                {
+                    ctx.Reply($"当前地图房间（{onMap.Count}）：");
+                    foreach (var r in onMap)
+                        ctx.Reply($"  {LobbySpawns.RoomName(r)}（{r}）");
+                }
+                else
+                {
+                    ctx.Reply("当前地图未加载或尚无房间数据。可选房间名（全局枚举，中文来自 TextDic）：");
+                    ctx.Reply("  " + LobbySpawns.FormatRoomChoices());
+                }
+                return CommandResult.Success(new { rooms = onMap.Select(r => new { raw = r.ToString(), name = LobbySpawns.RoomName(r) }).ToArray() });
+            }
+
             if (head == "reset")
             {
                 LobbySpawns.Clear();
@@ -83,7 +100,7 @@ namespace DT_Tools.Commands.LobbySpawn
 
             if (!LobbySpawns.TryParseRoomName(spot, out ERoomType roomType))
             {
-                ctx.Reply("可选房间：中央广场、教室、默认。");
+                ctx.Reply($"可选房间（中文名或英文枚举名）：{LobbySpawns.FormatRoomChoices()}；或 默认。也可用 lobby_spawn rooms 查看当前地图。");
                 return CommandResult.Fail("invalid room");
             }
 
