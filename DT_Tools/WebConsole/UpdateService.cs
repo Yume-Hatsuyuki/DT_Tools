@@ -280,12 +280,13 @@ namespace DT_Tools.WebConsole
         }
 
         /// <summary>
-        /// 比较 "v1.0.8.9" 形式的版本号：逐段数字比较，缺段补 0。
+        /// 比较 "v1.0.8.9" / "v2.0.0.7-v2" 形式的版本号：逐段取数字前缀比较，缺段补 0。
         /// </summary>
         /// <remarks>
-        /// tag 更新返回 true。
+        /// tag 比当前新时返回 true。数字段相等时不因后缀（-v2 / -beta）判定为更新，
+        /// 避免同版本重建包反复提示；真正升号（如 2.0.0.7 vs 2.0.0.6）仍能识别。
         /// </remarks>
-        /// <param name="tag">远端版本标签，如 v1.0.8.9。</param>
+        /// <param name="tag">远端版本标签，如 v1.0.8.9、v2.0.0.7-v2。</param>
         /// <param name="current">当前版本号。</param>
         /// <returns>tag 比当前版本新时为 true。</returns>
         public static bool IsNewer(string tag, string current)
@@ -296,7 +297,7 @@ namespace DT_Tools.WebConsole
             {
                 // 解析不出数字段（异常 tag）：退化为字符串不等即视为有更新
                 string na = (tag ?? "").Trim().TrimStart('v', 'V');
-                string nb = (current ?? "").Trim();
+                string nb = (current ?? "").Trim().TrimStart('v', 'V');
                 return na.Length > 0 && !string.Equals(na, nb, StringComparison.OrdinalIgnoreCase);
             }
             int len = Math.Max(a.Length, b.Length);
@@ -309,15 +310,34 @@ namespace DT_Tools.WebConsole
             return false;
         }
 
+        /// <summary>
+        /// 从版本字符串解析数字段。每段取<strong>前缀连续数字</strong>（"7-v2"→7，"9-beta"→9）；
+        /// 段内无任何前导数字（如纯 "beta"）则停止，其前已解析段仍参与比较。
+        /// </summary>
+        /// <remarks>
+        /// 旧实现对整段 int.TryParse，遇到 "7-v2" 直接截断，导致 v2.0.0.7-v2 被当成 2.0.0，
+        /// 在 2.0.0.6 上 hasUpdate=false、更新 UI 不出现。
+        /// </remarks>
         private static int[] ParseVersion(string version)
         {
             if (string.IsNullOrEmpty(version)) return Array.Empty<int>();
             string v = version.Trim().TrimStart('v', 'V');
             var list = new List<int>();
-            foreach (string part in v.Split('.'))
+            foreach (string raw in v.Split('.'))
             {
-                // 遇到非数字段（如 1.0.9-beta 的后缀）即截断，前缀仍参与比较
-                if (!int.TryParse(part.Trim(), out int n)) break;
+                string part = raw.Trim();
+                if (part.Length == 0) break;
+                // 整段纯数字
+                if (int.TryParse(part, out int whole))
+                {
+                    list.Add(whole);
+                    continue;
+                }
+                // 取前缀数字：7-v2 → 7；beta → 无数字则截断
+                int i = 0;
+                while (i < part.Length && part[i] >= '0' && part[i] <= '9') i++;
+                if (i == 0) break;
+                if (!int.TryParse(part.Substring(0, i), out int n)) break;
                 list.Add(n);
             }
             return list.ToArray();
