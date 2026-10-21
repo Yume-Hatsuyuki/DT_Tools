@@ -525,7 +525,6 @@ namespace DT_Tools.WebConsole.Api
             string name = hasName ? (body.Value<string>("name") ?? "") : null;
             string alias = hasAlias ? (body.Value<string>("alias") ?? "") : null;
             string level = hasLevel ? (body.Value<string>("level") ?? "") : null;
-            string newPath = null;
             if (hasPath)
             {
                 string input = (body.Value<string>("path") ?? body.Value<string>("input") ?? "").Trim();
