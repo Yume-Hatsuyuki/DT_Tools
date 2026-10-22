@@ -70,6 +70,12 @@ namespace DT_Tools.Game
         internal static int MixHead;
         internal static float MixVolume;
         internal static bool MixActive;
+        // 混入头以麦克风输出采样率计数（见 AudioMix.MixInto）；秒↔头换算统一走 AudioMix.*FromHead/HeadEnd。
+        internal static int MixOutputRate;     // 包装器每次回调刷新；加载/开启时先按设备能力预测
+        private static int _pendingRate;       // 加载期混入源的采样率（重采样成功时为目标采样率）
+        private static AudioMix.ResampleJob _mixJob;   // 加载期后台重采样（PrepareMix 启动，加载协程等待）
+        private static long _mixToken;         // 混入会话代数：停止/关闭/重开时递增，作废在途的后台应用
+        private static bool _rateMismatchLogged;
 
         // 广播期间被临时改写的音频设置（结束后还原；VoiceSettings 是 Dissonance public API，
         // 属性赋值经 PropertyChanged → WebRtcPreprocessor.Bind 实时重配 native，零反射）
@@ -226,6 +232,7 @@ namespace DT_Tools.Game
             }
             MixActive = false;
             MixSamples = null;
+            _mixToken++;
             Unmount();
             RestoreBroadcastAudioProfile();   // 兜底:档案应用后未及挂载即停止的路径（幂等）
             if (_localPlayback && _source != null && _source.isPlaying)
@@ -248,7 +255,7 @@ namespace DT_Tools.Game
             if (_source != null && _source.clip == _clip)
                 _source.time = t;   // 暂停中亦生效（恢复后从新位置继续）
             if (MixSamples != null && MixSampleRate > 0)
-                MixHead = Mathf.Clamp((int)(t * MixSampleRate), 0, MixSamples.Length - 1);
+                MixHead = Mathf.Clamp(AudioMix.HeadFromSeconds(t, MixOutRate()), 0, MixHeadEnd());
             return true;
         }
 
@@ -307,13 +314,20 @@ namespace DT_Tools.Game
                     var mono = AudioMix.ExtractMono(_clip, Tag);
                     if (mono == null)
                         return false;
-                    MixSamples = mono;
-                    MixSampleRate = _clip.frequency;
+                    int micRate = PredictMicRate(_wrapper.Real);
+                    MixOutputRate = micRate;
+                    _mixToken++;
+                    _mixJob = AudioMix.StartResample(mono, _clip.frequency, micRate);
+                    CoroutineHost.Start(CoApplyResampledMix(_mixJob, mono, _clip.frequency, _mixToken));
+                    MixVolume = _pendingVolume;   // MixActive 由 CoApplyResampledMix 在重采样完成后开启
                 }
-                if (_source != null && _source.clip == _clip)
-                    MixHead = Mathf.Clamp((int)(_source.time * MixSampleRate), 0, MixSamples.Length - 1);
-                MixVolume = _pendingVolume;
-                MixActive = true;
+                else
+                {
+                    MixOutputRate = PredictMicRate(_wrapper.Real);
+                    SyncHeadToPlayback();
+                    MixVolume = _pendingVolume;
+                    MixActive = true;
+                }
                 Log.Info(Tag, "麦克风混入已开启（挂载虚拟麦克风并应用广播音频档案）");
                 return true;
             }
@@ -347,7 +361,7 @@ namespace DT_Tools.Game
                 if (_source != null && _source.clip == _clip)
                     position = _source.time;
                 else if (MixSamples != null && MixSampleRate > 0)
-                    position = MixHead / (float)MixSampleRate;
+                    position = (float)AudioMix.SecondsFromHead(MixHead, MixOutRate());
             }
             return new TransportState
             {
@@ -437,6 +451,9 @@ namespace DT_Tools.Game
                     // 等 ForceReset 生效：约 10 帧内部延迟 + 管线重启（期间麦克风短暂断流）。
                     // 重建后的编码器才是广播码率——混入必须等它就绪，否则开头几秒仍走旧 32k 编码。
                     yield return new WaitForSecondsRealtime(0.6f);
+                    while (!_mixJob.Done)
+                        yield return null;   // 重采样通常已在 0.6s 等待内完成
+                    TakeResampleResult();
                 }
             }
 
@@ -458,9 +475,9 @@ namespace DT_Tools.Game
             {
                 MixSamples = _pendingMono;
                 _pendingMono = null;
-                MixSampleRate = clip.frequency;
+                MixSampleRate = _pendingRate;
                 MixHead = _pendingStart > 0f
-                    ? Mathf.Clamp((int)(_pendingStart * clip.frequency), 0, MixSamples.Length - 1)
+                    ? Mathf.Clamp(AudioMix.HeadFromSeconds(_pendingStart, MixOutRate()), 0, MixHeadEnd())
                     : 0;
                 MixVolume = _pendingVolume;
                 MixActive = true;
@@ -473,6 +490,94 @@ namespace DT_Tools.Game
                     : $"虚拟麦克风混流: {uri}（响度 {_pendingVolume:0.##}，仅混入发往全房、本地由调用方播放）")
                 : $"随身播放器: {uri}（响度 {_pendingVolume:0.##}，纯本地播放、不混入麦克风）");
             _stopCo = CoroutineHost.Start(CoTrackClock(_pendingMaxSeconds));
+        }
+
+        /// <summary>
+        /// 取回加载期后台重采样的结果；失败时保留原采样率样本（时间轴仍正确，仅回退线性插值）。
+        /// </summary>
+        private static void TakeResampleResult()
+        {
+            var job = _mixJob;
+            _mixJob = null;
+            if (job == null)
+                return;
+            if (job.Error != null)
+            {
+                Log.Warn(Tag, job.Error, "混入源重采样失败，改用原采样率混入");
+                return;
+            }
+            _pendingMono = job.Result;
+            _pendingRate = job.ResultRate;
+        }
+
+        /// <summary>
+        /// 会话中开启混入：等待后台重采样，完成后原子切换混入源并开启混入。
+        /// </summary>
+        /// <remarks>
+        /// 代数 token 不匹配（停止、关闭或重新开启）时作废，避免旧曲目的 PCM 混进新会话。
+        /// 失败时混入不启用，本地播放不受影响。
+        /// </remarks>
+        private static IEnumerator CoApplyResampledMix(AudioMix.ResampleJob job, float[] mono, int srcRate, long token)
+        {
+            while (!job.Done)
+            {
+                yield return null;
+                if (token != _mixToken)
+                    yield break;
+            }
+            if (token != _mixToken || _wrapper == null || _clip == null)
+                yield break;
+            if (job.Error != null)
+            {
+                Log.Warn(Tag, job.Error, "混入源重采样失败，改用原采样率混入");
+                MixSamples = mono;
+                MixSampleRate = srcRate;
+            }
+            else
+            {
+                MixSamples = job.Result;
+                MixSampleRate = job.ResultRate;
+            }
+            SyncHeadToPlayback();
+            MixActive = true;
+        }
+
+        /// <summary>
+        /// 混入头对齐到本地播放位置（无本地源时保持当前头）。
+        /// </summary>
+        private static void SyncHeadToPlayback()
+        {
+            if (_source != null && _source.clip == _clip)
+                MixHead = Mathf.Clamp(AudioMix.HeadFromSeconds(_source.time, MixOutRate()), 0, MixHeadEnd());
+        }
+
+        /// <summary>
+        /// 混入头的计数采样率：麦克风输出采样率；尚未收到回调时退回混入源采样率。
+        /// </summary>
+        private static int MixOutRate()
+        {
+            return MixOutputRate > 0 ? MixOutputRate : MixSampleRate;
+        }
+
+        /// <summary>
+        /// 混入头走完 PCM 的位置（与 AudioMix.MixInto 的停止条件一致）。
+        /// </summary>
+        private static int MixHeadEnd()
+        {
+            return MixSamples == null ? 0 : AudioMix.HeadEnd(MixSamples.Length, MixSampleRate, MixOutRate());
+        }
+
+        /// <summary>
+        /// 按 Dissonance 的采样率请求规则预测麦克风输出采样率。
+        /// </summary>
+        /// <remarks>
+        /// 与 BasicMicrophoneCapture.StartCapture 相同（DissonanceVoip BasicMicrophoneCapture.cs:62-63）：
+        /// 设备能力缺省取 48000，否则夹到能力范围内。预测不准时混入回退为线性插值，不影响时间轴。
+        /// </remarks>
+        private static int PredictMicRate(IMicrophoneCapture real)
+        {
+            Microphone.GetDeviceCaps(real?.Device, out int min, out int max);
+            return min == 0 && max == 0 ? 48000 : Mathf.Clamp(48000, min, max);
         }
 
         /// <summary>
@@ -514,6 +619,11 @@ namespace DT_Tools.Game
             _pendingMono = AudioMix.ExtractMono(clip, Tag);
             if (_pendingMono == null)
                 return false;
+            _pendingRate = clip.frequency;
+            _rateMismatchLogged = false;
+            int micRate = PredictMicRate(real);
+            MixOutputRate = micRate;
+            _mixJob = AudioMix.StartResample(_pendingMono, clip.frequency, micRate);
             return TryMountMic(real);
         }
 
@@ -549,7 +659,7 @@ namespace DT_Tools.Game
                 elapsed += Time.unscaledDeltaTime;
                 if (capSeconds > 0f && elapsed >= capSeconds)
                     break;   // 时长上限（墙钟）
-                if (MixActive && MixSamples != null && MixHead >= MixSamples.Length - 1)
+                if (MixActive && MixSamples != null && MixHead >= MixHeadEnd())
                     break;   // 混入头走完 PCM（麦克风帧停滞时头不动，不会误判播完）
                 if (_localPlayback && _source != null && _source.clip != null
                     && !_source.isPlaying && elapsed > 0.5f)
@@ -883,6 +993,12 @@ namespace DT_Tools.Game
                 if (MixActive)
                 {
                     EnsureOpusAudioApplication();   // 编码器重建后自动重切 Audio 模式（帧跳/设备变化自愈）
+                    MixOutputRate = format.SampleRate;
+                    if (format.SampleRate != MixSampleRate && !_rateMismatchLogged)
+                    {
+                        _rateMismatchLogged = true;
+                        Log.Warn(Tag, $"麦克风输出采样率 {format.SampleRate}Hz 与混入源 {MixSampleRate}Hz 不一致，改用线性插值混入（音质下降）");
+                    }
                     MixActive = AudioMix.MixInto(MixSamples, MixSampleRate, MixVolume,
                         ref MixHead, buffer, format.SampleRate);
                 }
