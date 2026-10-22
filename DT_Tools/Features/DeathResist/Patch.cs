@@ -22,6 +22,28 @@ namespace DT_Tools.Features.DeathResist
             _active && Engine.Enabled<DeathResistFeature>();
 
         /// <summary>
+        /// 0.1.20a GameManagerEX.Dead（GameManagerEX.cs:352-355）改播 KillFx.PlayVictim()
+        /// （CoVictim：DeathSfx + HideMyGhost 隐藏鬼魂 + 黑场，约 2.9s）。DeathResist 假活
+        /// （Postfix 置回 IsAlive=true）后这段演出与「假活」冲突——画面仍黑场、鬼魂仍被隐藏，
+        /// 启用时直接跳过。
+        /// </summary>
+        [HarmonyPatch(typeof(KillFx), "PlayVictim")] // 0.1.20a KillFx.cs:160
+        internal static class PlayVictimPatch
+        {
+            private static bool Prefix()
+            {
+                if (!Engine.Enabled<DeathResistFeature>())
+                    return true;
+                if (Managers.Game == null || Managers.Game.IsSpectator)
+                    return true;
+                if (Managers.Game.State == EGameState.Lobby
+                    || Managers.Game.State == EGameState.TotalResult)
+                    return true;
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 0.1.18c GameManagerEX.Dead（GameManagerEX.cs:334）：先 IsAlive=false / CanControl=false，
         /// 再 HidePlayer、CancelAllInteract、HideAll 等。Postfix 在整段之后改标志。
         /// </summary>
