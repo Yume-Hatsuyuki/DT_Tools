@@ -55,10 +55,12 @@ namespace DT_Tools.Features.PhotoTools
 
         /// <summary>
         /// CanStayInPhotoMode（0.1.18c PhotoManager.cs:224）Postfix：原版要求存活。
+        /// 0.1.20a PhotoManager.cs:265 原版新增 Timeline.IsLost 禁拍，幽灵放行不得覆盖。
         /// </summary>
         /// <remarks>
         /// GhostCamera 开启时死亡（幽灵视角）按原版其余条件（可控制/非聊天/非表情/
-        /// 非加载/非平板）重新判定放行；阶段限制保持原版（仅调查阶段）。
+        /// 非加载/非平板）重新判定放行；阶段限制保持原版（仅调查阶段）。该判定同时被
+        /// CanEnterPhotoMode Postfix 复用（Patch.cs:128），IsLost 检查一处即管住进出两条路。
         /// </remarks>
         [HarmonyPatch(typeof(PhotoManager), "CanStayInPhotoMode")]
         internal static class PhotoGhostStayPatch
@@ -67,7 +69,17 @@ namespace DT_Tools.Features.PhotoTools
             {
                 try
                 {
-                    if (__result || !Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.GhostCamera)
+                    if (!Engine.Enabled<PhotoToolsFeature>() || !PhotoToolsFeature.GhostCamera)
+                    {
+                        return;
+                    }
+                    if (__result)
+                    {
+                        return;
+                    }
+                    // 时间轴 lost 窗口（Managers.Timeline:102 / TimelineManager.cs:40）原版禁拍，
+                    // 幽灵判定不覆盖该限制。
+                    if (Managers.Timeline != null && Managers.Timeline.IsLost)
                     {
                         return;
                     }

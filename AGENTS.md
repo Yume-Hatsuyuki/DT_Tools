@@ -3,7 +3,7 @@
 DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 - 技术栈：C#、netstandard2.1、HarmonyX。
-- 游戏版本基准：`0.1.18c`。
+- 游戏版本基准：`0.1.21a`。
 - 正式版本号：`DT_Tools/DT_Tools.csproj` 里的 `<Version>`。
 - 本文件是本仓库唯一的架构与操作规则。
 - 改架构、改 API、改目录之前，必须先读本文件。
@@ -37,10 +37,10 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 2. 每个补丁方法的第一行，必须写开关检查（§1）。
 3. 禁止 Features、Commands、Automation 三个域互相依赖。共享代码上浮到 `Game/`（§4）。
 4. 配置段名、键名禁止写字符串。禁止 `ConfigEntry<T>` 字段（§9 约束 5）。
-5. 引用游戏 API 之前，必须先核对游戏源码。私有成员必须带 `0.1.18c 文件:行号` 注释（§10）。
+5. 引用游戏 API 之前，必须先核对游戏源码。私有成员必须带 `0.1.21a 文件:行号` 注释（§10）。
 6. 日志只走 `Log` 门面。注释、日志、命令文案全用中文。禁止 `Debug.Log`（§11）。
 7. JSON 只走 `DT_Tools.Core.Json`。禁止手拼 JSON（§11）。
-8. 禁止修改 `0.1.18c/`、`libs/`、`DT_Tools/WebUI/`（§2、§12）。
+8. 禁止修改 `0.1.21a/`、`libs/`、`DT_Tools/WebUI/`（§2、§12）。
 9. 补丁有执行顺序依赖时，必须用 `[HarmonyPriority]`。禁止依赖挂载顺序（§5）。
 10. 多代理并行作业时，禁止运行 `dotnet build`（§3）。
 11. 禁止在仓库文件里写本机绝对路径（§3）。
@@ -57,7 +57,7 @@ DT_Tools 是 Deadly Trick 的 BepInEx 5 插件。
 
 | 术语 | 含义 |
 | --- | --- |
-| 游戏源码 | `0.1.18c/` 目录。游戏的反编译源码。一切 API 的核对基准 |
+| 游戏源码 | `0.1.21a/` 目录。游戏的反编译源码。一切 API 的核对基准 |
 | 功能 | `Features/` 下的一个功能目录。类上带 `[PatchFeature]` 与 `Tags` |
 | 补丁 | 一个 `[HarmonyPatch]` 类。对应一个 Harmony 补丁点 |
 | 配置段 | .cfg 里的一个 `[段名]`。由 Feature 或 Module 类推导 |
@@ -97,7 +97,7 @@ if (!Engine.Enabled<本功能Feature>()) return;
 | `DT_Tools/` | 模组项目 | 插件源码和 `DT_Tools.csproj` |
 | `webui-src/` | 前端源码工程 | Vue 3 + Vite 桌面壳 WebUI（见 §12） |
 | `libs/` | 只读 | 游戏程序集。编译时引用 |
-| `0.1.18c/` | 只读。在仓库外的工作区根部 | 游戏源码 |
+| `0.1.21a/` | 只读。在仓库外的工作区根部 | 游戏源码 |
 
 ### 用户数据目录
 
@@ -194,7 +194,7 @@ Plugin.cs（装配根）
   ├ Automation/  自动化模块域（纯发包/只读）
   └ WebConsole/  HTTP+WebSocket 服务、路由、鉴权、API（含 Mcp/ 桥接子域）
       └ WebUI/   前端桌面壳（构建产物）
-最底层：0.1.18c 游戏程序集
+最底层：0.1.21a 游戏程序集
 ```
 
 ### 依赖规则
@@ -395,7 +395,7 @@ public sealed class XxxModule { }
 
 ### 约束 2：日志门面 `Log`
 
-- 游戏在全局命名空间有 `public static class Log`。位置：`0.1.18c/Log.cs`。
+- 游戏在全局命名空间有 `public static class Log`。位置：`0.1.21a/Log.cs`。
 - 本插件的日志门面也叫 `Log`。它放在 `DT_Tools` 根命名空间。
 - 不要“修复”这个布局。
 
@@ -445,14 +445,14 @@ public sealed class XxxModule { }
 
 ## 10. 游戏版本核对
 
-当前基准：`0.1.18c`。
+当前基准：`0.1.21a`。
 
 ### 写代码时
 
 - 引用游戏 API 之前，必须先在游戏源码里核对：存在性、可见性、签名。
 - 这条规则也管 `typeof(X)`、反射字符串、Traverse 成员名。
 - 私有成员用字符串定位（Traverse 或反射）。
-- 字符串定位处，必须加注释：`0.1.18c <文件>.cs:<行号>`。
+- 字符串定位处，必须加注释：`0.1.21a <文件>.cs:<行号>`。
 - 同名文件的注释，要带子目录前缀。
 - 能用 `nameof`，就必须用 `nameof`。
 
@@ -467,7 +467,7 @@ public sealed class XxxModule { }
 
 - `/agent` 有 4 条链。它们逐项判断服务端 StateList 的槽位。
 - 这些判断集中在 `Commands/Agent/Logic.ItemHelper.cs` 头部。
-- 位置：“设备 StateList 槽位布局表”。每行带 0.1.18c 行号。
+- 位置：“设备 StateList 槽位布局表”。每行带 0.1.21a 行号。
 - 游戏升级后，按这张表逐行复核。
 - 禁止新增没有锚点的槽位判断。
 
@@ -477,7 +477,7 @@ public sealed class XxxModule { }
 
 - 注释、配置描述、命令文案，全部用中文。
 - 注释要写机制依据：为什么能这么改。
-- 引用游戏源码时，必须带行号。引用未经校验时，写成 `0.1.18c 文件:行号（待核对）`。
+- 引用游戏源码时，必须带行号。引用未经校验时，写成 `0.1.21a 文件:行号（待核对）`。
 - 引用本文件时，写成 `AGENTS.md §章节号`。
 
 ### 日志
@@ -676,9 +676,8 @@ public sealed class XxxModule { }
 - 迁移：version 1 文件里光标层的 `none` 视为未设置，读取时迁移为跟随（v1 保存时把整张光标表都写成了 `none`）。
 - 生命周期：`OnPatched` 按 `Engine.Enabled` 补挂（启动读档不触发 `OnEnabled`），`OnEnabled` / `OnDisabled` 热切换。
 - 文件：`Game/Gamepad/`（纯逻辑与原生层）、`Features/Gamepad/Feature.cs`、`Features/Gamepad/Patch.CursorVisible.cs`、`WebConsole/Api/GamepadApi.cs`、`webui-src/src/apps/gamepad/GamepadApp.vue`。
-- 光标可见性：游戏的 `Managers.UpdateMouse`（私有，依据 0.1.18c `Managers.cs:243-266` 核对）在鼠标 3.0 秒无移动与点击后把 `Cursor.visible` 置为 false。`Features/Gamepad/Patch.CursorVisible.cs` 后缀该方法：光标模式生效（运行中、窗口在前台、处于光标模式）时重新置为 true；拍照模式不干预。依据 0.1.18c `Managers.cs:243-266`（已核对）。
+- 光标可见性：游戏的 `Managers.UpdateMouse`（私有，依据 0.1.21a `Managers.cs:243-266` 核对）在鼠标 3.0 秒无移动与点击后把 `Cursor.visible` 置为 false。`Features/Gamepad/Patch.CursorVisible.cs` 后缀该方法：光标模式生效（运行中、窗口在前台、处于光标模式）时重新置为 true；拍照模式不干预。依据 0.1.21a `Managers.cs:243-266`（已核对）。
 - 已知限制：只支持 XInput 手柄（Steam Input 默认设置会以虚拟 Xbox 手柄出现，可直接用）；摇杆转为数字键，没有模拟速度；右摇杆光标会移动真实系统光标；注入依赖游戏窗口在前台。
-- 作者字段为占位 `Claude（AI 助手）`，待替换为实名（AGENTS §7）。
 
 #### 目录浏览 API
 
@@ -821,12 +820,12 @@ public sealed class XxxModule { }
 - 采集是被动的：补丁挂在 `VoiceManager.EnqueueNormalChat`、`UI_GameTablet.AddClue`、`UI_GameTablet.AddPropositionMessage`、`UI_GameTablet.AddPhotoMessage`（私有，字符串定位）与 `GameManagerEX.State` 的 setter。每个补丁第一行是开关检查，只把数据转给 `Game/WebTablet/WebTabletBridge`。
 - 存储：`Game/WebTablet/WebTabletStore` 为纯内存、加锁、不依赖 Unity。写入在主线程，读取在 HTTP 线程，快照只复制列表。上限：聊天 1000 条，线索 500 条，照片 30 张（每张不超过 160KB）。功能关闭时 `Reset`（清空并忘记阶段）；界面的「清理」只 `Clear`（保留阶段，递增 `epoch`）。
 - 增量拉取：`GET /api/tablet/state?since=N` 返回序号大于 N 的聊天条目与全部线索，前端每 0.8 秒拉取一次。`epoch` 变化或 `seq` 回退时，前端丢弃本地列表并重新同步。
-- 文本规则：线索对象、地点、时间与头像按 0.1.18c `UI_ClueSubItem.FillText` 同源生成（`GetWhoText`、`FormatWhen`）；命题句调用 `Util.FormatProposition` 后去掉富文本标签。游戏升级后按这些行号复核。
+- 文本规则：线索对象、地点、时间与头像按 0.1.21a `UI_ClueSubItem.FillText` 同源生成（`GetWhoText`、`FormatWhen`）；命题句调用 `Util.FormatProposition` 后去掉富文本标签。游戏升级后按这些行号复核。
 - 头像：Madeline 与 Mastermind 共用资源，头像键统一为 `Mastermind`（`WebTabletAvatar`）。SD 原图裁切框为 760×760，左上角 (644, 260)，缩放为 192px，文件在 `apps/tablet/avatars/`。
 - 发言：仅允许 `Lobby` 与 `Trial`（`WebTabletText.CanTypeInState`）。游戏服务端 `RelayNormalChat` 还放行 `PickCharacter` 与 `TotalResult`，平板有意不开放。发送经 `Managers.Voice.SendChatMessage`，必须在 `WebConsole.RunOnMain` 中执行。
 - 照片：仅在 `Trial` 且 `ETrialState.Discuss` 时发送。以 `C_CHAT_PHOTO{SlotIndex=-1}` 发出，不占用本机相册槽位（`PhotoManager.Receive` 只在 `SlotIndex >= 0` 时写映射）。服务端校验 JPEG 魔数与 160KB 上限（`Server.Game/HostPacketHandler.cs` 的 `Handle_C_CHAT_PHOTO`）。
 - 不做：不改变游戏状态、不写配置文件、不持久化。导出在浏览器内完成（文本为 `.txt`，图片为分页 `.png`）。
-- 照片冷却：服务端 `GameRoom.TryConsumePhotoBudget` 为每人一格令牌、每秒回 0.2 格（5 秒一张），超出时直接丢弃照片、不报错。客户端 `PhotoManager` 有同算法的预算，仅用于游戏内界面。平板发图前检查冷却（`WebTabletBridge.SendPhoto`），发送后经 `PhotoManager.ConsumeBudget`（private，0.1.18c `PhotoManager.cs:715`）扣减，使游戏内发图与平板发图共用一份客户端预算。`Features/WebTablet/Patch.PhotoBudget.cs` 后缀该方法，据 `_budgetTokens`（:49）与 `_budgetTickMs`（:51）计算冷却截止时刻，存入 `WebTabletStore`；`/api/tablet/state` 以剩余毫秒下发。冷却无法被客户端察觉的服务端丢弃，只能尽量避免。
+- 照片冷却：服务端 `GameRoom.TryConsumePhotoBudget` 为每人一格令牌、每秒回 0.2 格（5 秒一张），超出时直接丢弃照片、不报错。客户端 `PhotoManager` 有同算法的预算，仅用于游戏内界面。平板发图前检查冷却（`WebTabletBridge.SendPhoto`），发送后经 `PhotoManager.ConsumeBudget`（private，0.1.21a `PhotoManager.cs:715`）扣减，使游戏内发图与平板发图共用一份客户端预算。`Features/WebTablet/Patch.PhotoBudget.cs` 后缀该方法，据 `_budgetTokens`（:49）与 `_budgetTickMs`（:51）计算冷却截止时刻，存入 `WebTabletStore`；`/api/tablet/state` 以剩余毫秒下发。冷却无法被客户端察觉的服务端丢弃，只能尽量避免。
 - 分局：`WebTabletStore` 在阶段切换到 `Lobby` 时递增局号，与游戏 `GameManagerEX.StartLobby` 清空线索的边界一致。线索与命题的去重键都带局号（游戏内时间 `SurviveTime` 每局从零开始，跨局同键会被静默丢弃）。局号只用于分段，不删除数据：旧局线索保留，便于结算后复盘与导出。前端 `orderClues` 按局分组，较早的局在前（与聊天一致）；局内与游戏 `UI_GameTablet.RefreshClueList` 的 `orderby` 完全一致：时间从早到晚 → 命题在前 → 对象玩家编号 → 房间编号 → 到达顺序。线索 DTO 带 `targetId`、`roomId` 供此排序使用。聊天条目同样带 `round`。局编号由聊天与线索共同计算（`roundNumbering([...lines, ...clues])`），段首「—— 第 N 局 ——」在聊天栏、线索栏、导出弹窗、导出文本与导出图片中一致插入。
 - 清理：`WebTabletStore.ClearChat`（递增 `epoch`，丢弃聊天与照片）、`ClearClues`（不递增 `epoch`）、`Clear`（两者都做）。界面「清理」为下拉菜单，三项均需确认。
 - 导出弹窗的分局勾选：每局标题有勾选框，全选关闭后点击标题即选中该局全部条目；该局已部分选中时点击同样补齐整局；标题框显示半选状态与「已选/总数」。
@@ -912,7 +911,7 @@ public int Add(int a, int b)
 
 ### 保留（写在 `<remarks>`、`<param>`、`<returns>` 中）
 
-- 游戏源码引用：`0.1.18c File.cs:行号`。未校验的标「（待核对）」。
+- 游戏源码引用：`0.1.21a File.cs:行号`。未校验的标「（待核对）」。
 - 约束与不变量：“必须”“禁止”“否则”“只在…时”。
 - 依据：为什么这么写，原版怎么做，踩过什么坑。
 - 跨文件的依赖与调用时机：谁会调用、在哪个线程、什么阶段。

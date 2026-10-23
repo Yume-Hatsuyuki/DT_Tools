@@ -9,7 +9,8 @@ using UnityEngine;
 namespace DT_Tools.Features.SurviveSpeed
 {
     /// <summary>
-    /// FixedUpdateSurvive 整替：逐分支复刻 0.1.18c MyPlayer.cs:1757，仅倍率可配。
+    /// FixedUpdateSurvive 整替：逐分支复刻 0.1.18c MyPlayer.cs:1757，仅倍率可配；
+    /// Interact 分支按 0.1.20a MyPlayer.cs:1804 复刻（新增「可移动打断」）。
     /// </summary>
     /// <remarks>
     /// 被调用的私有成员（字符串定位）：UpdateMovePacket 0.1.18c MyPlayer.cs:1955、
@@ -39,6 +40,21 @@ namespace DT_Tools.Features.SurviveSpeed
         /// </summary>
         private static readonly Action<MyPlayer> FixedKnockbackPlayerOf =
             Reflect.Bind<Action<MyPlayer>>(typeof(MyPlayer), "FixedKnockbackPlayer");
+
+        /// <summary>
+        /// _waitMoveRelease（private bool，0.1.20a MyPlayer.cs:49）：进入 Interact 时置 true
+        /// （StartState :411），抬手后由交互分支放行移动。字符串定位，绑定失败时整替分支
+        /// 退化回旧锁速逻辑。
+        /// </summary>
+        private static readonly FieldInfo WaitMoveReleaseField =
+            AccessTools.Field(typeof(MyPlayer), "_waitMoveRelease");
+
+        /// <summary>
+        /// _mouseMoveActive（private bool，0.1.20a MyPlayer.cs:53）：鼠标输入同样算「要移动」，
+        /// 可打断交互。
+        /// </summary>
+        private static readonly FieldInfo MouseMoveActiveField =
+            AccessTools.Field(typeof(MyPlayer), "_mouseMoveActive");
 
         private static bool Prefix(MyPlayer __instance)
         {
@@ -82,6 +98,35 @@ namespace DT_Tools.Features.SurviveSpeed
                     return false;
 
                 case EPlayerState.Interact:
+                    // 0.1.20a MyPlayer.cs:1804 交互分支新增「可移动打断」：全部交互弹窗可
+                    // 移动取消（UIManager.IsInteractAllCancelByMove，UIManager.cs:889）时，
+                    // 抬手后放行移动（FixedUpdateMove(1f)，Moving 时转 Idle），否则锁速。
+                    // 整替必须复刻，否则新玩法被旧行为覆盖。
+                    if (Managers.UI != null && Managers.UI.IsInteractAllCancelByMove())
+                    {
+                        if (WaitMoveReleaseField != null
+                            && (bool)WaitMoveReleaseField.GetValue(__instance)
+                            && (KeyBindings.MoveAxis() != Vector2.zero // KeyBindings.cs:141
+                                || (MouseMoveActiveField != null
+                                    && (bool)MouseMoveActiveField.GetValue(__instance))))
+                        {
+                            __instance.SetRigidBodyVelocity(Vector2.zero);
+                            return false;
+                        }
+                        if (WaitMoveReleaseField != null)
+                        {
+                            WaitMoveReleaseField.SetValue(__instance, false);
+                        }
+                        FixedUpdateMoveOf(__instance, 1f);
+                        if (__instance.Moving)
+                        {
+                            __instance.ChangeMyPlayerState(EPlayerState.Idle);
+                        }
+                        return false;
+                    }
+                    __instance.SetRigidBodyVelocity(Vector2.zero);
+                    return false;
+
                 case EPlayerState.Hide:
                 case EPlayerState.Sit:
                 case EPlayerState.Possess:
