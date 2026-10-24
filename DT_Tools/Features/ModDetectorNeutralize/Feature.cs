@@ -19,7 +19,12 @@ namespace DT_Tools.Features.ModDetectorNeutralize
     /// 任一命中 IsModded()==true（:58），经 C_ENTER_GAME.IsModded / SnapshotPlayer.IsModded 进入对局，
     /// 并随 MatchStatsReporter 在对局结算时上报到开发者 Discord webhook（MatchStatsReporter.cs:59, :51）。
     /// 本机只要装了 BepInEx 就必然命中 1/2，等于每个 DT_Tools 用户都会被标 modded 并上报——
-    /// 这是「误伤」的来源。本功能把 IsModded() 恒置 false，并跳过指纹扫描与对局上报。
+    /// 这是「误伤」的来源。本功能在本机上的覆盖范围：
+    /// 1) IsModded() 前缀直接返回 false，不执行原方法体，因此检测原因不写入 Player.log / log_*.txt；
+    /// 2) 指纹扫描（StartCodeCheck / RunCodeCheck）及其不一致记录（MarkChanged）均拦截；
+    /// 3) 本机生成的对局摘要中，角色异常（梅德琳类型或 ID 不在角色表）不计为 modded（IsAbnormalCharacter 恒为否）；
+    /// 4) 对局上报（MatchStatsReporter.Send）可选拦截。
+    /// 不在本功能范围内：其他客户端对本机角色的库存目击上报（CosmeticSightingReporter），本机无法拦截。
     ///
     /// 版本兼容：ModDetector / MatchStatsReporter 仅 0.1.21+ 存在，本功能用反射按版本动态挂载。
     /// 旧版本缺类时静默跳过（不报错、不影响其余功能）；新版本存在时生效。因此无需升级编译
@@ -38,7 +43,7 @@ namespace DT_Tools.Features.ModDetectorNeutralize
         /// <summary>
         /// 屏蔽 ModDetector：IsModded() 恒 false，并跳过其后台代码指纹扫描。
         /// </summary>
-        [Config("屏蔽 MOD 检测：对游戏恒返回「未改装」（ModDetector.IsModded → false），并跳过后台代码指纹扫描（StartCodeCheck / RunCodeCheck）。")]
+        [Config("屏蔽 MOD 检测：对游戏恒返回「未改装」（ModDetector.IsModded 不再执行，因此不写检测原因日志），跳过后台代码指纹扫描，并且本机生成的对局摘要不再因角色异常标记 modded。")]
         public static bool HideFromModDetector = true;
 
         /// <summary>
@@ -99,13 +104,22 @@ namespace DT_Tools.Features.ModDetectorNeutralize
             }
 
             int mounted = 0;
-            // IsModded 是全部 modded 标记的上游（C_ENTER_GAME / SnapshotPlayer / 房间 / 上报），后缀恒 false 即全局生效。
-            mounted += PatchMethod(type, "IsModded", nameof(IsModdedPostfix), prefix: false, "ModDetector.IsModded（0.1.21a ModDetector.cs:58）");
+            // IsModded 前缀直接跳过原方法：原方法体内的检测与 Debug.Log（检测原因）一并不执行。
+            mounted += PatchMethod(type, "IsModded", nameof(SkipIsModded), prefix: true, "ModDetector.IsModded（0.1.21a ModDetector.cs:58）");
             // StartCodeCheck 由 Unity [RuntimeInitializeOnLoadMethod] 触发（:42），可能先于本补丁执行；
             // 其后台 Task 内对 RunCodeCheck 的调用发生在异步线程、晚于补丁挂载，故 RunCodeCheck
             // 前缀是拦下指纹扫描的可靠落点（:119），StartCodeCheck 前缀为尽力而为。
             mounted += PatchMethod(type, "RunCodeCheck", nameof(SkipRunCodeCheck), prefix: true, "ModDetector.RunCodeCheck（0.1.21a ModDetector.cs:119）");
             mounted += PatchMethod(type, "StartCodeCheck", nameof(SkipStartCodeCheck), prefix: true, "ModDetector.StartCodeCheck（0.1.21a ModDetector.cs:42）");
+            // RunCodeCheck 若在补丁挂载前已开始，仍会经 MarkChanged 写入含文件名的原因（0.1.21c ModDetector.cs:172-176），此处兜底。
+            mounted += PatchMethod(type, "MarkChanged", nameof(SkipMarkChanged), prefix: true, "ModDetector.MarkChanged（0.1.21c ModDetector.cs:172）");
+
+            // 对局摘要的 modded 还会由角色类型判定（0.1.21c MatchStatsReporter.cs:92），与 IsModded 无关，需单独拦截。
+            var reporter = AccessTools.TypeByName("Server.Game.MatchStatsReporter");
+            if (reporter == null)
+                Log.Warn<ModDetectorNeutralizeFeature>("MatchStatsReporter 不存在（游戏版本 < 0.1.21），跳过角色异常判定屏蔽。");
+            else
+                mounted += PatchMethod(reporter, "IsAbnormalCharacter", nameof(SkipIsAbnormalCharacter), prefix: true, "MatchStatsReporter.IsAbnormalCharacter（0.1.21c MatchStatsReporter.cs:161）");
             return mounted;
         }
 
@@ -156,12 +170,37 @@ namespace DT_Tools.Features.ModDetectorNeutralize
         }
 
         /// <summary>
-        /// ModDetector.IsModded 后缀：恒返回「未改装」，并留痕原始检测结果。
+        /// ModDetector.IsModded 前缀：不执行原方法，恒返回「未改装」。检测与检测原因的日志因此都不发生。
         /// </summary>
-        private static void IsModdedPostfix(ref bool __result)
+        private static bool SkipIsModded(ref bool __result)
         {
-            Log.Info<ModDetectorNeutralizeFeature>($"已拦截 ModDetector.IsModded：原值 {__result} → false");
+            if (!Engine.Enabled<ModDetectorNeutralizeFeature>())
+                return true;
             __result = false;
+            Log.Info<ModDetectorNeutralizeFeature>("已拦截 ModDetector.IsModded：未执行检测，也不记录检测原因");
+            return false;
+        }
+
+        /// <summary>
+        /// ModDetector.MarkChanged 前缀：不记录指纹不一致的原因（原因含文件名，会进入 Player.log）。
+        /// </summary>
+        private static bool SkipMarkChanged()
+        {
+            if (!Engine.Enabled<ModDetectorNeutralizeFeature>())
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// MatchStatsReporter.IsAbnormalCharacter 前缀：角色类型为梅德琳或 ID 不在角色表时，不计为 modded。
+        /// 作用于本机生成的对局摘要（本机为房主时），对其他玩家的角色判定同样生效。
+        /// </summary>
+        private static bool SkipIsAbnormalCharacter(ref bool __result)
+        {
+            if (!Engine.Enabled<ModDetectorNeutralizeFeature>())
+                return true;
+            __result = false;
+            return false;
         }
 
         /// <summary>
@@ -169,6 +208,8 @@ namespace DT_Tools.Features.ModDetectorNeutralize
         /// </summary>
         private static bool SkipStartCodeCheck()
         {
+            if (!Engine.Enabled<ModDetectorNeutralizeFeature>())
+                return true;
             Log.Info<ModDetectorNeutralizeFeature>("已拦截 ModDetector.StartCodeCheck：跳过启动后台代码指纹扫描");
             return false;
         }
@@ -178,6 +219,8 @@ namespace DT_Tools.Features.ModDetectorNeutralize
         /// </summary>
         private static bool SkipRunCodeCheck()
         {
+            if (!Engine.Enabled<ModDetectorNeutralizeFeature>())
+                return true;
             Log.Info<ModDetectorNeutralizeFeature>("已拦截 ModDetector.RunCodeCheck：跳过全盘代码指纹扫描");
             return false;
         }
@@ -187,6 +230,8 @@ namespace DT_Tools.Features.ModDetectorNeutralize
         /// </summary>
         private static bool SkipMatchStatsSend()
         {
+            if (!Engine.Enabled<ModDetectorNeutralizeFeature>())
+                return true;
             Log.Info<ModDetectorNeutralizeFeature>("已拦截 MatchStatsReporter.Send：停止 Discord 对局上报");
             return false;
         }
