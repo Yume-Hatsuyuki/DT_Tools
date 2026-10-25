@@ -1,13 +1,14 @@
 # AGENTS.md — DT_Tools
 
-DT_Tools 是 Deadly Trick 的 BepInEx 5 插件，使用 C#（netstandard2.1）与 HarmonyX，附带 Vue 3 WebUI。游戏版本基准为 `0.1.21a`，游戏源码不在本仓库。插件版本号见 `DT_Tools/DT_Tools.csproj` 的 `<Version>`。
+DT_Tools 是 Deadly Trick 的 BepInEx 5 插件，使用 C#（netstandard2.1）与 HarmonyX，附带 Vue 3 WebUI。   
+插件版本号见 `DT_Tools/DT_Tools.csproj` 的 `<Version>`。
 
 ## 红线速查
 
 1. 遇到无法决策的问题（需求不明、方案需要取舍、无法核对游戏行为、需要违反本文件），直接询问用户，不自作主张。
 2. 所有回复必须遵守 `.github/skills/adhd-ste/SKILL.md`。
 3. 所有决策、改动与解释必须遵守 `.github/skills/occam-razor/SKILL.md`。
-4. 只在代码无法表达某条约束时写注释，一行为限。注释不复述代码，不写 `///` 文档块，不写行号。`tools/mcp-verify.ps1` 开头的 `<# .SYNOPSIS #>` 帮助块保留。
+4. 只在代码无法表达某条约束时写注释，一行为限。注释不复述代码。
 5. 产品内的用户可见文字、日志、命令输出用中文。
 6. 仓库文件中不写本机绝对路径。
 7. 改动架构、API、目录后，同步更新本文件。本文件只写当前有效的规则。
@@ -25,13 +26,12 @@ cd webui-src && npm run build
 - 完成标准：0 警告、0 错误。
 - 缺少 `libs/` 时，加 `-p:GameManaged="<libs 绝对路径>"`，路径不写入仓库。
 - 多代理并行作业时，禁止 `dotnet build`，共享的 `obj/` 会互相干扰。
-- .NET SDK 锁定为 7.0.410（见 `global.json`）。不恢复官方 BepInEx 源。
-- 游戏内运行验证只能由用户执行。
+- .NET SDK 锁定为 7.0.410（见 `global.json`）。
 
 ## 发版
 
-- `main` 为发布线。发版打 tag `vMAJOR.MINOR.PATCH[.BUILD]`，tag 必须在 `main` 历史中。
-- `dev-N.x` 为开发线。PR 先合入对应的 `dev-N.x`，验证后再合回 `main`。新主版本另开 `dev-N.x`。
+- `main` 为发布线，禁止在此处开发。
+- `dev-N.x` 为开发线。PR 先合入对应的 `dev-N.x`。
 - 同一版本号的重建包使用 `-vN` 后缀（如 `2.0.0.10-v2`），否则已安装用户无法识别更新。
 - 前端产物目录名必须是 `WebUI`，Linux CI 区分大小写。
 
@@ -50,7 +50,7 @@ cd webui-src && npm run build
 - 特性参数全部显式写出：`description`、`defaultEnabled`、`side`、`Tags`、`Author`。`Tags` 与 `Author` 必填。
 - `side`：目标是客户端类（如 `MyPlayer`、`UI_*`）填 `Client`；目标是 `Server.Game.*` 填 `Host`；两边都有填 `Both`。
 - `Author`：每个功能单独实名。禁止全局作者常量与「佚名」兜底。
-- `Tags`：1–3 个，只能用 `DT_Tools/Core/Attributes/FeatureTag.cs` 中的位。新位只追加在末尾，发布后不得重排或复用。新增标签时，同步 `FeatureTagCatalog.cs` 与 WebUI 译文。
+- `Tags`：至少1个，只能用 `DT_Tools/Core/Attributes/FeatureTag.cs` 中的位。新位只追加在末尾，发布后不得重排或复用。新增标签时，同步 `FeatureTagCatalog.cs` 与 WebUI 译文。
 - 补丁运行在不同机器角色上时，拆成两个独立功能。同一台机器上的两半不拆。
 - 补丁有执行顺序依赖时，用 `[HarmonyPriority(n)]`，禁止依赖挂载顺序。
 - 命名空间与目录路径一致。唯一例外：`Core/` 为扁平的 `DT_Tools.Core`。
