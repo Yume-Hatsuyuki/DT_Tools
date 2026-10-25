@@ -5,12 +5,6 @@ using System.Reflection;
 
 namespace DT_Tools.WebConsole
 {
-    /// <summary>
-    /// WebUI 静态资源服务：白名单（index/login/css/js）+ Mime 表 + 防目录穿越。
-    /// </summary>
-    /// <remarks>
-    /// WebUI 缺失时页面返回 503，API 不受影响。
-    /// </remarks>
     public static class StaticFiles
     {
         private static string _webRoot;
@@ -56,7 +50,6 @@ namespace DT_Tools.WebConsole
 
             string rel = path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
             string full = Path.GetFullPath(Path.Combine(root, rel));
-            // 前缀比较必须锚定到目录分隔符：否则 "WebUI" 前缀的同级目录（如 WebUI2）也能通过
             string rootFull = Path.GetFullPath(root);
             if (!rootFull.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
                 rootFull += Path.DirectorySeparatorChar;
@@ -75,7 +68,6 @@ namespace DT_Tools.WebConsole
             byte[] bytes = File.ReadAllBytes(full);
             resp.StatusCode = 200;
             resp.ContentType = Mime(full);
-            // 静态资源禁缓存：插件升级后浏览器必须拿新文件（协商缓存走 304）
             resp.Headers["Cache-Control"] = "no-cache";
             resp.ContentLength64 = bytes.Length;
             resp.OutputStream.Write(bytes, 0, bytes.Length);
@@ -83,11 +75,6 @@ namespace DT_Tools.WebConsole
             return true;
         }
 
-        /// <summary>
-        /// 未认证时返回登录页（401）；文件缺失返回 false 由调用方兜底。
-        /// </summary>
-        /// <param name="resp">要写入的 HTTP 响应。</param>
-        /// <returns>登录页已写入时为 true；文件缺失时为 false。</returns>
         public static bool TryServeLogin(HttpListenerResponse resp)
         {
             string full = Path.Combine(WebRoot, "login.html");

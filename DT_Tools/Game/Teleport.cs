@@ -4,9 +4,6 @@ using UnityEngine;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 本机瞬移：与 /beacon、官方 HandleRespawn 同款（本地落位 + C_MOVE + 相机跟随）。
-    /// </summary>
     public static class Teleport
     {
         public static bool TryTeleport(MyPlayer my, PosInfo pos, out string error)
@@ -53,7 +50,6 @@ namespace DT_Tools.Game
                 }
                 catch
                 {
-                    // 相机失败不影响瞬移
                 }
 
                 return true;

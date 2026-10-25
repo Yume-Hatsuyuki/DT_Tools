@@ -4,9 +4,6 @@ using System.Text;
 
 namespace DT_Tools.Commands.Modded
 {
-    /// <summary>
-    /// /modded 输出格式化：人类回复文本 + JSON 结果 DTO。
-    /// </summary>
     internal static class ModdedFormat
     {
         public static string Help() =>

@@ -3,12 +3,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.Phase
 {
-    /// <summary>
-    /// /enter_trial — 强制进入学级裁判。
-    /// </summary>
-    /// <remarks>
-    /// 仅房主。
-    /// </remarks>
     internal sealed class EnterTrialCommand : ICommand
     {
         public string Name => "enter_trial";

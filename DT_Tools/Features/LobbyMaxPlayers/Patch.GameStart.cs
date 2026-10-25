@@ -8,15 +8,6 @@ using Server.Game;
 
 namespace DT_Tools.Features.LobbyMaxPlayers
 {
-    /// <summary>
-    /// GameStart 整替（0.1.18c GameRoom.cs:662-684）：StartPosList 打乱后分配，
-    /// 人数超出出生点时 i % Count 循环复用，避免越界。
-    /// </summary>
-    /// <remarks>
-    /// 仅当 MaxMembers &gt; 8 时接管，否则走原版。
-    /// 与原版（0.1.18c GameRoom.cs:681 直接赋 FirstBloodVictimId=0）的差异用
-    /// public RestoreFirstBloodVictimId（0.1.18c GameRoom.cs:167）等价实现。
-    /// </remarks>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.GameStart))]
     internal static class LobbyMaxPlayersGameStartPatch
     {
@@ -28,15 +19,15 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             if (LobbyMaxPlayersFeature.MaxMembers <= 8)
                 return true;
 
-            ItemManager.Instance.ClearWithDespawn();            // public：0.1.18c ItemManager.cs:275
+            ItemManager.Instance.ClearWithDespawn();
 
-            __instance.CorpseMetas.Clear();                     // 0.1.18c GameRoom.cs:125
-            __instance.RoundStartPlayerCount = __instance.Players.Count;  // 0.1.18c GameRoom.cs:129
+            __instance.CorpseMetas.Clear();
+            __instance.RoundStartPlayerCount = __instance.Players.Count;
             Log.Info<LobbyMaxPlayersFeature>(
                 $"本局人数 {__instance.RoundStartPlayerCount} → 黑幕击杀上限 {__instance.BlackKillLimit} 次（出生点循环复用）");
 
             foreach (Server.Game.Player player in __instance.Players)
-                player.Clear();                                 // 0.1.18c Server.Game/Player.cs:706
+                player.Clear();
 
             List<PosInfo> list = Managers.Data.MapData.StartPosList != null
                 ? Managers.Data.MapData.StartPosList.ToList()
@@ -49,11 +40,11 @@ namespace DT_Tools.Features.LobbyMaxPlayers
                     fallback = new PosInfo { X = 0f, Y = 0f };
                 Log.Warn<LobbyMaxPlayersFeature>("StartPosList 为空，回退 ErrorPos/LobbyPos 出生点");
                 foreach (Server.Game.Player player in __instance.Players)
-                    player.GameStart(fallback);                 // 0.1.18c Server.Game/Player.cs:623
+                    player.GameStart(fallback);
             }
             else
             {
-                list = Util.Shuffle(list, list.Count);          // 0.1.18c Util.cs
+                list = Util.Shuffle(list, list.Count);
                 int n = __instance.Players.Count;
                 for (int i = 0; i < n; i++)
                     __instance.Players[i].GameStart(list[i % list.Count]);
@@ -63,24 +54,18 @@ namespace DT_Tools.Features.LobbyMaxPlayers
                         $"玩家数 {n} 超过出生点数 {list.Count}，出生点循环复用");
             }
 
-            // 客户端全局命名空间另有 DeviceManager，必须用 Server.Game 全名
-            Server.Game.DeviceManager.Instance.InitDevices();   // 0.1.18c Server.Game/DeviceManager.cs:798
-            Server.Game.DeviceManager.Instance.InitStorage();   // 0.1.18c Server.Game/DeviceManager.cs:347
+            Server.Game.DeviceManager.Instance.InitDevices();
+            Server.Game.DeviceManager.Instance.InitStorage();
 
             InvokeMissionStart();
 
-            // FirstBloodVictimId 只有 private set（0.1.18c GameRoom.cs:127），走 public Restore
-            __instance.RestoreFirstBloodVictimId(0);            // 0.1.18c GameRoom.cs:167
+            __instance.RestoreFirstBloodVictimId(0);
 
-            AwardManager.Instance.StartRound();                 // 0.1.18c Server.Game/AwardManager.cs:48（public）
+            AwardManager.Instance.StartRound();
 
             return false;
         }
 
-        /// <summary>
-        /// 开局任务分配：MissionManager 在发行程序集中为 internal（0.1.18c Server.Game/MissionManager.cs:10），
-        /// 反射访问统一收敛到 Game/MissionAccess（无参 StartMission()：Server.Game/MissionManager.cs:355）。
-        /// </summary>
         private static void InvokeMissionStart()
         {
             if (!MissionAccess.StartParameterless())

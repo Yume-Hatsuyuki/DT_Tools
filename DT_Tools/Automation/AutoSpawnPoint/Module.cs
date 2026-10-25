@@ -3,9 +3,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Automation.AutoSpawnPoint
 {
-    /// <summary>
-    /// 进入 Survive 后传送到指定出生点或自定义坐标（与 /beacon 同源）。
-    /// </summary>
     [AutomationModule("开局指定出生点",
         "进入生存阶段后传送到 StartPosList 出生点（下拉）或自定义坐标。",
         side: FeatureSide.Client,
@@ -28,16 +25,6 @@ namespace DT_Tools.Automation.AutoSpawnPoint
         [Config("进入 Survive 后延迟多少秒再传送。", Min = 0, Max = 120)]
         public static float DelaySeconds = 15f;
 
-        /// <summary>
-        /// 统一节拍入口。
-        /// </summary>
-        /// <remarks>
-        /// 注意：在对局中（已处于 Survive）热启用本模块时，
-        /// State.Reset 已把 LastState 归 NoneState、DoneThisRound=false，下一拍
-        /// Trigger 会视作"新进入 Survive"，立即按 DelaySeconds 计时并触发本局传送
-        /// ——与 AutoAcquireWeapon / AutoPickCharacter 共有的统一模式，属预期行为。
-        /// </remarks>
-        /// <param name="hostEnabled">自动化总开关的当前值，由调用方每帧传入。</param>
         public static void Tick(bool hostEnabled)
         {
             if (!hostEnabled || !Engine.Enabled<AutoSpawnPointModule>())

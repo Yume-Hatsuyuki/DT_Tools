@@ -6,17 +6,6 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Fusebox
 {
-    /// <summary>
-    /// /sabotage_fuse [#id|all]：客户端拉闸，无视拔螺栓谜题，直接发 C_INTERACT_FUSEBOX（跟随控制台，非房主可用，仅生存阶段）。
-    /// </summary>
-    /// <remarks>
-    /// 服务端 DisconnetCable 只校验 MissionType==-1（开局武装的 3 个电闸，0.1.18c Server.Game/Fusebox.cs:114），
-    /// 没有颜色、距离、谜题校验，所以好人也能拉闸；第 2 个电闸拉断会获得 OnBlackout「主谋」成就。
-    /// 多人局使用会污染成就与进程归属，服务端无法区分是否为命令所为。
-    /// 谜题进度 C_HANDLE_FUSEBOX.SaveProgress 只是表现层广播，拉断只看 C_INTERACT_FUSEBOX（StateList[0]==0），故直接发包可绕过谜题。
-    /// 服务端 DeviceManager.Interact 有 500ms InteractLock，all 模式用协程每 0.6 秒发一包。
-    /// 示例：/sabotage_fuse 查看列表；/sabotage_fuse all 拉断全部（第 2 个触发全场停电）；/拆电 #12 拉断指定电闸。
-    /// </remarks>
     internal sealed class SabotageFuseCommand : ICommand
     {
         public string Name => "sabotage_fuse";
@@ -33,10 +22,8 @@ namespace DT_Tools.Commands.Fusebox
             if (!FuseboxLogic.ValidateClient(ctx, out string validateCode))
                 return CommandResult.Fail(validateCode);
 
-            // 收集已武装且完好的电闸（MissionType==-1 && StateList[0]==0）
             var armed = Devices.ArmedIntactFuseboxes();
 
-            // 无参：列出可拉电闸
             if (ctx.Args.Length == 0)
             {
                 if (armed.Count == 0)
@@ -50,11 +37,9 @@ namespace DT_Tools.Commands.Fusebox
 
             string arg = ctx.Args[0];
 
-            // all：拉断全部已武装
             if (arg.Equals("all", StringComparison.OrdinalIgnoreCase))
                 return SabotageAll(armed, ctx);
 
-            // 单个 #id / id
             if (!TargetSpec.TryParseId(arg, out int fuseboxId))
             {
                 ctx.Reply($"无效的 ID: {arg}（应为 #<数字> 或纯数字）");
@@ -64,21 +49,12 @@ namespace DT_Tools.Commands.Fusebox
             return SabotageOne(fuseboxId, armed, ctx);
         }
 
-        /// <summary>
-        /// 单个电闸拉断：校验目标确实已武装且完好后发包，
-        /// 避免对已损坏电闸误发触发 ConnetCable 反而修好电闸。
-        /// </summary>
-        /// <param name="fuseboxId">要拉断的电闸 ID。</param>
-        /// <param name="armed">当前已武装的电闸列表，用于校验目标完好。</param>
-        /// <param name="ctx">命令上下文。</param>
-        /// <returns>命令执行结果。</returns>
         private static CommandResult SabotageOne(int fuseboxId, List<DeviceBase> armed, CommandContext ctx)
         {
             DeviceBase target = armed.Find(f => f.ID == fuseboxId);
 
             if (target == null)
             {
-                // 不在已武装列表中：检查是否存在此设备 / 是否为电闸 / 当前状态
                 var dev = FuseboxLogic.FindFusebox(fuseboxId, out string findError);
                 if (dev == null)
                 {
@@ -96,7 +72,6 @@ namespace DT_Tools.Commands.Fusebox
                     return CommandResult.Fail("already broken");
                 }
 
-                // 完好但未武装（MissionType != -1）：服务端 DisconnetCable 会提前 return
                 ctx.Warn(
                     $"电闸 #{fuseboxId} 当前状态: {stateLabel}（未武装），" +
                     "服务端 DisconnetCable 要求 MissionType==-1，将拒绝本次拉闸。");
@@ -112,15 +87,6 @@ namespace DT_Tools.Commands.Fusebox
             return CommandResult.Success(new { fuseboxId });
         }
 
-        /// <summary>
-        /// all 模式：用协程逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。
-        /// </summary>
-        /// <remarks>
-        /// 第 2 个电闸拉断时会触发全场停电 + ClearFuseboxSabotage，第 3 个包将被服务端拒绝。
-        /// </remarks>
-        /// <param name="armed">当前已武装的电闸列表。</param>
-        /// <param name="ctx">命令上下文。</param>
-        /// <returns>命令执行结果。</returns>
         private static CommandResult SabotageAll(List<DeviceBase> armed, CommandContext ctx)
         {
             if (armed.Count == 0)

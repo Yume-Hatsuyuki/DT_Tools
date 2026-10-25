@@ -5,13 +5,6 @@ using Protocol;
 
 namespace DT_Tools.Features.FishingPond
 {
-    /// <summary>
-    /// Fishing.HandleEvent 整替「起竿成功且有活跃任务」分支（HandleEvent：0.1.18c Server.Game/Fishing.cs:133；
-    /// 原版该分支在 Server.Game/Fishing.cs:161-183：固定掉落 1059/1060/1061 三种鱼）。
-    /// </summary>
-    /// <remarks>
-    /// 扩展池随机出道具，其余守卫（水下尸体优先、无任务忽略）与状态清理与原版一致。
-    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.Fishing), nameof(Server.Game.Fishing.HandleEvent))]
     internal static class FishingPondPatch
     {
@@ -26,7 +19,6 @@ namespace DT_Tools.Features.FishingPond
             if (!fishPkt.IsSuccess || fishPkt.IsPlaying)
                 return true;
 
-            // 水下有尸体时原版改为捞尸体，不介入
             if (Server.Game.DeviceManager.Instance.GetSubmergedPondCorpses().Count > 0)
                 return true;
 
@@ -50,7 +42,6 @@ namespace DT_Tools.Features.FishingPond
             __instance.DeviceInfo.Bubble = 0;
             __instance.DeviceInfo.StateList[1] = 0;
             __instance.BroadcastStateInArea();
-            // FishingPlayer 为 private set 属性（0.1.18c Server.Game/Fishing.cs:14），经其 setter 摘除事件挂钩
             Traverse.Create(__instance).Property("FishingPlayer").SetValue(null);
 
             return false;

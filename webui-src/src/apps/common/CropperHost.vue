@@ -3,11 +3,9 @@ import { ref, computed } from 'vue';
 import { useCropper, cropToDataUrl, clampOffset } from '../../composables/useCropper.js';
 import IconX from '~icons/tabler/x';
 
-/** 全局裁切模态框宿主——只在 Desktop 挂载一次，逻辑全在 useCropper。 */
 const { state } = useCropper();
 const busy = ref(false);
 
-// 舞台尺寸随模式变化：头像/图标=320×320 方台，壁纸=舞台即选区（所见即所得）
 const stageStyle = computed(() => ({ width: state.stageW + 'px', height: state.stageH + 'px' }));
 const boxStyle = computed(() => ({ width: state.selW + 'px', height: state.selH + 'px' }));
 

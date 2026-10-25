@@ -8,42 +8,20 @@ using UnityEngine;
 
 namespace DT_Tools.Features.CharacterMapPin
 {
-    /// <summary>
-    /// pin 同步：平板/HUD 的 pin 列表查找、白方强制刷新他人 pin 的每帧巡检、
-    /// 常驻箭头的追踪过滤。
-    /// </summary>
-    /// <remarks>
-    /// 贴图替换本体在 Ui。
-    /// </remarks>
     internal static class CharacterMapPinLogic
     {
-        /// <summary>
-        /// 平板 pin 列表：0.1.18c UI_GameTablet.cs。
-        /// </summary>
         private static readonly FieldInfo TabletPinsField =
             AccessTools.Field(typeof(UI_GameTablet), "_subItems");
 
-        /// <summary>
-        /// HUD 小地图 pin 列表：0.1.18c UI_GameScene.cs。
-        /// </summary>
         private static readonly FieldInfo HudPinsField =
             AccessTools.Field(typeof(UI_GameScene), "_playerPinList");
 
-        /// <summary>
-        /// RefreshPlayerPin(Player) 私有：0.1.18c UI_GameScene.cs:837。
-        /// </summary>
         private static readonly Action<UI_GameScene, Player> RefreshPlayerPinOf =
             Reflect.Bind<Action<UI_GameScene, Player>>(typeof(UI_GameScene), "RefreshPlayerPin", new[] { typeof(Player) });
 
-        /// <summary>
-        /// DeletePin(int) 私有：0.1.18c UI_GameScene.cs:920。
-        /// </summary>
         private static readonly Action<UI_GameScene, int> DeletePinOf =
             Reflect.Bind<Action<UI_GameScene, int>>(typeof(UI_GameScene), "DeletePin", new[] { typeof(int) });
 
-        /// <summary>
-        /// 白方巡检的存活玩家 id 集合：静态复用，避免每帧 new 分配。
-        /// </summary>
         private static readonly HashSet<int> LiveIds = new HashSet<int>();
 
         public static UI_MinimapSubItem FindTabletPin(object tablet, int id)
@@ -66,29 +44,12 @@ namespace DT_Tools.Features.CharacterMapPin
             return null;
         }
 
-        /// <summary>
-        /// HUD pin 列表原始访问（白方巡检清理 / 热关闭还原贴图用）。
-        /// </summary>
-        /// <param name="scene">HUD 场景对象。</param>
-        /// <returns>HUD 上的 pin 列表。</returns>
         public static List<UI_MinimapSubItem> HudPinListOf(object scene)
             => HudPinsField?.GetValue(scene) as List<UI_MinimapSubItem>;
 
-        /// <summary>
-        /// 平板 pin 列表原始访问（热关闭还原贴图用）。
-        /// </summary>
-        /// <param name="tablet">平板对象。</param>
-        /// <returns>平板上的 pin 列表。</returns>
         public static List<UI_MinimapSubItem> TabletPinListOf(object tablet)
             => TabletPinsField?.GetValue(tablet) as List<UI_MinimapSubItem>;
 
-        /// <summary>
-        /// 白方强制显示他人 Pin（独立开关 ShowPinsForWhite）：
-        /// 原版 LateUpdate 在 Color==White 时直接 return（0.1.18c UI_GameScene.cs:789-792），
-        /// 不调用 RefreshPlayerPin。开启后每帧补调 RefreshPlayerPin + ApplyPin，
-        /// 并清理已死亡/离开的 pin（保留自己的 MyPlayer pin）。
-        /// </summary>
-        /// <param name="scene">游戏场景界面。</param>
         public static void SweepWhitePins(UI_GameScene scene)
         {
             MyPlayer my = Managers.Player.MyPlayer;
@@ -112,7 +73,6 @@ namespace DT_Tools.Features.CharacterMapPin
                     continue;
 
                 LiveIds.Add(id);
-                // RefreshPlayerPin(Player) 私有：0.1.18c UI_GameScene.cs:837（委托缓存在上方）
                 RefreshPlayerPinOf?.Invoke(scene, player);
 
                 UI_MinimapSubItem pin = FindHudPin(scene, id);
@@ -120,8 +80,6 @@ namespace DT_Tools.Features.CharacterMapPin
                     CharacterMapPinUi.ApplyPin(pin, player, CharacterMapPinFeature.ReplaceBlackPin);
             }
 
-            // 清掉已不在 live 列表里的他人 pin（DeletePin(int) 私有：0.1.18c UI_GameScene.cs:920）。
-            // 「死亡保留 Pin」拦下的 pin 也在 live 列表外（玩家已 Despawn），按集合跳过。
             var pinList = HudPinListOf(scene);
             if (pinList == null)
                 return;
@@ -139,16 +97,6 @@ namespace DT_Tools.Features.CharacterMapPin
             }
         }
 
-        /// <summary>
-        /// 「死亡保留 Pin」是否拦下本次删除：仅对局内（Survive/Detective）、非自己的 pin。
-        /// </summary>
-        /// <remarks>
-        /// 庭审开始时原版 StartTrial→ClearSharedAndObservedPlayers 会广播 S_DESPAWN 清场
-        /// （0.1.18c Server.Game/GameRoom.cs:143)，此时状态已是 Trial（服务器先切 State 再广播，
-        /// 0.1.18c Server.Game/GameRoom.cs + 601-610），不在 Survive/Detective 内，照常删除。
-        /// </remarks>
-        /// <param name="id">pin 对应的 PlayerId。</param>
-        /// <returns>应拦下本次删除时为 true。</returns>
         public static bool CanKeepPin(int id)
         {
             MyPlayer my = Managers.Player.MyPlayer;
@@ -159,22 +107,9 @@ namespace DT_Tools.Features.CharacterMapPin
             return gs == EGameState.Survive || gs == EGameState.Detective;
         }
 
-        /// <summary>
-        /// HUD 删除 pin（DeletePin(int) 私有：0.1.18c UI_GameScene.cs:920；热关闭清理保留 pin 用）。
-        /// </summary>
-        /// <param name="scene">游戏场景界面。</param>
-        /// <param name="id">要删除 pin 的 PlayerId。</param>
         public static void DeleteHudPin(UI_GameScene scene, int id)
             => DeletePinOf?.Invoke(scene, id);
 
-        /// <summary>
-        /// 「死亡保留 Pin」跟随服务器广播的强制位移（Patch.RespawnFollow 在 PlayerManager.HandleRespawn 后置调用）。
-        /// </summary>
-        /// <remarks>
-        /// 复刻原版 Kaho（ComplyRules）对被追踪者的位置推送语义：服务器每次接受移动都向追踪者发 S_PIN_MOVE（含强制移动，0.1.18c Server.Game/Player.cs），客户端经 Handle_S_PIN_MOVE（0.1.18c PacketHandler.cs:243-249）调 RefreshComplyRulesPin，非强制分支走 SetTargetPosition 平滑（0.1.18c UI_GameScene.cs:886-889）。本方法与其同构：HUD / 平板两份保留 pin 一起平滑推到目标点，坐标换算与逐帧刷新同源（0.1.18c Util.cs:884-889）。
-        /// </remarks>
-        /// <param name="id">保留 pin 对应的 PlayerId。</param>
-        /// <param name="pos">服务器广播的强制位移目标坐标。</param>
         public static void FollowKeptPin(int id, PosInfo pos)
         {
             Vector2 target = new Vector2(pos.X, pos.Y);
@@ -186,12 +121,6 @@ namespace DT_Tools.Features.CharacterMapPin
                 FindTabletPin(tablet, id)?.SetTargetPosition(target);
         }
 
-        /// <summary>
-        /// 常驻箭头是否追踪该玩家：排除自己/无角色/观战/已死，Kaho 追踪目标不重复显示。
-        /// </summary>
-        /// <param name="my">本机玩家。</param>
-        /// <param name="player">要判断的玩家。</param>
-        /// <returns>应当追踪该玩家时为 true。</returns>
         public static bool ShouldTrack(MyPlayer my, Player player)
         {
             int id = player.PublicInfo.PlayerId;
@@ -199,7 +128,6 @@ namespace DT_Tools.Features.CharacterMapPin
                 return false;
             if (Managers.Player.KnownDeadIds.Contains(id))
                 return false;
-            // Kaho 正在追踪该玩家时，原版技能箭头已存在，避免双箭头
             if (my.SkillData != null
                 && my.SkillData.Type == ESkillType.ComplyRules
                 && my.SkillState == -id)

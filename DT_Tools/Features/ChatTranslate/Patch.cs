@@ -12,50 +12,26 @@ using Newtonsoft.Json;
 
 namespace DT_Tools.Features.ChatTranslate
 {
-    /// <summary>
-    /// 聊天翻译补丁：
-    /// 接收翻译——注入 VoiceManager.EnqueueNormalChat（0.1.18c VoiceManager.cs:1319，
-    /// 普通聊天接收入口，自己发出的消息经房主广播回显也会走这里）。
-    /// 原文照常入队显示（不拼接、不超长、不改变广播）；译文作为第二条本地消息追加
-    /// （带色[翻译版]标签 + 译文，仅自己可见，别人收不到）。
-    /// 发送翻译——注入 VoiceManager.SendChatMessage（0.1.18c VoiceManager.cs:1227，发包入口），
-    /// 把发出的中文消息翻译成目标语言再广播，让所有人看到译文。
-    /// 翻译通道：填了百度开放平台 appid/密钥走正式 API（稳定）；未填且开启免 key 模式
-    /// 走百度网页翻译接口（SSE 流式，免费，逆向实现、可能随官方调整失效）；都不可用时回退原文。
-    /// 百度正式 API：POST https://api.fanyi.baidu.com/api/trans/vip/translate，
-    /// 参数 q/from/to/appid/salt/sign，sign = MD5(appid + q + salt + 密钥)（q 用原始文本）。
-    /// 百度网页接口：POST https://fanyi.baidu.com/ait/text/translate（SSE），参数参考 bt.mjs。
-    /// </summary>
     internal static class Patches
     {
-        /// <summary>百度开放平台正式 API。</summary>
         private const string BaiduApi = "https://api.fanyi.baidu.com/api/trans/vip/translate";
 
-        /// <summary>百度网页版翻译接口（免 key，SSE 流式）。</summary>
         private const string BaiduWebApi = "https://fanyi.baidu.com/ait/text/translate";
 
-        /// <summary>网页接口需要浏览器 UA。</summary>
         private const string WebUserAgent =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36";
 
-        /// <summary>翻译版标签默认颜色（配置非法时回退）。</summary>
         private const string DefaultTagColor = "#80D8FF";
 
-        /// <summary>共享 HttpClient；每次请求用独立 CancellationToken 控制超时。</summary>
         private static readonly HttpClient Http = new HttpClient();
 
-        /// <summary>翻译结果缓存：原文+目标语言 → 译文。</summary>
         private static readonly Dictionary<string, string> Cache = new Dictionary<string, string>();
 
         private static readonly object CacheGate = new object();
 
-        /// <summary>无 key 且免 key 模式关闭时的提醒（只提醒一次）。</summary>
         private static bool _warnedNoChannel;
 
-        /// <summary>失败日志节流：30 秒内最多打一条，避免离线/限流时刷屏。</summary>
         private static DateTime _lastFailLogAt = DateTime.MinValue;
-
-        // ===== 正式 API 响应模型 =====
 
         private sealed class BaiduTrans
         {
@@ -72,8 +48,6 @@ namespace DT_Tools.Features.ChatTranslate
 
             public BaiduTrans[] trans_result { get; set; }
         }
-
-        // ===== 网页接口 SSE 事件模型 =====
 
         private sealed class WebList
         {
@@ -105,21 +79,9 @@ namespace DT_Tools.Features.ChatTranslate
             }
             catch
             {
-                // 运行时不支持时忽略，走系统默认 TLS
             }
         }
 
-        // ===== 1. 接收翻译 =====
-
-        /// <summary>
-        /// 聊天接收入口：原文照常入队；译文作为第二条本地消息追加（仅自己可见）。
-        /// 译文消息含汉字，再次入队时被本补丁的 IsChinese 判定跳过，不会递归翻译。
-        /// </summary>
-        /// <summary>
-        /// 聊天接收入口：原文先入队显示；译文在原文之后作为第二条本地消息追加（仅自己可见）。
-        /// Postfix 时机 = 原文已入队，译文排在原文下边；译文消息含汉字，再次入队时
-        /// 被本补丁的 IsChinese 判定跳过，不会递归翻译。
-        /// </summary>
         [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.EnqueueNormalChat))]
         internal static class ChatTranslateReceivePatch
         {
@@ -137,7 +99,6 @@ namespace DT_Tools.Features.ChatTranslate
                         return;
                     }
 
-                    // 已是中文直接显示原文（省额度、防重复翻译）
                     if (IsChinese(message))
                     {
                         return;
@@ -149,7 +110,6 @@ namespace DT_Tools.Features.ChatTranslate
                         return;
                     }
 
-                    // 追加第二条本地消息：带色[翻译版]标签 + 译文，只有本机显示，排在原文下边
                     Managers.Voice?.EnqueueNormalChat(playerId, BuildTranslationMessage(translated), isDeadByHost);
                 }
                 catch (Exception ex)
@@ -159,9 +119,6 @@ namespace DT_Tools.Features.ChatTranslate
             }
         }
 
-        // ===== 2. 发送翻译 =====
-
-        /// <summary>发送入口：中文消息 → 目标语言广播，让所有人看到译文。</summary>
         [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.SendChatMessage))]
         internal static class ChatTranslateSendPatch
         {
@@ -184,13 +141,11 @@ namespace DT_Tools.Features.ChatTranslate
                         return;
                     }
 
-                    // 跳过内部指令广播（零宽前缀，如动作同步指令），避免误翻译
                     if (message[0] == '\u200B')
                     {
                         return;
                     }
 
-                    // 只翻译中文消息；英文/韩文消息按原文发送
                     if (!IsChinese(message))
                     {
                         return;
@@ -210,12 +165,6 @@ namespace DT_Tools.Features.ChatTranslate
             }
         }
 
-        // ===== 3. 翻译核心 =====
-
-        /// <summary>
-        /// 翻译：先查缓存（按原文+目标语言）；未命中时选择通道——
-        /// 填了 appid/密钥走正式 API，否则免 key 网页接口；失败或译文与原文一致返回原文。
-        /// </summary>
         private static string TranslateTo(string text, string targetLang)
         {
             string cacheKey = text + "\u0001" + targetLang;
@@ -247,7 +196,6 @@ namespace DT_Tools.Features.ChatTranslate
             return text;
         }
 
-        /// <summary>百度正式 API 翻译；失败返回 null（调用方回退原文）。</summary>
         private static string TranslateByApi(string text, string targetLang)
         {
             string appId = ChatTranslateFeature.BaiduAppId;
@@ -296,10 +244,6 @@ namespace DT_Tools.Features.ChatTranslate
             }
         }
 
-        /// <summary>
-        /// 百度网页接口翻译（免 key，SSE 流式）；未开免 key 模式或失败返回 null。
-        /// 源语言本地检测（不传 auto），目标语言直接传百度代码。
-        /// </summary>
         private static string TranslateByWeb(string text, string targetLang)
         {
             if (!ChatTranslateFeature.WebApiFallback)
@@ -356,7 +300,6 @@ namespace DT_Tools.Features.ChatTranslate
                         return null;
                     }
 
-                    // SSE 逐行解析：data: 行内是 JSON 事件；Translating 事件的 list 累积为译文
                     using (Stream stream = resp.Content.ReadAsStreamAsync().GetAwaiter().GetResult())
                     using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
                     {
@@ -422,12 +365,6 @@ namespace DT_Tools.Features.ChatTranslate
             }
         }
 
-        // ===== 4. 工具方法 =====
-
-        /// <summary>
-        /// 构造第二条本地译文消息：带色[翻译版]标签 + 译文，走 TMP 富文本渲染；
-        /// 颜色配置非法（非 #RRGGBB）时回退默认色。
-        /// </summary>
         private static string BuildTranslationMessage(string translated)
         {
             string color = ChatTranslateFeature.TranslationTagColor;
@@ -437,7 +374,6 @@ namespace DT_Tools.Features.ChatTranslate
             }
             else
             {
-                // 校验十六进制位
                 for (int i = 1; i < color.Length; i++)
                 {
                     char c = color[i];
@@ -452,7 +388,6 @@ namespace DT_Tools.Features.ChatTranslate
             return "<color=" + color + ">[翻译版]</color>" + translated;
         }
 
-        /// <summary>MD5 十六进制小写（百度 sign 签名用）。</summary>
         private static string Md5Hex(string input)
         {
             using (MD5 md5 = MD5.Create())
@@ -467,10 +402,6 @@ namespace DT_Tools.Features.ChatTranslate
             }
         }
 
-        /// <summary>
-        /// 判断文本是否为中文：统计 CJK 相关字符，含日文假名或韩文谚文视为非中文；
-        /// 汉字占非 ASCII 字符比例 &gt; 40% 才算中文（避免把日文/夹带汉字的消息当中文）。
-        /// </summary>
         private static bool IsChinese(string s)
         {
             int han = 0;
@@ -479,15 +410,15 @@ namespace DT_Tools.Features.ChatTranslate
             {
                 if (c >= '\u3040' && c <= '\u30ff')
                 {
-                    return false; // 含假名 → 日文
+                    return false;
                 }
                 if (c >= '\uac00' && c <= '\ud7af')
                 {
-                    return false; // 含谚文 → 韩文
+                    return false;
                 }
                 if (c < '\u0080')
                 {
-                    continue; // ASCII 不计入比例
+                    continue;
                 }
                 total++;
                 if (c >= '\u4e00' && c <= '\u9fff')
@@ -498,7 +429,6 @@ namespace DT_Tools.Features.ChatTranslate
             return total > 0 && (double)han / total > 0.4;
         }
 
-        /// <summary>本地语言检测（网页接口用）：脚本正则识别，拉丁系一律按英文。</summary>
         private static string DetectLang(string s)
         {
             foreach (char c in s)
@@ -535,7 +465,6 @@ namespace DT_Tools.Features.ChatTranslate
             return "en";
         }
 
-        /// <summary>失败日志节流：30 秒内只打一条，避免刷屏 BepInEx。</summary>
         private static void LogFail(string detail)
         {
             DateTime now = DateTime.UtcNow;

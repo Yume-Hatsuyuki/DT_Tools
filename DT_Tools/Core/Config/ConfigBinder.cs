@@ -6,10 +6,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Core
 {
-    /// <summary>
-    /// 绑定 [Config] 静态字段：键 = 字段名，默认值 = 字段初始化器当前值；
-    /// 绑定后回写字段，配置热改（SettingChanged）时实时同步——功能代码读裸字段即可。
-    /// </summary>
     public static class ConfigBinder
     {
         public static void BindFields(ConfigFile config, Type owner, string section)
@@ -40,7 +36,6 @@ namespace DT_Tools.Core
                 config, section, field.Name, defaultValue, BuildDescription(attr, valueType), valueType);
 
             field.SetValue(null, entry.BoxedValue);
-            // SettingChanged 事件在泛型 ConfigEntry<T> 上（ConfigEntryBase 没有），经 EventInfo 订阅
             entry.GetType().GetEvent("SettingChanged")
                 ?.AddEventHandler(entry, new EventHandler((_, __) => field.SetValue(null, entry.BoxedValue)));
         }
@@ -60,8 +55,6 @@ namespace DT_Tools.Core
                     m.IsGenericMethodDefinition &&
                     m.GetParameters().Length == 4 &&
                     m.GetParameters()[2].ParameterType.IsGenericParameter &&
-                    // 第 4 参必须锚定 ConfigDescription 重载：另有一个 (…,T,string) 重载同样
-                    // 满足前三个条件，命中它会在 Invoke 时抛 ArgumentException（0.1.18c 审计 F-M17）
                     m.GetParameters()[3].ParameterType == typeof(ConfigDescription));
 
             var genericBind = bindMethod.MakeGenericMethod(valueType);
@@ -72,9 +65,6 @@ namespace DT_Tools.Core
         {
             AcceptableValueBase acceptable = null;
 
-            // 注意：不要对枚举使用 AcceptableValueList<T>。BepInEx 的 AcceptableValueList<T> 约束
-            // T : IEquatable<T>，Unity/Mono 上对 enum 做 MakeGenericType 会抛 Invalid generic arguments。
-            // 枚举选项由配置导出 API 用 Enum.GetNames 填充 accepts。
             if (attr.HasMin || attr.HasMax)
             {
                 if (valueType == typeof(float))

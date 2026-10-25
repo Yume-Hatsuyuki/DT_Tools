@@ -7,12 +7,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.HostScreenSms
 {
-    /// <summary>
-    /// 房主全员短信上屏：普通模式设备短信（DeviceChat）在房主中继时，额外以 SecretChat 类型转发给所有存活玩家，让每个客户端用原版 UI_SecretChatOverlay 原生渲染为屏幕气泡，未安装本插件的玩家也能看到。
-    /// </summary>
-    /// <remarks>
-    /// 原理：原版“黑方秘密通信”的黑方独占只是服务端 Replicator.Secrets 只发给黑 / 暗阵营，客户端气泡渲染（UI_SecretChatOverlay）并不检查阵营。房主把普通短信以 SecretChat 类型广播给全员，即可复用原生渲染管线。本功能只转发普通通信，绝不转发真正的秘密通信，避免泄露黑方情报。
-    /// </remarks>
     [HarmonyPatch]
     [PatchFeature(
         "房主全员短信上屏：普通模式设备短信由房主转发为全屏气泡，未安装插件的玩家也能看到（仅房主生效）。",
@@ -22,15 +16,6 @@ namespace DT_Tools.Features.HostScreenSms
         Author = "合理")]
     public sealed class HostScreenSmsFeature
     {
-        /// <summary>
-        /// Replicator.AliveReal 全库唯一调用点即普通设备短信中继
-        /// （Server.Game.HostPacketHandler.RelayDeviceChat 的 DeviceChat 分支），
-        /// 此处 Postfix 精准拦截：只对 Type=DeviceChat 的包补发一份 SecretChat 拷贝。
-        /// </summary>
-        /// <remarks>
-        /// 拷贝本身是 SecretChat，不会再命中本 Postfix，无递归。
-        /// </remarks>
-        /// <param name="packet">收到的消息包。</param>
         [HarmonyPatch(typeof(Replicator), nameof(Replicator.AliveReal))]
         [HarmonyPostfix]
         private static void PostfixAliveReal(IMessage packet)

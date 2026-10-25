@@ -7,28 +7,16 @@ using UnityEngine;
 
 namespace DT_Tools.Features.DtPresence
 {
-    /// <summary>
-    /// 在场暴露业务：写自己的 Lobby Member Data、扫描他人、驱动名字颜色。
-    /// </summary>
     internal static class DtPresenceLogic
     {
-        /// <summary>
-        /// Steam Lobby Member Data 键（与游戏 <c>build</c> 游戏版本键区分）。
-        /// </summary>
         public const string MemberDataKey = "dt_tools";
 
-        /// <summary>
-        /// 原版黑方名字色（0.1.18c UI_NameTag.SetNameColor）。
-        /// </summary>
         public static readonly Color BlackNameColor = new Color(1f, 0.18f, 0.439f);
 
         private static HostComponent _host;
         private static string _lastPublished = null;
         private static readonly Dictionary<int, MarkDriver> _drivers = new Dictionary<int, MarkDriver>();
 
-        /// <summary>
-        /// 确保常驻宿主存在（OnPatched / 热开共用）。
-        /// </summary>
         public static void EnsureHost()
         {
             if (_host != null)
@@ -52,9 +40,6 @@ namespace DT_Tools.Features.DtPresence
             _lastPublished = null;
         }
 
-        /// <summary>
-        /// 当前应写入的 value：功能关 → 清空；开且公布版本 → 版本号；开但不公布版本 → "1"。
-        /// </summary>
         public static string DesiredValue()
         {
             if (!Engine.Enabled<DtPresenceFeature>())
@@ -64,9 +49,6 @@ namespace DT_Tools.Features.DtPresence
             return "1";
         }
 
-        /// <summary>
-        /// 写入或清除自己的 Member Data（仅本机 Steam 身份）。
-        /// </summary>
         public static void TryPublish(string reason)
         {
             try
@@ -92,9 +74,6 @@ namespace DT_Tools.Features.DtPresence
             }
         }
 
-        /// <summary>
-        /// 功能关闭时尽量清空自己的键（仍在大厅时）。
-        /// </summary>
         public static void ClearOwnMemberData(string reason)
         {
             try
@@ -116,9 +95,6 @@ namespace DT_Tools.Features.DtPresence
             }
         }
 
-        /// <summary>
-        /// 读取某 Steam 用户在当前大厅的 dt_tools 值。
-        /// </summary>
         public static string ReadMemberDtTools(CSteamID steamId)
         {
             try
@@ -135,9 +111,6 @@ namespace DT_Tools.Features.DtPresence
             }
         }
 
-        /// <summary>
-        /// 解析配置中的标记色；失败时回退青蓝。
-        /// </summary>
         public static Color ResolveMarkColor()
         {
             string raw = (DtPresenceFeature.MarkColor ?? "").Trim();
@@ -145,12 +118,9 @@ namespace DT_Tools.Features.DtPresence
                 raw = "#" + raw;
             if (ColorUtility.TryParseHtmlString(raw, out Color c))
                 return c;
-            return new Color(0.31f, 0.76f, 0.97f); // #4FC3F7
+            return new Color(0.31f, 0.76f, 0.97f);
         }
 
-        /// <summary>
-        /// 每帧/节流：维护公布 + 同模标记。
-        /// </summary>
         public static void Tick()
         {
             if (!Engine.Enabled<DtPresenceFeature>())
@@ -192,7 +162,7 @@ namespace DT_Tools.Features.DtPresence
 
                 int pid = player.PublicInfo.PlayerId;
                 if (pid == myId)
-                    continue; // 只标记其他人
+                    continue;
 
                 ulong steam = Managers.Player.GetRosterSteamId(pid);
                 if (steam == 0)
@@ -211,7 +181,6 @@ namespace DT_Tools.Features.DtPresence
                 EnsureDriver(pid, player);
             }
 
-            // 清理已离开或不在场的驱动
             if (_drivers.Count > live.Count)
             {
                 var stale = new List<int>();
@@ -260,9 +229,6 @@ namespace DT_Tools.Features.DtPresence
             _drivers.Clear();
         }
 
-        /// <summary>
-        /// 常驻宿主：节流 Tick。
-        /// </summary>
         private sealed class HostComponent : MonoBehaviour
         {
             private float _nextPublishCheck;
@@ -272,7 +238,6 @@ namespace DT_Tools.Features.DtPresence
             {
                 float now = Time.unscaledTime;
 
-                // 公布：约 1.5s 一次（进房/热改也能较快跟上）
                 if (now >= _nextPublishCheck)
                 {
                     _nextPublishCheck = now + 1.5f;
@@ -280,7 +245,6 @@ namespace DT_Tools.Features.DtPresence
                         TryPublish("Host");
                 }
 
-                // 标记扫描稍密：0.5s
                 if (now >= _nextMarkScan)
                 {
                     _nextMarkScan = now + 0.5f;
@@ -289,9 +253,6 @@ namespace DT_Tools.Features.DtPresence
             }
         }
 
-        /// <summary>
-        /// 挂在目标 NameTag 上：每帧 LateUpdate 覆盖颜色；黑方时呼吸。
-        /// </summary>
         internal sealed class MarkDriver : MonoBehaviour
         {
             private Player _player;
@@ -335,13 +296,11 @@ namespace DT_Tools.Features.DtPresence
                 }
                 catch
                 {
-                    // 关房瞬间可能空引用
                 }
 
                 if (isBlack)
                 {
                     float period = Mathf.Max(0.4f, DtPresenceFeature.PulsePeriod);
-                    // 0→1→0 呼吸
                     float t = Mathf.PingPong(Time.unscaledTime / (period * 0.5f), 1f);
                     _text.color = Color.Lerp(BlackNameColor, mark, t);
                 }
@@ -351,9 +310,6 @@ namespace DT_Tools.Features.DtPresence
                 }
             }
 
-            /// <summary>
-            /// 还原原版颜色后销毁自身。
-            /// </summary>
             public void RestoreAndDestroy()
             {
                 if (_restoring)
@@ -370,13 +326,12 @@ namespace DT_Tools.Features.DtPresence
                             isBlack = pid > 0 && Managers.Player?.KnownBlackIds != null
                                       && Managers.Player.KnownBlackIds.Contains(pid);
                         }
-                        catch { /* ignore */ }
+                        catch { }
                         _player.NameTag.SetNameColor(isBlack);
                     }
                 }
                 catch
                 {
-                    // NameTag 可能已销毁
                 }
                 Destroy(this);
             }

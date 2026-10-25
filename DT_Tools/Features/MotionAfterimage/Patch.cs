@@ -3,9 +3,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.MotionAfterimage
 {
-    /// <summary>
-    /// 对局 HUD LateUpdate 后置 Tick（0.1.18c UI_GameScene.cs:789）。
-    /// </summary>
     [HarmonyPatch(typeof(UI_GameScene), "LateUpdate")]
     internal static class MotionAfterimageTickPatch
     {
@@ -18,12 +15,6 @@ namespace DT_Tools.Features.MotionAfterimage
         }
     }
 
-    /// <summary>
-    /// 他人 Despawn：只保留最后一次黑色定格（0.1.18c PlayerManager.cs:442)。
-    /// </summary>
-    /// <remarks>
-    /// Hide/进柜子不走此路径。
-    /// </remarks>
     [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.Despawn), new[] { typeof(int) })]
     internal static class MotionAfterimageDespawnPatch
     {
@@ -36,12 +27,6 @@ namespace DT_Tools.Features.MotionAfterimage
         }
     }
 
-    /// <summary>
-    /// 自己死亡：S_DEAD → GameManagerEX.Dead（0.1.18c GameManagerEX.cs:334）。
-    /// </summary>
-    /// <remarks>
-    /// 原版对自己忽略 S_DESPAWN，故本地定格走此钩子。
-    /// </remarks>
     [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
     internal static class MotionAfterimageLocalDeadPatch
     {

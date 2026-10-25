@@ -1,15 +1,12 @@
 #!/usr/bin/env node
-// nextmusic-dl.mjs
-// 用法: node nextmusic-dl.mjs <songId> [ip] [音质]
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 
 const BASE = 'https://nextmusic.toubiec.cn/api';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36';
-const DEFAULT_IP = '1.1.1.1'; // 最终兜底
+const DEFAULT_IP = '1.1.1.1';
 
-// 音质等级枚举（值均通过接口实测验证）
 const QualityLevel = Object.freeze({
   STANDARD: 'standard',
   HIGHER:   'higher',
@@ -39,7 +36,6 @@ const toLevel = s =>
   LABEL_TO_LEVEL[s] ||
   (ALL_LEVELS.includes(s) ? s : QualityLevel.STANDARD);
 
-// --- 新增：通过 ipinfo.io 获取真实公网 IP，失败时回落到默认 IP ---
 async function getPublicIP() {
   try {
     const res = await fetch('https://ipinfo.io/json', {
@@ -89,23 +85,19 @@ async function main() {
   const id = args[0];
   if (!id) throw new Error('用法: node nextmusic-dl.mjs <songId> [ip] [音质]');
 
-  // 优先级：命令行参数 > ipinfo.io 动态获取 > 默认兜底
   const ip = args[1] || await getPublicIP();
   const level = toLevel(args[2]);
 
   await mkdir('downloads', { recursive: true });
 
-  // 1) 元信息
   const info = await postJson('/getSongInfo', { id, ip });
   console.log(`🎵 ${info.name} - ${info.singer} [${info.duration}]`);
 
-  // 2) 取直链（拿到后立刻下，约 25 分钟内有效）
   const song = await postJson('/getSongUrl', { id, ip, level, timestamp: Date.now() });
   if (!song.url) throw new Error('未返回播放地址: ' + JSON.stringify(song));
   const note = song.level === level ? '' : `（请求 ${level} 被降级）`;
   console.log(`🔗 实际=${song.level} ${song.br}bps ${song.size}B ${note}`);
 
-  // 3) 下载
   const res = await fetch(song.url, { headers: { 'user-agent': UA }, redirect: 'follow' });
   if (!res.ok) {
     const b = await res.text().catch(() => '');

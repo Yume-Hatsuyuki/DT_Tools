@@ -17,8 +17,6 @@ import { pickImageFile } from '../composables/pickImage.js';
 import { useWallpaper } from '../composables/useWallpaper.js';
 import { useCropper } from '../composables/useCropper.js';
 import { useUpdateCheck } from '../composables/useUpdateCheck.js';
-// 桌面挂载即启动全局日志流（WebSocket 单例）：连接状态（顶栏）从桌面加载起
-// 就由日志流驱动，不依赖任何窗口是否打开。
 import { useLogStream } from '../composables/useLogStream.js';
 import { API } from '../api.js';
 
@@ -54,14 +52,6 @@ import IconBrandSteam from '~icons/tabler/brand-steam';
 import IconNews from '~icons/tabler/news';
 import IconModelAi from '~icons/tabler/model-ai';
 
-/**
- * 桌面应用注册表。id 同时是备忘录键（app:<id>）与窗口布局键；
- * 终端有两套：terminal=Kali 风格新版（不带 / 前缀），console=旧版（/ 命令 + 发送按钮），
- * 两套只显示各自会话的命令输出；log=全量日志应用。
- * 应用图标不再摆桌面——全部整合进底部 Dock（macOS 风），桌面只留壁纸/粒子/窗口。
- * onClose（可选）：窗口被关闭（红点 / 关闭所有进程）时的联动，当前仅随身MP3使用——
- * 关窗=同步销毁音乐（引擎会话销毁、语音管线还原）；未声明的应用零联动。
- */
 const apps = [
   { id: 'terminal', get title() { return t('app.terminal'); }, icon: markRaw(IconDragon), component: markRaw(TerminalApp), defaults: { x: 60, y: 50, w: 760, h: 520 } },
   { id: 'console', get title() { return t('app.console'); }, icon: markRaw(IconTerminal2), component: markRaw(ConsoleApp), defaults: { x: 90, y: 80, w: 760, h: 520 } },
@@ -76,8 +66,6 @@ const apps = [
 
 useLogStream();
 
-// 更新检测全局单例：桌面挂载即启动（3 分钟轮询），顶栏徽标/气泡、关于弹窗、
-// 更新信息弹窗共用同一份状态
 const upd = useUpdateCheck();
 upd.start();
 
@@ -85,31 +73,23 @@ const { windows, open, close, focus, minimize, toggleFocus, toggleMaximize, upda
 const wallpaper = useWallpaper();
 const cropper = useCropper();
 
-/**
- * 平铺模式：窗口不再浮动，只留当前激活的一个铺满「顶栏之下、Dock 之上」，
- * 切换靠顶栏标签与 Dock（标签页式）—— 对着"仿 macOS 桌面太重"的反馈做的简洁模式。
- * 状态与其它壳层本地状态一样进 localStorage。
- */
 const TILE_KEY = 'dt_desktop_tile_v1';
 const tileMode = ref(localStorage.getItem(TILE_KEY) === '1');
 function toggleTileMode() {
   tileMode.value = !tileMode.value;
   localStorage.setItem(TILE_KEY, tileMode.value ? '1' : '0');
 }
-/** 平铺模式下谁占着工作区：z 最大且未最小化的那个（其余窗口保持挂载但隐藏）。 */
 const tiledActiveId = computed(() => {
   if (!tileMode.value) return null;
   const top = windows.filter(w => !w.minimized).reduce((a, b) => (!a || b.z > a.z ? b : a), null);
   return top ? top.id : null;
 });
 
-const desktopMenu = ref(null);           // { x, y } —— 桌面右键菜单
-const dockMenu = ref(null);              // { x, y } —— Dock（任务栏）右键菜单
+const desktopMenu = ref(null);
+const dockMenu = ref(null);
 const busyInfo = ref(false);
 const showUpdate = ref(false);
-const showLanguage = ref(false);   // 语言弹窗（界面语言）           // 软件更新弹窗（顶栏徽标/气泡、关于弹窗均可打开）
-
-// ---- 挂件（Dock 可开可关，位置/关闭态由各自组件自持）----
+const showLanguage = ref(false);
 
 const WIDGET_STORE_KEY = 'dt_steam_widget_v1';
 const MCP_STORE_KEY = 'dt_mcp_widget_v1';
@@ -122,7 +102,6 @@ const steamWidgetOpen = ref(!widgetClosedAtStart(WIDGET_STORE_KEY));
 const mcpWidgetOpen = ref(!widgetClosedAtStart(MCP_STORE_KEY));
 const newsWidgetOpen = ref(!widgetClosedAtStart(NEWS_STORE_KEY));
 
-/** Dock 小组件定义（与应用图标同列，运行点表示弹窗开着）。 */
 const widgets = [
   { id: 'steam', get title() { return t('widget.steam'); }, icon: markRaw(IconBrandSteam) },
   { id: 'mcp', get title() { return t('widget.mcp'); }, icon: markRaw(IconModelAi) },
@@ -135,14 +114,12 @@ function toggleWidget(id) {
   else if (id === 'news') newsWidgetOpen.value = !newsWidgetOpen.value;
 }
 
-/** 当前打开的挂件 id 集合（Dock 运行指示点）。 */
 const openWidgets = computed(() => [
   ...(steamWidgetOpen.value ? ['steam'] : []),
   ...(mcpWidgetOpen.value ? ['mcp'] : []),
   ...(newsWidgetOpen.value ? ['news'] : []),
 ]);
 
-/** 多实例：每次启动都开新窗口（Dock 指示点/顶栏标签负责找回已开窗口）。 */
 function launchApp(appId) {
   const app = apps.find(a => a.id === appId);
   if (!app) return;
@@ -150,30 +127,19 @@ function launchApp(appId) {
   win.appDef = markRaw(app);
 }
 
-/**
- * 关窗联动：应用声明了 onClose 就在窗口销毁前触发（随身MP3=同步销毁音乐）。
- * 联动失败不阻塞关窗；多实例下关闭任意一个 MP3 窗口都会停掉共享的后端播放会话
- * （播放器本体是服务端单例，窗口只是遥控器）。
- */
 function onWindowClose(win) {
-  try { windowFor(win)?.onClose?.(); } catch { /* 联动失败不阻塞关窗 */ }
+  try { windowFor(win)?.onClose?.(); } catch { }
   close(win.id);
 }
 
-/** 「关闭所有进程」：逐窗触发 onClose 联动后再整体关闭（与单个红点语义一致）。 */
 function closeAllWindows() {
-  windows.forEach(w => { try { windowFor(w)?.onClose?.(); } catch { /* 同上 */ } });
+  windows.forEach(w => { try { windowFor(w)?.onClose?.(); } catch { } });
   closeAll();
 }
 
-// ---- 桌面 / Dock 右键菜单 ----
-
 function onDesktopContextMenu(e) {
-  // 窗口内部右键不弹桌面菜单（浏览器菜单已在全局捕获阶段屏蔽）
   if (e.target.closest && e.target.closest('.win')) return;
   e.preventDefault();
-  // 右键 Dock（任务栏）弹专属快捷菜单，不再套用桌面菜单——应用图标自己的
-  // 备忘菜单在 Dock 内已 stopPropagation，不会走到这里
   if (e.target.closest && e.target.closest('.dock')) {
     desktopMenu.value = null;
     dockMenu.value = {
@@ -197,8 +163,6 @@ async function changeWallpaper() {
   closeMenus();
   const file = await pickImageFile();
   if (!file) return;
-  // 与头像同款裁切流程：选区比例取当前视口（裁出来即铺满桌面所见），
-  // 输出 ≤1920px JPEG——落 localStorage 的体积与旧压缩管线一致
   const dataUrl = await cropper.open(file, {
     title: t('crop.wallpaper'),
     shape: 'free',
@@ -214,20 +178,15 @@ function resetWallpaper() {
   wallpaper.reset();
 }
 
-// ---- 粒子效果开关（桌面壳本地状态，存 localStorage）----
-
-// 自定义壁纸时粒子流会压在照片上，可整体关掉动效层只留壁纸（预设壁纸同理可关）
 const PARTICLES_KEY = 'dt_particles_v1';
 const particlesOn = ref((() => {
   try { return localStorage.getItem(PARTICLES_KEY) !== '0'; } catch { return true; }
 })());
 function toggleParticles() {
   particlesOn.value = !particlesOn.value;
-  try { localStorage.setItem(PARTICLES_KEY, particlesOn.value ? '1' : '0'); } catch { /* 隐私模式等场景忽略 */ }
+  try { localStorage.setItem(PARTICLES_KEY, particlesOn.value ? '1' : '0'); } catch { }
   closeMenus();
 }
-
-// ---- Dock 右键快捷菜单（动作全部在 Desktop 收口：launchApp / 窗口管理 / 关于）----
 
 const dockMenuItems = [
   { get label() { return t('menu.openTerminal'); }, icon: IconTerminal, action: () => { closeMenus(); launchApp('terminal'); } },
@@ -237,31 +196,23 @@ const dockMenuItems = [
   { get label() { return t('common.about'); }, icon: IconInfoCircle, action: () => { closeMenus(); busyInfo.value = true; } },
 ];
 
-// ---- 窗口内容屏蔽浏览器右键菜单（输入框/文本域除外，保留粘贴菜单）----
-
 function onGlobalContextMenu(e) {
   const t = e.target;
-  if (!t.closest || !t.closest('.win')) return;                 // 桌面/Dock 有自己的菜单逻辑
-  if (t.matches('input, textarea') || t.isContentEditable) return; // 保留系统粘贴菜单
+  if (!t.closest || !t.closest('.win')) return;
+  if (t.matches('input, textarea') || t.isContentEditable) return;
   e.preventDefault();
 }
-
-// ---- 桌面壁纸样式 ----
 
 const desktopStyle = computed(() => {
   const w = wallpaper.state;
   let style;
   if (w.custom) {
-    // url() 必须带引号：dataURL 里可能出现未编码的括号/引号字符（如 SVG 的 url(#id)），
-    // 不加引号整条 background 声明会被浏览器静默丢弃
     style = { backgroundImage: `url("${w.custom}")`, backgroundSize: 'cover', backgroundPosition: 'center' };
   } else {
     const preset = wallpaper.presets.find(p => p.id === w.presetId) || wallpaper.presets[0];
     style = { backgroundImage: preset.css };
     if (preset.size) style.backgroundSize = preset.size;
   }
-  // 自定义壁纸取色 → 覆写 Dock 配色。CSS 变量沿 .desktop 继承进 Dock 组件，
-  // Dock 自身零改动；色相来自壁纸，明度/饱和度已在 useWallpaper 压进深色玻璃区间
   const t = w.tint;
   if (t) {
     style['--dock-bg'] = `hsla(${t.h}, ${(t.s * 100).toFixed(1)}%, ${(t.l * 100).toFixed(1)}%, 0.60)`;
@@ -270,7 +221,6 @@ const desktopStyle = computed(() => {
   return style;
 });
 
-/** 光柱/地面网格只在 CSS 渐变壁纸上叠加；自定义图片壁纸时只留粒子。 */
 const decorative = computed(() => !wallpaper.state.custom);
 
 function windowFor(win) {
@@ -444,10 +394,8 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
 .ctx-menu button svg { width: 14px; height: 14px; color: var(--shell-glow); flex-shrink: 0; }
 .ctx-menu button:hover { background: rgba(150, 225, 255, 0.10); color: var(--text-0); }
 .ctx-menu button:disabled { opacity: 0.5; cursor: default; }
-/* 开关类菜单项右端的状态角标（同顶栏面板 km-item-state 的语义） */
 .ctx-state { margin-left: auto; padding-left: 14px; font-size: 10.5px; color: var(--text-2); }
 .ctx-state.on { color: var(--accent-green); }
-/* 破坏性操作（关闭所有进程）：红色可辨 */
 .ctx-menu button.danger { color: var(--accent-red); }
 .ctx-menu button.danger svg { color: var(--accent-red); }
 .ctx-menu button.danger:hover { background: rgba(236, 1, 1, 0.12); color: var(--accent-red); }
@@ -473,7 +421,6 @@ onUnmounted(() => document.removeEventListener('contextmenu', onGlobalContextMen
 .about-line { font-size: 12px; color: var(--text-1); line-height: 1.7; }
 .about-line.mono { font-family: var(--font-mono); color: var(--text-0); }
 
-/* 检查更新（手动）：按钮 + 结果行（错误红 / 有新版绿可跳详情 / 已最新绿） */
 .about-check-row { display: flex; justify-content: center; margin-top: 10px; }
 .about-check {
   display: inline-flex;

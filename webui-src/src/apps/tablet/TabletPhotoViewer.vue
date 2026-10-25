@@ -14,11 +14,6 @@ import {
   initialView, zoomAt, toggleView, clampPan, wheelFactor, pinchMetrics,
 } from './tabletViewer.js';
 
-/**
- * 照片查看器：覆盖平板区域，支持滚轮、双击、双指缩放，拖动平移，左右切换。
- * 与社交软件一致：点击图片以外的空白区域或按 Esc 关闭。几何计算见 tabletViewer.js。
- * photos 每项：{ key, src, name, time, line }；line 为聊天条目，待确认照片没有 line（不显示复制/另存）。
- */
 const props = defineProps({
   photos: { type: Array, default: () => [] },
   currentKey: { type: String, default: '' },
@@ -50,7 +45,6 @@ function measure() {
   if (el) vp.value = { w: el.clientWidth, h: el.clientHeight };
 }
 
-/** 客户端坐标 → 相对视口中心的坐标（几何计算的原点）。 */
 function relCenter(clientX, clientY) {
   const r = stageEl.value.getBoundingClientRect();
   return { cx: clientX - (r.left + r.width / 2), cy: clientY - (r.top + r.height / 2) };
@@ -74,7 +68,6 @@ function onResize() {
   if (natural.value.w) view.value = initialView(geom.value);
 }
 
-// —— 滚轮与双击 ——
 function onWheel(e) {
   e.preventDefault();
   const { cx, cy } = relCenter(e.clientX, e.clientY);
@@ -85,10 +78,9 @@ function onDblClick(e) {
   view.value = toggleView(view.value, cx, cy, geom.value);
 }
 
-// —— 指针：单指 / 鼠标拖动平移，双指缩放；点击空白区域关闭 ——
 const pointers = new Map();
-let drag = null;   // { x, y, tx, ty, moved, fromBg }
-let pinch = null;  // { dist0, view0 }
+let drag = null;
+let pinch = null;
 
 function onPointerDown(e) {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -130,7 +122,6 @@ function onPointerUp(e) {
   pointers.delete(e.pointerId);
   if (pointers.size < 2) pinch = null;
   if (pointers.size === 1 && !drag) {
-    // 双指松开一根后，剩下的手指继续拖动，不触发关闭
     const p = [...pointers.values()][0];
     drag = { x: p.x, y: p.y, tx: view.value.tx, ty: view.value.ty, moved: true, fromBg: false };
   }
@@ -146,7 +137,6 @@ function onPointerCancel(e) {
   if (pointers.size === 0) drag = null;
 }
 
-// —— 按钮与键盘 ——
 function zoomBy(factor) {
   view.value = zoomAt(view.value, factor, 0, 0, geom.value);
 }

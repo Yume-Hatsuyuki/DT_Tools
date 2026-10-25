@@ -6,28 +6,13 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
-    /// /api/gamepad/* — 手柄应用后端：映射配置与实时状态。手柄只控制游戏，这里只是配置面。
-    /// </summary>
-    /// <remarks>
-    /// 写操作经 WebConsole.RunOnMain 在主线程执行（与其它应用一致）。映射保存后即时生效（线程只读编译快照）。
-    /// 错误码小写英文短词，中文详情放在 data.message。
-    /// </remarks>
     public static class GamepadApi
     {
-        /// <summary>
-        /// GET /api/gamepad/state — 功能状态、实时输入、映射表与可选项。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleState(HttpListenerContext ctx)
         {
             HttpServer.WriteJson(ctx.Response, CommandResult.Success(BuildState()));
         }
 
-        /// <summary>
-        /// POST /api/gamepad/bind {layer, button, output} — 设置某层某按钮的输出。光标层可传 inherit，恢复为跟随普通层。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleBind(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -37,10 +22,6 @@ namespace DT_Tools.WebConsole.Api
             WriteMain(ctx, () => Bind(layer, button, output));
         }
 
-        /// <summary>
-        /// POST /api/gamepad/toggle {button} — 设置切换光标模式的按钮。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleToggle(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -53,10 +34,6 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
-        /// POST /api/gamepad/reset — 恢复默认映射。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleReset(HttpListenerContext ctx)
         {
             WriteMain(ctx, () =>

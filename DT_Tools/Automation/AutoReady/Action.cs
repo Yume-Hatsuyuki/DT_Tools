@@ -4,34 +4,10 @@ using UnityEngine;
 
 namespace DT_Tools.Automation.AutoReady
 {
-    /// <summary>
-    /// 动作：延迟等待 → 上限检查 → 定位 UI_GameScene 准备按钮 → 经原版
-    /// OnClickReadyButton 发送 C_READY（0.1.18c UI_GameScene.cs:2078，私有方法；
-    /// F5 快捷键即直接调用它 :4882）。
-    /// </summary>
-    /// <remarks>
-    /// 房主（开局按钮可见）无需准备；
-    /// 原版开局只由房主发 C_START 触发（0.1.18c Server.Game/GameRoom.cs），
-    /// 准备动作因此不可能间接开局。
-    /// </remarks>
     internal static class AutoReadyAction
     {
-        /// <summary>
-        /// 房主开局按钮（StartButton，枚举值 31）：只有房主可见。
-        /// </summary>
-        /// <remarks>
-        /// 0.1.18c UI_GameScene.cs:52 枚举；SelectedHostPlayer（:1735-1749）按房主身份切换显隐，
-        /// F5 快捷键也以它的显隐判定开局（:4800）。
-        /// </remarks>
         private const int StartButtonIndex = 31;
 
-        /// <summary>
-        /// 准备按钮（ReadyButton，枚举值 30）：非房主可见，点击走 OnClickReadyButton。
-        /// </summary>
-        /// <remarks>
-        /// 0.1.18c UI_GameScene.cs:51 枚举；绑定见 :599，F5 准备分支见 :4804。
-        /// 不要用 RoomCodeButton（枚举值 32，UI_GameScene.cs:53）判定房主：大厅所有人都可见。
-        /// </remarks>
         private const int ReadyButtonIndex = 30;
 
         public static void Run()
@@ -52,14 +28,13 @@ namespace DT_Tools.Automation.AutoReady
                 return;
             }
 
-            var scene = Managers.UI?.SceneUI as UI_GameScene;   // 0.1.18c UIManager.cs:61
+            var scene = Managers.UI?.SceneUI as UI_GameScene;
             if (scene == null)
             {
                 ScheduleRetry();
                 return;
             }
 
-            // GetObject 为 UI_Base protected（0.1.18c UI_Base.cs:93），经 Traverse 调用。
             var t = HarmonyLib.Traverse.Create(scene);
             GameObject startBtn = t.Method("GetObject", new object[] { StartButtonIndex }).GetValue<GameObject>();
             if (startBtn != null && startBtn.activeInHierarchy)
@@ -75,7 +50,7 @@ namespace DT_Tools.Automation.AutoReady
                 return;
             }
 
-            if (scene.IsReady)   // 公开属性：0.1.18c UI_GameScene.cs:497
+            if (scene.IsReady)
             {
                 AutoReadyState.MarkLeft();
                 Log.Info<AutoReadyModule>("已处于就绪状态");
@@ -86,7 +61,6 @@ namespace DT_Tools.Automation.AutoReady
             AccessTools.Method(typeof(UI_GameScene), "OnClickReadyButton")
                 ?.Invoke(scene, new object[] { null });
             Log.Info<AutoReadyModule>($"已发送准备（尝试 {AutoReadyState.Attempts}/{max}）");
-            // 下一拍核对 IsReady；仍未就绪按 RetryInterval 再试
             AutoReadyState.NextTryRealtime = Time.realtimeSinceStartup + 0.8f;
         }
 

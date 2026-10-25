@@ -5,14 +5,6 @@ using DT_Tools.Core;
 
 namespace DT_Tools
 {
-    /// <summary>
-    /// 全项目唯一日志入口。
-    /// </summary>
-    /// <remarks>
-    /// Info / Warn / Error / Fatal / Debug 同时写三处：BepInEx 主日志、全局环形缓冲（WebUI 控制台页）、按 tag 的段级环形缓冲（WebUI 配置 / 自动化页）。
-    /// Exception() 的完整堆栈只进 BepInEx（LogOutput.log 可查），环形缓冲只留单行摘要，避免大文本刷掉常用条目。tag 一律用段名：Log.Info&lt;TFeature>(…) 自动取 Engine.SectionOf&lt;T>()。
-    /// 注意：本类必须放在 DT_Tools 根命名空间。游戏在全局命名空间有一个 public static class Log（0.1.18c Log.cs），C# 命名空间查找链上 DT_Tools.Log 优先于它，否则会被遮蔽。
-    /// </remarks>
     public static class Log
     {
         private const int GlobalCapacity = 2000;
@@ -25,21 +17,10 @@ namespace DT_Tools
             new Dictionary<string, RingBuffer<LogEntry>>(StringComparer.OrdinalIgnoreCase);
         private static long _seq;
 
-        /// <summary>
-        /// 每条日志写入后触发（WebConsole 订阅后经 WebSocket 推给前端）。
-        /// </summary>
-        /// <remarks>
-        /// 订阅方必须只做入队等轻量操作、绝不阻塞——事件可能从主线程或 HTTP 线程发出。
-        /// </remarks>
         public static event Action<LogEntry> EntryAppended;
 
         public static void Init(ManualLogSource source) => _src = source;
 
-        /// <summary>
-        /// 详细诊断：进入环形缓冲（WebUI 白色），不要用它输出异常堆栈——用 <see cref="Exception"/>。
-        /// </summary>
-        /// <param name="tag">日志段名。</param>
-        /// <param name="message">诊断信息。</param>
         public static void Debug(string tag, string message)
         {
             _src?.LogDebug(Format(tag, message));
@@ -50,26 +31,14 @@ namespace DT_Tools
         public static void Warn(string tag, string message) => Write("WARN", tag, message);
         public static void Error(string tag, string message) => Write("ERROR", tag, message);
 
-        /// <summary>
-        /// 失败日志：消息为「context：ex.Message」，只记摘要不记堆栈（要堆栈用 Exception）。
-        /// </summary>
         public static void Warn(string tag, Exception ex, string context) => Write("WARN", tag, Failure(ex, context));
         public static void Error(string tag, Exception ex, string context) => Write("ERROR", tag, Failure(ex, context));
         public static void Warn<T>(Exception ex, string context) => Warn(Engine.SectionOf<T>(), ex, context);
         public static void Error<T>(Exception ex, string context) => Error(Engine.SectionOf<T>(), ex, context);
         private static string Failure(Exception ex, string context) => $"{context}：{ex?.Message}";
 
-        /// <summary>
-        /// 致命错误（功能无法继续 / 数据损坏级）：BepInEx LogFatal，WebUI 红色。
-        /// </summary>
         public static void Fatal(string tag, string message) => Write("FATAL", tag, message);
 
-        /// <summary>
-        /// 异常：BepInEx 进完整堆栈（含内层异常），环形缓冲只留「类型: 消息」单行摘要。
-        /// </summary>
-        /// <param name="tag">日志段名。</param>
-        /// <param name="ex">要记录的异常。</param>
-        /// <param name="context">可选的上下文说明，默认无。</param>
         public static void Exception(string tag, Exception ex, string context = null)
         {
             if (ex == null) return;
@@ -108,12 +77,6 @@ namespace DT_Tools
             }
         }
 
-        /// <summary>
-        /// BepInEx + 全局缓冲 + 段缓冲三写（Debug 走 <see cref="Debug"/>，Exception 走 <see cref="Exception"/>）。
-        /// </summary>
-        /// <param name="level">日志级别。</param>
-        /// <param name="tag">日志段名。</param>
-        /// <param name="message">日志内容。</param>
         private static void Write(string level, string tag, string message)
         {
             if (string.IsNullOrEmpty(message)) return;
@@ -132,12 +95,6 @@ namespace DT_Tools
             Append(level, tag, message);
         }
 
-        /// <summary>
-        /// 只写两处环形缓冲（已写过 BepInEx 时复用；持锁内构造条目保证 Seq 单调）。
-        /// </summary>
-        /// <param name="level">日志级别。</param>
-        /// <param name="tag">日志段名。</param>
-        /// <param name="message">日志内容。</param>
         private static void Append(string level, string tag, string message)
         {
             LogEntry entry;
@@ -153,7 +110,6 @@ namespace DT_Tools
                     ring.Append(entry);
                 }
             }
-            // 锁外触发：订阅方（WebSocket 广播）只做入队，避免持锁回调引入锁序问题
             EntryAppended?.Invoke(entry);
         }
 

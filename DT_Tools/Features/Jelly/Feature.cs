@@ -2,15 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.Jelly
 {
-    /// <summary>
-    /// 全员Q弹：让场景内所有玩家角色循环播放果冻缩放动画
-    /// （下压压扁→释放拉伸→阻尼回弹数轮→还原→停顿→循环）。
-    /// </summary>
-    /// <remarks>
-    /// 主开关只管玩家角色；三个子开关各自独立：场景设备 / 地形装饰 / UI 按钮。
-    /// 所有缩放都不碰游戏判定——碰撞体随缩放自动反向补偿，世界形状恒定；
-    /// 纯客户端视觉，别人看不到，大厅与对局全场景生效。
-    /// </remarks>
     [PatchFeature(
         "全员Q弹：所有角色循环果冻缩放（压扁→弹起拉伸→回弹还原）。仅本地视觉，不影响交互与位置。\n建议配合：⚡️邦友の酒⚡️",
         defaultEnabled: false,

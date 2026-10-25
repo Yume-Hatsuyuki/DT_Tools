@@ -10,26 +10,14 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
-    /// /api/tablet/* — 平板电脑应用后端：状态轮询、发言、照片上传与下载、清理。
-    /// </summary>
-    /// <remarks>
-    /// 读取只访问 WebTabletStore（纯内存、加锁）。发言与照片上传经 WebConsole.RunOnMain 在主线程发出。
-    /// 功能未启用时状态接口仍返回 enabled=false，前端据此提示。错误码小写英文短词，中文详情放在 data.message。
-    /// </remarks>
     public static class WebTabletApi
     {
-        /// <summary>
-        /// GET /api/tablet/state?since=N — 阶段、版本号、序号大于 N 的聊天增量与全部线索。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleState(HttpListenerContext ctx)
         {
             long since = ParseLong(ctx.Request.QueryString["since"]);
             WebTabletSnapshot snap = WebTabletStore.Snapshot(since);
             if (snap.StateCode.Length == 0 && Engine.Enabled<WebTabletFeature>())
             {
-                // 功能刚启用时阶段可能早已进入，主线程补一次同步后重新取快照
                 WebConsole.RunOnMain(() =>
                 {
                     WebTabletBridge.SyncState();
@@ -52,10 +40,6 @@ namespace DT_Tools.WebConsole.Api
             }));
         }
 
-        /// <summary>
-        /// POST /api/tablet/send {text} — 以本机身份发送一条聊天。仅大厅与学级裁判允许。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleSend(HttpListenerContext ctx)
         {
             JObject body = ApiUtil.ParseBody(ctx);
@@ -81,13 +65,8 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
-        /// POST /api/tablet/photo {data} — 上传 base64 编码的 JPEG，在学级裁判讨论阶段发出。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandlePhotoUpload(HttpListenerContext ctx)
         {
-            // 冷却只在功能启用时由补丁同步；功能关闭时冷却无从得知，直接拒绝以免绕过节流
             if (!Engine.Enabled<WebTabletFeature>())
             {
                 HttpServer.WriteJson(ctx.Response, CommandResult.Fail("disabled", new { message = "平板电脑未启用" }));
@@ -133,10 +112,6 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
-        /// GET /api/tablet/photo?key=N — 返回照片的原始 JPEG 字节。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandlePhotoGet(HttpListenerContext ctx)
         {
             if (!int.TryParse(ctx.Request.QueryString["key"], NumberStyles.Integer, CultureInfo.InvariantCulture, out int key))
@@ -161,10 +136,6 @@ namespace DT_Tools.WebConsole.Api
             resp.OutputStream.Close();
         }
 
-        /// <summary>
-        /// POST /api/tablet/clear {scope} — 按范围清理本地记录：chat 聊天（含照片）、clues 线索、all 全部。游戏内容不受影响。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void HandleClear(HttpListenerContext ctx)
         {
             JObject body = ApiUtil.ParseBody(ctx);

@@ -3,13 +3,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.UnlockMadeline
 {
-    /// <summary>
-    /// SteamInventorySource.IsCharacterOwned：原版对 101(Madeline) 恒 false
-    /// （public，可用 nameof）：0.1.18c SteamInventorySource.cs。
-    /// </summary>
-    /// <remarks>
-    /// 仅 101 整替为 true，其余走原版（与 UnlockCharacters 互补）。
-    /// </remarks>
     [HarmonyPatch(typeof(SteamInventorySource), nameof(SteamInventorySource.IsCharacterOwned))]
     internal static class UnlockMadelineSteamOwnedPatch
     {
@@ -26,11 +19,6 @@ namespace DT_Tools.Features.UnlockMadeline
         }
     }
 
-    /// <summary>
-    /// SteamInventorySource.OwnedCharacterIds getter（public，可用 nameof）：
-    /// 0.1.18c SteamInventorySource.cs。后缀追加 101（不覆盖原结果，
-    /// 可与 UnlockCharacters 的 OwnedCharacterIds 全解锁 Prefix 叠加）。
-    /// </summary>
     [HarmonyPatch(typeof(SteamInventorySource), nameof(SteamInventorySource.OwnedCharacterIds),
         MethodType.Getter)]
     internal static class UnlockMadelineSteamOwnedIdsPatch
@@ -54,7 +42,4 @@ namespace DT_Tools.Features.UnlockMadeline
         }
     }
 
-    // 注：曾存在 SaveManager.IsCharacterOwned（SaveManager.cs:362）的同类补丁，
-    // 0.1.18c 全源码零调用点（所有权判定全部走 SteamInventorySource），属无效防御
-    // 补丁，已删除（审计 O-1）；若未来版本调用面变化需重新评估。
 }

@@ -9,13 +9,6 @@ using Protocol;
 
 namespace DT_Tools.Features.MotionAfterimage
 {
-    /// <summary>
-    /// 活体残影：对齐 FlashVfx（ColorPlayerShadow + Idle 定格 + alpha 淡出）。
-    /// </summary>
-    /// <remarks>
-    /// 死亡定格：ShadowPlayerShadow 黑色最后一帧。
-    /// Survive / Detective 地图内生效（可分别开关）。
-    /// </remarks>
     internal static class MotionAfterimageLogic
     {
         private static readonly string[] PrefabCandidates = { "ShadowPartnerVfx", "FlashVfx" };
@@ -56,14 +49,10 @@ namespace DT_Tools.Features.MotionAfterimage
 
             if (!inSurvive && !inDetective)
             {
-                // 阶段关闭或已离开地图：全清（含死亡定格）
                 if (MotionAfterimageState.Tracks.Count > 0)
                     ClearAll();
                 return;
             }
-
-            // 调查阶段若关掉活体但仍可能要留死亡定格：上面 inDetective 已要求 EnableInDetective。
-            // 若只关 ShowDeathResidual，见下方采样与 Despawn。
 
             EnsureRoot();
             float now = Time.time;
@@ -75,8 +64,6 @@ namespace DT_Tools.Features.MotionAfterimage
             int myId = Managers.Player.MyPlayer?.PublicInfo?.PlayerId ?? int.MinValue;
             bool selfAlive = Managers.Game.IsAlive;
 
-            // 自己已死（幽灵）：禁止再刷活体残影，并立刻清掉残留的蓝色生前残影
-            // 否则幽灵移动时会拖一串「生前形象」蓝影
             if (!selfAlive && myId != int.MinValue &&
                 MotionAfterimageState.Tracks.TryGetValue(myId, out AfterimageTrack selfTrack))
             {
@@ -97,7 +84,6 @@ namespace DT_Tools.Features.MotionAfterimage
                         continue;
                     if (p.PublicInfo.PlayerId == myId)
                         continue;
-                    // 他人若已是幽灵态，不刷活体蓝影（黑定格由 Despawn 负责）
                     if (p.PublicInfo.IsGhost)
                         continue;
 
@@ -106,7 +92,6 @@ namespace DT_Tools.Features.MotionAfterimage
                 }
             }
 
-            // 人又在场上（临时 Despawn 后又 Spawn）→ 清掉其死亡定格，只认「最后一次仍未回来的 Despawn」
             foreach (KeyValuePair<int, AfterimageTrack> kv in MotionAfterimageState.Tracks.ToList())
             {
                 if (liveIds.Contains(kv.Key))
@@ -135,11 +120,6 @@ namespace DT_Tools.Features.MotionAfterimage
                 TickLiveFade(kv.Value, now);
         }
 
-        /// <summary>
-        /// 自己死亡（S_DEAD → Game.Dead）：
-        /// 1) 必清自己的活体蓝影（避免幽灵拖着生前形象残影）；
-        /// 2) 按配置定格黑色最后一帧。
-        /// </summary>
         public static void OnLocalPlayerDead()
         {
             if (!Engine.Enabled<MotionAfterimageFeature>())
@@ -156,7 +136,6 @@ namespace DT_Tools.Features.MotionAfterimage
                 MotionAfterimageState.Tracks[id] = track;
             }
 
-            // 无论是否留黑定格，先清掉蓝色活体残影
             ClearLiveOnly(track);
 
             if (me.CharData != null)
@@ -178,14 +157,6 @@ namespace DT_Tools.Features.MotionAfterimage
             PlaceDeathResidual(track);
         }
 
-        /// <summary>
-        /// 只保留「最后一次 Despawn」的黑色定格：先删旧再新建。
-        /// </summary>
-        /// <remarks>
-        /// 无采样历史时从 PlayerCache 补全角色/坐标（幽灵视角下他人死亡也能定格）。
-        /// 自己通常不走 Despawn（客户端忽略 S_DESPAWN self），见 OnLocalPlayerDead。
-        /// </remarks>
-        /// <param name="playerId">退场玩家的 PlayerId。</param>
         public static void OnPlayerDespawned(int playerId)
         {
             if (!Engine.Enabled<MotionAfterimageFeature>())
@@ -216,11 +187,6 @@ namespace DT_Tools.Features.MotionAfterimage
             PlaceDeathResidual(track);
         }
 
-        /// <summary>
-        /// Despawn 后 Players 已移除，从 Cache 取最后坐标与角色。
-        /// </summary>
-        /// <param name="playerId">玩家 PlayerId。</param>
-        /// <param name="track">要补全的残影轨迹。</param>
         private static void TryFillTrackFromCache(int playerId, AfterimageTrack track)
         {
             if (Managers.Player == null)
@@ -252,10 +218,6 @@ namespace DT_Tools.Features.MotionAfterimage
                 track.LastCharacterIdLive = cached.PublicInfo.CharacterId;
         }
 
-        /// <summary>
-        /// 同一 track 只留一个黑色定格（先删再建）。
-        /// </summary>
-        /// <param name="track">要放置定格的残影轨迹。</param>
         private static void PlaceDeathResidual(AfterimageTrack track)
         {
             if (track.DeathGhost != null)
@@ -316,7 +278,6 @@ namespace DT_Tools.Features.MotionAfterimage
             track.LastLookLeft = p.LookLeft;
             track.LastCharacterIdLive = p.CharData.DataId;
 
-            // 已有死亡定格的人不再刷活体
             if (track.DeathGhost != null)
                 return;
 
@@ -550,7 +511,6 @@ namespace DT_Tools.Features.MotionAfterimage
 
         private static Transform ResolveParent(bool preferStableRoot = false)
         {
-            // 死亡定格挂到自有 Root，避免幽灵阶段 Device 显隐影响
             if (preferStableRoot)
             {
                 EnsureRoot();
@@ -572,7 +532,6 @@ namespace DT_Tools.Features.MotionAfterimage
             float ax = Mathf.Abs(scale.x);
             if (ax < 0.01f)
                 ax = 1f;
-            // 对齐 FlashVfx：lookLeft 时 x 为正
             scale.x = lookLeft ? ax : -ax;
             go.transform.localScale = scale;
         }
@@ -588,7 +547,6 @@ namespace DT_Tools.Features.MotionAfterimage
                 else
                     Object.Destroy(inst.Go);
             }
-            // 材质副本是 Instantiate 出来的运行时对象,必须随实例销毁,否则等场景切换才释放
             if (inst.Mat != null)
                 Object.Destroy(inst.Mat);
             inst.Go = null;

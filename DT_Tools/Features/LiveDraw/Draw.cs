@@ -4,34 +4,20 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LiveDraw
 {
-    /// <summary>
-    /// 单条笔画的基准数据（动画永远从基准点偏移，不累计漂移）。
-    /// </summary>
     internal sealed class LiveStroke
     {
-        public int Id;                 // 实际落笔后从 DrawingManager 拿到的 StrokeId（动画 REPLACE 复用同一 id）
+        public int Id;
         public float Width;
-        public float Ph;               // 每条笔画的抖动相位
+        public float Ph;
         public List<Vector2> Base = new List<Vector2>();
     }
 
-    /// <summary>
-    /// 照片 → 笔画管线（原 DT_LiveDraw v1.0.0 移植，逻辑不变）：
-    /// 缩放 → 灰度 → 盒式模糊×3 → 多阈值 marching squares → Douglas-Peucker 简化 →
-    /// 最小点距 2 → 预算裁剪（笔画/点数上限走配置），绘制顺序按从上往下像真人作画。
-    /// 画布几何 879×696（X±439.5 / Y±348），输出点始终落在画布范围内。
-    /// </summary>
     internal static class DrawConverter
     {
         private const float CanvasHalfW = 439.5f;
         private const float CanvasHalfH = 348f;
         private const float Margin = 32f;
 
-        /// <summary>
-        /// 把照片字节解析为线稿笔画计划；失败/无内容返回 null。
-        /// </summary>
-        /// <param name="bytes">照片的原始字节。</param>
-        /// <returns>线稿笔画计划；解析失败或无内容时为 null。</returns>
         public static List<LiveStroke> BuildPlan(byte[] bytes)
         {
             var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
@@ -60,7 +46,6 @@ namespace DT_Tools.Features.LiveDraw
             if (ratio > 1f) { fitW = availW; fitH = availW / ratio; }
             else { fitH = availH; fitW = availH * ratio; }
 
-            // 缩到工作网格（长边 200），同时算灰度
             int gw = fitW >= fitH ? 200 : Mathf.Max(8, Mathf.RoundToInt(200 * fitW / fitH));
             int gh = fitW >= fitH ? Mathf.Max(8, Mathf.RoundToInt(200 * fitH / fitW)) : 200;
             float[] gray = new float[gw * gh];
@@ -101,13 +86,11 @@ namespace DT_Tools.Features.LiveDraw
                     var pts = new List<Vector2>();
                     for (int i = 0; i < simp.Count; i++)
                     {
-                        // y 映射：图像顶部（y=0）→ 画布 +fitH/2（画布 y 轴朝下时为顶部）；
-                        // 原版方向为 (0.5 - y/gh) 会把照片上下颠倒（庭审画布 y 轴朝下），此处修正。
                         var v = new Vector2(
                             (simp[i].x / gw - 0.5f) * fitW,
                             (simp[i].y / gh - 0.5f) * fitH);
                         int n = pts.Count;
-                        if (n == 0 || (v - pts[n - 1]).sqrMagnitude >= 4f) pts.Add(v); // 原版点距 ≥2
+                        if (n == 0 || (v - pts[n - 1]).sqrMagnitude >= 4f) pts.Add(v);
                     }
                     if (pts.Count < 2) continue;
                     float len = 0f;
@@ -122,7 +105,6 @@ namespace DT_Tools.Features.LiveDraw
                 }
             }
 
-            // 预算裁剪：优先保留最长的轮廓
             all.Sort((a, b) => StrokeLen(b).CompareTo(StrokeLen(a)));
             var plan = new List<LiveStroke>();
             int total = 0;
@@ -135,7 +117,6 @@ namespace DT_Tools.Features.LiveDraw
                 total += c;
             }
 
-            // 绘制顺序：从上往下，看起来像真人作画
             plan.Sort((a, b) =>
             {
                 int t = b.Base[0].y.CompareTo(a.Base[0].y);
@@ -170,7 +151,6 @@ namespace DT_Tools.Features.LiveDraw
             return o;
         }
 
-        // marching squares：对灰度场做等值线追踪，返回网格坐标折线
         private static List<List<Vector2>> TraceLevel(float[] v, int gw, int gh, float L)
         {
             var segs = new List<Vector2[]>();
@@ -204,7 +184,6 @@ namespace DT_Tools.Features.LiveDraw
                 }
             }
 
-            // 端点配对连成折线
             var map = new Dictionary<long, List<int>>();
             Func<Vector2, long> key = p => Mathf.RoundToInt(p.x * 100f) * 100000L + Mathf.RoundToInt(p.y * 100f);
             for (int i = 0; i < segs.Count; i++)
@@ -263,7 +242,6 @@ namespace DT_Tools.Features.LiveDraw
         private static List<int> GetOr(Dictionary<long, List<int>> d, long k)
             => d.TryGetValue(k, out var v) ? v : null;
 
-        // Douglas-Peucker
         private static List<Vector2> Simplify(List<Vector2> pts, float eps)
         {
             if (pts.Count < 3) return pts;

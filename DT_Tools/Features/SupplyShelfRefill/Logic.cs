@@ -6,20 +6,8 @@ using Protocol;
 
 namespace DT_Tools.Features.SupplyShelfRefill
 {
-    /// <summary>
-    /// 必出与补货逻辑。
-    /// </summary>
-    /// <remarks>
-    /// 兜底道具集中于此（FallbackItems）：BELL(3009) / AIRHORN(3008)，与原版 InitStorage
-    /// 的内建投放池一致（0.1.18c Server.Game/DeviceManager.cs）；Define 常量：Define.cs:738 / :744。
-    /// 补货池经 Game/ItemPools.ShelfPoolProvider 只读（由 SupplyShelf 装载时发布，含其
-    /// Enabled/Mode 判定）；货架读取走 Game.Devices——无 Features 间横向依赖（AGENTS.md §4）。
-    /// </remarks>
     internal static class SupplyShelfRefillLogic
     {
-        /// <summary>
-        /// 兜底道具池：货架随机道具功能未开启时，补货只从这两样里选。
-        /// </summary>
         public static readonly int[] FallbackItems =
         {
             Define.ITEM_ID_BELL,
@@ -38,7 +26,6 @@ namespace DT_Tools.Features.SupplyShelfRefill
             if (HasItemOnShelves(storages, guaranteed))
                 return;
 
-            // 1) 优先空槽（Storage.InsertItem：0.1.18c Server.Game/Storage.cs:94）
             foreach (Server.Game.Storage s in storages)
             {
                 if (s.StorageType != EStorageType.StorageNormal)
@@ -51,7 +38,6 @@ namespace DT_Tools.Features.SupplyShelfRefill
                 }
             }
 
-            // 2) 无空槽：在 StorageNormal 中随机选一格强制替换
             var candidates = new List<(Server.Game.Storage storage, int index)>();
             foreach (Server.Game.Storage s in storages)
             {
@@ -100,13 +86,13 @@ namespace DT_Tools.Features.SupplyShelfRefill
         {
             if (storage.Items[index] != null)
             {
-                Server.Game.ItemManager.Instance.RemoveItem(storage.Items[index]);   // 0.1.18c ItemManager.cs:240
+                Server.Game.ItemManager.Instance.RemoveItem(storage.Items[index]);
                 storage.Items[index] = null;
             }
 
             storage.DeviceInfo.StateList[index] = itemId;
-            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // :43
-            storage.BroadcastStateInArea();                                          // 0.1.18c Server.Game/Device.cs:114
+            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);
+            storage.BroadcastStateInArea();
         }
 
         public static void ScheduleRefill(Server.Game.Storage storage, C_INTERACT_STORAGE interact, int interval)
@@ -120,7 +106,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
             if (interact == null)
                 return;
 
-            int index = interact.Index;                                    // 0.1.18c Protocol/C_INTERACT_STORAGE.cs:45
+            int index = interact.Index;
             if (index < 0 || index >= storage.Items.Count)
                 return;
             if (storage.Items[index] != null)
@@ -139,17 +125,10 @@ namespace DT_Tools.Features.SupplyShelfRefill
                 return;
             }
 
-            // 已知取舍：延迟补货闭包不复查 Engine.Enabled——功能排程后被关闭，
-            // 这一格仍会在到点后补回。理由：
-            // 1) 补货是「拿取时功能开启」动作的延迟收口，最多补一格，影响有界；
-            // 2) 残留任务随整局结束由 TimeManager.ClearSurvivalJob 统一清空
-            //    （0.1.18c GameRoom.cs:540 FullReset 内调用 → Server.Game/TimeManager.cs:129），
-            //    不会跨局泄漏；
-            // 3) RefillIntervalSeconds 默认 -1（不排程），常态下根本不会产生闭包。
             int storageId = storage.ID;
             int slot = index;
             int refillId = itemId;
-            Server.Game.TimeManager.Instance.PushSurvivalJob(interval, () =>               // Server.Game/TimeManager.cs:77
+            Server.Game.TimeManager.Instance.PushSurvivalJob(interval, () =>
             {
                 if (Server.Game.GameRoom.Instance?.State != EGameState.Survive)
                     return;
@@ -163,10 +142,6 @@ namespace DT_Tools.Features.SupplyShelfRefill
                 $"scheduled storage={storageId} slot={slot} itemId={refillId} after={interval}s");
         }
 
-        /// <summary>
-        /// 补货池：货架随机道具开启时沿用其扩展池（经 ItemPools.ShelfPoolProvider），否则兜底 BELL/AIRHORN。
-        /// </summary>
-        /// <returns>随机抽取的补货道具 DataId。</returns>
         private static int PickRefillItemId()
         {
             int[] pool = ItemPools.ShelfPoolProvider?.Invoke() ?? FallbackItems;
@@ -180,12 +155,6 @@ namespace DT_Tools.Features.SupplyShelfRefill
             return list?.FirstOrDefault(s => s.ID == id);
         }
 
-        // 已知取舍：任务道具被取走后这里补回的是普通道具。原版 Storage.Interact 摘走任务道具时
-        // 只复位格子并在无剩余任务道具时清 DeviceInfo.MissionType/IsInfected
-        // （0.1.18c Server.Game/Storage.cs:39/:48-51），任务语义挂在 Item.IsMissionItem /
-        // InsertItem(missionType,…,true) 链路上（Server.Game/Storage.cs:94-106）；本补货直接
-        // CreateAndStorage 普通道具，不恢复任务状态。RefillIntervalSeconds 默认 -1
-        // 关闭补货，触发面收敛为「显式开启补货 + 任务道具恰好被取走」的组合，风险可控。
         private static void TryRefillSlot(Server.Game.Storage storage, int index, int itemId)
         {
             if (storage == null || index < 0 || index >= storage.Items.Count)
@@ -194,7 +163,7 @@ namespace DT_Tools.Features.SupplyShelfRefill
                 return;
 
             storage.DeviceInfo.StateList[index] = itemId;
-            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);  // 0.1.18c ItemManager.cs:43
+            storage.Items[index] = Server.Game.ItemManager.Instance.CreateAndStorage(storage, itemId);
             storage.BroadcastStateInArea();
             Log.Info<SupplyShelfRefillFeature>(
                 $"refilled storage={storage.ID} slot={index} itemId={itemId}");

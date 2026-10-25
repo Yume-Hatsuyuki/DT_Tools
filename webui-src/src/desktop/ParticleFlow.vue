@@ -1,20 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue';
 
-/**
- * 「深海数据流」背景层：CSS 光柱 + 透视地面网格 + canvas 上升粒子流，
- * 复刻 NoriOS（os.inori.ai）参考图的水下光柱与漂浮微粒氛围。
- *
- * 分层职责：壁纸渐变在 .desktop 背景上，本组件绝对定位于其上、窗口之下
- * （z-index 0，pointer-events:none）——粒子永远漂浮，光柱与地面网格仅在
- * CSS 预设壁纸时显示（自定义图片壁纸时会被光效压住照片，故只留粒子）。
- *
- * 性能：粒子用预渲染发光 sprite（离屏 canvas 画一次径向渐变，之后只
- * drawImage，避免每粒子 shadowBlur）；rAF 驱动，标签页隐藏即暂停；
- * prefers-reduced-motion 时只画一帧静态。
- */
 const props = defineProps({
-  /** 光柱 + 地面网格（自定义图片壁纸时传 false，只保留粒子层）。 */
   decorative: { type: Boolean, default: true },
 });
 
@@ -31,7 +18,7 @@ let width = 0;
 let height = 0;
 let lastT = 0;
 
-const PARTICLE_DENSITY = 1 / 16000;   // 每像素面积粒子数（1080p ≈ 120）
+const PARTICLE_DENSITY = 1 / 16000;
 const STREAK_COUNT = 6;
 
 function makeSprite() {
@@ -54,7 +41,6 @@ function spawnParticle(randomY) {
     x: Math.random() * width,
     y: randomY ? Math.random() * height : height + 8,
     r,
-    // 上升数据流：速度与粒径弱相关，远景（小）更慢
     vy: 10 + r * 12 + Math.random() * 14,
     swayAmp: 6 + Math.random() * 18,
     swayFreq: 0.2 + Math.random() * 0.5,
@@ -104,7 +90,6 @@ function step(t) {
     ctx.drawImage(sprite, x - size / 2, p.y - size / 2, size, size);
   }
 
-  // 快速上升的"数据流"亮线：细长渐隐，偶尔划过
   ctx.lineWidth = 1.4;
   for (const s of streaks) {
     s.y -= s.vy * dt;
@@ -151,7 +136,6 @@ onMounted(() => {
   window.addEventListener('resize', resize);
   document.addEventListener('visibilitychange', onVisibility);
   if (prefersReducedMotion()) {
-    // 静态一帧：粒子在场但不流动
     running = true;
     step(performance.now());
     running = false;
@@ -187,7 +171,6 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-/* 斜向水下光柱：缓慢平移 + 呼吸，营造"光从水面沉下来"的层次 */
 .beam {
   position: absolute;
   top: -18%;
@@ -211,7 +194,6 @@ onUnmounted(() => {
   to { transform: rotate(19deg) translateX(42px); opacity: 0.75; }
 }
 
-/* 地面透视网格：图2 底部的微亮地平线，向上渐隐 */
 .grid-floor {
   position: absolute;
   left: -30%;

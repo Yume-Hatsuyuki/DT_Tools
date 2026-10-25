@@ -1,4 +1,3 @@
-/** Author:/Side: 元数据写在 Enabled 项描述的头几行，body 为去掉这些行之后的正文。 */
 export function splitDesc(desc) {
   const lines = String(desc || '').split(/\r?\n/);
   let author = '', side = '';
@@ -15,7 +14,6 @@ export function splitDesc(desc) {
   return { author, side, text: body.join('\n') };
 }
 
-/** 段的 Author/Side 取自其开关键（enabledKey 由协议给出，禁止硬编码 'Enabled'）的描述头。 */
 export function sectionMeta(section) {
   const enabledEntry = (section.entries || []).find(e => e.key === section.enabledKey);
   if (!enabledEntry) return { author: '', side: '' };
@@ -33,7 +31,6 @@ export function isNumberType(type) {
   return t.includes('int') || t.includes('single') || t.includes('double') || t.includes('float');
 }
 
-/** 段落搜索：段名或任一字段的 key/描述命中即算匹配。 */
 export function sectionMatches(section, query) {
   const q = query.trim().toLowerCase();
   if (!q) return true;

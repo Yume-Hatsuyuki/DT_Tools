@@ -3,15 +3,8 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveDrink
 {
-    /// <summary>
-    /// /givedrink 输出格式化：可用道具列表 + 人类回复 + JSON 结果 DTO。
-    /// </summary>
     internal static class GiveDrinkFormat
     {
-        /// <summary>
-        /// 可用道具列表：由 Args.ItemDefs（别名解析的同一数据源）生成，
-        /// 消除旧版文案表与别名表的双份维护口径漂移。
-        /// </summary>
         public static string ItemList
         {
             get

@@ -7,12 +7,6 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp.Tools.ReadLog
 {
-    /// <summary>
-    /// read_log：全局日志尾部。
-    /// </summary>
-    /// <remarks>
-    /// RingBuffer 自带锁，HTTP 线程可直接读（同 /api/log）。
-    /// </remarks>
     [McpTool("read_log",
         "读取全局日志尾部（环形缓冲 2000 条）：命令输出、警告、异常都在这里。run_command 之后建议先 read_log 核对命令的人类可读输出，再决定下一步。",
         Tags = FeatureTag.SysDebug,
@@ -47,7 +41,6 @@ namespace DT_Tools.WebConsole.Mcp.Tools.ReadLog
                             || (e.Message?.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0))
                 .ToList();
 
-            // 先过滤后取尾：过滤语义下"最近 count 条匹配"比"最近 count 条里挑匹配"更符合调用意图
             var page = filtered.Skip(Math.Max(0, filtered.Count - count)).Select(LogsApi.Shape).ToList();
             return CommandResult.Success(new { total = filtered.Count, returned = page.Count, entries = page });
         }

@@ -9,13 +9,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.TrophyHit
 {
-    /// <summary>
-    /// 奖杯砸人增强（服务端权威，房主开启后全员可用）：
-    /// - 移除冷却：原版 Lobby 奖杯（金/银/铜 1062/1063/1064）客户端有 1.5 秒冷却（_lobbyTrophyCooltime），本功能置零。
-    /// - 范围/距离可配：原版固定 224 像素（距离平方 50176），本功能以配置 TrophyRange（默认 224）替代；范围内除 Dummy、柜中、坐下外的玩家都会被击退。
-    /// - 生存阶段可砸：原版仅限 Lobby 阶段（客户端 UpdateLobby 与服务端 HandleLobbyTrophyKnockback 都检查 EGameState.Lobby），本功能允许 Survive 阶段；默认 E 键（与平板键相同，手持奖杯时按下为砸人、不开平板，可自定义）。
-    /// 实现（复用原版通道）：客户端生存阶段按砸人键且手持奖杯 → 播放 Attack 动画并发 C_USE_ITEM{Item=new ItemInfo()}（与原版 Lobby 动画事件同款格式），同时拦截 Inventory.HandSmaho 避免 E 键冲突；服务端 Handle_C_USE_ITEM 在 Survive 阶段识别手持奖杯 → 走 GameRoom.HandleLobbyTrophyKnockback（被本功能 Patch：允许 Lobby/Survive，距离可配）。
-    /// </summary>
     [HarmonyPatch]
     [PatchFeature(
         "奖杯砸人增强：移除奖杯砸人冷却；砸人范围/距离可自定义（默认 224 像素）；可在局内生存阶段手持奖杯砸人（默认 E 键，可自定义）。服务端实现，房主开启后全员可用。",
@@ -36,18 +29,11 @@ namespace DT_Tools.Features.TrophyHit
 
         internal static float RangeValue => Math.Max(TrophyRange, 0);
 
-        /// <summary>
-        /// 是否手持奖杯（金/银/铜 1062/1063/1064）。
-        /// </summary>
-        /// <param name="handItemId">手持道具的 DataId。</param>
-        /// <returns>手持奖杯时为 true。</returns>
         private static bool IsHoldingTrophy(int handItemId)
         {
             return handItemId == 1062 || handItemId == 1063 || handItemId == 1064;
         }
 
-        // 注意：E 键是原版交互键（Interact），本前缀命中后 return false 跳过整个 UpdateSurvive，
-        // 避免按 E 砸人的同时触发原版设备交互（开门/拾取/打字机）。
         [HarmonyPatch(typeof(MyPlayer), "UpdateSurvive")]
         [HarmonyPrefix]
         private static bool SurviveKeyPrefix(MyPlayer __instance)
@@ -63,14 +49,12 @@ namespace DT_Tools.Features.TrophyHit
                 if (!IsHoldingTrophy(__instance.PublicInfo.HandItemId))
                     return true;
 
-                // 原版 Lobby 砸人同款：播放 Attack 动画（动画事件驱动表现）
                 __instance.ChangeMyPlayerState(EPlayerState.Attack);
-                // 原版 Lobby 动画事件发包同款格式：空 ItemInfo 触发服务端奖杯击退分支
                 Managers.Network.GameServer.Send(new C_USE_ITEM
                 {
                     Item = new ItemInfo()
                 });
-                return false; // 跳过本帧其余 UpdateSurvive：不触发原版交互（E 键为交互键）
+                return false;
             }
             catch (Exception ex)
             {
@@ -94,7 +78,7 @@ namespace DT_Tools.Features.TrophyHit
                     return true;
                 if (!IsHoldingTrophy(owner.PublicInfo.HandItemId))
                     return true;
-                return false; // 手持奖杯按下砸人键 → 砸人优先，不打开平板
+                return false;
             }
             catch (Exception ex)
             {
@@ -180,17 +164,17 @@ namespace DT_Tools.Features.TrophyHit
 
                 Server.Game.GameRoom room = Server.Game.GameRoom.Instance;
                 if (room.State != EGameState.Survive)
-                    return true; // Lobby 及其他阶段走原版
+                    return true;
 
                 GamePlayer presser = host.Player;
                 if (!IsHoldingTrophy(presser.PublicInfo.HandItemId))
-                    return true; // 非奖杯物品走原版 HandleUseItem
+                    return true;
 
                 room.Push(delegate
                 {
                     room.HandleLobbyTrophyKnockback(presser);
                 });
-                return false; // 拦截原版分支，已按奖杯击退处理
+                return false;
             }
             catch (Exception ex)
             {

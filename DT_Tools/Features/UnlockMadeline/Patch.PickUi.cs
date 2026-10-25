@@ -8,11 +8,6 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.UnlockMadeline
 {
-    /// <summary>
-    /// UI_PickPopup.RebuildPickList 整替（私有方法，字符串定位）：
-    /// 0.1.18c UI_PickPopup.cs。原版 where Type != ECharacterType.Madeline 过滤掉
-    /// 梅德琳；改为全角色列表（排序算法见 Logic.OrderedPickList，所有权经补丁恒真）。
-    /// </summary>
     [HarmonyPatch(typeof(UI_PickPopup), "RebuildPickList")]
     internal static class UnlockMadelinePickRebuildPatch
     {
@@ -21,7 +16,6 @@ namespace DT_Tools.Features.UnlockMadeline
             if (!Engine.Enabled<UnlockMadelineFeature>())
                 return true;
 
-            // _list 为私有字段：0.1.18c UI_PickPopup.cs:74
             var listField = Traverse.Create(__instance).Field<List<UI_PickSubItem>>("_list");
             List<UI_PickSubItem> list = listField.Value;
 
@@ -29,15 +23,12 @@ namespace DT_Tools.Features.UnlockMadeline
                 Managers.Resource.Destroy(item.gameObject);
             list.Clear();
 
-            // UI_Base.GetObject 为 protected：0.1.18c UI_Base.cs:93；容器 0 = 列表区
             Transform container = Traverse.Create(__instance)
                 .Method("GetObject", new[] { typeof(int) })
                 .GetValue<GameObject>(0)
                 .transform;
             ScrollRect scroll = container.GetComponentInParent<ScrollRect>();
 
-            // OnPickCharacter（0.1.18c UI_PickPopup.cs:361）与 RegisterPickItem
-            //（0.1.18c UI_PickPopup.cs)均为私有实例方法
             var onPickMethod = AccessTools.Method(typeof(UI_PickPopup), "OnPickCharacter");
             var onPickDelegate = (global::System.Action<PointerEventData>)global::System.Delegate.CreateDelegate(
                 typeof(global::System.Action<PointerEventData>),
@@ -57,14 +48,6 @@ namespace DT_Tools.Features.UnlockMadeline
         }
     }
 
-    /// <summary>
-    /// UI_PickPopup.SetMainInfo 前缀整替（私有方法，字符串定位）：
-    /// 0.1.18c UI_PickPopup.cs。原版 default 分支对每个角色取 "&lt;Name&gt;Explain"
-    /// 文本键（UI_PickPopup.cs:517），Madeline 无该文本数据，Managers.GetText 缺键必
-    /// Debug.LogError（0.1.18c Managers.cs:223-229）→ 非 Madeline 放行原版；
-    /// Madeline 时按原方法体（UI_PickPopup.cs:492-541）等价重写 UI 写入，
-    /// 介绍行改用内置六语言文案（Logic.GetExplain），从源头消除缺键报错。
-    /// </summary>
     [HarmonyPatch(typeof(UI_PickPopup), "SetMainInfo")]
     internal static class UnlockMadelinePickMainInfoPatch
     {
@@ -74,34 +57,27 @@ namespace DT_Tools.Features.UnlockMadeline
                 return true;
 
             if (characterId != UnlockMadelineLogic.MadelineDataId)
-                return true;    // 非 Madeline 文本键齐全，放行原版
+                return true;
 
-            // _selectCharacterId 为私有字段（UI_PickPopup.cs:92，赋值在 SetStanding :423）
             if (Traverse.Create(__instance).Field<int>("_selectCharacterId").Value == characterId)
                 return false;
 
-            // GetObject(4) = 主信息区容器（原版 :494）
             GameObject infoGo = UnlockMadelineUi.GetObject(__instance, 4);
             if (infoGo == null)
                 return false;
             Transform transform = infoGo.transform;
 
-            // SetMainCharacterOnlyActive 为私有方法：0.1.18c UI_PickPopup.cs:572
             AccessTools.Method(typeof(UI_PickPopup), "SetMainCharacterOnlyActive")
                 ?.Invoke(__instance, new object[] { true });
 
             CharacterData characterData = Managers.Data.CharacterDic[characterId];
-            WriteText(__instance, 4, Managers.GetText(characterData.Name));                      // 原版 :512
-            WriteText(__instance, 5, UnlockMadelineLogic.GetExplain());                          // 原版 :513 缺键报错处，改内置六语言
-            WriteText(__instance, 6, Managers.GetText(characterData.Skill.ToString()));          // 原版 :514-515
-            WriteText(__instance, 8, Managers.GetText(characterData.Skill.ToString() + "Info")); // 原版 :516
-            if (Managers.Data.SkillDic.TryGetValue(characterData.Skill, out var skill))          // 原版 :517-520（SkillData.IsActive：Data/SkillData.cs:11）
+            WriteText(__instance, 4, Managers.GetText(characterData.Name));
+            WriteText(__instance, 5, UnlockMadelineLogic.GetExplain());
+            WriteText(__instance, 6, Managers.GetText(characterData.Skill.ToString()));
+            WriteText(__instance, 8, Managers.GetText(characterData.Skill.ToString() + "Info"));
+            if (Managers.Data.SkillDic.TryGetValue(characterData.Skill, out var skill))
                 WriteText(__instance, 7, Managers.GetText(skill.IsActive ? "Active" : "Passive"));
 
-            // 动画尾巴（原版 :496-497 DOComplete 与 :524-536 的 0.2s DOTween 缩放淡入）：
-            // 工程未引用 DOTween 程序集，无法直接调扩展；其各补间终态均为可见
-            // （alpha=1 / scaleX=1），与直写终态一致，故直接落终态（等价原版
-            // :524-528 的 animate=false 分支），仅 Madeline 选中少一段入场动画。
             Vector3 localScale = transform.localScale;
             transform.localScale = new Vector3(1f, localScale.y, localScale.z);
             var canvasGroup = transform.GetComponent<CanvasGroup>();
@@ -111,12 +87,6 @@ namespace DT_Tools.Features.UnlockMadeline
             return false;
         }
 
-        /// <summary>
-        /// 按绑定器索引写文本；缺槽静默跳过（原版必写，此处更稳）。
-        /// </summary>
-        /// <param name="__instance">选人弹窗界面。</param>
-        /// <param name="idx">绑定器中的文本槽索引。</param>
-        /// <param name="text">要写入的文字。</param>
         private static void WriteText(UI_PickPopup __instance, int idx, string text)
         {
             var label = UnlockMadelineUi.GetText(__instance, idx);
@@ -125,11 +95,6 @@ namespace DT_Tools.Features.UnlockMadeline
         }
     }
 
-    /// <summary>
-    /// UI_PickPopup.SetStanding 后缀（私有方法，字符串定位）：
-    /// 0.1.18c UI_PickPopup.cs。原版立绘 switch 不含 Madeline 类型，图区恒空；
-    /// 容器为 GetObject(6)（UI_PickPopup.cs:428），注入常驻 Image 并挂立绘。
-    /// </summary>
     [HarmonyPatch(typeof(UI_PickPopup), "SetStanding")]
     internal static class UnlockMadelinePickStandingPatch
     {

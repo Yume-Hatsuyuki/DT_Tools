@@ -3,18 +3,8 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.PhotoSend
 {
-    /// <summary>
-    /// 聊天触发补丁：`![文字](路径)` 直发照片（严格 markdown 括号对，半角）。
-    /// </summary>
-    /// <remarks>
-    /// 文字非空时先发一条同内容的普通聊天消息再发照片；文字可空（`![](路径)`），路径不允许为空。
-    /// 大厅/观战/死亡（原版照片入口不可用的状态）与其余 `!` 开头消息一律放行不接管。
-    /// </remarks>
     internal static class Patch
     {
-        /// <summary>
-        /// 补丁自己发送文字说明期间的再入闸：文字若以 ! 开头，防止被本补丁再次解析成指令。
-        /// </summary>
         internal static bool SendingCaption;
 
         [HarmonyPatch(typeof(VoiceManager), "SendChatMessage")]
@@ -34,11 +24,9 @@ namespace DT_Tools.Features.PhotoSend
                 string trimmed = message.TrimStart();
                 if (!trimmed.StartsWith("!", global::System.StringComparison.Ordinal))
                 {
-                    return true; // 严格 markdown：只认半角 !
+                    return true;
                 }
 
-                // 大厅/观战/死亡时原版照片入口不可用（与 0.1.18c UI_GameTablet.RefreshPhotoButton 同条件），
-                // 此时完全不接管，避免在大厅等场景吃掉消息
                 if (Managers.Game == null || !Managers.Game.IsAlive || Managers.Game.IsSpectator)
                 {
                     return true;
@@ -48,7 +36,7 @@ namespace DT_Tools.Features.PhotoSend
                 ParseResult result = TryParseMarkdown(body, out string alt, out string argument);
                 if (result == ParseResult.NotCommand)
                 {
-                    return true; // 非 [ 开头：普通聊天（旧式 !photo 等一并放行）
+                    return true;
                 }
                 if (result != ParseResult.Ok)
                 {
@@ -66,7 +54,7 @@ namespace DT_Tools.Features.PhotoSend
                     Log.Warn<PhotoSendFeature>($"{error}");
                     PhotoSendLogic.ReportChatError(__instance, error);
                 }
-                return false; // 拦截原消息
+                return false;
             }
 
             private static string Describe(ParseResult result)
@@ -89,16 +77,6 @@ namespace DT_Tools.Features.PhotoSend
             Ok,
         }
 
-        /// <summary>
-        /// 解析 markdown 图片语法：`[` 文字 `](` 路径 `)`。
-        /// </summary>
-        /// <remarks>
-        /// 文字可空（Trim 后），路径不允许为空。
-        /// </remarks>
-        /// <param name="body">消息正文。</param>
-        /// <param name="alt">解析出的文字说明，可为空。</param>
-        /// <param name="argument">解析出的图片路径。</param>
-        /// <returns>解析结果，区分是否为合法的图片语法。</returns>
         private static ParseResult TryParseMarkdown(string body, out string alt, out string argument)
         {
             alt = null;

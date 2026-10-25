@@ -3,13 +3,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.KahoWatch
 {
-    /// <summary>
-    /// 拔刀提示（0.1.18c Player.HandWeapon(int)，C_HAND_WEAPON 服务端入口）：被监视者
-    /// 手持武器时提示 KAHO。
-    /// </summary>
-    /// <remarks>
-    /// 该服务端方法仅在房主进程执行，无需 IsHost 判定。
-    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.Player), "HandWeapon")]
     internal static class KahoWatchDrawPatch
     {

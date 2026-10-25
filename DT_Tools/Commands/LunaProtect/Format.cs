@@ -2,9 +2,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.LunaProtect
 {
-    /// <summary>
-    /// /luna_protect 输出格式化：人类回复文本 + JSON 结果 DTO。
-    /// </summary>
     internal static class LunaProtectFormat
     {
         private const string CaveatAll =

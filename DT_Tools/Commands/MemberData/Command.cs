@@ -5,12 +5,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.MemberData
 {
-    /// <summary>
-    /// /member_data [all|#id] [额外键…] — 读取玩家 Steam Lobby Member Data（build / dt_tools 等）。
-    /// </summary>
-    /// <remarks>
-    /// 无参数 → 帮助（与 /list_players 一致）；all → 全部玩家；#n / n → 指定玩家。
-    /// </remarks>
     internal sealed class MemberDataCommand : ICommand
     {
         public string Name => "member_data";
@@ -24,7 +18,6 @@ namespace DT_Tools.Commands.MemberData
 
         public CommandResult Execute(CommandContext ctx)
         {
-            // 无参数 / help / ? / 帮助 → 说明
             if (ctx.Args == null || ctx.Args.Length == 0)
             {
                 ctx.Reply(MemberDataFormat.Help());
@@ -53,7 +46,6 @@ namespace DT_Tools.Commands.MemberData
                 return CommandResult.Fail("invalid args");
             }
 
-            // 既不是 all 也不是指定 id（理论上 TryParse 已拦）
             if (!listAll && filterPid <= 0)
             {
                 ctx.Reply(MemberDataFormat.Help());
@@ -63,7 +55,6 @@ namespace DT_Tools.Commands.MemberData
             var lobby = Managers.Network?.Lobby;
             bool inLobby = lobby != null && lobby.InLobby;
 
-            // listAll → filterPid=0 表示全部
             int pid = listAll ? 0 : filterPid;
             var entries = MemberDataLogic.Collect(pid, extraKeys);
             int myId = Managers.Player.MyPlayerID;
@@ -72,9 +63,6 @@ namespace DT_Tools.Commands.MemberData
             return CommandResult.Success(MemberDataFormat.Result(entries, myId, inLobby));
         }
 
-        /// <summary>
-        /// 解析：第一个参数为 all | #id | id；其后为额外 Member Data 键。
-        /// </summary>
         private static bool TryParse(
             string[] args,
             out int filterPid,
@@ -112,8 +100,6 @@ namespace DT_Tools.Commands.MemberData
                 }
                 else
                 {
-                    // 第一个参数既不是 all 也不是玩家 id：整段当额外键，并默认 all
-                    // （例如 /member_data foo → 读全部玩家的 foo 键）
                     listAll = true;
                     i = 0;
                 }

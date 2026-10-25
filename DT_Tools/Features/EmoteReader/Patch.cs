@@ -4,17 +4,6 @@ using UnityEngine;
 
 namespace DT_Tools.Features.EmoteReader
 {
-    /// <summary>
-    /// UseEmotion 后置：与 EmoteTaunt 共用同一方法但方向相反——这里只解读"别人"的表情
-    /// （Managers.Player.MyPlayer == __instance 时跳过，不自我解说）。
-    /// </summary>
-    /// <remarks>
-    /// 表情 id→解读台词映射与 EmoteTaunt 的 18 个表情一一对应（0.1.18c Emotions.cs），
-    /// 台词逐表情配置于 Feature（配置页可直接修改，留空=该表情不解读）。
-    /// 广播描述的是"对方的行为"（XX 的解读），不是冒充对方发言，无冒名风险。
-    /// 庭审阶段：表情走 UI_TrialEvent.UseEmotion 而非 Player.UseEmotion（0.1.18c PacketHandler.cs:454），
-    /// 由下方 EmoteReaderTrialPatch 单独钩住，与平时共用台词与冷却。
-    /// </remarks>
     [HarmonyPatch(typeof(Player), nameof(Player.UseEmotion))]
     internal static class EmoteReaderPatch
     {
@@ -41,42 +30,33 @@ namespace DT_Tools.Features.EmoteReader
             Managers.Voice?.SendChatMessage($"{name} {reading}");
         }
 
-        /// <summary>
-        /// emotionId → 解读台词（读配置）；未知名表情返回 null。
-        /// </summary>
-        /// <param name="emotionId">表情 ID。</param>
-        /// <returns>解读台词；未知表情时为 null。</returns>
         internal static string ReadLine(int emotionId)
         {
             switch (emotionId)
             {
-                case 201: return EmoteReaderFeature.GaspLine;     // GASP
-                case 202: return EmoteReaderFeature.PanicLine;    // PANIC
-                case 210: return EmoteReaderFeature.HeartLine;    // HEART
-                case 208: return EmoteReaderFeature.SmugLine;     // SMUG
-                case 216: return EmoteReaderFeature.PunchLine;    // PUNCH
-                case 212: return EmoteReaderFeature.ThisOneLine;  // THISONE
-                case 204: return EmoteReaderFeature.HmmLine;      // HMM
-                case 111: return EmoteReaderFeature.QuestionLine; // QUESTION
-                case 206: return EmoteReaderFeature.AbsurdLine;   // ABSURD
-                case 112: return EmoteReaderFeature.SadLine;      // SAD
-                case 113: return EmoteReaderFeature.SorryLine;    // SORRY
-                case 116: return EmoteReaderFeature.YahoLine;     // YAHO
-                case 106: return EmoteReaderFeature.HelpLine;     // HELP
-                case 209: return EmoteReaderFeature.YikesLine;    // YIKES
-                case 214: return EmoteReaderFeature.BlehLine;     // BLEH
-                case 207: return EmoteReaderFeature.NopeLine;     // NOPE
-                case 205: return EmoteReaderFeature.TooMuchLine;  // TOOMUCH
-                case 215: return EmoteReaderFeature.FightingLine; // FIGHTING
+                case 201: return EmoteReaderFeature.GaspLine;
+                case 202: return EmoteReaderFeature.PanicLine;
+                case 210: return EmoteReaderFeature.HeartLine;
+                case 208: return EmoteReaderFeature.SmugLine;
+                case 216: return EmoteReaderFeature.PunchLine;
+                case 212: return EmoteReaderFeature.ThisOneLine;
+                case 204: return EmoteReaderFeature.HmmLine;
+                case 111: return EmoteReaderFeature.QuestionLine;
+                case 206: return EmoteReaderFeature.AbsurdLine;
+                case 112: return EmoteReaderFeature.SadLine;
+                case 113: return EmoteReaderFeature.SorryLine;
+                case 116: return EmoteReaderFeature.YahoLine;
+                case 106: return EmoteReaderFeature.HelpLine;
+                case 209: return EmoteReaderFeature.YikesLine;
+                case 214: return EmoteReaderFeature.BlehLine;
+                case 207: return EmoteReaderFeature.NopeLine;
+                case 205: return EmoteReaderFeature.TooMuchLine;
+                case 215: return EmoteReaderFeature.FightingLine;
                 default: return null;
             }
         }
     }
 
-    /// <summary>
-    /// 庭审阶段钩子：庭审中表情经 UI_TrialEvent.UseEmotion(playerId, emotionId)（0.1.18c UI_TrialEvent.cs:1687），
-    /// 只解读他人（playerId != MyPlayerID），玩家名从 PlayerCache 取；台词与冷却与平时共享。
-    /// </summary>
     [HarmonyPatch(typeof(UI_TrialEvent), nameof(UI_TrialEvent.UseEmotion))]
     internal static class EmoteReaderTrialPatch
     {

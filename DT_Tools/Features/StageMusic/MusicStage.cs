@@ -1,12 +1,5 @@
 namespace DT_Tools.Features.StageMusic
 {
-    /// <summary>
-    /// 音乐触发阶段（扩展：加成员 + Feature 对应 [Config] 字段 + Patch.Triggers.cs 触发补丁）。
-    /// </summary>
-    /// <remarks>
-    /// PickCharacter 起为 2026-09 审计新增（0.1.18c 源码核对，见各触发补丁注释），全部默认空，
-    /// 不影响原有八阶段行为。
-    /// </remarks>
     public enum MusicStage
     {
         Kill,

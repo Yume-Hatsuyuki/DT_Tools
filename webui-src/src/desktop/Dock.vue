@@ -5,21 +5,10 @@ import { useSectionMeta } from '../composables/useSectionMeta.js';
 import { pickImageFile } from '../composables/pickImage.js';
 import { useCropper } from '../composables/useCropper.js';
 
-/**
- * 底部应用坞（macOS Dock 风）：桌面应用图标全部整合于此——悬停鱼眼放大、
- * 上方气泡提示、运行中窗口指示点；单击打开/聚焦（已开窗口在 聚焦/最小化
- * 间切换），右键备忘菜单（重命名/自定义图标，仅存本浏览器）。
- * 菜单 Teleport 到 body：Dock 容器的 backdrop-filter 会劫持 fixed 后代的
- * 包含块，留在内部会按 Dock 左上角错位（FolderGrid 同款先例）。
- */
 const props = defineProps({
-  /** 桌面应用注册表 [{id,title,icon}]。 */
   apps: { type: Array, required: true },
-  /** 运行中窗口（算运行指示点 + 聚焦切换）。 */
   windows: { type: Array, required: true },
-  /** 小组件（插件弹窗）定义 [{id,title,icon}]，排在应用图标之后。 */
   widgets: { type: Array, default: () => [] },
-  /** 当前打开的小组件 id 集合（指示点）。 */
   openWidgets: { type: Array, default: () => [] },
 });
 const emit = defineEmits(['launch', 'focus-window', 'toggle-widget']);
@@ -27,7 +16,6 @@ const emit = defineEmits(['launch', 'focus-window', 'toggle-widget']);
 const metaStore = useSectionMeta();
 const cropper = useCropper();
 
-/** Dock 全部条目（应用 + 小组件），鱼眼缩放按这份列表算。 */
 const entries = computed(() => [
   ...props.apps.map(a => ({ kind: 'app', id: a.id, title: a.title, icon: a.icon })),
   ...props.widgets.map(w => ({ kind: 'widget', id: w.id, title: w.title, icon: w.icon })),
@@ -37,7 +25,6 @@ function appMetaKey(appId) { return 'app:' + appId; }
 function appLabel(app) { return metaStore.displayName(appMetaKey(app.id)) || app.title; }
 function appIconSrc(app) { return (metaStore.get(appMetaKey(app.id)) || {}).icon || null; }
 
-/** 该应用运行中的窗口（按 z 降序，第一扇即最上层）。 */
 function windowsOf(appId) {
   return props.windows
     .filter(w => w.appId === appId)
@@ -53,8 +40,6 @@ function onItem(entry) {
   if (wins.length) emit('focus-window', wins[0].id);
   else emit('launch', entry.id);
 }
-
-// ---- 悬停鱼眼：鼠标 x 距各图标中心的距离映射为放大倍率 ----
 
 const itemEls = ref([]);
 const scales = ref([]);
@@ -88,7 +73,6 @@ function itemStyle(i) {
   };
 }
 
-/** 小组件是否打开（运行指示点）。 */
 function widgetOpen(id) {
   return props.openWidgets.includes(id);
 }
@@ -107,17 +91,13 @@ function entryRunning(entry) {
 }
 function onEntryContextMenu(e, entry) {
   e.preventDefault();
-  if (entry.kind !== 'app') return;   // 小组件无备忘菜单，仅屏蔽浏览器菜单
+  if (entry.kind !== 'app') return;
   openMenu(e, appOf(entry.id));
 }
 
-// ---- tooltip：悬停项的气泡提示（图2 风格：图标上方黑底小气泡）----
-
 const hoverIdx = ref(-1);
 
-// ---- 右键备忘菜单（原桌面图标菜单迁入）----
-
-const menu = ref(null);   // { x, y, appId }
+const menu = ref(null);
 
 function openMenu(e, app) {
   e.preventDefault();
@@ -211,7 +191,7 @@ async function changeAppIcon(app) {
   display: flex;
   justify-content: center;
   z-index: 5000;
-  pointer-events: none;   /* 只有 Dock 本体可点，两侧留空给窗口拖放 */
+  pointer-events: none;
 }
 
 .dock {
@@ -238,7 +218,6 @@ async function changeAppIcon(app) {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 应用区与小组件区的细分隔线 */
 .dock-sep {
   width: 1px;
   align-self: stretch;
@@ -252,7 +231,6 @@ async function changeAppIcon(app) {
   display: grid;
   place-items: center;
   border-radius: 13px;
-  /* 深海青玻璃瓦片：与壳层同源的高光青渐变 + 白描边，随鱼眼一起缩放 */
   background: radial-gradient(circle at 50% 40%,
     rgba(120, 210, 240, 0.30) 0%,
     rgba(52, 120, 160, 0.42) 48%,
@@ -279,7 +257,6 @@ async function changeAppIcon(app) {
   border-radius: 13px;
 }
 
-/* 运行指示点：macOS 式图标下方小圆点 */
 .dock-dot {
   position: absolute;
   bottom: -7px;
@@ -295,7 +272,6 @@ async function changeAppIcon(app) {
   box-shadow: 0 0 6px var(--shell-glow-dim);
 }
 
-/* 悬停气泡提示（图2 终端 tooltip 风格） */
 .dock-tip {
   position: absolute;
   bottom: calc(100% + 12px);
@@ -323,7 +299,6 @@ async function changeAppIcon(app) {
   border-top-color: rgba(8, 15, 22, 0.92);
 }
 
-/* 右键备忘菜单（Teleport 到 body） */
 .dock-menu-mask {
   position: fixed;
   inset: 0;

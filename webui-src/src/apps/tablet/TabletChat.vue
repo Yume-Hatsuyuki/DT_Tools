@@ -5,11 +5,6 @@ import { groupByRound } from './tabletFormat.js';
 import { API } from '../../api.js';
 import { t } from '../../i18n/index.js';
 
-/**
- * 平板电脑的聊天流。头像、名字、气泡与游戏内一致：双方都显示头像与名字，
- * 本机消息靠右，他人消息靠左；死亡者气泡为灰色；阶段标记为黄字居中。
- * 照片下方提供「复制」「另存为」，操作由父组件完成。
- */
 const props = defineProps({
   lines: { type: Array, default: () => [] },
   numbering: { type: Map, default: () => new Map() },

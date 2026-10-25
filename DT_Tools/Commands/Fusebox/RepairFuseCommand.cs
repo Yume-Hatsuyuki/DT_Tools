@@ -6,14 +6,6 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Fusebox
 {
-    /// <summary>
-    /// /repair_fuse [#id|all]：客户端秒修损坏电闸，无视 10 秒读条，直接发 C_INTERACT_FUSEBOX（跟随控制台，非房主可用，仅生存阶段）。
-    /// </summary>
-    /// <remarks>
-    /// 原版客户端 Fusebox.Interact 先本地读条 10 秒才发包；服务端 Server.Game.Fusebox.Interact（0.1.18c Server.Game/Fusebox.cs:16）见 StateList[0]==9999 直接 ConnetCable()（:97），没有读条、距离、颜色、存活校验，所以直接发包即可。
-    /// 服务端 DeviceManager.Interact 有 500ms InteractLock，all 模式用协程每 0.6 秒发一包。
-    /// 示例：/repair_fuse 查看损坏列表；/repair_fuse all 秒修全部；/修电 #12 秒修指定电闸。
-    /// </remarks>
     internal sealed class RepairFuseCommand : ICommand
     {
         public string Name => "repair_fuse";
@@ -30,10 +22,8 @@ namespace DT_Tools.Commands.Fusebox
             if (!FuseboxLogic.ValidateClient(ctx, out string validateCode))
                 return CommandResult.Fail(validateCode);
 
-            // 收集损坏电闸（StateList[0]==9999）
             var broken = FuseboxLogic.CollectBroken();
 
-            // 无参：列出损坏电闸
             if (ctx.Args.Length == 0)
             {
                 if (broken.Count == 0)
@@ -47,11 +37,9 @@ namespace DT_Tools.Commands.Fusebox
 
             string arg = ctx.Args[0];
 
-            // all：秒修全部
             if (arg.Equals("all", StringComparison.OrdinalIgnoreCase))
                 return RepairAll(broken, ctx);
 
-            // 单个 #id / id
             if (!TargetSpec.TryParseId(arg, out int fuseboxId))
             {
                 ctx.Reply($"无效的 ID: {arg}（应为 #<数字> 或纯数字）");
@@ -61,20 +49,12 @@ namespace DT_Tools.Commands.Fusebox
             return RepairOne(fuseboxId, broken, ctx);
         }
 
-        /// <summary>
-        /// 单个电闸修复：校验目标确实损坏后发包，避免对完好电闸误发触发 DisconnetCable。
-        /// </summary>
-        /// <param name="fuseboxId">要修复的电闸 ID。</param>
-        /// <param name="broken">当前已损坏的电闸列表，用于校验目标确实损坏。</param>
-        /// <param name="ctx">命令上下文。</param>
-        /// <returns>命令执行结果。</returns>
         private static CommandResult RepairOne(int fuseboxId, List<DeviceBase> broken, CommandContext ctx)
         {
             DeviceBase target = broken.Find(f => f.ID == fuseboxId);
 
             if (target == null)
             {
-                // 不在损坏列表中：检查是否存在此设备 / 是否为电闸 / 当前状态
                 var dev = FuseboxLogic.FindFusebox(fuseboxId, out string findError);
                 if (dev == null)
                 {
@@ -82,7 +62,6 @@ namespace DT_Tools.Commands.Fusebox
                     return CommandResult.Fail("fusebox not found");
                 }
 
-                // 是电闸但未损坏（StateList[0]==0）：拒绝发包防止误触发 DisconnetCable
                 ctx.Warn(
                     $"电闸 #{fuseboxId} 当前状态: {FuseboxLogic.GetStateLabel(dev)}（未损坏），无需修复。" +
                     "对完好电闸发 C_INTERACT_FUSEBOX 会触发 DisconnetCable 拉断电闸，已拒绝。" +
@@ -99,12 +78,6 @@ namespace DT_Tools.Commands.Fusebox
             return CommandResult.Success(new { fuseboxId });
         }
 
-        /// <summary>
-        /// all 模式：用协程逐个发 C_INTERACT_FUSEBOX，间隔 PacketInterval 秒避让服务端 InteractLock。
-        /// </summary>
-        /// <param name="broken">当前已损坏的电闸列表。</param>
-        /// <param name="ctx">命令上下文。</param>
-        /// <returns>命令执行结果。</returns>
         private static CommandResult RepairAll(List<DeviceBase> broken, CommandContext ctx)
         {
             if (broken.Count == 0)

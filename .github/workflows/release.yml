@@ -1,7 +1,5 @@
 name: Release
 
-# 1) 推送 v*.*.* tag → 编译并发布
-# 2) Actions 手动 Run workflow，填入 tag（可基于当前 main 新建 tag）
 on:
   push:
     tags:
@@ -16,7 +14,6 @@ on:
 permissions:
   contents: write
 
-# 同一 tag 重复触发时取消旧运行，避免重复发布
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
@@ -31,7 +28,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 表达式一律经 env 传入 shell，避免把 inputs / ref 名直接拼进脚本（注入风险）
       - name: 校验发布来源分支
         shell: bash
         env:
@@ -72,29 +68,27 @@ jobs:
           # 编译用的版本号必须是纯数字（BepInEx / System.Version 不支持后缀），
           # 只取匹配到的 v数字.数字.数字(.数字)? 前缀，后面不管跟什么（-c2 / _b2 / 中文 / 空格等）一律丢弃。
           ASSEMBLY_VERSION="${BASH_REMATCH[1]}"
+          # 完整构建版本：去掉 v 前缀，只保留 0-9 A-Z a-z . _ -（+ 会被 SDK 当成元数据分隔符，必须剔除）。
+          # 写入 InformationalVersion，运行时更新检测据此识别同数字版本的重建包（如 2.0.0.10-v2）。
+          INFO_VERSION="$(printf '%s' "${TAG#v}" | tr -cd 'A-Za-z0-9._-')"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$ASSEMBLY_VERSION" >> "$GITHUB_OUTPUT"
+          echo "informational=$INFO_VERSION" >> "$GITHUB_OUTPUT"
 
-      # 显式安装并固定 Node 版本（与本地开发环境 Node 24 保持一致）
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: npm
-          # setup-node v5 起默认启用 package-manager 缓存，与上方 cache: npm 冲突，显式关闭
           package-manager-cache: false
           cache-dependency-path: webui-src/package-lock.json
 
-      # 先于 dotnet build 构建前端：产物写入 DT_Tools/WebUI，
-      # 保证 csproj 里 <None Include="WebUI/**"> 在求值时就能看到这些文件。
       - name: Build WebUI
         working-directory: webui-src
         run: |
           npm ci
           npm run build
 
-      # 版本以仓库根目录 global.json 为唯一来源（rollForward=disable，必须精确匹配）。
-      # 注意不要再同时写 dotnet-version，否则两个版本都会被安装。
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
@@ -103,11 +97,14 @@ jobs:
       - name: Restore
         run: dotnet restore DT_Tools/DT_Tools.csproj
 
-      # 前端已在上面显式构建，跳过 csproj 内的 BuildWebUI，避免重复执行 npm
       - name: Build
+        env:
+          ASSEMBLY_VERSION: ${{ steps.ver.outputs.version }}
+          INFO_VERSION: ${{ steps.ver.outputs.informational }}
         run: |
           dotnet build DT_Tools/DT_Tools.csproj -c Release --no-restore \
-            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:Version="$ASSEMBLY_VERSION" \
+            -p:InformationalVersion="$INFO_VERSION" \
             -p:SkipWebUIBuild=true
 
       - name: 打包发布文件
@@ -176,7 +173,6 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
-          # 手动触发且 tag 尚不存在时，让新 tag 落在被构建的那个提交上
           target_commitish: ${{ github.sha }}
           name: DT_Tools ${{ steps.ver.outputs.tag }}
           generate_release_notes: true

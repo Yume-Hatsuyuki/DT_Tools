@@ -4,13 +4,6 @@ using TMPro;
 
 namespace DT_Tools.Features.ChatLimit
 {
-    /// <summary>
-    /// TMP_InputField.OnEnable 后置：任意输入框启用时，若仍是原版 100 上限则抬高。
-    /// </summary>
-    /// <remarks>
-    /// 目标为 Unity TextMeshPro 程序集成员（不在游戏反编译源内）；
-    /// protected override，字符串定位，已核对 libs/Unity.TextMeshPro.dll 元数据含 OnEnable。
-    /// </remarks>
     [HarmonyPatch(typeof(TMP_InputField), "OnEnable")]
     internal static class ChatLimitTmpOnEnablePatch
     {

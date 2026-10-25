@@ -6,30 +6,14 @@ using UnityEngine;
 
 namespace DT_Tools.Features.UnlockMadeline
 {
-    /// <summary>
-    /// 纯逻辑：存档字段探底、位置表补键、排序算法、六语言介绍文案、
-    /// 审判表情图随机挑选与 Addressables 预载。
-    /// </summary>
     internal static class UnlockMadelineLogic
     {
         public const int MadelineDataId = 101;
 
-        /// <summary>
-        /// 人物档案立绘位置（Madeline 缺键时原版回退到 STANDING_BASE_POS 通用底位）。
-        /// </summary>
-        /// <remarks>
-        /// 值为旧版标定：档案页立绘居中略下沉。
-        /// </remarks>
         public static readonly Vector2 ProfileStandingPos = new Vector2(0f, -450f);
 
-        /// <summary>
-        /// 审判过场立绘位置（与其余角色在 CUTSCENE_POS_LIST 的量级一致）。
-        /// </summary>
         public static readonly Vector2 TrialCutscenePos = new Vector2(90f, 150f);
 
-        /// <summary>
-        /// 审判过场表情图集键（立绘表情四态；键即 Addressables 地址前缀）。
-        /// </summary>
         public static readonly string[] ExpKeys =
         {
             "Madeline_standing_exp_smile.sprite",
@@ -38,20 +22,12 @@ namespace DT_Tools.Features.UnlockMadeline
             "Madeline_standing_exp_sinister.sprite",
         };
 
-        // _data 为私有字段：0.1.18c SaveManager.cs:16；MarkDirty 为私有方法。
-
         public static PlayerSaveData GetSaveData(SaveManager save)
             => Traverse.Create(save).Field("_data").GetValue<PlayerSaveData>();
 
         public static void MarkDirty(SaveManager save)
             => Traverse.Create(save).Method("MarkDirty").GetValue();
 
-        /// <summary>
-        /// 确保 CharacterPlayCounts 含 101（原版 EnsureCharacterStats 明确跳过 101：
-        /// 0.1.18c SaveManager.cs:487；RecordGamePlayed 只对已有键自增：SaveManager.cs:470）。
-        /// 新补键时 MarkDirty。
-        /// </summary>
-        /// <param name="save">存档管理器。</param>
         public static void SeedPlayCount(SaveManager save)
         {
             var data = GetSaveData(save);
@@ -63,10 +39,6 @@ namespace DT_Tools.Features.UnlockMadeline
             MarkDirty(save);
         }
 
-        /// <summary>
-        /// 档案立绘位置表（私有静态只读字典）：0.1.18c UI_InfomationPopup.cs。
-        /// </summary>
-        /// <returns>角色名到立绘位置的映射表。</returns>
         private static Dictionary<string, Vector2> StandingPosList()
             => AccessTools.Field(typeof(UI_InfomationPopup), "STANDING_POS_LIST")
                 ?.GetValue(null) as Dictionary<string, Vector2>;
@@ -91,9 +63,6 @@ namespace DT_Tools.Features.UnlockMadeline
             dict.Remove("Medelin");
         }
 
-        /// <summary>
-        /// 审判过场位置表（public 静态字段）：0.1.18c UI_TrialEvent.cs。
-        /// </summary>
         public static void EnsureCutscenePos()
         {
             if (!UI_TrialEvent.CUTSCENE_POS_LIST.ContainsKey("Madeline"))
@@ -108,11 +77,6 @@ namespace DT_Tools.Features.UnlockMadeline
             UI_TrialEvent.CUTSCENE_POS_LIST.Remove("Medelin");
         }
 
-        /// <summary>
-        /// 选人列表排序：已拥有优先，其次中文序（或 DataId），与原版一致但不再
-        /// 过滤 ECharacterType.Madeline（原版过滤见 0.1.18c UI_PickPopup.cs:142）。
-        /// </summary>
-        /// <returns>排序后的角色列表：已拥有的在前，其次按中文序（或 DataId）。</returns>
         public static IEnumerable<CharacterData> OrderedPickList()
             => from d in Managers.Data.CharacterDic.Values
                orderby Managers.Inventory.IsCharacterOwned(d.DataId) descending,
@@ -120,14 +84,6 @@ namespace DT_Tools.Features.UnlockMadeline
                        d.DataId
                select d;
 
-        /// <summary>
-        /// 选人面板介绍文案（六语言）。
-        /// </summary>
-        /// <remarks>
-        /// 原版取 "&lt;Name&gt;Explain" 文本键（0.1.18c
-        /// UI_PickPopup.cs:517），Madeline 无对应文本数据，故本地内置。
-        /// </remarks>
-        /// <returns>选人面板的角色介绍文案，按当前语言返回。</returns>
         public static string GetExplain()
         {
             switch (Managers.Language)
@@ -147,10 +103,6 @@ namespace DT_Tools.Features.UnlockMadeline
             }
         }
 
-        /// <summary>
-        /// 从四态表情图集中随机挑一张（先确保 Addressables 预载）。
-        /// </summary>
-        /// <returns>随机选中的表情图。</returns>
         public static Sprite PickRandomExp()
         {
             EnsureExpsPreloaded();
@@ -165,13 +117,6 @@ namespace DT_Tools.Features.UnlockMadeline
             return list.Count == 0 ? null : list[Random.Range(0, list.Count)];
         }
 
-        /// <summary>
-        /// 表情图集不在 ResourceManager 缓存（Madeline 未开放），尝试经 Addressables
-        /// 同步预载进 _resources 字典（私有字段：0.1.18c ResourceManager.cs:11）。
-        /// </summary>
-        /// <remarks>
-        /// 只试一次；Addressables 不可用时静默跳过（审判过场表情缺失可接受）。
-        /// </remarks>
         public static void EnsureExpsPreloaded()
         {
             if (UnlockMadelineState.ExpsTried)
@@ -208,7 +153,6 @@ namespace DT_Tools.Features.UnlockMadeline
                 if (dict.TryGetValue(key, out var exist) && exist is Sprite)
                     continue;
 
-                // Addressables 地址形如 "Madeline_standing_exp_smile.sprite[Madeline_standing_exp_smile]"
                 string addr = key + "[" + key.Replace(".sprite", "") + "]";
                 try
                 {
@@ -229,11 +173,9 @@ namespace DT_Tools.Features.UnlockMadeline
                 }
                 catch
                 {
-                    // Addressables 不可用时跳过单键
                 }
             }
 
-            // 宣言立绘表情缺图时以 smile 顶替（与 Ui.InjectAll 的裁切回退同源）
             if (dict.TryGetValue("Madeline_standing_exp_smile.sprite", out var smile) && smile is Sprite)
             {
                 dict["Madeline_standing_exp_proposition.sprite"] = smile;

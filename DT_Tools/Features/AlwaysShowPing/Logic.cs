@@ -7,34 +7,16 @@ using UnityEngine;
 
 namespace DT_Tools.Features.AlwaysShowPing
 {
-    /// <summary>
-    /// 延迟常显逻辑：保证 UI_PingIndicator 在任意阶段可见并按间隔刷新。
-    /// </summary>
-    /// <remarks>
-    /// 私有字段定位见 0.1.18c UI_GameScene.cs。
-    /// </remarks>
     internal static class AlwaysShowPingLogic
     {
-        /// <summary>
-        /// _pingIndicator：0.1.18c UI_GameScene.cs:325。
-        /// </summary>
         private static readonly FieldInfo PingIndicatorField =
             AccessTools.Field(typeof(UI_GameScene), "_pingIndicator");
 
-        /// <summary>
-        /// _nextPingRefreshAt：0.1.18c UI_GameScene.cs:327。
-        /// </summary>
         private static readonly FieldInfo NextRefreshField =
             AccessTools.Field(typeof(UI_GameScene), "_nextPingRefreshAt");
 
-        /// <summary>
-        /// 原版父节点，关闭功能时还原。
-        /// </summary>
         private static Transform _originalParent;
 
-        /// <summary>
-        /// 是否已将指示器挂到 UI_GameScene 根。
-        /// </summary>
         private static bool _reparented;
 
         public static void Tick(UI_GameScene scene)
@@ -58,23 +40,12 @@ namespace DT_Tools.Features.AlwaysShowPing
             NextRefreshField.SetValue(scene, Time.unscaledTime + interval);
 
             bool isHost = Managers.Host != null && Managers.Host.IsHost;
-            // 与原版 TickPingIndicator 一致（0.1.18c UI_GameScene.cs:1868-1869）：
-            // 房主显示客人平均延迟，客人显示到房主的 ping。
             int ms = isHost
                 ? Managers.Player.GetAverageGuestPing()
                 : Managers.Network.GetHostPingMs();
             indicator.SetPing(ms);
         }
 
-        /// <summary>
-        /// 保证指示器节点处于激活层级。
-        /// </summary>
-        /// <remarks>
-        /// 若父链被 Lobby 面板关掉，则挂到
-        /// UI_GameScene 根节点（避免随 Lobby/Common 面板切换被关掉）。
-        /// </remarks>
-        /// <param name="scene">当前的游戏场景界面。</param>
-        /// <param name="indicator">延迟指示器节点。</param>
         private static void EnsureVisible(UI_GameScene scene, UI_PingIndicator indicator)
         {
             GameObject go = indicator.gameObject;
@@ -88,17 +59,14 @@ namespace DT_Tools.Features.AlwaysShowPing
                 return;
             }
 
-            // 自身或祖先被关：先尝试只开自身
             if (!go.activeSelf)
                 go.SetActive(true);
 
             if (go.activeInHierarchy)
                 return;
 
-            // 父链仍关（通常在 Lobby 面板下）→ 挂到 UI_GameScene 根，避免随 Lobby/Common 面板切换被关掉
             if (_reparented)
             {
-                // 场景重建后指示器可能是新实例，静态状态失效，允许重新挂载
                 if (go.transform.parent == scene.transform)
                 {
                     go.SetActive(true);
@@ -115,9 +83,6 @@ namespace DT_Tools.Features.AlwaysShowPing
             Log.Info("AlwaysShowPing", "PingIndicator 已挂到 UI_GameScene 根节点，离开大厅后仍可见。");
         }
 
-        /// <summary>
-        /// 功能关闭时还原父节点。
-        /// </summary>
         public static void RestoreParent()
         {
             if (!_reparented || _originalParent == null)
@@ -136,7 +101,6 @@ namespace DT_Tools.Features.AlwaysShowPing
                     if (indicator != null && indicator.transform != null)
                     {
                         indicator.transform.SetParent(_originalParent, worldPositionStays: true);
-                        // 仅大厅时原版会显示，其余阶段保持原版隐藏语义
                         bool inLobby = Managers.Game != null && Managers.Game.State == EGameState.Lobby;
                         indicator.gameObject.SetActive(inLobby);
                     }

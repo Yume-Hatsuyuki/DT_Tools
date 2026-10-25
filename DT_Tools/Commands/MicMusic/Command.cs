@@ -1,16 +1,6 @@
 using DT_Tools.Core.Attributes;
 namespace DT_Tools.Commands.MicMusic
 {
-    /// <summary>
-    /// /mic_music &lt;url|路径&gt; [volume 0.8] [seconds 120] [local|online] | off — 虚拟麦克风点歌
-    /// （参数顺序任意，路径放最前即可）：运行期把 Dissonance 捕获管线上的采集器临时替换为
-    /// 包装器，音乐混入麦克风帧后照常走语音编码发给全房间（混流点在 VAD 上游，无需说话）。
-    /// </summary>
-    /// <remarks>
-    /// 真实麦克风不被接替（仅叠加），播放结束或 off 时销毁还原。引擎在 Game/MicBroadcast；
-    /// /stop_music 兼停。
-    /// 前提：游戏内麦克风未静音（Comms.IsMuted=true 时 Dissonance 整条发送关闭）。
-    /// </remarks>
     internal sealed class MicMusicCommand : ICommand
     {
         public string Name => "mic_music";

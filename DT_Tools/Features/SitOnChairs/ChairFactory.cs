@@ -9,32 +9,14 @@ using UnityEngine;
 
 namespace DT_Tools.Features.SitOnChairs
 {
-    /// <summary>
-    /// 椅子运行时工厂（原 IslandMap ChairFactory）：游戏原版资源里没有 "Chair"
-    /// 预制体（0.1.18c 只有 Chair.cs 逻辑），这里在运行时动态构建一个：
-    /// 根物体 = 透明 SpriteRenderer（sortingOrder 240，仅承载设备交互与定位），
-    /// 子物体 Skeleton = MeshRenderer（sortingOrder 260 = 坐姿人物层级）+ SkeletonAnimation，
-    /// 骨架数据取任意已加载的角色骨骼资源（FindSkeletonData），坐下时 Chair.ChangeCharacter
-    /// 会按坐的人的角色换骨骼。
-    /// </summary>
-    /// <remarks>
-    /// 同时负责坐姿偏移（椅子设备整体移动到 数据坐标+偏移）
-    /// 与坐姿人物渲染层级设置。
-    /// </remarks>
     internal static class ChairFactory
     {
-        /// <summary>
-        /// 注入到 ResourceManager._resources 的预制体键名（0.1.18c 无此资源，运行时注入）
-        /// </summary>
         internal const string PrefabKey = "Chair";
 
         internal const string TextKey = "ChairInteract";
 
         internal const string TextValue = "坐下/起身";
 
-        /// <summary>
-        /// 坐姿人物渲染层级：高于地图 250、低于其他玩家，见 README/ChairFactory 说明
-        /// </summary>
         internal const int CharacterSortingOrder = 260;
 
         private static GameObject _template;
@@ -57,9 +39,6 @@ namespace DT_Tools.Features.SitOnChairs
             return _resField.GetValue(resource) as Dictionary<string, UnityEngine.Object>;
         }
 
-        /// <summary>
-        /// 确保 "Chair" 预制体存在于资源字典（不存在则构建并注入）。
-        /// </summary>
         internal static void Ensure()
         {
             try
@@ -103,10 +82,6 @@ namespace DT_Tools.Features.SitOnChairs
             return root;
         }
 
-        /// <summary>
-        /// 把椅子上的坐姿人物 MeshRenderer 固定到 260 层级并启用。
-        /// </summary>
-        /// <param name="chair">椅子组件。</param>
         internal static void ApplyCharacterSorting(Component chair)
         {
             if (chair == null)
@@ -129,10 +104,6 @@ namespace DT_Tools.Features.SitOnChairs
             }
         }
 
-        /// <summary>
-        /// 把椅子设备整体移到 数据坐标 + 坐姿偏移（人跟着椅子动）。
-        /// </summary>
-        /// <param name="chair">要移动的椅子设备。</param>
         internal static void ApplySeatOffset(Chair chair)
         {
             if (chair == null)
@@ -156,10 +127,6 @@ namespace DT_Tools.Features.SitOnChairs
             }
         }
 
-        /// <summary>
-        /// 初始化椅子的 SkeletonAnimation（防空引用；骨架数据取任意已加载角色骨骼）。
-        /// </summary>
-        /// <param name="anim">椅子的骨骼动画组件。</param>
         internal static void EnsureSkeleton(SkeletonAnimation anim)
         {
             if (anim == null)
@@ -240,7 +207,6 @@ namespace DT_Tools.Features.SitOnChairs
                 {
                     return false;
                 }
-                // 数据名可能是中文（如"炼金室沙发"）或英文（"Sofa"/"Couch"），都算沙发
                 return name.IndexOf("Sofa", StringComparison.OrdinalIgnoreCase) >= 0
                     || name.IndexOf("Couch", StringComparison.OrdinalIgnoreCase) >= 0
                     || name.IndexOf("沙发", StringComparison.Ordinal) >= 0;
@@ -277,12 +243,6 @@ namespace DT_Tools.Features.SitOnChairs
             return SitOnChairsFeature.SeatYOffset;
         }
 
-        /// <summary>
-        /// 找离指定位置最近的椅子（500 世界单位内）。
-        /// </summary>
-        /// <param name="dm">设备管理器。</param>
-        /// <param name="pos">查找的中心位置。</param>
-        /// <returns>500 世界单位内最近的椅子；范围内没有时为 null。</returns>
         internal static Chair NearestChair(DeviceManager dm, Vector3 pos)
         {
             if (dm == null || dm.Cache == null)

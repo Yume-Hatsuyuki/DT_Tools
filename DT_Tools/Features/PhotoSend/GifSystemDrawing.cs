@@ -8,25 +8,8 @@ using GameDrawing::System.Drawing.Imaging;
 
 namespace DT_Tools.Features.PhotoSend
 {
-    /// <summary>
-    /// GIF 第一帧解码（系统 GDI+）：交给游戏自带的 System.Drawing 解码，按白底合成为 RGBA。
-    /// </summary>
-    /// <remarks>
-    /// 依赖 Windows 自带的 GDI+（gdiplus.dll）。解码前用逻辑屏幕尺寸拦截超大画布，
-    /// 解码后再按实际位图尺寸复核；GDI+ 对损坏数据抛出的异常统一转为中文原因。
-    /// 输出约定与 GifFirstFrame 相同（自上而下的 RGBA，不透明），由 PhotoSendFeature.GifDecoder 选择。
-    /// </remarks>
     internal static class GifSystemDrawing
     {
-        /// <summary>
-        /// 用 GDI+ 解码 GIF 第一幅图，白底合成到位图上。
-        /// </summary>
-        /// <param name="data">GIF 的原始字节。</param>
-        /// <param name="width">图像宽度，单位像素。失败时为 0。</param>
-        /// <param name="height">图像高度，单位像素。失败时为 0。</param>
-        /// <param name="rgba">自上而下排列的 RGBA 像素；失败时为 null。</param>
-        /// <param name="error">失败时的中文原因；成功时为 null。</param>
-        /// <returns>解码成功返回 true，否则返回 false。</returns>
         internal static bool TryDecode(byte[] data, out int width, out int height, out byte[] rgba, out string error)
         {
             width = 0;
@@ -95,13 +78,6 @@ namespace DT_Tools.Features.PhotoSend
             return false;
         }
 
-        /// <summary>
-        /// 把 32bppArgb 位图读成自上而下的 RGBA 字节（GDI+ 内存是 BGRA，逐像素交换 R/B）。
-        /// </summary>
-        /// <param name="bitmap">已合成完成的不透明位图。</param>
-        /// <param name="width">宽度，单位像素。</param>
-        /// <param name="height">高度，单位像素。</param>
-        /// <returns>长度为 width * height * 4 的 RGBA 字节。</returns>
         private static byte[] ReadTopDownRgba(Bitmap bitmap, int width, int height)
         {
             var rgba = new byte[width * height * 4];

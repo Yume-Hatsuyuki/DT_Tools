@@ -1,8 +1,3 @@
-/**
- * 平板电脑的图片导出（Canvas 绘制）、照片转换与剪贴板写入。依赖 DOM，只在浏览器中使用。
- * 尺寸与颜色取自 TabletChat.vue、TabletClues.vue 的样式（CSS 像素），使导出图与界面一致。
- * 画布不读取 CSS 变量，因此颜色按 styles/tokens.css 的同值写在 C 中。
- */
 import { avatarSrc, personalColor } from './tabletAvatars.js';
 import { chatBody, groupByRound, orderClues, singleLine } from './tabletFormat.js';
 import { API } from '../../api.js';
@@ -10,9 +5,7 @@ import { API } from '../../api.js';
 const W = 760;
 const PAD = 20;
 const DPR = 2;
-/** 单张导出图的高度上限（CSS 像素）。超过则分页导出，避免超出浏览器画布上限。 */
 const MAX_PART_H = 7000;
-/** 列表容器的上内边距（.chat-list / .clue-list 的 padding-top）。 */
 const BODY_TOP = 10;
 
 const FONT_UI = '"Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif';
@@ -39,7 +32,6 @@ const C = {
   avatarBg: 'rgba(255, 255, 255, 0.05)',
 };
 
-/** 聊天栏（.chat-list、.msg、.bubble、.meta）的尺寸。 */
 const CHAT = {
   inset: 12,
   vgap: 12,
@@ -60,7 +52,6 @@ const CHAT = {
   stateH: 22,
 };
 
-/** 线索卡片（.clue-list、.card、.fields）的尺寸。 */
 const CLUE = {
   inset: 12,
   vgap: 8,
@@ -81,7 +72,6 @@ const CLUE = {
   destroyedH: 14,
 };
 
-/** 预加载图片；失败返回 null（绘制时用占位）。 */
 function loadImage(src) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -91,7 +81,6 @@ function loadImage(src) {
   });
 }
 
-/** 按字符宽度换行（中英文通用）。换行符强制分段。 */
 function wrapText(ctx, text, maxWidth) {
   const rows = [];
   for (const para of String(text ?? '').split('\n')) {
@@ -124,7 +113,6 @@ function setFont(ctx, px, weight = 400, mono = false) {
   ctx.font = `${weight} ${px}px ${mono ? FONT_MONO : FONT_UI}`;
 }
 
-/** 头像：圆角方框 + object-fit: contain；死亡时整体 45% 不透明度并去色。 */
 function drawAvatar(ctx, img, x, y, size, dead) {
   ctx.save();
   if (dead) {
@@ -144,7 +132,6 @@ function drawAvatar(ctx, img, x, y, size, dead) {
   ctx.restore();
 }
 
-/** 小头像（线索卡片里的提交者与对象）。 */
 function drawSmallAvatar(ctx, img, x, y, size, radius) {
   ctx.save();
   roundRect(ctx, x, y, size, size, radius);
@@ -164,7 +151,6 @@ function blank(h) {
   return { h, draw() {} };
 }
 
-/** 把若干块按高度切成多段，每段一张图。 */
 function paginate(blocks) {
   const parts = [];
   let cur = [];
@@ -208,7 +194,6 @@ function paintPart(part, title, partIndex, partCount) {
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
 
-/** 一条聊天的排版：气泡宽高、元信息宽度，以及绘制函数。 */
 function chatMessageBlock(l, avatarMap, photoMap, measure) {
   const mine = !!l.isMine;
   const dead = !!l.isDead;
@@ -230,7 +215,6 @@ function chatMessageBlock(l, avatarMap, photoMap, measure) {
     bubbleW = photoW + CHAT.photoPad * 2;
     bubbleH = photoH + CHAT.photoPad * 2;
   } else {
-    // 界面里命题不带「【命题】」前缀，且气泡内为单行，导出与之保持一致
     const label = l.kind === 'photo' ? '[图片不可用]' : proposition ? singleLine(l.text) : chatBody(l);
     setFont(measure, CHAT.bubbleFont, proposition ? 500 : 400);
     rows = wrapText(measure, label, colMax - CHAT.bubblePadX * 2 - border * 2);
@@ -324,7 +308,6 @@ function chatMessageBlock(l, avatarMap, photoMap, measure) {
   };
 }
 
-/** 状态分隔（进入某阶段）：居中黄字。 */
 function chatStateBlock(l) {
   return {
     h: CHAT.stateH + CHAT.vgap,
@@ -339,7 +322,6 @@ function chatStateBlock(l) {
   };
 }
 
-/** 聊天记录分段渲染为 PNG Blob 列表。左右气泡与游戏一致：头像与名字在两侧，颜色取人物色。 */
 export async function renderChatParts(lines, title, numbering = new Map()) {
   const photoKeys = lines.filter((l) => l.kind === 'photo').map((l) => l.photoKey);
   const avatarKeys = [...new Set(lines.map((l) => l.avatar).filter(Boolean))];
@@ -370,7 +352,6 @@ export async function renderChatParts(lines, title, numbering = new Map()) {
   return out;
 }
 
-/** 绘制一组带小标签的胶囊（.tag）：圆角边框 + 居中文字。返回宽度。 */
 function drawPill(ctx, x, y, text, color, border) {
   setFont(ctx, 10.5);
   const w = ctx.measureText(text).width + 14;
@@ -385,7 +366,6 @@ function drawPill(ctx, x, y, text, color, border) {
   return w;
 }
 
-/** 线索的字段行（对象 / 地点 / 时间），按宽度换行。返回各行的条目与行数。 */
 function layoutFields(measure, c, maxW) {
   setFont(measure, CLUE.fieldsFont);
   const items = [
@@ -410,7 +390,6 @@ function layoutFields(measure, c, maxW) {
   return rows;
 }
 
-/** 一张线索卡片的排版与绘制函数。 */
 function clueCardBlock(c, avatarMap, measure) {
   const cardW = W - PAD * 2 - CLUE.inset * 2;
   const innerW = cardW - CLUE.padL - CLUE.padR - 2;
@@ -504,7 +483,6 @@ function clueCardBlock(c, avatarMap, measure) {
   };
 }
 
-/** 局段首标题：与界面的「—— 第 N 局 ——」一致。 */
 function roundHeaderBlock(no) {
   return {
     h: 34,
@@ -519,12 +497,6 @@ function roundHeaderBlock(no) {
   };
 }
 
-/**
- * 线索分段渲染为 PNG Blob 列表。卡片与界面一致：按局分段（段首标题），局内命题在前，线索按时间从晚到早。
- * @param {object[]} clues 要导出的线索。
- * @param {string} title 标题。
- * @param {Map<number, number>} numbering 局号到显示编号的对照表（由全量线索计算）。
- */
 export async function renderClueParts(clues, title, numbering = new Map()) {
   const ordered = orderClues(clues);
   const avatarKeys = [...new Set(ordered.flatMap((c) => [c.ownerAvatar, c.whoAvatar]).filter(Boolean))];
@@ -557,7 +529,6 @@ export async function renderClueParts(clues, title, numbering = new Map()) {
   return out;
 }
 
-/** 触发浏览器下载。 */
 export function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -569,16 +540,10 @@ export function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
-/** 文本下载，带 UTF-8 BOM，避免 Windows 记事本乱码。 */
 export function downloadText(text, filename) {
   downloadBlob(new Blob([`\ufeff${text}`], { type: 'text/plain;charset=utf-8' }), filename);
 }
 
-/**
- * 把任意图片 Blob（照片为 JPEG）转为 PNG Blob。剪贴板只接受 image/png，因此复制前需要转换。
- * @param {Blob} blob 图片数据。
- * @returns {Promise<Blob>} PNG 数据。
- */
 export async function imageBlobToPng(blob) {
   const url = URL.createObjectURL(blob);
   try {
@@ -606,10 +571,6 @@ function blobToBase64(blob) {
   });
 }
 
-/**
- * 把用户选择的图片压缩为不超过 limit 字节的 JPEG，返回 base64。
- * 先降质量，仍超标则逐步缩小尺寸；仍失败则抛错。
- */
 export async function fileToJpegBase64(file, limit) {
   const url = URL.createObjectURL(file);
   try {

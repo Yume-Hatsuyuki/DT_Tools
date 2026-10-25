@@ -5,15 +5,12 @@ using Protocol;
 
 namespace DT_Tools.Features.SupplyShelf
 {
-    /// <summary>
-    /// 货架投放：清空 → 按池构造道具袋 → 逐 StorageNormal 架切片投放。
-    /// </summary>
     internal static class SupplyShelfLogic
     {
         public static void RefillAll(List<Server.Game.Storage> storages)
         {
             foreach (Server.Game.Storage storage in storages)
-                storage.ResetItems();                                  // 0.1.18c Server.Game/Storage.cs:58
+                storage.ResetItems();
 
             int slotCount = 0;
             foreach (Server.Game.Storage s in storages)
@@ -38,7 +35,7 @@ namespace DT_Tools.Features.SupplyShelf
                     slice.Add(bag[idx]);
                     bag.RemoveAt(idx);
                 }
-                storage.InitStorage(slice);                            // 0.1.18c Server.Game/Storage.cs:77
+                storage.InitStorage(slice);
             }
 
             Log.Info<SupplyShelfFeature>(
@@ -46,13 +43,6 @@ namespace DT_Tools.Features.SupplyShelf
                 $"mode={SupplyShelfFeature.Mode} alwaysFilled={SupplyShelfFeature.AlwaysFilled}");
         }
 
-        /// <summary>
-        /// 构造道具袋：池整体入袋；不足补 0（或按池补齐），超出随机截断。
-        /// </summary>
-        /// <param name="slotCount">道具袋的格数。</param>
-        /// <param name="pool">候选道具 DataId 池。</param>
-        /// <param name="alwaysFilled">是否总是把格子填满。</param>
-        /// <returns>长度为 slotCount 的道具 DataId 列表。</returns>
         public static List<int> BuildBag(int slotCount, int[] pool, bool alwaysFilled)
         {
             var bag = new List<int>();
@@ -78,7 +68,7 @@ namespace DT_Tools.Features.SupplyShelf
 
             if (bag.Count > slotCount)
             {
-                Util.Shuffle(bag, bag.Count);                          // 0.1.18c Util.cs
+                Util.Shuffle(bag, bag.Count);
                 bag = bag.Take(slotCount).ToList();
             }
 

@@ -1,22 +1,13 @@
 import { ref, watch } from 'vue';
 import { API, createPoller } from '../api.js';
 
-/**
- * 任一面板（Config/Automation）有未保存改动时，关闭/刷新页面前提醒——
- * 照搬旧版 toolbar.js 的 dirtyState 模块级单例，供 main.js 的 beforeunload 读取。
- */
 export const dirtyState = { config: false, automation: false };
 
-/**
- * CONFIG / AUTOMATION 共用面板工具栏逻辑（保存/导出/导入/重置/自动刷新/脏标记），
- * 照搬旧版 toolbar.js 的行为，换成 Vue ref 承载状态。
- * flag: 'config' | 'automation'，用于写回上面的共享 dirtyState。
- */
 export function useConfigToolbar({ reload, isEditing, flag } = {}) {
   const dirty = ref(false);
   if (flag) watch(dirty, (v) => { dirtyState[flag] = v; });
   const autoRefresh = ref(true);
-  const toast = ref(null);   // { text, error }
+  const toast = ref(null);
 
   function showToast(text, error = false) {
     toast.value = { text, error };

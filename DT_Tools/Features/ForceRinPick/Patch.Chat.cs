@@ -7,32 +7,16 @@ using Protocol;
 
 namespace DT_Tools.Features.ForceRinPick
 {
-    /// <summary>
-    /// 强制选角标记与目标/角色解析（服务端进程内共享状态）。
-    /// </summary>
     internal static class ForceRinPickLogic
     {
-        /// <summary>
-        /// 被强制玩家 PlayerId → 目标角色 DataId 映射（一次强制：命中后即移除）。
-        /// </summary>
         private static readonly Dictionary<int, int> _forced = new Dictionary<int, int>();
 
-        /// <summary>
-        /// 标记目标玩家：下次选角强制为指定角色（角色不存在则忽略）。
-        /// </summary>
-        /// <param name="playerId">目标玩家的 PlayerId。</param>
-        /// <param name="characterDataId">要强制选择的角色 DataId；角色不存在时忽略。</param>
         public static void Mark(int playerId, int characterDataId)
         {
             if (characterDataId <= 0) return;
             _forced[playerId] = characterDataId;
         }
 
-        /// <summary>
-        /// 选角时消费标记：返回被强制选的角色 DataId（0 表示无标记）。
-        /// </summary>
-        /// <param name="playerId">选角的玩家 PlayerId。</param>
-        /// <returns>被强制选中的角色 DataId；无标记时为 0。</returns>
         public static int Consume(int playerId)
         {
             if (_forced.TryGetValue(playerId, out int dataId))
@@ -43,11 +27,6 @@ namespace DT_Tools.Features.ForceRinPick
             return 0;
         }
 
-        /// <summary>
-        /// 按指令参数（玩家名或 PlayerId）在房间内解析目标玩家。
-        /// </summary>
-        /// <param name="arg">玩家名或 PlayerId 文字。</param>
-        /// <returns>找到的目标玩家；找不到时为 null。</returns>
         public static Server.Game.Player ResolveTarget(string arg)
         {
             if (string.IsNullOrWhiteSpace(arg)) return null;
@@ -55,7 +34,6 @@ namespace DT_Tools.Features.ForceRinPick
             if (room == null) return null;
 
             string trimmed = arg.Trim();
-            // 纯数字 → PlayerId 精确匹配
             if (int.TryParse(trimmed, out int id))
             {
                 foreach (var p in room.Players)
@@ -63,7 +41,6 @@ namespace DT_Tools.Features.ForceRinPick
                         return p;
                 return null;
             }
-            // 玩家名：先精确（忽略大小写），再包含匹配（方便带空格/后缀）
             foreach (var p in room.Players)
                 if (string.Equals(p.Name, trimmed, global::System.StringComparison.OrdinalIgnoreCase))
                     return p;
@@ -73,17 +50,11 @@ namespace DT_Tools.Features.ForceRinPick
             return null;
         }
 
-        /// <summary>
-        /// 按角色参数（枚举名/角色名/DataId）解析角色 DataId。
-        /// </summary>
-        /// <param name="arg">角色的枚举名、角色名或 DataId 文字。</param>
-        /// <returns>解析出的角色 DataId。</returns>
         public static int ResolveCharacter(string arg)
         {
             if (string.IsNullOrWhiteSpace(arg)) return 0;
             string trimmed = arg.Trim();
 
-            // 纯数字 → DataId 直接匹配
             if (int.TryParse(trimmed, out int dataId))
             {
                 if (Managers.Data.CharacterDic.ContainsKey(dataId))
@@ -93,7 +64,6 @@ namespace DT_Tools.Features.ForceRinPick
 
             foreach (var c in Managers.Data.CharacterDic.Values)
             {
-                // 枚举名（Rin/Madeline/...）与角色名（Name 字段）精确匹配
                 string typeName = c.Type.ToString();
                 if (string.Equals(typeName, trimmed, global::System.StringComparison.OrdinalIgnoreCase))
                     return c.DataId;
@@ -102,7 +72,6 @@ namespace DT_Tools.Features.ForceRinPick
                         || c.Name.IndexOf(trimmed, global::System.StringComparison.OrdinalIgnoreCase) >= 0))
                     return c.DataId;
             }
-            // 枚举名包含匹配（大小写不敏感）
             foreach (var c in Managers.Data.CharacterDic.Values)
                 if (c.Type.ToString().IndexOf(trimmed, global::System.StringComparison.OrdinalIgnoreCase) >= 0)
                     return c.DataId;
@@ -110,13 +79,6 @@ namespace DT_Tools.Features.ForceRinPick
         }
     }
 
-    /// <summary>
-    /// 服务端聊天入口（0.1.18c HostPacketHandler.Handle_C_CHAT_MESSAGE，static）：解析
-    /// `!force 目标 [角色]` 指令——命中则标记目标玩家并拦截本次聊天（指令文本不广播全房）。
-    /// </summary>
-    /// <remarks>
-    /// 仅在房主进程执行（客户端上 HostPacketHandler 链路不运行），无需 IsHost 判定。
-    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.HostPacketHandler), "Handle_C_CHAT_MESSAGE")]
     internal static class ForceRinPickChatPatch
     {
@@ -125,7 +87,7 @@ namespace DT_Tools.Features.ForceRinPick
             try
             {
                 if (!Engine.Enabled<ForceRinPickFeature>())
-                    return true; // 未开启：放行原逻辑
+                    return true;
 
                 if (!(packet?.Pkt is C_CHAT_MESSAGE msg))
                     return true;
@@ -134,12 +96,12 @@ namespace DT_Tools.Features.ForceRinPick
 
                 string prefix = ForceRinPickFeature.CommandPrefix?.Trim() ?? "!force";
                 if (string.IsNullOrEmpty(prefix) || !msg.Text.TrimStart().StartsWith(prefix + " ", global::System.StringComparison.OrdinalIgnoreCase))
-                    return true; // 非指令：放行
+                    return true;
 
                 string[] parts = msg.Text.TrimStart().Substring(prefix.Length).Trim()
                     .Split(new[] { ' ' }, 2, global::System.StringSplitOptions.RemoveEmptyEntries);
                 if (parts.Length == 0)
-                    return false; // 空指令：拦截不广播
+                    return false;
 
                 string targetArg = parts[0].Trim();
                 string charArg = parts.Length > 1 ? parts[1].Trim() : ForceRinPickFeature.DefaultCharacter;
@@ -148,7 +110,7 @@ namespace DT_Tools.Features.ForceRinPick
                 if (target == null)
                 {
                     Log.Info<ForceRinPickFeature>($"强制选角指令未命中目标：{targetArg}");
-                    return false; // 指令已拦截，不广播（未命中也静默，避免刷屏）
+                    return false;
                 }
 
                 int charDataId = ForceRinPickLogic.ResolveCharacter(charArg);
@@ -160,7 +122,7 @@ namespace DT_Tools.Features.ForceRinPick
 
                 ForceRinPickLogic.Mark(target.PublicInfo.PlayerId, charDataId);
                 Log.Info<ForceRinPickFeature>($"强制选角 {charArg}：玩家 {target.PublicInfo.PlayerId}（{target.Name}）");
-                return false; // 拦截：指令文本不广播全房
+                return false;
             }
             catch (global::System.Exception ex)
             {

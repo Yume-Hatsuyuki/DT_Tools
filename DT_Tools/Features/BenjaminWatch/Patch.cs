@@ -7,10 +7,6 @@ using UnityEngine;
 
 namespace DT_Tools.Features.BenjaminWatch
 {
-    /// <summary>
-    /// 宿主创建入口：UI_GameScene 对局内常驻每帧 Update，Postfix 确保观察窗宿主存在
-    /// （场景切换宿主销毁后自动重建）。
-    /// </summary>
     [HarmonyPatch(typeof(UI_GameScene), "Update")]
     internal static class BenjaminWatchHostPatch
     {
@@ -25,9 +21,6 @@ namespace DT_Tools.Features.BenjaminWatch
         }
     }
 
-    /// <summary>
-    /// 本杰明观察窗宿主：OnGUI 画常驻小窗，按节流周期刷新检测数据。
-    /// </summary>
     internal sealed class BenjaminWatchHost : MonoBehaviour
     {
         public static BenjaminWatchHost Instance;
@@ -52,17 +45,13 @@ namespace DT_Tools.Features.BenjaminWatch
             if (!Engine.Enabled<BenjaminWatchFeature>())
                 return;
             if (!IsRin())
-                return; // 仅本机玩家为 Rin 时显示
+                return;
             if (!IsInGame())
-                return; // 仅对局内显示，大厅/结算不显示
+                return;
             RefreshIfNeeded();
             DrawWindow();
         }
 
-        /// <summary>
-        /// 仅本机玩家为 Rin 时显示（ECharacterType.Rin）。
-        /// </summary>
-        /// <returns>本机玩家为 Rin 时为 true。</returns>
         private static bool IsRin()
         {
             if (Managers.Player == null || Managers.Player.MyPlayer == null)
@@ -71,10 +60,6 @@ namespace DT_Tools.Features.BenjaminWatch
                 && Managers.Player.MyPlayer.CharData.Type == ECharacterType.Rin;
         }
 
-        /// <summary>
-        /// 仅对局内（生存/侦探/庭审）显示；大厅、选人、结算不显示。
-        /// </summary>
-        /// <returns>处于生存、侦探或庭审阶段时为 true。</returns>
         private static bool IsInGame()
         {
             if (Managers.Game == null)
@@ -103,10 +88,6 @@ namespace DT_Tools.Features.BenjaminWatch
                 if (Managers.Player == null || Managers.Player.MyPlayer == null)
                     return;
 
-                // 与游戏一致的本杰明检测判定（0.1.18c Summon.cs:243 DetectNearbyPlayer：
-                // 椭圆范围 448×410.6667 :266-267、Raycast 挡墙 layerMask=4096 :258）。
-                // 注意：不排除本机自己（本杰明通常跟随主人，排除自己会误报"无人"）；也不排除假人
-                // （IsDummy，制作假人/挂机占位也要能看见），自己以"我"标记。
                 Vector2 pos = benjamin.Position;
                 foreach (Player value in Managers.Player.Players.Values)
                 {
@@ -122,7 +103,7 @@ namespace DT_Tools.Features.BenjaminWatch
                     float magnitude = direction.magnitude;
                     bool wallBlocked = !BenjaminWatchFeature.IgnoreWalls
                         && magnitude > 0.01f
-                        && Physics2D.Raycast(pos, direction, magnitude, 4096); // layerMask 与原版一致（0.1.18c Summon.cs:258）
+                        && Physics2D.Raycast(pos, direction, magnitude, 4096);
                     if (!wallBlocked)
                     {
                         bool isMe = value == Managers.Player.MyPlayer;

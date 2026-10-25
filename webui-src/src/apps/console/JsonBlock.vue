@@ -4,10 +4,6 @@ import { ref, computed } from 'vue';
 const props = defineProps({ text: { type: String, required: true } });
 const copied = ref(false);
 
-/** JSON 语法上色：key/string/number/bool-null 五类 span，通过安全拼 innerHTML
- * 的方式渲染——文本内容已由 JSON.stringify 产出、不含用户可控的 HTML 结构，
- * 唯一风险是字符串值本身，这里逐段转义后再包 span，杜绝注入。
- */
 function esc(s) {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -40,7 +36,7 @@ async function copy() {
     await navigator.clipboard.writeText(props.text);
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 1500);
-  } catch { /* 剪贴板被拒绝：静默失败，按钮文案不变 */ }
+  } catch { }
 }
 </script>
 

@@ -6,14 +6,6 @@ using Server.Game;
 
 namespace DT_Tools.Features.LobbySpawn
 {
-    /// <summary>
-    /// 新玩家入场：构造后把初始位置从大厅点改为解析出的大厅点。
-    /// </summary>
-    /// <remarks>
-    /// 原版构造：PublicInfo.Pos = MapData.LobbyPos 的副本（0.1.18c Server.Game/Player.cs:555），EffectivePosition 未设置（Player.cs:138）。
-    /// 这里不调用 Move：Move 会广播重生包（Player.cs:747-752），而新玩家尚未加入 Players，且原版构造阶段也不经过 Move。
-    /// 直接写入两处坐标，与 Move 对非存活玩家的处理（只更新坐标，不更新区域，Player.cs:733-746）等价。
-    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.Player), MethodType.Constructor,
         new[] { typeof(int), typeof(HostPeerSession), typeof(string) })]
     internal static class LobbySpawnCtorPatch

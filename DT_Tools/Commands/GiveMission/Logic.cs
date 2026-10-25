@@ -6,21 +6,8 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveMission
 {
-    /// <summary>
-    /// /givemission 业务：MissionManager 访问守卫、软前置联动初始化、任务派发。
-    /// </summary>
-    /// <remarks>
-    /// MissionManager 是 internal（0.1.18c Server.Game/MissionManager.cs:10），所有访问统一走 Game.MissionAccess 反射访问器（行号与缓存见其头注释）。
-    /// StartMission 会把任务加入 ProgressMissionList、递归启动硬前置（PrevType）并按 ESchoolMission 激活设备，但不广播 S_MISSION_STATE，所以派发后额外调用 BroadcastMissionState()，让客户端立即刷新任务面板。
-    /// 软前置联动：MissionData.PrevType 只记录硬前置，但不少任务的设备初始化依赖另一条已完成的任务链（如 ScRune(12)←ScBookRune(11)、ScSurgery(1)←ScManikinStart(18)、ScSprayCancer(20)←ScMakeSpray(2)、ScShakerDrink(22)←ScShakeShaker(16)←ScDrink(15)），这些关系通过 NextType 表达。
-    /// 本命令据此构建反向 NextType 表：派发任务 T 时沿链收集软前置 P，逐个 StartMission(P) 跑设备初始化，随后立即从 ProgressMissionList 移除 P。P 的设备状态被正确初始化，但玩家完成 P 时 ClearMission(P) 直接返回（不计分、不触发 NextType 链），只有 T 计分。派发前先 RemoveFromWaitQueue 清理队列残留，避免下次 StartNextFromQueue 把任务再次启动。
-    /// </remarks>
     internal static class GiveMissionLogic
     {
-        /// <summary>
-        /// switch 中无对应 Start_ScXXX 分支的占位任务类型
-        /// （0.1.18c Server.Game/MissionManager.cs 空分组，另含枚举外的裸值 5/19）。
-        /// </summary>
         private static readonly HashSet<ESchoolMission> EmptyCaseMissions =
             new HashSet<ESchoolMission>
             {
@@ -33,13 +20,9 @@ namespace DT_Tools.Commands.GiveMission
                 ESchoolMission.ScWeapon,
             };
 
-        // 反向 NextType 表（NextType → [Type]），首次派发时构建
         private static Dictionary<int, List<int>> _reverseNextMap;
         private static bool _reverseMapBuilt;
 
-        /// <summary>
-        /// 派发结果（供 Format 输出）。
-        /// </summary>
         public sealed class Outcome
         {
             public ESchoolMission Mission;
@@ -48,25 +31,9 @@ namespace DT_Tools.Commands.GiveMission
             public bool IsEmptyCase;
         }
 
-        /// <summary>
-        /// 阶段守卫：切换中 / 迁移中拒绝派发（判定上浮 Game/RoomFlow.TryGuardBusy）。
-        /// </summary>
-        /// <param name="room">当前房间。</param>
-        /// <param name="code">拒绝时的错误码。</param>
-        /// <param name="text">拒绝时的提示文字。</param>
-        /// <returns>可以派发时为 true；切换中或迁移中为 false。</returns>
         public static bool TryGuardBusy(GameRoom room, out string code, out string text)
             => RoomFlow.TryGuardBusy(room, "切换阶段", out code, out text);
 
-        /// <summary>
-        /// 派发前置守卫：MissionManager 反射访问器是否可用。
-        /// </summary>
-        /// <remarks>
-        /// 反射链路一旦初始化失败会永久短路（见 MissionAccess.EnsureInit），此时提示
-        /// 与旧"成员定位失败"文案等价的诊断。
-        /// </remarks>
-        /// <param name="text">不可用时的提示文字。</param>
-        /// <returns>MissionManager 访问器可用时为 true。</returns>
         public static bool EnsureMissionAccess(out string text)
         {
             if (MissionAccess.Available)
@@ -78,17 +45,6 @@ namespace DT_Tools.Commands.GiveMission
             return false;
         }
 
-        /// <summary>
-        /// 派发任务：软前置联动初始化 → 清队列 → StartMission(T) → BroadcastMissionState。
-        /// </summary>
-        /// <remarks>
-        /// 失败返回 false（错误码与提示已给出）。
-        /// </remarks>
-        /// <param name="missionType">要派发的任务类型。</param>
-        /// <param name="outcome">派发结果。</param>
-        /// <param name="code">失败时的错误码。</param>
-        /// <param name="text">失败时的提示文字。</param>
-        /// <returns>派发成功返回 true；失败返回 false，原因写入 code 与 text。</returns>
         public static bool TryDispatch(ESchoolMission missionType, out Outcome outcome, out string code, out string text)
         {
             outcome = null;
@@ -101,7 +57,7 @@ namespace DT_Tools.Commands.GiveMission
                 return false;
             }
 
-            MissionData data = Managers.Data.GetMissionData((int)missionType);   // 0.1.18c DataManager.cs:105
+            MissionData data = Managers.Data.GetMissionData((int)missionType);
             if (data == null)
             {
                 code = "no mission data";
@@ -117,7 +73,6 @@ namespace DT_Tools.Commands.GiveMission
                 return false;
             }
 
-            // 防重：ProgressMissionList 中已有该类型则拒绝
             if (ContainsMissionType(progressList, (int)missionType))
             {
                 code = "mission in progress";
@@ -135,18 +90,13 @@ namespace DT_Tools.Commands.GiveMission
 
             foreach (int pType in softPrereqs)
             {
-                // 前置已在 ProgressMissionList → 设备已初始化，跳过
                 if (ContainsMissionType(progressList, pType)) continue;
 
                 MissionData pData = Managers.Data.GetMissionData(pType);
                 if (pData == null) continue;
 
-                // 从队列清理残留（尽力而为，队列本就无该任务时返回 false 不影响主流程）
                 MissionAccess.RemoveFromWaitQueue(pType);
 
-                // 调用 StartMission(P) 跑设备初始化（会 Add 到 ProgressMissionList）。
-                // MissionAccess 吞掉反射异常改返 false——设备初始化不完整时不能再继续
-                // 派发主任务（会得到半初始化的链），直接中止并给出诊断。
                 if (!MissionAccess.StartMission(pData))
                 {
                     code = "prerequisite failed";
@@ -154,11 +104,6 @@ namespace DT_Tools.Commands.GiveMission
                     return false;
                 }
 
-                // 立即从 ProgressMissionList 移除 P：仅做设备初始化，不计分。
-                // 玩家完成 P 的设备交互时 ClearMission(P) 找不到任务直接 return，
-                // 不会触发 NextType 链重复启动 T。
-                // 注意：若未来游戏 P 链（StartMission(MissionData) 递归前置链）引入异步初始化，
-                // 此同步移除需复核。
                 progressList.Remove(pData);
                 outcome.InitializedPrereqs.Add(pType);
             }
@@ -170,7 +115,6 @@ namespace DT_Tools.Commands.GiveMission
                 text = "MissionManager.StartMission 调用失败（实例丢失或游戏版本变更），任务未派发。";
                 return false;
             }
-            // 尽力广播；失败只影响客户端面板即时刷新，不影响派发结果（与旧版不检查一致）
             MissionAccess.BroadcastMissionState();
 
             code = null;
@@ -178,14 +122,6 @@ namespace DT_Tools.Commands.GiveMission
             return true;
         }
 
-        /// <summary>
-        /// 沿反向 NextType 链递归收集所有软前置，返回链头→链尾顺序的列表。
-        /// </summary>
-        /// <remarks>
-        /// 例如派发 ScShakerDrink(22): 22←16←15，返回 [15, 16]。
-        /// </remarks>
-        /// <param name="type">任务类型（ESchoolMission 底层值）。</param>
-        /// <returns>软前置任务类型，按链头到链尾排列。</returns>
         private static List<int> CollectSoftPrerequisites(int type)
         {
             EnsureReverseNextMapBuilt();
@@ -199,24 +135,17 @@ namespace DT_Tools.Commands.GiveMission
 
         private static void CollectSoftPrerequisitesCore(int type, HashSet<int> visited, List<int> result)
         {
-            if (!visited.Add(type)) return;   // 防环
+            if (!visited.Add(type)) return;
             if (_reverseNextMap == null) return;
             if (!_reverseNextMap.TryGetValue(type, out var predecessors)) return;
 
             foreach (int p in predecessors)
             {
-                CollectSoftPrerequisitesCore(p, visited, result);   // 先递归上游（链头优先）
+                CollectSoftPrerequisitesCore(p, visited, result);
                 result.Add(p);
             }
         }
 
-        /// <summary>
-        /// 构建反向 NextType 表: NextType → [Type]。
-        /// </summary>
-        /// <remarks>
-        /// 例: MissionData{Type=11, NextType=12} → map[12] = [11]。
-        /// 数据源 Managers.Data.MissionList（0.1.18c DataManager.cs:26）。
-        /// </remarks>
         private static void EnsureReverseNextMapBuilt()
         {
             if (_reverseMapBuilt) return;
@@ -246,12 +175,6 @@ namespace DT_Tools.Commands.GiveMission
             }
         }
 
-        /// <summary>
-        /// 检查 ProgressMissionList 中是否已包含某 Type 的任务。
-        /// </summary>
-        /// <param name="progressList">进行中的任务列表（ProgressMissionList）。</param>
-        /// <param name="type">要查找的任务类型（ESchoolMission 底层值）。</param>
-        /// <returns>列表中已有该类型的任务时为 true。</returns>
         private static bool ContainsMissionType(System.Collections.IList progressList, int type)
         {
             foreach (var item in progressList)

@@ -5,10 +5,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.WebTablet
 {
-    /// <summary>
-    /// VoiceManager.EnqueueNormalChat 后缀（public，可用 nameof）：0.1.18c VoiceManager.cs:1319。
-    /// 普通聊天的统一入口：大厅与学级裁判的消息都由 S_CHAT_MESSAGE（0.1.18c PacketHandler.cs:416）经此进入客户端。
-    /// </summary>
     [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.EnqueueNormalChat))]
     internal static class WebTabletChatPatch
     {

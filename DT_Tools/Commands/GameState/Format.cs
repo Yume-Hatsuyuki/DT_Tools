@@ -3,9 +3,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.GameState
 {
-    /// <summary>
-    /// /game_state 输出格式化：状态中文标签 + 列表文本 + JSON 结果 DTO。
-    /// </summary>
     internal static class GameStateFormat
     {
         public static string StateLabel(EGameState state)
@@ -60,8 +57,6 @@ namespace DT_Tools.Commands.GameState
 
         public static object Result(GameStateLogic.ReadResult r)
         {
-            // Json.Settings 全局 NullValueHandling.Ignore：
-            // 非 trial 时 trial_state/trial_state_label 自动省略，屏障标志仅房主端输出
             return new
             {
                 is_host = r.IsHost,

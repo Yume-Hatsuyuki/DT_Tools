@@ -3,9 +3,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.Agent
 {
-    /// <summary>
-    /// 交付链：手持道具 → 对应设备（对应旧 AgentDeliveryChain.cs，原 AgentCommand.Planner.CollectDeliveries）。
-    /// </summary>
     internal static class AgentDeliveryChain
     {
         public static void Collect(int hand, List<DeviceBase> devices, AddDel Add)
@@ -47,7 +44,6 @@ namespace DT_Tools.Commands.Agent
                 if (hand == AgentItemHelper.ItemEmptyBattery && dev.DeviceType == EDeviceType.Charger
                     && st != null && st.Count > 2 && st[0] == 0 && st[2] == 10)
                 {
-                    // 放入后要等充电计时 → TimedStart
                     Add(Pri.TimedStart, $"放入空电→充电器#{id}", (int)ESchoolMission.ScChargeBattery, id,
                         () => Managers.Network.GameServer.Send(new C_INTERACT_CHARGER { ChargerId = id }), changesHand: true);
                 }
@@ -137,7 +133,6 @@ namespace DT_Tools.Commands.Agent
                                 (int)ESchoolMission.ScCollector, id,
                                 () => Managers.Network.GameServer.Send(new C_INTERACT_COLLECTOR { CollectorId = id }), changesHand: true);
                         }
-                        // 该色已交满：不交付，留给 ShouldDropHand 丢掉，避免失败死循环
                     }
                 }
                 if (hand == AgentItemHelper.ItemHotWater && dev.DeviceType == EDeviceType.Boiler
@@ -159,14 +154,12 @@ namespace DT_Tools.Commands.Agent
                             () => Managers.Network.GameServer.Send(new C_INTERACT_POTION { PotionId = id }), changesHand: true);
                     }
                 }
-                // 献酒：最后优先级（依赖移动摇出的 1040）
                 if (hand == AgentItemHelper.ItemShakenSake && dev.DeviceType == EDeviceType.Drink && sub == 1
                     && st != null && st.Count > 1 && st[0] == 1 && st[1] != 1)
                 {
                     Add(Pri.ShakeLast, $"献酒→雕像#{id}", (int)ESchoolMission.ScShakerDrink, id,
                         () => Managers.Network.GameServer.Send(new C_INTERACT_DRINK { DrinkId = id }), changesHand: true);
                 }
-                // 手持 1039：无法发包变 1040，仅提示性不发包（摇酒靠玩家走）
             }
         }
     }
