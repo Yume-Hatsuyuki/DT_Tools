@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using BepInEx;
 using DT_Tools.Core;
@@ -11,7 +13,8 @@ namespace DT_Tools.WebConsole
 {
     /// <summary>
     /// 更新检测与下载服务：请求 GitHub Releases latest，与插件当前版本比较
-    /// （当前版本来自 DT_Tools.csproj 的 &lt;Version&gt;，编译期注入 MyPluginInfo.PLUGIN_VERSION）。
+    /// （当前版本来自编译期写入的 InformationalVersion，即发布 tag 去掉 v 前缀，如 2.0.0.10-v2；
+    /// 缺失时退回 MyPluginInfo.PLUGIN_VERSION）。
     /// </summary>
     /// <remarks>
     /// 线程模型与 SteamApi 同源：全部工作在 HTTP 线程 / 专用后台线程完成，不触碰 Unity API。
@@ -67,9 +70,13 @@ namespace DT_Tools.WebConsole
             new DownloadSnapshot(false, false, 0, 0, null, null);
 
         /// <summary>
-        /// 插件当前版本（csproj &lt;Version&gt; 经 BepInEx.PluginInfoProps 生成）。
+        /// 当前安装包的完整版本：编译期经 InformationalVersion 写入发布 tag（如 2.0.0.10-v2）。
         /// </summary>
-        public static string CurrentVersion => MyPluginInfo.PLUGIN_VERSION;
+        /// <remarks>
+        /// 与 MyPluginInfo.PLUGIN_VERSION（纯数字，供 BepInEx 与 MCP 使用）分开：它带修订后缀，只用于更新检测与展示。
+        /// </remarks>
+        public static string CurrentVersion { get; } = NormalizeBuildVersion(
+            typeof(UpdateService).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
 
         /// <summary>
         /// 返回状态 JSON（经 Json.To 序列化）。
@@ -280,67 +287,119 @@ namespace DT_Tools.WebConsole
         }
 
         /// <summary>
-        /// 比较 "v1.0.8.9" / "v2.0.0.7-v2" 形式的版本号：逐段取数字前缀比较，缺段补 0。
+        /// 判断远端 tag 是否比当前版本新。
         /// </summary>
         /// <remarks>
-        /// tag 比当前新时返回 true。数字段相等时不因后缀（-v2 / -beta）判定为更新，
-        /// 避免同版本重建包反复提示；真正升号（如 2.0.0.7 vs 2.0.0.6）仍能识别。
+        /// 先比数字段（缺段补 0）。数字段相同时比修订号：无后缀为 0，"-v2" / "-v10" / "-2" 取其数字，
+        /// 因此同数字的重建包（2.0.0.10 → 2.0.0.10-v2）能被识别。修订号识别不出（如 "-beta"）时不提示，
+        /// 避免预发布标签误报。数字段本身解析失败时退化为字符串不等。
         /// </remarks>
-        /// <param name="tag">远端版本标签，如 v1.0.8.9、v2.0.0.7-v2。</param>
-        /// <param name="current">当前版本号。</param>
+        /// <param name="tag">远端版本标签，如 v2.0.0.10-v2。</param>
+        /// <param name="current">当前版本，如 2.0.0.10 或 2.0.0.10-v2。</param>
         /// <returns>tag 比当前版本新时为 true。</returns>
         public static bool IsNewer(string tag, string current)
         {
-            int[] a = ParseVersion(tag);
-            int[] b = ParseVersion(current);
-            if (a.Length == 0 || b.Length == 0)
+            VersionKey remote = VersionKey.Parse(tag);
+            VersionKey local = VersionKey.Parse(current);
+            if (remote == null || local == null)
             {
                 // 解析不出数字段（异常 tag）：退化为字符串不等即视为有更新
                 string na = (tag ?? "").Trim().TrimStart('v', 'V');
                 string nb = (current ?? "").Trim().TrimStart('v', 'V');
                 return na.Length > 0 && !string.Equals(na, nb, StringComparison.OrdinalIgnoreCase);
             }
-            int len = Math.Max(a.Length, b.Length);
-            for (int i = 0; i < len; i++)
-            {
-                int x = i < a.Length ? a[i] : 0;
-                int y = i < b.Length ? b[i] : 0;
-                if (x != y) return x > y;
-            }
-            return false;
+
+            int cmp = remote.CompareNumbers(local);
+            if (cmp != 0)
+                return cmp > 0;
+            if (remote.Revision == null || local.Revision == null)
+                return false;
+            return remote.Revision.Value > local.Revision.Value;
         }
 
         /// <summary>
-        /// 从版本字符串解析数字段。每段取<strong>前缀连续数字</strong>（"7-v2"→7，"9-beta"→9）；
-        /// 段内无任何前导数字（如纯 "beta"）则停止，其前已解析段仍参与比较。
+        /// 把编译期写入的 InformationalVersion 规范化为版本字符串：去掉 SDK 自动附加的 "+哈希" 元数据。
         /// </summary>
         /// <remarks>
-        /// 旧实现对整段 int.TryParse，遇到 "7-v2" 直接截断，导致 v2.0.0.7-v2 被当成 2.0.0，
-        /// 在 2.0.0.6 上 hasUpdate=false、更新 UI 不出现。
+        /// 本地构建未传 InformationalVersion 时 SDK 默认为 Version[+哈希]；去掉 + 之后即为纯数字版本。
         /// </remarks>
-        private static int[] ParseVersion(string version)
+        /// <param name="raw">程序集的 InformationalVersion，可为 null 或空白。</param>
+        /// <returns>规范化后的版本；无法得到时为 MyPluginInfo.PLUGIN_VERSION。</returns>
+        internal static string NormalizeBuildVersion(string raw)
         {
-            if (string.IsNullOrEmpty(version)) return Array.Empty<int>();
-            string v = version.Trim().TrimStart('v', 'V');
-            var list = new List<int>();
-            foreach (string raw in v.Split('.'))
+            if (!string.IsNullOrWhiteSpace(raw))
             {
-                string part = raw.Trim();
-                if (part.Length == 0) break;
-                // 整段纯数字
-                if (int.TryParse(part, out int whole))
-                {
-                    list.Add(whole);
-                    continue;
-                }
-                // 取前缀数字：7-v2 → 7；beta → 无数字则截断
-                int i = 0;
-                while (i < part.Length && part[i] >= '0' && part[i] <= '9') i++;
-                if (i == 0) break;
-                if (!int.TryParse(part.Substring(0, i), out int n)) break;
-                list.Add(n);
+                int plus = raw.IndexOf('+');
+                string v = (plus >= 0 ? raw.Substring(0, plus) : raw).Trim();
+                if (v.Length > 0)
+                    return v;
             }
-            return list.ToArray();
+            return MyPluginInfo.PLUGIN_VERSION;
+        }
+
+        /// <summary>
+        /// 版本号拆解结果：数字段与修订号。
+        /// </summary>
+        private sealed class VersionKey
+        {
+            private static readonly Regex NumberPattern =
+                new Regex(@"^[vV]?(\d+(?:\.\d+)*)(.*)$", RegexOptions.CultureInvariant);
+            private static readonly Regex RevisionPattern =
+                new Regex(@"^[-_]?[vV]?(\d+)$", RegexOptions.CultureInvariant);
+
+            public int[] Numbers;
+
+            /// <summary>无后缀为 0；后缀形如 -v2 取 2；后缀识别不出（如 -beta）为 null。</summary>
+            public int? Revision;
+
+            /// <summary>
+            /// 解析形如 2.0.0.10、v2.0.0.10-v2 的版本字符串。
+            /// </summary>
+            /// <param name="text">版本字符串，可为 null。</param>
+            /// <returns>解析结果；数字段不存在或溢出时为 null。</returns>
+            public static VersionKey Parse(string text)
+            {
+                if (string.IsNullOrWhiteSpace(text))
+                    return null;
+                Match m = NumberPattern.Match(text.Trim());
+                if (!m.Success)
+                    return null;
+
+                string[] parts = m.Groups[1].Value.Split('.');
+                var numbers = new int[parts.Length];
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (!int.TryParse(parts[i], out numbers[i]))
+                        return null;
+                }
+
+                string suffix = m.Groups[2].Value;
+                int? revision = 0;
+                if (suffix.Length > 0)
+                {
+                    Match r = RevisionPattern.Match(suffix);
+                    revision = r.Success && int.TryParse(r.Groups[1].Value, out int n) ? n : (int?)null;
+                }
+                return new VersionKey { Numbers = numbers, Revision = revision };
+            }
+
+            /// <summary>
+            /// 逐段比较数字段，缺段按 0 补齐。
+            /// </summary>
+            /// <param name="other">要比较的另一个版本。</param>
+            /// <returns>大于 0 表示本版本更大，小于 0 表示更小，0 表示数字段相同。</returns>
+            public int CompareNumbers(VersionKey other)
+            {
+                int len = Math.Max(Numbers.Length, other.Numbers.Length);
+                for (int i = 0; i < len; i++)
+                {
+                    int x = i < Numbers.Length ? Numbers[i] : 0;
+                    int y = i < other.Numbers.Length ? other.Numbers[i] : 0;
+                    if (x != y)
+                        return x.CompareTo(y);
+                }
+                return 0;
+            }
         }
 
         private sealed class DownloadJob

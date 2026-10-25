@@ -72,8 +72,12 @@ jobs:
           # 编译用的版本号必须是纯数字（BepInEx / System.Version 不支持后缀），
           # 只取匹配到的 v数字.数字.数字(.数字)? 前缀，后面不管跟什么（-c2 / _b2 / 中文 / 空格等）一律丢弃。
           ASSEMBLY_VERSION="${BASH_REMATCH[1]}"
+          # 完整构建版本：去掉 v 前缀，只保留 0-9 A-Z a-z . _ -（+ 会被 SDK 当成元数据分隔符，必须剔除）。
+          # 写入 InformationalVersion，运行时更新检测据此识别同数字版本的重建包（如 2.0.0.10-v2）。
+          INFO_VERSION="$(printf '%s' "${TAG#v}" | tr -cd 'A-Za-z0-9._-')"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$ASSEMBLY_VERSION" >> "$GITHUB_OUTPUT"
+          echo "informational=$INFO_VERSION" >> "$GITHUB_OUTPUT"
 
       # 显式安装并固定 Node 版本（与本地开发环境 Node 24 保持一致）
       - name: Setup Node
@@ -105,9 +109,13 @@ jobs:
 
       # 前端已在上面显式构建，跳过 csproj 内的 BuildWebUI，避免重复执行 npm
       - name: Build
+        env:
+          ASSEMBLY_VERSION: ${{ steps.ver.outputs.version }}
+          INFO_VERSION: ${{ steps.ver.outputs.informational }}
         run: |
           dotnet build DT_Tools/DT_Tools.csproj -c Release --no-restore \
-            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:Version="$ASSEMBLY_VERSION" \
+            -p:InformationalVersion="$INFO_VERSION" \
             -p:SkipWebUIBuild=true
 
       - name: 打包发布文件
