@@ -3,12 +3,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.RemoveWallCollision
 {
-    /// <summary>
-    /// 原版 HidePlayer：退出躲藏时 isTrigger=false，会重新变成实心。
-    /// </summary>
-    /// <remarks>
-    /// 公共方法（nameof 定位），0.1.18c MyPlayer.cs:1009（:1016 写 Collider.isTrigger=isHide）。
-    /// </remarks>
     [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.HidePlayer))]
     internal static class RemoveWallCollisionHidePlayerPatch
     {

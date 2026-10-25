@@ -24,36 +24,28 @@ import IconPencil from '~icons/tabler/pencil';
 import IconPlus from '~icons/tabler/plus';
 import IconMusic from '~icons/tabler/music';
 
-/**
- * 随身MP3：游戏机本机播放器（服务端播放，非浏览器播放）。选文件（WebUI 内置
- * 目录浏览）→ 歌单（多歌单，BepInEx/config/DT_Tools/mp3/ 持久化，全窗口/重启共享；
- * 每个歌单独立配置曲目，可拖动排序）→ 播放控制（上一首/播放暂停/下一首/停止 +
- * 可拖进度条 + 响度）。「混入麦克风」开关决定是否发给全房（语音未连接时仅本地出声），
- * 「本地出声」开关静音喇叭但进度照走（远程当 DJ 用）。与 /mic_music 共用同一播放会话。
- */
 const phase = ref('idle');
 const position = ref(0);
 const duration = ref(0);
 const volume = ref(0.85);
-const mic = ref(true);          // 混入偏好（开关位置，持久化）
-const micActive = ref(false);   // 当前会话是否真的在混入麦克风（语音未连接时偏好为开、此处为假）
+const mic = ref(true);
+const micActive = ref(false);
 const local = ref(true);
 const mode = ref('list');
-const lists = ref([]);          // 歌单库概览：[{ id, name, count }]
-const activeId = ref('');       // 界面当前显示的歌单
-const playingListId = ref('');  // 播放上下文所属歌单（空 = 无）
-const playingLabel = ref('');   // 正在播放的曲目名（来自播放上下文，可能不在当前显示的歌单里）
-const index = ref(-1);          // 正在播放的曲目在其歌单中的下标
-const playlist = ref([]);       // 当前显示歌单的曲目
+const lists = ref([]);
+const activeId = ref('');
+const playingListId = ref('');
+const playingLabel = ref('');
+const index = ref(-1);
+const playlist = ref([]);
 const loadError = ref('');
 const toast = reactive({ text: '', error: false });
 let toastTimer = null;
-const busy = ref(false);        // 传输操作进行中（防重复点击）
+const busy = ref(false);
 const browsing = ref(false);
-const addOpen = ref(false);   // 添加面板（本地 / https / 网易云）
+const addOpen = ref(false);
 const lastPath = ref(localStorage.getItem('dt_mp3_last') || '');
 
-// 拖动进度/响度期间暂停轮询回写，松手提交
 const seeking = ref(false);
 const seekValue = ref(0);
 const volumeDragging = ref(false);
@@ -82,8 +74,6 @@ async function reload() {
   playlist.value = j.data?.playlist || [];
 }
 
-// 切歌/停止时强制结束拖动态：否则拖到结尾触发自动连播后，seeking 仍挂着
-// 会把进度条和时间冻在旧曲目结尾（"UI 显示坏掉"的来源）
 watch([index, duration, phase], () => {
   if (phase.value !== 'playing' || duration.value === 0) seeking.value = false;
 });
@@ -111,13 +101,10 @@ async function act(fn, okText) {
 }
 
 const activeList = computed(() => lists.value.find(l => l.id === activeId.value) || null);
-// 正在播放的那首属于当前显示的歌单时，才在列表里高亮
 const playingHere = computed(() => !!playingListId.value && playingListId.value === activeId.value);
 const highlightIndex = computed(() => (playingHere.value ? index.value : -1));
 
 const playPause = () => {
-  // 空闲时主按钮=「播放歌单」（显示 ▶，点击从当前歌单第一首开始）；
-  // 播放中显示 ‖（点击暂停）、暂停中显示 ▶（点击恢复）——按钮永远显示点击后将做的事
   if (phase.value === 'idle') return act(() => API.mp3Index(0, activeId.value));
   if (phase.value === 'paused') return act(() => API.mp3Resume());
   return act(() => API.mp3Pause());
@@ -138,7 +125,6 @@ function onVolumeCommit(e) {
   act(() => API.mp3Volume(v));
 }
 
-// 开关标签：关=仅本地；开且会话在混入=混入麦克风；开但未混入（语音未连接/空闲）=混入待命
 const micChip = computed(() => (!mic.value ? '仅本地' : micActive.value ? '混入麦克风' : '混入待命'));
 const micTitle = computed(() => {
   if (!mic.value) return '纯本地播放（点击开启混入麦克风）';
@@ -148,7 +134,6 @@ const micTitle = computed(() => {
 const micToggle = () => act(() => API.mp3Mic(!mic.value), true);
 const localToggle = () => act(() => API.mp3Local(!local.value));
 
-// 播放方式循环切换：列表循环 → 单曲循环 → 随机播放
 const MODES = [
   { id: 'list', label: '列表循环', title: '列表循环：播完自动连播下一首（点击切换为单曲循环）' },
   { id: 'single', label: '单曲循环', title: '单曲循环：播完重播当前曲目（点击切换为随机播放）' },
@@ -163,13 +148,12 @@ const modeToggle = () => {
 function displayName(item) { return (item.alias || '').trim() || item.label; }
 function itemKind(item) { return (item.kind || '').toLowerCase() || 'local'; }
 
-/** 曲目编辑对话框：按类型提供名字 / 链接 / 音质 */
 const editOpen = ref(false);
 const editIndex = ref(-1);
 const editKind = ref('local');
 const editName = ref('');
-const editPath = ref('');   // https 链接或网易云链接/ID（展示用，不含 netease: 前缀时也可）
-const editLevel = ref('');  // 空 = 跟随全局
+const editPath = ref('');
+const editLevel = ref('');
 const editLevelOptions = ref([
   { value: '', label: '跟随全局设置' },
   { value: 'standard', label: '标准音质' },
@@ -196,7 +180,7 @@ async function loadLevelOptions() {
         ];
       }
     }
-  } catch { /* ignore */ }
+  } catch { }
 }
 
 function startEdit(i, item) {
@@ -228,15 +212,14 @@ async function saveEdit() {
   if (i < 0) return;
   const fields = {
     name: editName.value.trim(),
-    alias: editName.value.trim(), // 展示优先 alias；与 label 同步便于列表
+    alias: editName.value.trim(),
   };
   if (editKind.value === 'netease') {
     fields.path = editPath.value.trim();
-    fields.level = editLevel.value; // 可空串 = 跟随全局
+    fields.level = editLevel.value;
   } else if (editKind.value === 'https') {
     fields.path = editPath.value.trim();
   }
-  // local：只改名字（alias/label），不改路径
   const r = await API.mp3PlaylistUpdate(i, activeId.value, fields);
   if (!r.ok) {
     showToast(r.data?.message || r.error || '保存失败', true);
@@ -267,7 +250,6 @@ async function onAdded(added) {
   await reload();
 }
 
-/** 本地选文件后的可选重命名：不填则保持文件名 */
 const localNameOpen = ref(false);
 const localNamePath = ref('');
 const localNameDraft = ref('');
@@ -280,7 +262,7 @@ const localNameDefault = computed(() => {
 function onPicked(path) {
   browsing.value = false;
   lastPath.value = path;
-  try { localStorage.setItem('dt_mp3_last', path); } catch { /* 隐私模式忽略 */ }
+  try { localStorage.setItem('dt_mp3_last', path); } catch { }
   localNamePath.value = path;
   localNameDraft.value = '';
   localNameOpen.value = true;
@@ -295,7 +277,7 @@ function cancelLocalName() {
 async function confirmLocalName() {
   const path = localNamePath.value;
   if (!path) { cancelLocalName(); return; }
-  const name = localNameDraft.value.trim(); // 空 = 后端用文件名
+  const name = localNameDraft.value.trim();
   localNameOpen.value = false;
   if (busy.value) return;
   busy.value = true;
@@ -305,8 +287,6 @@ async function confirmLocalName() {
     if (j.unauthorized) return;
     if (!j.ok) { showToast(j.data?.message || j.error || '添加失败', true); return; }
     const added = j.data?.index ?? -1;
-    // 空闲时选完即播；正在播时只入队（歌单里点播放接管）。
-    // 直接调 API 不走 act()——此时 busy 已占用，act 会静默吞掉这次播放
     if (phase.value === 'idle') {
       const r = await API.mp3Index(added, activeId.value);
       if (!r.ok) showToast(r.data?.message || r.error || '播放失败', true);
@@ -321,7 +301,6 @@ async function confirmLocalName() {
   }
 }
 
-// 点正在播的行 = 切换暂停/恢复（像常规播放器）；点其他行 = 切歌。
 function playAt(i) {
   if (i === highlightIndex.value && playingSomewhere.value) {
     return phase.value === 'paused' ? act(() => API.mp3Resume()) : act(() => API.mp3Pause());
@@ -337,21 +316,17 @@ const clearAll = () => {
   act(() => API.mp3PlaylistClear(activeId.value));
 };
 
-// ---- 多歌单：切换 / 新建 / 重命名 / 删除 ----
 const creating = ref(false);
 const draftName = ref('');
 const renamingId = ref('');
 const renameText = ref('');
 
-// 输入框出现时自动聚焦并全选（重命名失败回填时同样生效）
 const vFocus = {
   mounted(el) {
-    // 下一帧再聚焦：避免「点铅笔 → 输入框挂载」同一次点击把焦点立刻夺走
     nextTick(() => { el.focus(); el.select?.(); });
   },
 };
 
-/** 歌单重命名 / 新建进行中时，点输入框外任意处提交（输入框未获焦时 blur 不会触发） */
 function onDocPointerDown(e) {
   if (!renamingId.value && !creating.value) return;
   const el = e.target;
@@ -374,7 +349,6 @@ function startCreate() {
 }
 
 async function commitCreate() {
-  // 回车与失焦会各触发一次：先关闭输入框，保证只提交一次
   if (!creating.value) return;
   const name = draftName.value.trim();
   creating.value = false;
@@ -410,8 +384,6 @@ async function deleteList(list) {
   await act(() => API.mp3ListDelete(list.id), '歌单已删除');
 }
 
-// 歌单按文件名过滤：只影响显示，不改歌单顺序。每行保留歌单原下标，
-// 播放 / 移除 / 上下移 / 拖动都用原下标，所以过滤后操作的仍是真实的那一首。
 const nameFilter = ref('');
 const filterKeyword = computed(() => nameFilter.value.trim());
 const filtering = computed(() => filterKeyword.value !== '');
@@ -428,12 +400,9 @@ const listHeadText = computed(() => {
     : `${name}（${playlist.value.length}）`;
 });
 
-// ---- 拖动排序（pointer 事件：鼠标与触摸通用）----
-// 拖动期间只记录目标位置，松手才提交一次 move，避免中途多次写盘
 const listEl = ref(null);
 const drag = reactive({ active: false, from: -1, slot: -1, pointerId: null });
 
-// 插入位置 slot 是「插到第 slot 行之前」；移除原行后的最终下标需要修正
 function finalDropIndex(from, slot) {
   return slot > from ? slot - 1 : slot;
 }

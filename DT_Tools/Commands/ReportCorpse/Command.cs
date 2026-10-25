@@ -5,16 +5,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.ReportCorpse
 {
-    /// <summary>
-    /// /report [#corpseId] — 客户端报警：无参列出场上尸体与可报警状态；带 #id 对尸体
-    /// 直接发 C_INTERACT_CORPSE 强制全员开会（服务端 EndSurvival → Detective）。
-    /// </summary>
-    /// <remarks>
-    /// 无视距离 / 身份 / 存活状态（跟随控制台，非房主可用，只需本机已进入对局）。
-    /// x 是死者 PlayerId（尸体 DeviceId 与死者 PlayerId 相同）。
-    /// ⚠ 多人局警示：观战者也能强制全员开庭，服务端无存活校验、事后无法区分是否命令
-    /// 所为，会打断正常对局流程，慎用。
-    /// </remarks>
     internal sealed class ReportCorpseCommand : ICommand
     {
         public string Name => "report";
@@ -34,7 +24,6 @@ namespace DT_Tools.Commands.ReportCorpse
                 return CommandResult.Fail(ctxCode);
             }
 
-            // 无参：列尸体 + 用法，不报警
             if (ctx.Args.Length == 0)
             {
                 var corpses = ReportCorpseLogic.ListCorpses(device);
@@ -42,7 +31,6 @@ namespace DT_Tools.Commands.ReportCorpse
                 return CommandResult.Success(ReportCorpseFormat.ResultList(corpses, device));
             }
 
-            // 带参：报警指定尸体。报警只在生存阶段有意义（已开会/未开局都拒）
             if (!ReportCorpseLogic.RequireSurvive(out string stateCode, out string stateText))
             {
                 ctx.Reply(stateText);

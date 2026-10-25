@@ -4,30 +4,11 @@ using Protocol;
 
 namespace DT_Tools.Commands.Agent
 {
-    /// <summary>
-    /// 生成源：假人/采矿/取电/花/炼金药等（对应旧 AgentGenerateChain.cs，原 CollectGenerate）。
-    /// </summary>
-    /// <remarks>
-    /// 挖矿冷却字段 <see cref="AgentGenerateChain.MineralMineCooldown"/> 语义不变，
-    /// 由 Planner 每 tick 调用一次本类，本类内部自减。
-    /// </remarks>
     internal static class AgentGenerateChain
     {
-        // ═══════════════════════════════════════════════════
-        //  具名常量：挖矿冷却
-        // ═══════════════════════════════════════════════════
 
-        /// <summary>
-        /// 挖矿后冷却 tick 数：等待服务端 S_SPAWN_DEVICE 回包与客户端 Cache 刷新，避免矿石还没落地就重复发送挖矿包。
-        /// </summary>
-        /// <remarks>
-        /// 服务端 Mineral.HandleEvent 零冷却、零状态锁（0.1.18c Server.Game/Mineral.cs:26/43，每次收到 C_HANDLE_MINERAL{IsSuccess=true} 即无条件 CreateAndDropItem + 广播），此值不是在模拟服务器限制，纯粹是等待网络 RTT。0.25s tick 下取 2 tick = 0.5s，对常见 Steam P2P 延迟（约 50-200ms）留约 2 倍余量。实测联机延迟明显更高可调大；始终低延迟可尝试调至 1。
-        /// </remarks>
-        private const int MineralCooldownTicks = 2; // 原 5（对应旧 0.6s tick，等效 3s，明显过量）
+        private const int MineralCooldownTicks = 2;
 
-        /// <summary>
-        /// 挖矿后冷却 tick 数，强制先捡再挖，避免空挖刷屏。
-        /// </summary>
         public static int MineralMineCooldown;
 
         public static void Collect(List<DeviceBase> devices, AgentFilter filter, AddDel Add)
@@ -53,13 +34,11 @@ namespace DT_Tools.Commands.Agent
                 && d.Info.StateList[0] >= AgentItemHelper.MineralMin && d.Info.StateList[0] <= AgentItemHelper.MineralMax
                 && (neededMineralIds.Count == 0 || neededMineralIds.Contains(d.Info.StateList[0])));
 
-            // 只有真正算出缺口才挖；不要用 Want()（无 filter 时 Want 恒 true）
             bool needMineral = neededMineralIds.Count > 0;
 
             if (MineralMineCooldown > 0)
                 MineralMineCooldown--;
 
-            // 花：仅当喷雾台/调酒台仍缺花槽时才浇/采（按目标 DataId）
             var neededFlowerIds = AgentItemHelper.BuildNeededFlowerIds(devices);
             bool needFlower = neededFlowerIds.Count > 0;
 
@@ -67,13 +46,12 @@ namespace DT_Tools.Commands.Agent
 
             foreach (var dev in devices)
             {
-                if (dev.Data == null) continue; // 跳过无 Data 的临时物（掉落由 Vacuum 处理）
+                if (dev.Data == null) continue;
                 var st = dev.Info.StateList;
                 int sub = dev.Data.SubType;
                 int mt = dev.Info.MissionType;
                 int id = dev.ID;
 
-                // 假人：Harvest 可采，或任意设备 MissionType==18
                 if (Want((int)ESchoolMission.ScManikinStart))
                 {
                     bool isHarvest = dev.DeviceType == EDeviceType.Harvest && sub == 0
@@ -89,7 +67,6 @@ namespace DT_Tools.Commands.Agent
                     }
                 }
 
-                // 采矿：地上有矿或冷却中则不挖；每 tick 最多 1 次
                 if (!minePlanned
                     && needMineral
                     && !haveNeededOnHand
@@ -117,7 +94,6 @@ namespace DT_Tools.Commands.Agent
                     }
                 }
 
-                // 取满电
                 if (dev.DeviceType == EDeviceType.Charger
                     && st != null && st.Count > 2 && st[0] == 1 && st[2] == 0)
                 {
@@ -126,14 +102,9 @@ namespace DT_Tools.Commands.Agent
                         changesHand: true);
                 }
 
-                // 花：仅缺花时；只操作 SubType 能正确映射且确实在缺口里的花盆
                 if (needFlower && dev.DeviceType == EDeviceType.Flower && st != null && st.Count > 1)
                 {
                     int flowerItem = AgentItemHelper.FlowerItemId(sub);
-                    // flowerItem==0 表示 SubType 无法映射到已知花色（FlowerNone 或异常值），
-                    // 此时既不知道该花盆产出什么、也无法判断是否命中缺口，直接跳过更安全，
-                    // 不再对"映射失败"做无差别浇水/采摘的兜底（该兜底曾在花色映射有误时
-                    // 掩盖问题，导致对不需要的花盆重复操作）。
                     bool thisNeeded = flowerItem > 0 && neededFlowerIds.Contains(flowerItem);
 
                     if (thisNeeded && st[0] == 2)
@@ -155,7 +126,6 @@ namespace DT_Tools.Commands.Agent
                     }
                 }
 
-                // 炼金取药
                 if (dev.DeviceType == EDeviceType.Alchemist && sub == 2
                     && st != null && st.Count > 1 && st[0] == 1 && st[1] == 2
                     && mt == (int)ESchoolMission.ScPotionAlchemist)
@@ -165,7 +135,6 @@ namespace DT_Tools.Commands.Agent
                         changesHand: true);
                 }
 
-                // 制冰：启动 Timed；可取则 Generate
                 if (dev.DeviceType == EDeviceType.Boiler && sub == (int)EBoilerType.IceMaker)
                 {
                     if (st != null && st[0] == 3)
@@ -177,7 +146,6 @@ namespace DT_Tools.Commands.Agent
                             () => Managers.Network.GameServer.Send(new C_INTERACT_BOILER { BoilerId = id }));
                 }
 
-                // 调酒台取 1039（摇酒链）— 低优先
                 if (dev.DeviceType == EDeviceType.Drink && sub == 0
                     && st != null && st.Count > 1 && st[1] == 1
                     && mt == (int)ESchoolMission.ScShakeShaker)
@@ -187,8 +155,6 @@ namespace DT_Tools.Commands.Agent
                         changesHand: true);
                 }
 
-                // 药剂色台：InteractColor 每次都会进手一瓶且 State 不关，
-                // 必须只在「扫描仪仍缺该色」且空手时取一次
                 if (dev.DeviceType == EDeviceType.Potion && sub >= 1 && sub <= 4
                     && st != null && st.Count > 0 && st[0] == 1)
                 {
@@ -196,8 +162,7 @@ namespace DT_Tools.Commands.Agent
                     if (handChk < 0) handChk = 0;
                     if (handChk == 0)
                     {
-                        int needColor = AgentItemHelper.ScannerNextNeededColor(devices); // 1..4，0=不需要
-                        // SubType: Red=1 Green=2 Blue=3 Yellow=4 与 HandPotionColor 一致
+                        int needColor = AgentItemHelper.ScannerNextNeededColor(devices);
                         if (needColor > 0 && sub == needColor)
                         {
                             int pid = id;

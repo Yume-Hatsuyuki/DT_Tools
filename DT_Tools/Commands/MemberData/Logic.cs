@@ -8,19 +8,12 @@ using Steamworks;
 
 namespace DT_Tools.Commands.MemberData
 {
-    /// <summary>
-    /// /member_data 业务：按玩家收集已知 Lobby Member Data 键。
-    /// </summary>
-    /// <remarks>
-    /// Steam Matchmaking 不提供「枚举某成员全部 key」的 API，只能按已知键读取。
-    /// 当前固定探测：游戏原版 <c>build</c>、本模组 <c>dt_tools</c>，以及调用方额外指定的键。
-    /// </remarks>
     internal static class MemberDataLogic
     {
         public static readonly string[] DefaultKeys =
         {
-            DummyClient.SteamLobbyManager.LOBBY_DATA_BUILD_KEY, // "build"
-            DtPresenceLogic.MemberDataKey,                       // "dt_tools"
+            DummyClient.SteamLobbyManager.LOBBY_DATA_BUILD_KEY,
+            DtPresenceLogic.MemberDataKey,
         };
 
         public sealed class Entry
@@ -30,7 +23,6 @@ namespace DT_Tools.Commands.MemberData
             public ulong SteamId;
             public bool IsHost;
             public bool IsSelf;
-            /// <summary>key → value；空 value 表示键不存在或为空。</summary>
             public Dictionary<string, string> Data = new Dictionary<string, string>(StringComparer.Ordinal);
         }
 
@@ -61,11 +53,6 @@ namespace DT_Tools.Commands.MemberData
             return 0;
         }
 
-        /// <summary>
-        /// 收集玩家 Member Data。
-        /// </summary>
-        /// <param name="filterPid">仅该 PlayerId；0 表示全部。</param>
-        /// <param name="extraKeys">额外要读的键（可与默认键重复，会去重）。</param>
         public static List<Entry> Collect(int filterPid, IEnumerable<string> extraKeys)
         {
             var keys = new List<string>();

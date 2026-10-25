@@ -8,52 +8,22 @@ using UnityEngine.EventSystems;
 
 namespace DT_Tools.Features.EmoteSlot16
 {
-    /// <summary>
-    /// 两处表情面板各自的当前页（0/1）。
-    /// </summary>
     internal static class EmoteSlot16State
     {
-        /// <summary>
-        /// 游戏内表情板（UI_EmotionPanel）当前页。
-        /// </summary>
         public static int GamePage;
 
-        /// <summary>
-        /// 商店配置页（UI_Shop_EmoticonCustom）当前页。
-        /// </summary>
         public static int ShopPage;
 
-        /// <summary>
-        /// 每页槽位数。
-        /// </summary>
         public const int SlotsPerPage = 8;
 
-        /// <summary>
-        /// 槽位总数。
-        /// </summary>
         public const int TotalSlots = 32;
 
-        /// <summary>
-        /// 总页数。
-        /// </summary>
         public const int TotalPages = TotalSlots / SlotsPerPage;
 
-        /// <summary>
-        /// 商店配置页当前激活面板（用于放置/卸下/交换后刷新槽位图）。
-        /// </summary>
         public static UI_Shop_EmoticonCustom ActiveShopCustom;
 
-        /// <summary>
-        /// 表情板上次构建时的功能开关状态（用于热开关后自动重建面板）。
-        /// </summary>
         public static bool LastBuiltEnabled;
 
-        /// <summary>
-        /// 解析配置键为 KeyCode；非法时回退。
-        /// </summary>
-        /// <param name="name">配置中的键名字符串。</param>
-        /// <param name="fallback">解析失败时使用的按键。</param>
-        /// <returns>解析出的按键；非法时为 fallback。</returns>
         public static KeyCode ParseKey(string name, KeyCode fallback)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -69,39 +39,22 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 存档：老 8 槽存档迁移到 32 槽（原槽位保留、新槽位置空）。
-    /// </summary>
-    /// <remarks>
-    /// 注意：原版 EnsureSchema 在 EquippedEmoticonIds.Length != 8 时会重置为默认 8 槽，
-    /// 因此 32 槽数据必须在 Prefix 备份、Postfix 恢复，否则重启游戏后第 9-32 槽表情会丢失。
-    /// </remarks>
     [HarmonyPatch(typeof(SaveManager), "EnsureSchema")]
     internal static class SaveSchemaMigratePatch
     {
-        /// <summary>
-        /// 本次 EnsureSchema 调用前的 32 槽数据备份（防止原版按 Length!=8 重置为默认 8 槽）。
-        /// </summary>
         private static int[] _backup32;
 
-        /// <summary>
-        /// 原版清理前的已拥有表情备份（原版 EnsureSchema 在 Version&lt;5 时清空 OwnedEmoticonIds 只留默认，
-        /// 若用清空后的列表做槽位清理会误删非默认表情，导致每次进游戏都要重新配）。
-        /// </summary>
         private static List<int> _backupOwned;
 
         private static void Prefix(SaveManager __instance)
         {
             try
             {
-                // 数据保护：无论功能开关状态，只要存档已是 32 槽就先备份，
-                // 防止原版 EnsureSchema 按 Length!=8 把 32 槽重置为默认 8 槽。
                 var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
                 if (data?.EquippedEmoticonIds != null
                     && data.EquippedEmoticonIds.Length == EmoteSlot16State.TotalSlots)
                 {
                     _backup32 = (int[])data.EquippedEmoticonIds.Clone();
-                    // 同步备份清理前的拥有列表（原版 Version<5 分支会清空它）
                     _backupOwned = data.OwnedEmoticonIds != null
                         ? new List<int>(data.OwnedEmoticonIds)
                         : null;
@@ -114,7 +67,6 @@ namespace DT_Tools.Features.EmoteSlot16
             }
             catch (Exception)
             {
-                // 备份失败可忽略
             }
         }
 
@@ -125,11 +77,8 @@ namespace DT_Tools.Features.EmoteSlot16
                 var data = Traverse.Create(__instance).Field("_data").GetValue<PlayerSaveData>();
                 if (data == null)
                     return;
-                // 1) 原版因 Length!=8 把 32 槽重置为默认 8 槽：用备份恢复第 9-32 槽的表情（数据保护，始终执行）
                 if (_backup32 != null)
                 {
-                    // 无效表情清理用【备份的】拥有列表判断，避免原版 Version<5 清空 OwnedEmoticonIds
-                    // 后把非默认表情误判为"未拥有"而置 -1（否则每次进游戏表情配置都会丢）。
                     var owned = _backupOwned ?? data.OwnedEmoticonIds;
                     for (int i = 0; i < _backup32.Length; i++)
                     {
@@ -137,8 +86,6 @@ namespace DT_Tools.Features.EmoteSlot16
                             _backup32[i] = -1;
                     }
                     data.EquippedEmoticonIds = _backup32;
-                    // 原版 Version<5 分支会清空 OwnedEmoticonIds 只留默认表情：把备份的已拥有表情合并回去，
-                    // 玩家不因升级丢失已购买/解锁的表情（槽位清理因此也始终以真实拥有列表为准）。
                     if (_backupOwned != null && data.OwnedEmoticonIds != null)
                     {
                         foreach (int id in _backupOwned)
@@ -154,12 +101,10 @@ namespace DT_Tools.Features.EmoteSlot16
                 int[] arr = data.EquippedEmoticonIds;
                 if (arr == null || arr.Length == EmoteSlot16State.TotalSlots)
                     return;
-                // 2) 老存档（8/16 槽）迁移到 32 槽是功能行为：仅在功能开启时执行
                 if (!Engine.Enabled<EmoteSlot16Feature>())
                     return;
                 if (arr.Length < EmoteSlot16State.TotalSlots)
                 {
-                    // 原槽位保留，新槽位置空（与原版默认空槽 -1 一致）
                     int[] n = new int[EmoteSlot16State.TotalSlots];
                     Array.Copy(arr, n, arr.Length);
                     for (int i = arr.Length; i < EmoteSlot16State.TotalSlots; i++)
@@ -174,9 +119,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 存档读槽：放宽到 16 槽。
-    /// </summary>
     [HarmonyPatch(typeof(SaveManager), "GetEquippedEmoticon")]
     internal static class SaveGetSlotPatch
     {
@@ -195,9 +137,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 存档写槽：放宽到 16 槽。
-    /// </summary>
     [HarmonyPatch(typeof(SaveManager), "SetEquippedEmoticon")]
     internal static class SaveSetSlotPatch
     {
@@ -219,21 +158,16 @@ namespace DT_Tools.Features.EmoteSlot16
                 }
                 catch (Exception)
                 {
-                    // 存档脏标记失败可忽略，下次存档仍会写入
                 }
                 return false;
             }
             catch (Exception)
             {
-                // 槽位越界等异常可忽略（防止旧存档未迁移时炸日志）
                 return false;
             }
         }
     }
 
-    /// <summary>
-    /// 装备按钮的"第一个空槽"：放宽到 32 槽（原版仅查前 8 个）。
-    /// </summary>
     [HarmonyPatch(typeof(InventoryManager), "FirstEmptyEmoticonSlot")]
     internal static class FirstEmptySlotPatch
     {
@@ -255,9 +189,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 外部触发 InventoryManager.OnChanged 事件（event 不能直接外部 invoke）。
-    /// </summary>
     internal static class InvokeChangedHelper
     {
         public static void InvokeChanged(InventoryManager mgr)
@@ -268,13 +199,9 @@ namespace DT_Tools.Features.EmoteSlot16
             }
             catch (Exception)
             {
-                // 事件字段访问失败可忽略
             }
         }
 
-        /// <summary>
-        /// 商店配置页打开时刷新槽位图（放置/卸下/交换后立即可见）。
-        /// </summary>
         public static void RefreshShopSlots()
         {
             try
@@ -286,14 +213,10 @@ namespace DT_Tools.Features.EmoteSlot16
             }
             catch (Exception)
             {
-                // 商店未打开或刷新失败可忽略
             }
         }
     }
 
-    /// <summary>
-    /// 装备表情：放宽到 16 槽（复刻原逻辑：重复表情从其它槽移除）。
-    /// </summary>
     [HarmonyPatch(typeof(InventoryManager), "EquipEmoticon")]
     internal static class EquipSlot16Patch
     {
@@ -326,17 +249,12 @@ namespace DT_Tools.Features.EmoteSlot16
             Traverse.Create(__instance).Field("_source")
                 .Method("SetEquippedEmoticon", slot, id).GetValue();
             __result = true;
-            // 对齐原版 EquipEmoticon：触发 OnChanged，刷新商店槽位与游戏内表情板（否则需重进商店才显示）
             InvokeChangedHelper.InvokeChanged(__instance);
-            // 放置成功后同步刷新商店配置页槽位图（原版 Equip 后不刷新商店，翻页放置时看不到结果）
             InvokeChangedHelper.RefreshShopSlots();
             return false;
         }
     }
 
-    /// <summary>
-    /// 卸下表情：放宽到 16 槽。
-    /// </summary>
     [HarmonyPatch(typeof(InventoryManager), "UnequipEmoticon")]
     internal static class UnequipSlot16Patch
     {
@@ -355,9 +273,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 交换槽位：放宽到 16 槽。
-    /// </summary>
     [HarmonyPatch(typeof(InventoryManager), "SwapEquippedEmoticons")]
     internal static class SwapSlot16Patch
     {
@@ -380,16 +295,11 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 游戏内表情板（UI_EmotionPanel）：整替 SetEmotions——按当前页构建 8 个子项，
-    /// 数据取 EquippedEmoticonIds[page*8 + i]（原版仅 8 个；16 槽数据源时正常显示两页）。
-    /// </summary>
     [HarmonyPatch(typeof(UI_EmotionPanel), "SetEmotions")]
     internal static class PanelSetEmotionsPatch
     {
         private static bool Prefix(UI_EmotionPanel __instance)
         {
-            // 记录本次构建时的开关状态，供 Update 检测热开关变化后自动重建
             EmoteSlot16State.LastBuiltEnabled = Engine.Enabled<EmoteSlot16Feature>();
             if (!Engine.Enabled<EmoteSlot16Feature>())
                 return true;
@@ -435,9 +345,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 游戏内表情板翻页：面板打开时按翻页键切换页面并重建子项。
-    /// </summary>
     [HarmonyPatch(typeof(UI_EmotionPanel), "Update")]
     internal static class PanelPageFlipPatch
     {
@@ -446,12 +353,11 @@ namespace DT_Tools.Features.EmoteSlot16
             try
             {
                 bool nowEnabled = Engine.Enabled<EmoteSlot16Feature>();
-                // 热开关变化：立即重建表情板（开→32槽，关→原版8槽），无需重启或重新初始化
                 if (nowEnabled != EmoteSlot16State.LastBuiltEnabled)
                 {
                     EmoteSlot16State.LastBuiltEnabled = nowEnabled;
                     var t = Traverse.Create(__instance);
-                    t.Method("ClearSelection").GetValue(); // 先清空旧选中高亮
+                    t.Method("ClearSelection").GetValue();
                     t.Field("_currentSelectIndex").SetValue(-1);
                     __instance.SetEmotions();
                     return;
@@ -463,7 +369,6 @@ namespace DT_Tools.Features.EmoteSlot16
                     return;
                 if (Managers.Game == null)
                     return;
-                // 对齐原版可操作状态：非选角/结算/加载，且不是聊天输入中
                 if (Managers.Game.State == EGameState.PickCharacter
                     || Managers.Game.State == EGameState.TotalResult
                     || Managers.UI.IsLoading
@@ -477,11 +382,11 @@ namespace DT_Tools.Features.EmoteSlot16
                 if (Input.GetKeyDown(next))
                     EmoteSlot16State.GamePage = (EmoteSlot16State.GamePage + 1) % EmoteSlot16State.TotalPages;
                 else if (Input.GetKeyDown(prev))
-                    EmoteSlot16State.GamePage = (EmoteSlot16State.GamePage + EmoteSlot16State.TotalPages - 1) % EmoteSlot16State.TotalPages; // 上一页
+                    EmoteSlot16State.GamePage = (EmoteSlot16State.GamePage + EmoteSlot16State.TotalPages - 1) % EmoteSlot16State.TotalPages;
                 if (EmoteSlot16State.GamePage != old)
                 {
                     var t = Traverse.Create(__instance);
-                    t.Method("ClearSelection").GetValue(); // 先清空旧选中高亮
+                    t.Method("ClearSelection").GetValue();
                     t.Field("_currentSelectIndex").SetValue(-1);
                     __instance.SetEmotions();
                 }
@@ -493,10 +398,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 商店配置页（UI_Shop_EmoticonCustom）：整替 RefreshSlots——按当前页显示 8 个槽位数据
-    /// （实际槽位索引 = 页*8 + i）。
-    /// </summary>
     [HarmonyPatch(typeof(UI_Shop_EmoticonCustom), "RefreshSlots")]
     internal static class ShopRefreshSlotsPatch
     {
@@ -530,14 +431,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 商店配置页点击径向板：把页内索引换算为实际槽位（页*8 + 页内索引）后选中。
-    /// </summary>
-    /// <remarks>
-    /// 原版 SelectSlot/UpdateSelectionVisuals 对实际槽位 >=8 不会高亮（_slots 只有 8 个元素，
-    /// i == _selectedSlot 永远不匹配），这里手动维护选中态：槽位高亮页内槽、列表按 _selectedEmoteId 高亮。
-    /// （翻页键在 UI_ShopPopup.Update 中处理，中键也走那里；本方法不重复处理中键，避免双翻页。）
-    /// </remarks>
     [HarmonyPatch(typeof(UI_Shop_EmoticonCustom), "OnClickBoard")]
     internal static class ShopClickBoardPatch
     {
@@ -559,7 +452,6 @@ namespace DT_Tools.Features.EmoteSlot16
                     int selected = t.Field("_selectedSlot").GetValue<int>();
                     int newSelected = selected == real ? -1 : real;
                     t.Field("_selectedSlot").SetValue(newSelected);
-                    // 复刻原版 SelectSlot 语义：选中槽里的表情 id（>0 时），供列表高亮
                     int selectedEmote = -1;
                     if (newSelected >= 0)
                     {
@@ -577,7 +469,6 @@ namespace DT_Tools.Features.EmoteSlot16
                                 slots[i].SetSelected(i == num && newSelected >= 0);
                         }
                     }
-                    // 复刻原版 UpdateSelectionVisuals：列表按选中的表情 id 高亮
                     var items = t.Field("_items").GetValue<List<UI_EmoticonCustomSubItem>>();
                     if (items != null)
                     {
@@ -598,11 +489,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 商店配置页翻页：Unity 事件系统不会为中键产生 UI click 事件（OnClickBoard 里的中键分支实际不触发），
-    /// 改为在 UI_ShopPopup.Update 中检测键盘翻页键（Q/E，与游戏内表情板一致，可配置）——
-    /// 仅当当前面板为表情配置页（EShopSection.EmoticonCustom）时翻页并刷新槽位；鼠标中键保留为备用。
-    /// </summary>
     [HarmonyPatch(typeof(UI_ShopPopup), "Update")]
     internal static class ShopPopupUpdatePatch
     {
@@ -626,10 +512,8 @@ namespace DT_Tools.Features.EmoteSlot16
                 if (custom == null)
                     return;
 
-                // 记录当前激活面板（商店打开即记录，供放置/卸下后刷新槽位图）
                 EmoteSlot16State.ActiveShopCustom = custom;
 
-                // 键盘翻页键（可配置，默认 Q=下一页 E=上一页）；中键作为备用翻页
                 KeyCode next = EmoteSlot16State.ParseKey(EmoteSlot16Feature.PageNextKey, KeyCode.Q);
                 KeyCode prev = EmoteSlot16State.ParseKey(EmoteSlot16Feature.PagePrevKey, KeyCode.E);
                 bool nextPressed = Input.GetKeyDown(next) || Input.GetMouseButtonDown(2);
@@ -655,9 +539,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 径向板拖拽开始：把页内索引换算为实际槽位（原版 _dragFromSlot 是页内索引，翻页后会错位）。
-    /// </summary>
     [HarmonyPatch(typeof(UI_Shop_EmoticonCustom), "OnBoardBeginDrag")]
     internal static class ShopBoardBeginDragPatch
     {
@@ -686,9 +567,6 @@ namespace DT_Tools.Features.EmoteSlot16
         }
     }
 
-    /// <summary>
-    /// 拖拽放置结束：槽位索引换算为实际槽位（页*8 + 页内索引）。
-    /// </summary>
     [HarmonyPatch(typeof(UI_Shop_EmoticonCustom), "OnDragEnd")]
     internal static class ShopDragEndPatch
     {

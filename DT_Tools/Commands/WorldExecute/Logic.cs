@@ -5,12 +5,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.WorldExecute
 {
-    /// <summary>
-    /// /world.execute 业务：参数门禁 → 身份/阶段/持刀校验 → C_KILL_PLAYER 自瞄。
-    /// </summary>
-    /// <remarks>
-    /// 服务端裁决以 UseWeapon 为准；本机只做可提前拦截的条件并给出中文说明。
-    /// </remarks>
     internal static class WorldExecuteLogic
     {
         public static CommandResult Execute(CommandContext ctx)
@@ -61,7 +55,6 @@ namespace DT_Tools.Commands.WorldExecute
                 return CommandResult.Fail("no weapon");
             }
 
-            // 不要求 ClientCanAttack：那是 UI「附近有目标」门闩，自瞄不经过瞄准逻辑。
             if (!my.ServerCanAttack)
             {
                 ctx.Warn("当前 CanAttack=false（刀在冷却 / 尚未就绪），服务端会静默拒绝。稍后再试。");

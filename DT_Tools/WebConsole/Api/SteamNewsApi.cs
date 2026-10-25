@@ -10,19 +10,8 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
-    /// Steam 新闻代理：转发 /feeds/news/app/{AppID}?l=语言，解析为 JSON 供游戏新闻挂件使用。
-    /// </summary>
-    /// <remarks>
-    /// 浏览器直连 Steam 受 CORS 限制，因此由后端中转。工作线程上同步请求，按语言缓存 50 秒（短于挂件 1 分钟的轮询间隔）；
-    /// 失败时重试 3 次，仍失败则降级返回该语言的旧缓存。语言白名单须与前端 i18n/index.js 的 LOCALES.steam 保持一致。
-    /// 所选语言没有公告时回退英文，并在结果中标注 fallback。
-    /// </remarks>
     public static class SteamNewsApi
     {
-        /// <summary>
-        /// 允许的语言代码（Steam 新闻 RSS 的 l= 参数）。与游戏的 9 种语言一一对应，须与前端 i18n/index.js 的 LOCALES.steam 一致。
-        /// </summary>
         public static readonly string[] Languages =
         {
             "schinese", "tchinese", "english", "spanish", "french", "japanese", "koreana", "brazilian", "russian",
@@ -41,7 +30,7 @@ namespace DT_Tools.WebConsole.Api
         static SteamNewsApi()
         {
             try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; }
-            catch { /* 运行时不支持时忽略 */ }
+            catch { }
         }
 
         private sealed class CacheEntry
@@ -50,10 +39,6 @@ namespace DT_Tools.WebConsole.Api
             public DateTime At;
         }
 
-        /// <summary>
-        /// GET /api/steam/news?lang=语言代码。语言不在白名单内时返回 400。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文。</param>
         public static void Handle(HttpListenerContext ctx)
         {
             string raw = ctx.Request.QueryString["lang"];
@@ -100,9 +85,6 @@ namespace DT_Tools.WebConsole.Api
             }
         }
 
-        /// <summary>
-        /// 拉取并组装响应。所选语言没有公告时回退英文。
-        /// </summary>
         private static string Build(string lang)
         {
             var items = Fetch(lang);

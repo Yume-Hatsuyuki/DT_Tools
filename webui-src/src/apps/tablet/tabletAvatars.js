@@ -1,8 +1,3 @@
-/**
- * 平板电脑的头像与人物配色。
- * 头像由 SD 原图裁切（见 avatars/，裁切框 760×760 @ (644,260)，缩放到 192px）。
- * Madeline 与 Mastermind 共用资源，后端已把 Madeline 映射为键 "Mastermind"（见 Game/WebTablet/WebTabletAvatar.cs）。
- */
 import avatarBlack from './avatars/Black.png';
 import avatarHasung from './avatars/Hasung.png';
 import avatarJeremy from './avatars/Jeremy.png';
@@ -37,7 +32,6 @@ const SOURCES = {
   Someone: avatarSomeone,
 };
 
-/** 与游戏 PersonalColor.cs 一致的气泡色；未列出的（Mastermind、Black、Someone）为白色。 */
 const PERSONAL_COLOR = {
   Soi: '#959BE3',
   Jeremy: '#D8D3AB',
@@ -53,12 +47,10 @@ const PERSONAL_COLOR = {
   Miyuki: '#F4D278',
 };
 
-/** 头像地址；未知键回退到无名剪影。 */
 export function avatarSrc(key) {
   return SOURCES[key] || SOURCES.Someone;
 }
 
-/** 气泡底色；未知键或无专属色时为白。 */
 export function personalColor(key) {
   return PERSONAL_COLOR[key] || '#ffffff';
 }

@@ -4,23 +4,15 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.CustomRoomName
 {
-    /// <summary>
-    /// 建房：把 roomName 入参替换为配置的自定义名。
-    /// </summary>
-    /// <remarks>
-    /// CreateLobby 为公开方法：0.1.18c DummyClient/SteamLobbyManager.cs:128。
-    /// </remarks>
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]
     internal static class CustomRoomNameCreateLobbyPatch
     {
-        // 顺序契约见 CustomRoomCode.CreateLobby 注释：改参 Prefix 先于整替 Prefix
         [HarmonyPriority(500)]
         private static void Prefix(ref string roomName)
         {
             if (!Engine.Enabled<CustomRoomNameFeature>())
                 return;
 
-            // 清洗链（trim→去富文本→trim→64 截断）唯一实现复用 Logic.SanitizeName
             string custom = CustomRoomNameLogic.SanitizeName();
             if (string.IsNullOrEmpty(custom))
                 return;

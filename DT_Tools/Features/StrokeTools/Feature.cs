@@ -2,18 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.StrokeTools
 {
-    /// <summary>
-    /// 画线工具（一大开关带两小开关，范本 BlackKillNotify）：用画笔（庭审平板）在地图上画完一条线，松开后按各小开关执行。
-    /// </summary>
-    /// <remarks>
-    /// 画线测速：线长 = Stroke.Points（MapBoundsRect 局部坐标）换算到世界坐标后的折线总长（0.1.18c UI_GameTablet.cs:915 InitConstMap(9184,7235)，官方比例 Util.cs:887 GetMinimapPosition）。
-    /// 实测：线长 3843 单位约跑 6 秒，平均速度 ≈ 640 ≈ (奔跑 728 + 走路 560)/2。玩家日常接近“跑走各半”，全程按均速估算。
-    /// 速度基准：活人走路 560、奔跑 560×1.3=728（0.1.18c BuffComponent.cs:171-180 RefreshSpeed，Run 状态 +0.3 倍）。840 是幽灵速度（MakeSpectatorGhost），与活人无关。
-    /// 注意：旧版曾把奔跑默认设为 840 并写入本地 .cfg，替换 DLL 后旧配置仍会生效；若广播里显示“跑840”，删除 BepInEx/config/DT_Tools/DT_Tools.cfg 或把该值改回 728。
-    /// 路线解读：识别线穿过的房间，依据官方地图格子数组 MapArray（0.1.18c Server.Game/AreaManager.cs:79 GetArea：格子 = 世界坐标 ÷ 224 − MapOffset，值即 ERoomType），房间名 = Managers.GetText(枚举名)（0.1.18c UI_ChatDevicePopup.cs）。
-    /// 两小开关各自独立，同钩 DrawingManager.EndLocalStroke，各自 Prefix 互不干扰。结果经聊天广播显示，无需房主与对方装插件。
-    /// 原 StrokeTimer / StrokeRoute 两功能已合并：旧 .cfg 的 [StrokeTimer]、[StrokeRoute] 段已作废，新段 [StrokeTools]，速度等参数需按需重设。
-    /// </remarks>
     [PatchFeature(
         "画线工具：用画笔在地图上画一条线，松开后按小开关执行。\n" +
         "Timer（画线测速）：按实测校准的跑走均速折算所需时间并广播，全房可见。\n" +

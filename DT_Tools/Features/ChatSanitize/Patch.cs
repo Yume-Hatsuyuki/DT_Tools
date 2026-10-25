@@ -5,10 +5,6 @@ using Server.Game;
 
 namespace DT_Tools.Features.ChatSanitize
 {
-    /// <summary>
-    /// SanitizeChat 整替：原版硬编码 100 截断（0.1.18c Server.Game/GameRoom.cs:2524，
-    /// Util.NeutralizeRichText 在 0.1.18c Util.cs:172），改为读配置上限并保留代理对完整性。
-    /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.SanitizeChat))]
     internal static class ChatSanitizePatch
     {
@@ -18,13 +14,10 @@ namespace DT_Tools.Features.ChatSanitize
                 return true;
 
             string text = raw ?? "";
-            // 手改 .cfg 可绕过 [Config(Min=100)]：低于原版 100 的截断上限不放行
-            // （对齐 LobbyMaxPlayers 的 Math.Clamp 收口惯例）
             int max = Math.Max(100, ChatSanitizeFeature.MaxLength);
             if (text.Length > max)
             {
                 int n = max;
-                // 不截断在代理对中间（emoji 等增补字符）
                 if (n > 0 && char.IsHighSurrogate(text[n - 1]))
                     n--;
                 if (n < text.Length)

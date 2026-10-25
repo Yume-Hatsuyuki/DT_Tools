@@ -4,14 +4,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.PassKnifeRange
 {
-    /// <summary>
-    /// GetHandWeaponTarget 整替：最近玩家搜索见 NearestTargetFinder（骨架与
-    /// 0.1.18c MyPlayer.cs:2197 一致），额外排除 KnownBlackIds
-    /// （0.1.18c MyPlayer.cs 原文内联于循环，此处收敛为谓词）。
-    /// </summary>
-    /// <remarks>
-    /// 方法为 private，字符串定位：0.1.18c MyPlayer.cs。
-    /// </remarks>
     [HarmonyPatch(typeof(MyPlayer), "GetHandWeaponTarget")]
     internal static class PassKnifeRangePatch
     {

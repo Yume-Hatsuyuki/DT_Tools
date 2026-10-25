@@ -4,9 +4,6 @@ using Protocol;
 
 namespace DT_Tools.Automation.AutoSpawnPoint
 {
-    /// <summary>
-    /// 触发器：监测进入 Survive 的时刻，维护阶段跟踪并驱动动作。
-    /// </summary>
     internal static class AutoSpawnPointTrigger
     {
         public static void Tick()

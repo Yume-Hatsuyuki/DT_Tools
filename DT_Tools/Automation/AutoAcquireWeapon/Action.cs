@@ -6,14 +6,6 @@ using UnityEngine;
 
 namespace DT_Tools.Automation.AutoAcquireWeapon
 {
-    /// <summary>
-    /// 动作：延迟等待 → 上限检查 → 持刀 / 颜色判定 → 选开放武器架 → 发送 C_INTERACT_ARMORY，
-    /// 失败后按 RetryInterval 重试。
-    /// </summary>
-    /// <remarks>
-    /// 发包路径与游戏一致：
-    /// 白方 Armory.InteractArmory（0.1.18c Armory.cs:233）、黑方 UseSabotageArmory（0.1.18c Armory.cs:265）。
-    /// </remarks>
     internal static class AutoAcquireWeaponAction
     {
         public static void Run()
@@ -41,7 +33,6 @@ namespace DT_Tools.Automation.AutoAcquireWeapon
                 return;
             }
 
-            // 已持刀 / 已是黑方：无需再取
             if (my.Color == EPlayerColor.Black
                 || (my.Inventory != null && my.Inventory.Weapon.DataId != 0))
             {
@@ -102,14 +93,9 @@ namespace DT_Tools.Automation.AutoAcquireWeapon
             Log.Info<AutoAcquireWeaponModule>(
                 $"已发送 C_INTERACT_ARMORY armory=#{armory.ID} type={interactType}" +
                 $"（尝试 {AutoAcquireWeaponState.Attempts}/{max}）");
-            // 不立刻 done：下一拍检查是否已持刀；短暂间隔后再试
             AutoAcquireWeaponState.NextTryRealtime = Time.realtimeSinceStartup + 0.8f;
         }
 
-        /// <summary>
-        /// 安排下一次重试时刻并计入一次尝试（与旧实现一致：失败也消耗尝试次数）。
-        /// </summary>
-        /// <param name="overrideInterval">覆盖本次重试的等待秒数；为 null 时沿用默认重试间隔。</param>
         private static void ScheduleRetry(float? overrideInterval = null)
         {
             float interval = overrideInterval

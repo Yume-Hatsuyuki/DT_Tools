@@ -6,13 +6,6 @@ using DT_Tools.Core;
 
 namespace DT_Tools.WebConsole.Mcp
 {
-    /// <summary>
-    /// MCP 状态/开关/配置端点（WebUI 挂件用，也注册在 MCP 独立监听上）。
-    /// </summary>
-    /// <remarks>
-    /// /mcp 被停用或监听未拉起时这两条仍可用——挂件靠它读状态并重新打开。
-    /// 挂件与「DT 配置」页都经 ConfigService 读写 Mcp 段，两处天然同步。
-    /// </remarks>
     internal static class McpStatusApi
     {
         public static void HandleStatus(HttpListenerContext ctx)
@@ -46,8 +39,6 @@ namespace DT_Tools.WebConsole.Mcp
                 return;
             }
 
-            // 段名/键名必须与引擎推导值（Mcp/Enabled）逐字一致；此处走 ConfigService.Update
-            // 是为了同步 BepInEx 条目再落盘——直改静态字段不会被 config.Save() 持久化
             var (ok, error, value) = ConfigService.Update(Engine.Config, "Mcp", "Enabled", enabled ? "true" : "false");
             if (!ok)
             {
@@ -60,15 +51,6 @@ namespace DT_Tools.WebConsole.Mcp
             HttpServer.WriteJson(ctx.Response, new { ok = true, enabled = McpOptions.Enabled, value });
         }
 
-        /// <summary>
-        /// 端点展示地址（挂件复制配置用）：回环/未配置 → 127.0.0.1；通配监听 → 本机主要
-        /// IPv4（局域网客户端按此接入，如 192.168.x.x）；具体 IP 原样（IPv6 已带方括号时
-        /// 原样拼入）。
-        /// </summary>
-        /// <remarks>
-        /// 枚举失败回退回环，只影响展示不影响监听。
-        /// </remarks>
-        /// <returns>端点展示地址：回环或未配置时为 127.0.0.1，通配监听时为本机 IPv4。</returns>
         private static string EndpointUrl()
         {
             string ip = (McpOptions.ListenIp ?? "").Trim();
@@ -87,7 +69,6 @@ namespace DT_Tools.WebConsole.Mcp
                 }
                 catch
                 {
-                    // 主机名/网卡枚举不可用：保持回环展示
                 }
             }
             return $"http://{ip}:{McpOptions.Port}/mcp";

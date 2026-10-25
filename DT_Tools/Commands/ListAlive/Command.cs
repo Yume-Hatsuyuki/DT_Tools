@@ -4,12 +4,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.ListAlive
 {
-    /// <summary>
-    /// /list_alive — 列出当前仍存活的玩家，并标注阵营（黑幕 / 黑方 / 白方）与「你」。
-    /// </summary>
-    /// <remarks>
-    /// 仅房主、仅游戏中（选角结束之后）；完整阵营数据仅在 Host 端。
-    /// </remarks>
     internal sealed class ListAliveCommand : ICommand
     {
         public string Name => "list_alive";

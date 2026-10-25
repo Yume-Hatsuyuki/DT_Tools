@@ -4,18 +4,8 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Kick
 {
-    /// <summary>
-    /// /kick 业务：大厅门禁、目标校验（房主门禁由框架按 RequireHost 统一执行）。
-    /// </summary>
     internal static class KickLogic
     {
-        /// <summary>
-        /// 房间门禁：踢人仅在大厅可用（服务端 KickPlayer 只处理 Lobby）。
-        /// </summary>
-        /// <param name="room">当前房间。</param>
-        /// <param name="code">拒绝时的错误码。</param>
-        /// <param name="text">拒绝时的提示文字。</param>
-        /// <returns>仅在大厅阶段可踢人时为 true。</returns>
         public static bool TryGuard(GameRoom room, out string code, out string text)
         {
             if (room.State != EGameState.Lobby)
@@ -29,18 +19,9 @@ namespace DT_Tools.Commands.Kick
             return true;
         }
 
-        /// <summary>
-        /// 目标校验：房主对象存在、不能踢自己、目标在房间内。
-        /// </summary>
-        /// <param name="room">当前房间。</param>
-        /// <param name="targetId">要踢的玩家 ID。</param>
-        /// <param name="target">解析到的目标玩家；失败时为 null。</param>
-        /// <param name="code">失败时的错误码。</param>
-        /// <param name="text">失败时的提示文字。</param>
-        /// <returns>目标可踢时为 true；失败返回 false，原因写入 code 与 text。</returns>
         public static bool TryResolveTarget(GameRoom room, int targetId, out Server.Game.Player target, out string code, out string text)
         {
-            var host = room.Host;   // 0.1.18c Server.Game/GameRoom.cs:145
+            var host = room.Host;
             if (host?.PublicInfo == null)
             {
                 target = null;
@@ -55,7 +36,6 @@ namespace DT_Tools.Commands.Kick
                 text = "不能踢自己。";
                 return false;
             }
-            // GameRoom.Players 按 PlayerId 查目标（收敛自 Game/PlayerQuery.FindById）
             target = PlayerQuery.FindById(room, targetId);
             if (target == null)
             {

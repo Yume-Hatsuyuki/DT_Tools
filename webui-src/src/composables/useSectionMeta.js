@@ -1,13 +1,7 @@
 import { reactive } from 'vue';
 
-/**
- * "文件夹"备忘录元数据：仅 WebUI 层的显示重命名 + 自定义图标，
- * 不触碰后端配置（段名/模块 id 始终是原始键）。
- * 键 = 段名（配置段与自动化模块共用一套键，二者本就指向同一配置段）。
- * 结构：{ "<段名>": { name?: "显示名", icon?: "dataURL" } }
- */
 const STORAGE_KEY = 'dt_section_meta_v1';
-const ICON_MAX_BYTES = 256 * 1024;   // 裁切后 256×256，正常远小于此；防超大 PNG 撑爆配额
+const ICON_MAX_BYTES = 256 * 1024;
 
 const meta = reactive(load());
 
@@ -21,7 +15,7 @@ function load() {
 }
 
 function persist() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(meta)); } catch { /* 隐私模式忽略 */ }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(meta)); } catch { }
 }
 
 export function useSectionMeta() {
@@ -29,7 +23,6 @@ export function useSectionMeta() {
     return meta[key] || null;
   }
 
-  /** 备忘录级显示名（未设置时返回 null，调用方回退原名）。 */
   function displayName(key) {
     const m = meta[key];
     return m && m.name ? m.name : null;

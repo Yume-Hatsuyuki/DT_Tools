@@ -11,14 +11,8 @@ import { t } from '../../i18n/index.js';
 import { orderClues, roundNumbering, formatChatText, formatClueText, fileStampOf } from './tabletFormat.js';
 import { renderChatParts, renderClueParts, downloadBlob, downloadText, fileToJpegBase64, imageBlobToPng } from './tabletImage.js';
 
-/**
- * 平板电脑（实验性）：左侧聊天、右侧线索。数据由后端在游戏内采集，前端每 0.8 秒增量拉取。
- * 发言只在大厅与学级裁判可用；照片只在学级裁判的讨论阶段可用，并受照片冷却约束（均由后端与游戏双重校验）。
- */
-
 const POLL_MS = 800;
 const PHOTO_LIMIT = 163840;
-/** 待确认照片在查看器中的占位键，不与任何聊天照片的 photoKey 冲突。 */
 const PENDING_KEY = '__pending__';
 const LINE_CAP = 1000;
 const CLEAR_TEXT = {
@@ -52,17 +46,13 @@ const tick = ref(Date.now());
 const menu = ref('');
 const exportDialog = ref(null);
 const confirmScope = ref('');
-/** 待确认发送的照片：压缩后的 JPEG（base64）与预览地址，确认前不会发出。 */
 const pendingPhoto = ref(null);
-/** 照片查看器：{ key, pending }。pending 为 true 时查看的是待确认照片。 */
 const viewer = ref(null);
 
 const clueList = computed(() => orderClues(clues.value));
-/** 局编号由聊天与线索共同计算，同一局在两边的编号一致。 */
 const roundNo = computed(() => roundNumbering([...lines.value, ...clues.value]));
 const canSendPhoto = computed(() => stateCode.value === 'Trial' && canType.value);
 const photoWait = computed(() => Math.max(0, Math.ceil((cooldownUntil.value - tick.value) / 1000)));
-/** 聊天中的全部照片，供查看器左右切换（与聊天顺序一致）。 */
 const photoItems = computed(() => lines.value
   .filter((l) => l.kind === 'photo')
   .map((l) => ({ key: l.photoKey, src: API.tabletPhotoUrl(l.photoKey), name: l.name, time: l.time, line: l })));
@@ -71,7 +61,6 @@ const viewerItems = computed(() => (viewer.value?.pending
   : photoItems.value));
 const viewerKey = computed(() => (viewer.value?.pending ? PENDING_KEY : viewer.value?.key || ''));
 watch(photoItems, (items) => {
-  // 查看的照片因聊天容量被挤掉时，关闭查看器，避免显示空白
   if (viewer.value && !viewer.value.pending && !items.some((p) => p.key === viewer.value.key)) viewer.value = null;
 });
 const photoButtonText = computed(() => {
@@ -128,7 +117,6 @@ async function poll() {
   const cool = Number(d.photoCooldownMs) || 0;
   cooldownUntil.value = cool > 0 ? Date.now() + cool : 0;
 
-  // 存储被清理或后端重启（代数变化、序号回退）：丢弃本地列表，从头同步一次
   if ((epoch.value !== null && d.epoch !== epoch.value) || d.seq < cursor.value) {
     epoch.value = d.epoch;
     lines.value = [];
@@ -172,10 +160,6 @@ function onEnter(e) {
   send();
 }
 
-/**
- * 取得一张待发送的照片：压缩为发送时的同一份 JPEG，弹出确认层。
- * 真正发送只在用户确认后发生（见 confirmPhoto），避免误触粘贴就直接发出。
- */
 async function preparePhoto(file) {
   if (pendingPhoto.value) {
     flash(t('tablet.photo.pendingBlocked'), true);
@@ -204,16 +188,11 @@ async function preparePhoto(file) {
   }
 }
 
-/** 取消待发送的照片（取消按钮、Esc 或点击遮罩）。若正在查看它，一并关闭查看器。 */
 function cancelPhoto() {
   pendingPhoto.value = null;
   if (viewer.value?.pending) viewer.value = null;
 }
 
-/**
- * 用户确认后才真正发送。确认时若已不可发（阶段变化），取消并提示；
- * 仍在冷却则保留确认层，等冷却结束再点「发送」。发送结束（成功或失败）都关闭确认层。
- */
 async function confirmPhoto() {
   const p = pendingPhoto.value;
   if (!p || photoBusy.value) return;
@@ -259,10 +238,6 @@ async function pickPhoto() {
   if (file) preparePhoto(file);
 }
 
-/**
- * 粘贴剪贴板中的图片：先进入发送确认，不直接发送。纯文字粘贴保持原样，交给输入框处理。
- * 查看器打开时不响应粘贴。
- */
 function onPaste(e) {
   const data = e.clipboardData;
   if (!data) return;
@@ -287,7 +262,6 @@ function onViewerSelect(key) {
   viewer.value = { key, pending: false };
 }
 
-/** 点击面板空白处时把焦点移到根节点，使 Ctrl+V 的粘贴事件落在平板上。输入框与按钮保持原有焦点行为。 */
 function focusRoot(e) {
   if (e.target.closest?.('input, textarea, select, button, a')) return;
   rootEl.value?.focus({ preventScroll: true });

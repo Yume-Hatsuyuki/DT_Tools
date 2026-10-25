@@ -2,15 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.TabletQol
 {
-    /// <summary>
-    /// 会议/调查阶段平板（`UI_GameTablet`）的两项体验优化，合成一个配置段。
-    /// </summary>
-    /// <remarks>
-    /// 纯客户端（FeatureSide.Client）：只改自己屏幕上的 UI，不影响别人，也不需要房主装。
-    /// ① 滚动条：聊天/线索列表加可拖拽滚动条。游戏从不用 UnityEngine.UI.Scrollbar（0.1.18c 全文 0 处，已核对），列表只靠 ScrollRect 的拖拽/滚轮（UI_ScrollDrag.cs），长列表翻页很累。默认贴边（BarOffset=0），可点轨道翻页（BarTrackClickPages）。
-    /// ② 「提交线索」二次确认：PropositionButton 一点就提交且不可撤回（UI_ClueSubItem.cs:351 OnClickPropositionButton 直接发 C_SUBMIT_PROPOSITION，:356）。拦下来先弹确认栏，栏内内嵌一张原版线索卡片（照抄 MakeSubItem&lt;UI_ClueSubItem> + SetInfo；SetInfo 内部已 Init，0.1.18c 已删除 InitPopupClue），按钮也克隆原版，视觉与原版一致。
-    /// 两个列表（_chatScroll / ClueSrollRect）在会议与调查里是同一个 UI_GameTablet 的同一块，两阶段默认都开「线索」页（DefaultSection()（UI_GameTablet.cs:1004）/ IsInvestigation（:424）），因此挂两个点（Init 与 Section setter）才能两阶段都生效。
-    /// </remarks>
     [PatchFeature(
         "会议/调查阶段平板两项优化：① 聊天/线索列表加可拖拽滚动条（贴边、可点轨道翻页）；② 点「提交线索」先弹二次确认栏（内嵌一张原版线索卡片，确认后才提交）。两项可分别开关（客户端，自己装生效）。",
         defaultEnabled: false,

@@ -7,15 +7,6 @@ using Protocol;
 
 namespace DT_Tools.Features.MastermindWeight
 {
-    /// <summary>
-    /// 替换黑幕的抽取结果：按权重从非观战玩家中重新抽取，并同步颜色。
-    /// </summary>
-    /// <remarks>
-    /// 原版：GameRoom.StartPick 先把全员设为白、随机选一人设为黑（0.1.18c Server.Game/GameRoom.cs:1608-1612），
-    /// 再调用 SetMasterMind。这里在 SetMasterMind 的 Prefix 中改写 player 参数，并把颜色统一按新结果重设。
-    /// 池子与 SpectatorJoin 的替换版一致（非观战者，Features/SpectatorJoin/Feature.GameStart.cs:184）。
-    /// IsMigrating 为真时是迁移恢复黑幕身份（MigrationOrchestrator.cs:186、196），不得重抽。
-    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.GameRoom), nameof(Server.Game.GameRoom.SetMasterMind))]
     internal static class MastermindWeightSetMasterMindPatch
     {

@@ -4,31 +4,11 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LoginReward
 {
-    /// <summary>
-    /// 发放与弹窗流程（0.1.18c）：TryGrant → InventoryManager.GrantFreeFromStars（InventoryManager.cs:349）→ SteamInventorySource.GrantFreeFromStars（:964）→ FreeCurrencyDrops.Enqueue → 串行 SteamInventory.TriggerItemDrop。
-    /// </summary>
-    /// <remarks>
-    /// OnProgress 可能多次中间回调；终态为 FreeDropPendingUnits 回落到请求前基线后读 LastRevealEarned，再 TryShowPopup。
-    /// 终态规则：earned>0 走官方动画；earned≤0 立即视为“当日已满 / 未发放”，不死等。中间 OnProgress（单次 +10）不得提前裁决。
-    /// 在途竞态：GrantFreeFromStars 入口把 _revealEarned 清 0（InventoryManager.cs:353），真终态要等 drop 回调写入（:356）。TryGrant 发请求前把 _revealEarned 置 InFlightEarned(-1)，同步 OnChanged 见 -1 即过滤；批次完成判定另看 FreeDropPendingUnits。
-    /// </remarks>
     internal static class LoginRewardLogic
     {
-        /// <summary>
-        /// 0.1.18c InventoryManager.cs:14——公开属性 LastRevealEarned 的后备字段；
-        /// 写点 :353（入口清 0）与 :356（grant 回调写终值）。游戏升级后按行号复核；
-        /// 仅写需要反射（读走公开属性），字段缺失时跳过标记并告警。
-        /// </summary>
         private static readonly global::System.Reflection.FieldInfo RevealEarnedField =
             AccessTools.Field(typeof(InventoryManager), "_revealEarned");
 
-        /// <summary>
-        /// 订阅库存回调并安排首次发放尝试（Init 后缀与 OnEnabled 热开启共用）。
-        /// </summary>
-        /// <remarks>
-        /// Init 可能多次触发（每次启动流程），按实例判重。
-        /// </remarks>
-        /// <param name="inv">要订阅的库存管理器。</param>
         public static void Attach(InventoryManager inv)
         {
             if (inv == null)
@@ -49,9 +29,6 @@ namespace DT_Tools.Features.LoginReward
             LoginRewardTicker.Ensure();
         }
 
-        /// <summary>
-        /// 主线程轮询（Ticker 调用）：到点发起发放 / 推进弹窗等待 / 判定掉落批次完成。
-        /// </summary>
         public static void Tick()
         {
             if (!Engine.Enabled<LoginRewardFeature>())
@@ -66,7 +43,6 @@ namespace DT_Tools.Features.LoginReward
 
             if (LoginRewardState.WaitingReveal && !LoginRewardState.PopupDone)
             {
-                // 掉落批次完成：pending 回落到请求前基线（中间 OnProgress 不在此提前裁决）
                 if (!LoginRewardState.RevealResolved && !LoginRewardState.FakeOnly)
                     TryResolveBatch();
 
@@ -75,9 +51,6 @@ namespace DT_Tools.Features.LoginReward
             }
         }
 
-        /// <summary>
-        /// InventoryManager.OnChanged 回调：首次库存就绪即尝试；在途过滤同步抢跑。
-        /// </summary>
         public static void OnInventoryChanged()
         {
             if (!Engine.Enabled<LoginRewardFeature>())
@@ -89,8 +62,6 @@ namespace DT_Tools.Features.LoginReward
                 return;
             }
 
-            // GrantFreeFromStars 调用期间的同步 OnChanged（其末尾必触发一次，
-            // 失败路径经回调还会再来一次）不算终态到达
             if (LoginRewardState.InGrantCall)
             {
                 LoginRewardState.SyncChangedDuringGrant = true;
@@ -99,24 +70,16 @@ namespace DT_Tools.Features.LoginReward
 
             if (LoginRewardState.WaitingReveal && !LoginRewardState.PopupDone && !LoginRewardState.FakeOnly)
             {
-                // 在途过滤：抢跑的 OnChanged 时 _revealEarned 仍为 -1
                 var waitingInv = Managers.Inventory;
                 if (waitingInv != null && waitingInv.LastRevealEarned == LoginRewardState.InFlightEarned)
                     return;
 
-                // 不在此立即 RevealResolved——等 pending 回落，避免中间 +10 抢跑
                 TryResolveBatch();
                 if (LoginRewardState.RevealResolved)
                     TryShowPopup();
             }
         }
 
-        /// <summary>
-        /// 判定 FreeCurrencyDrops 批次是否结束。
-        /// </summary>
-        /// <remarks>
-        /// pending ≤ 请求前基线 且 LastRevealEarned 已离开在途标记 → 终态。
-        /// </remarks>
         private static void TryResolveBatch()
         {
             if (LoginRewardState.RevealResolved)
@@ -154,8 +117,6 @@ namespace DT_Tools.Features.LoginReward
                 return;
             }
 
-            // DailyEarned → FreeCurrencyDrops.DailyUsed（0.1.18c SteamInventorySource.cs:145）
-            // DailyCap：0.1.18c InventoryManager.cs:38（public 属性，原版即硬编码 250）
             int earnedToday = inv.DailyEarned;
             int cap = inv.DailyCap;
             int want = Mathf.Clamp(LoginRewardFeature.GrantAmount, 0, cap);
@@ -202,7 +163,6 @@ namespace DT_Tools.Features.LoginReward
                 Log.Info<LoginRewardFeature>(
                     $"请求掉落发放 amount={want} → 金星={gold} 银星={silver}（今日 {earnedToday}/{cap}，pending基线={LoginRewardState.PendingBaseline}，ForceAnim={forceAnim}）");
 
-                // 在途标记：GrantFreeFromStars 入口会清 0（0.1.18c InventoryManager.cs:353）
                 if (RevealEarnedField != null)
                     RevealEarnedField.SetValue(inv, LoginRewardState.InFlightEarned);
                 else
@@ -219,7 +179,6 @@ namespace DT_Tools.Features.LoginReward
                     LoginRewardState.InGrantCall = false;
                 }
 
-                // 失败路径（Steam 未初始化 / amount≤0）会在调用内同步回调 → 已是终态
                 if (LoginRewardState.SyncChangedDuringGrant)
                     LoginRewardState.RevealResolved = true;
             }
@@ -232,18 +191,6 @@ namespace DT_Tools.Features.LoginReward
             LoginRewardTicker.Ensure();
         }
 
-        /// <summary>
-        /// 实验数据 → 金星/银星（gold×30+silver×10）。
-        /// </summary>
-        /// <remarks>
-        /// 上限读库存组件 DailyCap
-        /// （0.1.18c InventoryManager.cs:38，原版即硬编码 250），由调用方传入。
-        /// SteamInventorySource 再按 num/10 折成 drop 单位（每单位 10）。
-        /// </remarks>
-        /// <param name="amount">实验数据数量。</param>
-        /// <param name="cap">每日上限。</param>
-        /// <param name="gold">换算出的金星数量。</param>
-        /// <param name="silver">换算出的银星数量。</param>
         private static void AmountToStars(int amount, int cap, out int gold, out int silver)
         {
             int value = Mathf.Clamp(amount, 0, cap);
@@ -305,14 +252,13 @@ namespace DT_Tools.Features.LoginReward
                     Log.Info<LoginRewardFeature>(
                         $"掉落发放 earned={earned}，播放官方动画（今日 {inv.DailyEarned}/{inv.DailyCap}）。");
                     if (sceneUi != null)
-                        sceneUi.TryShowDailyCapPopup();     // 0.1.18c UI_GameScene.cs:2838
+                        sceneUi.TryShowDailyCapPopup();
                     else
                         PlayDirect(inv.FreeBalance, earned);
                 }
                 else
                 {
-                    // 未发放：消费 pending，避免官方 "+0" 弹窗被 TryShowDailyCapPopup 拉出
-                    if (inv.HasPendingDailyReveal)                    // InventoryManager.cs:34
+                    if (inv.HasPendingDailyReveal)
                         inv.ConsumeDailyReveal(out _, out _);
                     Log.Info<LoginRewardFeature>(
                         $"掉落未发放（granted=0，今日 {inv.DailyEarned}/{inv.DailyCap}）。");

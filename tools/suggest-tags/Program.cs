@@ -11,8 +11,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace SuggestTags
 {
-    /// 标签建议工具：语义分析功能代码实际引用了哪些游戏类型/成员，按规则表映射到标签。
-    /// 只给建议，不改源码。同一输入输出确定（CI 可重复）。
     internal static class Program
     {
         private const string GameAssembly = "Assembly-CSharp";
@@ -54,7 +52,6 @@ namespace SuggestTags
             return rel.StartsWith("/obj/") || rel.StartsWith("/bin/");
         }
 
-        /// 编译引用 = project.assets.json 的 netstandard2.1 编译资产 + libs/（游戏程序集）+ 运行时 TPA（仅补基础库）。
         private static List<MetadataReference> BuildReferences(string root, string assetsPath)
         {
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -97,7 +94,6 @@ namespace SuggestTags
             return list;
         }
 
-        /// 找出所有功能 / 自动化模块 / MCP 工具 / 命令；记下它们的声明标签与所在目录。
         private static List<UnitInfo> DiscoverUnits(CSharpCompilation comp, List<SyntaxTree> trees, string projectDir)
         {
             var units = new List<UnitInfo>();
@@ -108,7 +104,6 @@ namespace SuggestTags
                 {
                     var sym = model.GetDeclaredSymbol(cls);
                     if (sym == null) continue;
-                    // partial 类的非首段没有特性语法：只把带特性（或声明了 ICommand）的那一段当作单元，避免重复计数
                     bool hasUnitSyntax = cls.AttributeLists.Count > 0 || (cls.BaseList != null && cls.BaseList.Types.Any(t => t.ToString().Contains("ICommand")));
                     if (!hasUnitSyntax) continue;
                     string kind = null;
@@ -148,7 +143,6 @@ namespace SuggestTags
             return new HashSet<string>(Regex.Matches(text.ToString(), @"FeatureTag\.(\w+)").Cast<Match>().Select(m => m.Groups[1].Value));
         }
 
-        /// 单元引用的游戏类型与成员（计数），以及每个键的首次出现位置（证据）。
         private static UnitEvidence Collect(CSharpCompilation comp, UnitInfo unit, string projectDir)
         {
             var ev = new UnitEvidence();
@@ -185,7 +179,7 @@ namespace SuggestTags
             var asm = owner.ContainingAssembly?.Name;
             if (asm != null && GameAssemblies.Contains(asm)) return true;
             var ns = owner.ContainingNamespace?.ToDisplayString() ?? "";
-            return ns.StartsWith("DT_Tools.Game", StringComparison.Ordinal);   // 模组里的共享游戏助手
+            return ns.StartsWith("DT_Tools.Game", StringComparison.Ordinal);
         }
 
         private static string Qualified(ISymbol s)
@@ -304,11 +298,8 @@ namespace SuggestTags
 
     internal static class Scorer
     {
-        /// 类名信号相对于游戏类型引用的权重（经验值，见 README 的指标说明）。
         private const double SelfNameWeight = 2.0;
 
-        /// 思路：每个游戏类型的权重 = ln(1 + 单元总数 / 引用它的单元数)，越普遍（枢纽类）越低。
-        /// 类型被规则命中时，把规则权重累加到对应标签上；成员的精确映射权重更高。
         public static List<UnitResult> Score(List<UnitInfo> units, Dictionary<UnitInfo, UnitEvidence> ev, GameMap map, double threshold)
         {
             int n = units.Count;
@@ -354,8 +345,6 @@ namespace SuggestTags
                     foreach (var t in tags) Add(t, kv.Key, idf * 1.5);
                 }
 
-                // 单元自身类名也是信号（如 AutoReadyModule → SysAutomation）。
-                // 游戏类型统计看不到模组内部的类，所以这里单独计一次，权重低于游戏类型引用。
                 var selfBest = new Dictionary<string, double>();
                 foreach (var rule in map.Rules)
                 {

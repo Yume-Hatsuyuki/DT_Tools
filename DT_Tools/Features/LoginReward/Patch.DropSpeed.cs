@@ -4,14 +4,6 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LoginReward
 {
-    /// <summary>
-    /// 按玩家自设秒数改写 FreeCurrencyDrops 客户端等待（0.1.18c FreeCurrencyDrops.cs）。
-    /// </summary>
-    /// <remarks>
-    /// 官方硬编码：RESULT_TIMEOUT=20、RECHECK_WAIT=65、RETRY_MIN=2、RETRY_MAX=60。
-    /// 功能开启时读取 LoginRewardFeature 的 ResultTimeoutSec / EmptyRecheckSec / RetryMinSec / RetryMaxSec（默认即官方值）：Update Prefix 在结果超时短于官方时提前结束 in-flight 并 ScheduleRetry；TryHandleResult Postfix 把空结果 / Prime 的 _waitUntil 改为配置的复查秒数；ScheduleRetry Postfix 按配置的下限 / 上限重写指数退避。
-    /// 不改 Steam TriggerItemDrop 本身，也不能突破生成器冷却与每日次数上限。
-    /// </remarks>
     internal static class LoginRewardDropSpeed
     {
         internal const float VanillaResultTimeout = 20f;
@@ -30,13 +22,6 @@ namespace DT_Tools.Features.LoginReward
         }
     }
 
-    /// <summary>
-    /// FreeCurrencyDrops.Update（public）：0.1.18c FreeCurrencyDrops.cs:131。
-    /// </summary>
-    /// <remarks>
-    /// Prefix：配置的结果超时短于官方 20s 时，提前结束 in-flight 并重试。
-    /// 配置 ≥20 时不干预，由原版 20s 逻辑处理（无法单靠 Prefix 延长）。
-    /// </remarks>
     [HarmonyPatch(typeof(FreeCurrencyDrops), nameof(FreeCurrencyDrops.Update))]
     internal static class LoginRewardDropSpeedUpdatePatch
     {
@@ -63,7 +48,6 @@ namespace DT_Tools.Features.LoginReward
                 return;
 
             LoginRewardDropSpeed.Resolve(out float resultTimeout, out _, out _, out _);
-            // 仅当配置比官方更短时提前触发；≥20 交给原版
             if (resultTimeout >= LoginRewardDropSpeed.VanillaResultTimeout)
                 return;
 
@@ -85,12 +69,6 @@ namespace DT_Tools.Features.LoginReward
         }
     }
 
-    /// <summary>
-    /// FreeCurrencyDrops.TryHandleResult（public）：0.1.18c FreeCurrencyDrops.cs:180。
-    /// </summary>
-    /// <remarks>
-    /// Postfix：把刚写入的空结果/Prime _waitUntil 改为配置的复查秒数。
-    /// </remarks>
     [HarmonyPatch(typeof(FreeCurrencyDrops), nameof(FreeCurrencyDrops.TryHandleResult))]
     internal static class LoginRewardDropSpeedTryHandleResultPatch
     {
@@ -112,7 +90,6 @@ namespace DT_Tools.Features.LoginReward
 
             float now = Time.unscaledTime;
             float target = now + recheck;
-            // 原版刚写入的是 now+65；把仍在等待的条目统一改为配置值（可短可长）
             var keys = new global::System.Collections.Generic.List<int>(waitUntil.Keys);
             for (int i = 0; i < keys.Count; i++)
             {
@@ -123,12 +100,6 @@ namespace DT_Tools.Features.LoginReward
         }
     }
 
-    /// <summary>
-    /// FreeCurrencyDrops.ScheduleRetry（private）：0.1.18c FreeCurrencyDrops.cs:248。
-    /// </summary>
-    /// <remarks>
-    /// Postfix：按配置的下限/上限重写 _nextAt 指数退避。
-    /// </remarks>
     [HarmonyPatch(typeof(FreeCurrencyDrops), "ScheduleRetry")]
     internal static class LoginRewardDropSpeedScheduleRetryPatch
     {
@@ -145,7 +116,6 @@ namespace DT_Tools.Features.LoginReward
                 return;
 
             LoginRewardDropSpeed.Resolve(out _, out _, out float retryMin, out float retryMax);
-            // ScheduleRetry 已执行 failures++；退避用递增后的值减 1 对齐原版公式
             int failures = (int)FailuresField.GetValue(__instance);
             int exp = Mathf.Min(Mathf.Max(failures - 1, 0), 5);
             float delay = Mathf.Min(retryMax, retryMin * (float)(1 << exp));

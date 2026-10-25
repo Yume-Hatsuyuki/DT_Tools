@@ -4,9 +4,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.ListPlayers
 {
-    /// <summary>
-    /// /list_players [参数…] — 列出房间内所有玩家，每个参数显示一条信息并按顺序拼接；不带参数显示参数说明。
-    /// </summary>
     internal sealed class ListPlayersCommand : ICommand
     {
         public string Name => "list_players";

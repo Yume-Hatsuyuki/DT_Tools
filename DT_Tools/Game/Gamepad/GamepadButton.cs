@@ -2,9 +2,6 @@ using System;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 手柄按钮。取值与 XInput 的 wButtons 位一致；LT/RT 是扳机越过阈值时生成的虚拟按钮。
-    /// </summary>
     [Flags]
     internal enum GamepadButton
     {

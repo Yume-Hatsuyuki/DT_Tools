@@ -4,15 +4,8 @@ using System.Text;
 
 namespace DT_Tools.Commands.ListPlayers
 {
-    /// <summary>
-    /// /list_players 输出格式化：玩家列表文本 + JSON 结果 DTO。
-    /// </summary>
     internal static class ListPlayersFormat
     {
-        /// <summary>
-        /// 参数说明（不带参数时的输出）。
-        /// </summary>
-        /// <returns>多行中文说明，列出全部参数与示例。</returns>
         public static string Help()
         {
             var sb = new StringBuilder();
@@ -25,10 +18,6 @@ namespace DT_Tools.Commands.ListPlayers
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 参数说明的 JSON 结果：列出全部参数名。
-        /// </summary>
-        /// <returns>含 help 标记与参数名列表的结果对象。</returns>
         public static object HelpResult()
             => new
             {
@@ -36,13 +25,6 @@ namespace DT_Tools.Commands.ListPlayers
                 modules = ListPlayersArgs.Table.Select(r => r.Token).ToArray(),
             };
 
-        /// <summary>
-        /// 按模块拼接的文本输出：每个玩家一行，各模块的片段以空格连接。
-        /// </summary>
-        /// <param name="players">按 PlayerId 排序的玩家条目。</param>
-        /// <param name="hostId">房主的 PlayerId，识别失败为 0。</param>
-        /// <param name="modules">要显示的模块，按拼接顺序排列，不为空。</param>
-        /// <returns>多行文本，末行为人数。</returns>
         public static string Reply(List<ListPlayersLogic.Entry> players, int hostId, IReadOnlyList<ListPlayersModule> modules)
         {
             var sb = new StringBuilder();
@@ -63,12 +45,6 @@ namespace DT_Tools.Commands.ListPlayers
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 单个模块对应的文本片段。内容为空时返回空串，该模块在这一行不显示。
-        /// </summary>
-        /// <param name="module">信息模块。</param>
-        /// <param name="e">玩家条目，房主与自身标注已由 IsHost、IsSelf 给出。</param>
-        /// <returns>该模块的文本片段。</returns>
         private static string Fragment(ListPlayersModule module, ListPlayersLogic.Entry e)
         {
             switch (module)

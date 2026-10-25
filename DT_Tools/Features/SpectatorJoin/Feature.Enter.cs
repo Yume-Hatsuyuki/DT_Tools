@@ -17,13 +17,6 @@ namespace DT_Tools.Features.SpectatorJoin
 {
     public sealed partial class SpectatorJoinFeature
     {
-        // HandleEnterPlayer：满房（等待阶段 + 进行中）允许以观战身份进入。
-        // 完整重写（与原版 + LobbyMaxPlayers 对齐），仅改动：
-        //   1) 满员且仍有座位且处于可观战状态（Lobby/Survive/Detective/允许观战的审判）→ 以观战者身份进入（不拒绝）；
-        //   2) 观战者不超过 MaxSpectators 上限；
-        //   3) Lobby 观战者保持可见（不置 IsGhost）、暂不执行 EnterSpectator，
-        //      待 GameStart 时统一切换为幽灵观战；进行中加入则立即走 EnterSpectator 幽灵观战；
-        //   4) 满员阈值沿用 LobbyMaxPlayers 配置（默认 8 = 原版）。
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.HandleEnterPlayer))]
         [HarmonyPrefix]
@@ -31,7 +24,6 @@ namespace DT_Tools.Features.SpectatorJoin
         {
             if (!Engine.EnabledOf(typeof(SpectatorJoinFeature)))
             {
-                // 诊断：满员/无座位但功能未开启 → 提示房主需开启（客户端自行开启无法放行）
                 if (__instance.RoomMemberCountForMetadata() >= LobbyMaxPlayersFeature.MaxMembers
                     || !ObjectUtils.HasFreeSeat())
                 {
@@ -92,24 +84,18 @@ namespace DT_Tools.Features.SpectatorJoin
             {
                 bool roomFullByMembers = !reclaimDummy && __instance.RoomMemberCountForMetadata() >= maxMembers;
                 bool seatAvailable = ObjectUtils.HasFreeSeat();
-                // 观战加入窗口：等待中（Lobby）与进行中（Survive/Detective，
-                // 以及允许观战的审判阶段）均可接受观战加入；其余阶段拒绝。
                 bool stateAllowsSpectate = __instance.State == EGameState.Lobby
                     || __instance.State == EGameState.Survive
                     || __instance.State == EGameState.Detective
                     || (__instance.State == EGameState.Trial && TrialManager.Instance.AcceptsSpectator);
                 if (!seatAvailable)
                 {
-                    // 座位硬满（Steam 大厅 16 上限）：拒绝（观战者也占用座位，无法进入）
                     Log.Info<SpectatorJoinFeature>($"拒绝：Steam 大厅座位已满（16 上限）人数={__instance.RoomMemberCountForMetadata()}");
                     s_ENTER_GAME.Success = false;
                     s_ENTER_GAME.Name = "ErrorRoomFull";
                 }
                 else if (__instance.State == EGameState.Lobby)
                 {
-                    // Lobby 阶段不再"满员即观战"：允许超员真实进房（受 Steam 16 座位约束），
-                    // 超员者由开局前"最后准备者转观战"机制确定（见 HandleStart 补丁），
-                    // 使"谁当观战者"由准备顺序而非进房顺序决定。
                     spectating = false;
                     Log.Info<SpectatorJoinFeature>($"Lobby 超员真实进房 name={pkt.PlayerName}（配置上限 {maxMembers}，参与上限 {PlayMaxPlayersValue}，开局时按最后准备顺序转观战）");
                 }
@@ -242,7 +228,6 @@ namespace DT_Tools.Features.SpectatorJoin
                     s_ADD_PLAYER2.CharacterId = player2.PublicInfo.CharacterId;
                     player.Session.Send(s_ADD_PLAYER2);
                     player2.Session.Send(s_ADD_PLAYER);
-                    // 大厅观战者可见其他玩家的准备状态（局内观战维持原版跳过）
                     if (!spectating || __instance.State == EGameState.Lobby)
                     {
                         player.Session.Send(new S_READY

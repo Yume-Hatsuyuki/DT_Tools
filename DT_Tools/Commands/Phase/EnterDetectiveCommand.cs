@@ -3,12 +3,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Commands.Phase
 {
-    /// <summary>
-    /// /enter_detective — 强制进入调查阶段。
-    /// </summary>
-    /// <remarks>
-    /// 仅房主、Survive。
-    /// </remarks>
     internal sealed class EnterDetectiveCommand : ICommand
     {
         public string Name => "enter_detective";

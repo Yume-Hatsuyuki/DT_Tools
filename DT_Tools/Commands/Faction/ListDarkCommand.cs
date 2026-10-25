@@ -4,12 +4,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.Faction
 {
-    /// <summary>
-    /// /list_dark — 游戏中列出黑幕（EPlayerColor.Dark）。
-    /// </summary>
-    /// <remarks>
-    /// 仅房主。
-    /// </remarks>
     internal sealed class ListDarkCommand : ICommand
     {
         public string Name => "list_dark";

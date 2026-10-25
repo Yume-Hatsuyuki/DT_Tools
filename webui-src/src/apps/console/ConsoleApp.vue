@@ -5,11 +5,6 @@ import { useLogStream } from '../../composables/useLogStream.js';
 import SuggestPopup from '../common/SuggestPopup.vue';
 import JsonBlock from './JsonBlock.vue';
 
-/**
- * 旧版控制台（/命令 + 发送按钮）。
- * 会话隔离：本窗口只显示自己执行的命令产生的日志（后端按 X-DT-Session 标记
- * 回流），不再打印全部日志——全量日志归「日志」应用，两套控制台互不干扰。
- */
 const { commands, historyUp, historyDown, runCommand } = useCommandInput('console');
 const mySession = newSessionId();
 const LEVEL_COLOR = {
@@ -20,8 +15,6 @@ const LEVEL_COLOR = {
   CMD: 'var(--accent-cyan)',
 };
 
-// ── 本窗口条目（本地视图，清屏只清这里）──
-
 let uid = 0;
 const entries = ref([]);
 const MAX_ENTRIES = 2000;
@@ -29,11 +22,8 @@ const TRIM_STEP = 400;
 
 function pushLocal(e) {
   entries.value.push(e);
-  // 批量截断：逐条 shift 会每次扰动 DOM 与选区，这是"控制台一直刷新"的帮凶之一
   if (entries.value.length > MAX_ENTRIES) entries.value.splice(0, TRIM_STEP);
 }
-
-// ── 吸底滚动：仅当本就贴底且没有进行中的文本选择时才跟随 ──
 
 const logEl = ref(null);
 const stick = ref(true);
@@ -52,18 +42,14 @@ async function maybeScroll() {
   if (stick.value && logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight;
 }
 
-// ── 订阅全局日志流：只收本会话条目 ──
-
 const stream = useLogStream();
 function onStreamEntry(e) {
   if (e.session !== mySession) return;
   pushLocal(e);
   maybeScroll();
 }
-stream.replay(onStreamEntry);   // 补齐窗口打开前的本会话日志
+stream.replay(onStreamEntry);
 onUnmounted(stream.onEntry(onStreamEntry));
-
-// ── 补全（旧版形态：整条输入是单个 token 时弹层）──
 
 const input = ref('');
 const inputEl = ref(null);
@@ -85,8 +71,6 @@ const matches = computed(() => {
   });
 });
 
-// 历史翻找填充的输入不弹补全弹层（historyNav 消费一次）：填的是已知完整命令，
-// 弹层反而把后续 ↑↓ 劫持成候选切换，历史导航就此失灵（新版终端同款修法）
 let historyNav = false;
 watch(matches, (m) => {
   if (historyNav) { historyNav = false; suggestOpen.value = false; return; }
@@ -94,7 +78,6 @@ watch(matches, (m) => {
   if (suggestOpen.value) selIdx.value = 0;
 });
 
-/** 历史翻找写入输入框；值没变（已到翻找边界）不动标记，避免吞掉下一次键入的弹层。 */
 function fillFromHistory(v) {
   if (v === input.value) return;
   historyNav = true;

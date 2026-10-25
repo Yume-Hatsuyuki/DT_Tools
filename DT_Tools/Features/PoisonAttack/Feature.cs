@@ -11,24 +11,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.PoisonAttack
 {
-    /// <summary>
-    /// 毒杀（服务端权威，房主开启后全员可用）。
-    /// </summary>
-    /// <remarks>
-    /// 黑方持刀时按毒杀键，对近距离目标下毒。
-    /// 判定距离、存活、阶段与原版刀人（Player.UseWeapon）一致，但允许对柜中（EPlayerState.Hide）目标下毒，毒发时先强制出柜。
-    /// 时序（服务端 GameRoom 队列）：
-    /// - 下毒：黑方弹屏提示，进入 31 秒毒杀冷却（覆盖原版 20 秒刀冷却，并同步 S_COOLTIME_WEAPON）。
-    /// - 毒发前 N 秒（默认 5）：目标用 SecretChat 弹屏提示剩余秒数（复用 UI_SecretChatOverlay）。
-    /// - 毒发前 3 秒起：被毒者留下脚印（方向为真实移动方向的反向），毒发后写入尸体；尸体未被报告时不广播。
-    /// - 30 秒后：目标经原版 OnDead(EDeathType.Murder) 死亡；身处可触发 Deadly Trick 的地点时只死亡，不触发。
-    /// 约束：
-    /// - 仅黑方阵营可用（含白方转黑后，服务端 Color 即时生效）。
-    /// - 全程不调用 OnDamaged，因此下毒不产生脚印，毒发只走 OnDead。
-    /// - 对局在毒发前结束则毒发失效，目标不死，警告与脚印一并取消。
-    /// 指令：毒杀键发 C_ATTACK{TargetId, Item=手持刀}（原版攻击通道，不走聊天）；无准星目标时 TargetId=-1，服务端选黑方身边最近的存活玩家。
-    /// 刀人键走 C_KILL_PLAYER，服务端据此区分刀人与毒杀。
-    /// </remarks>
     [HarmonyPatch]
     [PatchFeature(
         "毒杀：黑方持刀时按毒杀键（默认 K，刀人 Q 不变）对近距离目标下毒，30 秒后毒发死亡；毒发前 5 秒目标弹屏警告；毒杀冷却 31 秒；死亡时在柜中先强制出柜、不触发 Deadly Trick。服务端实现，房主开启后全员可用。",
@@ -53,14 +35,8 @@ namespace DT_Tools.Features.PoisonAttack
         [Config("毒杀判定距离（像素，默认 672 = 原版刀人距离）。", Min = 0)]
         public static int PoisonRange = 672;
 
-        /// <summary>
-        /// 毒杀脚印模式：目标 PlayerId 集合（死亡前 3 秒的脚印按反向收集）。
-        /// </summary>
         private static readonly HashSet<int> _poisonFootprintMode = new HashSet<int>();
 
-        /// <summary>
-        /// 毒杀脚印独立收集：目标 PlayerId → 脚印列表（毒发后写入其尸体）。
-        /// </summary>
         private static readonly Dictionary<int, List<FootstepInfo>> _poisonFootprints =
             new Dictionary<int, List<FootstepInfo>>();
 
@@ -71,13 +47,6 @@ namespace DT_Tools.Features.PoisonAttack
         internal static int DelayValue => Math.Max(PoisonDelay, 1);
         internal static int WarnValue => Math.Clamp(WarnAhead, 0, DelayValue);
         internal static float RangeValue => Math.Max(PoisonRange, 0);
-
-        // 注意：只要求服务端同步的 ServerCanAttack（变黑持刀后 true），
-        // 不依赖 ClientCanAttack —— 后者在帧内更晚的目标锁定更新后才置真，
-        // 刚把准星移到目标上就按毒杀键会被上一帧的旧值误拒。
-        // 包型选择：刀人键 Q 走 C_KILL_PLAYER（原版 UseWeapon），毒杀键 K 走 C_ATTACK
-        // （带 TargetId 的原版攻击通道）——服务端据此区分"刀人"与"毒杀"，
-        // 毒杀请求全程不产生聊天消息。
 
         [HarmonyPatch(typeof(MyPlayer), "UpdateSurvive")]
         [HarmonyPrefix]
@@ -94,15 +63,11 @@ namespace DT_Tools.Features.PoisonAttack
                 if (!__instance.ServerCanAttack)
                     return;
 
-                // 目标：优先准星锁定目标；无准星目标时 TargetId=-1，
-                // 服务端自动判定黑方身边最近的存活玩家下毒。
                 Player target = __instance.AttackTargetPlayer;
                 int targetId = (target != null && target.PublicInfo != null)
                     ? target.PublicInfo.PlayerId
                     : -1;
 
-                // 不播放挥刀动作：毒杀为隐蔽手段，黑方确认反馈改由服务端弹屏
-                // （“已对<目标id>使用毒杀”，见 TryPoison 施加后的 SecretChat）。
                 var hand = __instance.Inventory?.Hand;
                 Managers.Network.GameServer.Send(new C_ATTACK
                 {
@@ -136,17 +101,14 @@ namespace DT_Tools.Features.PoisonAttack
                 if (room == null || room.IsMigrating || attacker == null || attacker.IsDummy)
                     return true;
 
-                // 仅拦截"黑方 + 持刀"的 C_ATTACK（毒杀键发来的）；
-                // 白方道具/注射等场景的 C_ATTACK 走原版 HandleUseItem。
                 if (attacker.Color != EPlayerColor.Black || attacker.Weapon == null)
                     return true;
 
-                // 与原版攻击同队列执行，保证服务端时序
                 room.Push(delegate
                 {
                     TryPoison(room, attacker, atk.TargetId);
                 });
-                return false; // 拦截原版 C_ATTACK 处理，不产生任何攻击/使用效果
+                return false;
             }
             catch (Exception ex)
             {
@@ -162,8 +124,6 @@ namespace DT_Tools.Features.PoisonAttack
 
             string section = Engine.SectionOf(typeof(PoisonAttackFeature));
 
-            // 毒杀仅限黑方阵营（含"白方转变为黑方"后，变黑时服务端 Color 立即置 Black）；
-            // 校验对齐原版 Player.UseWeapon，但放行柜中目标。
             if (!attacker.IsAlive)
             {
                 Log.Info(section, $"毒杀拒绝 attacker={attacker.PublicInfo.PlayerId} 已死亡");
@@ -202,8 +162,6 @@ namespace DT_Tools.Features.PoisonAttack
             }
             else
             {
-                // 未指定目标（客户端无准星目标）：自动判定黑方身边最近的
-                // 存活玩家（毒杀距离内最近；排除自己/分身/观战/死亡）。
                 float rangeSq = RangeValue * RangeValue;
                 float minSq = float.MaxValue;
                 target = null;
@@ -241,11 +199,6 @@ namespace DT_Tools.Features.PoisonAttack
                 }
             }
 
-            // 施加：毒杀与刀人共用击杀次数（原版规则：开局人数≥6 可杀 2 次、否则 1 次；
-            // 若启用 BlackAttack 等修改剩余次数的 mod，则随其配置）。
-            // 消耗逻辑对齐原版 ConsumeKillAndRearm，但冷却时长使用毒杀配置（默认 31 秒）：
-            //   - 还有剩余次数 → CanAttack=false + StartWeaponCooltime(31)，31 秒后可再次刀人/毒杀；
-            //   - 次数用尽     → 取消再装填、冷却归 0、CanAttack 保持 false（与原版刀人用尽一致）。
             int cd = CooldownValue;
             attacker.CanAttack = false;
             if (attacker.RemainKill > 0)
@@ -276,8 +229,6 @@ namespace DT_Tools.Features.PoisonAttack
                 }
             }
 
-            // 黑方弹屏确认：不播出刀动作，改以 SecretChat 弹屏显示已对目标下毒
-            // （复用原版 UI_SecretChatOverlay 原生渲染，未装插件的黑方玩家同样可见）。
             attacker.Session.Send(new S_CHAT_MESSAGE
             {
                 Type = EChatType.SecretChat,
@@ -289,11 +240,6 @@ namespace DT_Tools.Features.PoisonAttack
                 Seq = 0
             });
 
-            // 毒杀死亡回放：把下毒时刻登记为击杀录制时间并通知黑方保留该时刻录制
-            // （对齐原版刀人 OnDamaged 400ms 回调：attacker.RecordTime = SurviveTime +
-            //  S_RECORD_REPLAY）。这样毒发后尸体 meta 携带毒杀时刻，尸体被发现/裁判阶段
-            //  会向黑方请求 tape，全员回放"黑方使用毒杀"的画面；不设置则尸体无录制
-            //  时间（RecordTime 为旧值或 0），死亡回放不会出现。
             int recordTime = Server.Game.TimeManager.Instance.SurviveTime;
             Traverse.Create(attacker).Property("RecordTime").SetValue(recordTime);
             attacker.Session.Send(new S_RECORD_REPLAY
@@ -304,7 +250,6 @@ namespace DT_Tools.Features.PoisonAttack
             int delayMs = DelayValue * 1000;
             int warnMs = WarnValue * 1000;
 
-            // 毒发前 3 秒：被毒死者开始留脚印（持续 3 秒，脚印反向、独立收集后写入其尸体）
             if (delayMs > 3000)
             {
                 room.PushAfter(delayMs - 3000, delegate
@@ -330,12 +275,6 @@ namespace DT_Tools.Features.PoisonAttack
                 $"剩余次数={attacker.RemainKill} cd={cd}s 毒发={DelayValue}s 警告={WarnValue}s");
         }
 
-        /// <summary>
-        /// 毒发前 3 秒触发：给被毒死者附加 3 秒 Footprint 足迹 buff（死亡前 3 秒留脚印），
-        /// 并置为毒杀脚印模式 —— GameRoom.FillFootstep 对该玩家按反向角度独立收集脚印。
-        /// </summary>
-        /// <param name="room">所在房间。</param>
-        /// <param name="target">被毒的玩家。</param>
         private static void StartPoisonFootprint(Server.Game.GameRoom room, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))
@@ -351,14 +290,6 @@ namespace DT_Tools.Features.PoisonAttack
                 $"毒杀脚印开始 target={target.PublicInfo.PlayerId}（死亡前3秒，反向）");
         }
 
-        /// <summary>
-        /// 毒杀脚印模式下的服务端脚印记录：方向为真实移动方向相反（+180°，同原版随机偏移），
-        /// 独立收集到 _poisonFootprints（毒发后写入被毒死者的尸体，尸体被发现时随 S_REPLAY_FOOTSTEP 广播）。
-        /// </summary>
-        /// <param name="__instance">被拦截的房间实例。</param>
-        /// <param name="player">留下脚印的玩家。</param>
-        /// <param name="loopId">脚印循环的编号。</param>
-        /// <returns>为 false 时跳过原方法；为 true 时继续执行原方法。</returns>
         [HarmonyPatch(typeof(Server.Game.GameRoom), nameof(Server.Game.GameRoom.FillFootstep))]
         [HarmonyPrefix]
         private static bool FillFootstepPrefix(Server.Game.GameRoom __instance, GamePlayer player, int loopId)
@@ -372,8 +303,8 @@ namespace DT_Tools.Features.PoisonAttack
                 if (!player.IsFootstepLoop(loopId) || !player.BuffComponent.HasBuff(EBuffType.Footprint) || !player.IsAlive)
                     return false;
 
-                float angle = player.DirectionAngle + 180f; // 真实脚印的相反方向
-                angle += Util.GetRandomNumber(-5, 6);        // 同原版随机偏移
+                float angle = player.DirectionAngle + 180f;
+                angle += Util.GetRandomNumber(-5, 6);
                 if (angle < 0f)
                     angle += 360f;
                 else if (angle > 360f)
@@ -391,8 +322,8 @@ namespace DT_Tools.Features.PoisonAttack
                     Pos = player.PublicInfo.Pos.Clone(),
                     Angle = angle
                 });
-                __instance.PushAfter(300, __instance.FillFootstep, player, loopId); // 递归同原版
-                return false; // 拦截原版写入 FootstepCorpse，毒杀脚印独立收集
+                __instance.PushAfter(300, __instance.FillFootstep, player, loopId);
+                return false;
             }
             catch (Exception ex)
             {
@@ -401,11 +332,6 @@ namespace DT_Tools.Features.PoisonAttack
             }
         }
 
-        /// <summary>
-        /// 取毒杀脚印收集列表（不存在则创建）。
-        /// </summary>
-        /// <param name="playerId">被毒玩家的 PlayerId。</param>
-        /// <returns>该玩家的毒杀脚印列表；不存在时新建。</returns>
         private static List<FootstepInfo> GetPoisonFootprints(int playerId)
         {
             if (!_poisonFootprints.TryGetValue(playerId, out var steps))
@@ -416,11 +342,6 @@ namespace DT_Tools.Features.PoisonAttack
             return steps;
         }
 
-        /// <summary>
-        /// 取消武器再装填任务（原版 ConsumeKillAndRearm 用尽分支的同款清理）。
-        /// </summary>
-        /// <param name="attacker">下毒者。</param>
-        /// <param name="section">功能段名，用于日志。</param>
         private static void TryKillWeaponRearmJob(GamePlayer attacker, string section)
         {
             try
@@ -439,16 +360,6 @@ namespace DT_Tools.Features.PoisonAttack
             }
         }
 
-        /// <summary>
-        /// 毒发前警告：SecretChat 弹屏（原版 UI_SecretChatOverlay 原生渲染，全员客户端可见）。
-        /// </summary>
-        /// <remarks>
-        /// 文本为“您将于N秒后死亡”，N = 警告提前量配置（默认 5，随配置动态变化）。
-        /// 仅在 Survive 阶段弹——若游戏已结束（结束前不足毒发时长下毒），不弹警告、不死亡。
-        /// </remarks>
-        /// <param name="room">所在房间。</param>
-        /// <param name="attacker">下毒者。</param>
-        /// <param name="target">被毒的玩家。</param>
         private static void WarnDeath(Server.Game.GameRoom room, GamePlayer attacker, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))
@@ -473,24 +384,11 @@ namespace DT_Tools.Features.PoisonAttack
                 $"毒发警告 target={target.PublicInfo.PlayerId} 文本=您将于{WarnValue}秒后死亡");
         }
 
-        /// <summary>
-        /// 毒发：先处理柜中状态（强制出柜）再走原版刀人死亡链路；
-        /// 不触发 Deadly Trick（毒发仅 OnDead，不发 S_DEADLY_TRICK）。
-        /// </summary>
-        /// <remarks>
-        /// 若游戏已结束（Survive 阶段结束，含"结束前不足 30 秒下毒"的场景），毒发不生效，
-        /// 被毒杀者不会死亡。
-        /// 死亡后把死亡前 3 秒收集的反向脚印写入其尸体（尸体未被发现时原版不广播脚印）。
-        /// </remarks>
-        /// <param name="room">所在房间。</param>
-        /// <param name="attacker">下毒者。</param>
-        /// <param name="target">被毒的玩家。</param>
         private static void ExecutePoisonDeath(Server.Game.GameRoom room, GamePlayer attacker, GamePlayer target)
         {
             if (!Engine.EnabledOf(typeof(PoisonAttackFeature)))
                 return;
 
-            // 无论毒发是否生效，先清理毒杀脚印标记与收集（防止残留干扰后续对局）
             _poisonFootprintMode.Remove(target.PublicInfo.PlayerId);
             bool hasSteps = _poisonFootprints.Remove(target.PublicInfo.PlayerId, out var steps);
 
@@ -515,7 +413,6 @@ namespace DT_Tools.Features.PoisonAttack
 
             target.OnDead(attacker, EDeathType.Murder);
 
-            // 死亡后写入毒杀脚印到被毒死者自己的尸体（OnDead → ExitPlayer 已同步创建尸体）
             if (hasSteps && steps.Count > 0)
             {
                 var corpse = Server.Game.DeviceManager.Instance.GetCorpse(target.PublicInfo.PlayerId);

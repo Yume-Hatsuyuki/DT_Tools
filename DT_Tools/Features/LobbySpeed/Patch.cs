@@ -4,10 +4,6 @@ using Protocol;
 
 namespace DT_Tools.Features.LobbySpeed
 {
-    /// <summary>
-    /// FixedUpdateMove 前置改写 deltaSpeed（方法为 private，字符串定位：
-    /// 0.1.18c MyPlayer.cs)。仅 Lobby 生效，其余阶段原样放行。
-    /// </summary>
     [HarmonyPatch(typeof(MyPlayer), "FixedUpdateMove")]
     internal static class LobbySpeedPatch
     {

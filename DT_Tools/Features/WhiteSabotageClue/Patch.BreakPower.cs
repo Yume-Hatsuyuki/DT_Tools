@@ -7,13 +7,6 @@ using Server.Game;
 
 namespace DT_Tools.Features.WhiteSabotageClue
 {
-    /// <summary>
-    /// 白方拉电闸留痕：Fusebox.DisconnetCable 后缀（private，字符串定位：
-    /// 0.1.18c Server.Game/Fusebox.cs）。原版在此处把拉闸人固定记为黑幕
-    /// （11037，:127 的 EWhatState.Mastermind），白方拉闸同样被记成"黑幕所为"；
-    /// 本补丁在其后追加一条真实身份线索。后缀校验 StateList[0]==9999（成功拉闸
-    /// 后置位，:122）——MissionType 不符被原版提前 return 时不误记。
-    /// </summary>
     [HarmonyPatch]
     internal static class WhiteBreakPowerCluePatch
     {
@@ -27,7 +20,7 @@ namespace DT_Tools.Features.WhiteSabotageClue
             if (player?.Color != EPlayerColor.White)
                 return;
             if (__instance.DeviceInfo == null || __instance.DeviceInfo.StateList[0] != 9999)
-                return;    // 本次调用没有实际拉闸
+                return;
             SabotageClue.AddClue(__instance, player);
             Log.Info<WhiteSabotageClueFeature>(
                 $"白方拉电闸留痕：{player.Name}(pid={player.PublicInfo.PlayerId}) 设备={__instance.ID} 房间={__instance.RoomID}");

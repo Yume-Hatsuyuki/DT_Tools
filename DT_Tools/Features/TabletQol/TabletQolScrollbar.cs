@@ -4,12 +4,6 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.TabletQol
 {
-    /// <summary>
-    /// ① 滚动条：运行时给 ScrollRect 补上可拖拽的滚动条。
-    /// 游戏从不用 UnityEngine.UI.Scrollbar（0.1.18c 全文 0 处，已核对），没有现成 prefab，自己拼：轨道（背景 Image）+ 手柄（子 Image）+ Scrollbar，交给 ScrollRect 驱动。
-    /// 默认贴边（BarOffset=0）。BarTrackClickPages 打开时轨道可点（点空白翻一页）；关闭时轨道 raycastTarget=false，不抢底下按钮的点击，只留手柄可拖。
-    /// 轴以 ScrollRect 当前真实轴为准；两个轴都没开时按竖排处理（平板列表都是竖排，verticalNormalizedPosition / UI_SmoothScroll.ScrollToVertical，UI_SmoothScroll.cs:35），不跳过。都没开通常只是内容还短或还没刷新，跳过会永远挂不上（同一 ClueSrollRect 会议阶段有条、调查阶段没条）。
-    /// </summary>
     internal static class TabletQolScrollbar
     {
         private const string BarName = "DT_TabletScrollbar";
@@ -22,7 +16,7 @@ namespace DT_Tools.Features.TabletQol
             if (scroll == null)
                 return false;
             if (scroll.verticalScrollbar != null || scroll.horizontalScrollbar != null)
-                return false;                        // 已挂（被销毁时 Unity 的 null 语义会让这里重新挂）
+                return false;
 
             bool axisForced = !scroll.vertical && !scroll.horizontal;
             bool vertical = scroll.vertical || axisForced;
@@ -54,7 +48,6 @@ namespace DT_Tools.Features.TabletQol
 
             Image track = go.GetComponent<Image>();
             track.color = new Color(1f, 1f, 1f, TrackAlpha);
-            // 可点轨道 ⇒ 点空白翻一页（更省事）；不可点 ⇒ 不抢点击、不误触跳页
             track.raycastTarget = TabletQolFeature.BarTrackClickPages;
 
             GameObject handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
@@ -67,7 +60,7 @@ namespace DT_Tools.Features.TabletQol
             hrt.offsetMax = new Vector2(-1f, -1f);
             Image hi = handle.GetComponent<Image>();
             hi.color = new Color(1f, 1f, 1f, HandleAlpha);
-            hi.raycastTarget = true;                 // 手柄始终可拖
+            hi.raycastTarget = true;
 
             Scrollbar bar = go.GetComponent<Scrollbar>();
             bar.handleRect = hrt;

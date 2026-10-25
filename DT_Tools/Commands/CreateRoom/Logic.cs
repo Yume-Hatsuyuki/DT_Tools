@@ -7,24 +7,10 @@ using UnityEngine;
 
 namespace DT_Tools.Commands.CreateRoom
 {
-    /// <summary>
-    /// /create_room 业务编排：等大厅界面就绪 → 复刻原版 OnClickCreateButton 的
-    /// 建房前序（0.1.18c UI_LobbyScene.cs)：回跳段 → 语音预连 → School 资源域
-    /// → Steam 建房。
-    /// </summary>
-    /// <remarks>
-    /// mic/语言/公开-私密的缺省值读大厅 UI 私有字段（与原版同源），
-    /// 显式参数覆盖。回调在主线程（游戏主循环泵 Steam 回调）。
-    /// </remarks>
     internal static class CreateRoomLogic
     {
         private const float LobbyUiTimeoutSeconds = 15f;
 
-        /// <summary>
-        /// 启动建房流程（协程等大厅 UI，随后按原版次序异步推进）。
-        /// </summary>
-        /// <param name="roomName">房间名。</param>
-        /// <param name="privacy">房间的隐私设置。</param>
         public static void StartCreateFlow(string roomName, string privacy)
         {
             CoroutineHost.Start(CoCreate(roomName, privacy));
@@ -52,13 +38,12 @@ namespace DT_Tools.Commands.CreateRoom
                 yield break;
             }
 
-            // 原版次序：回跳段（退出房间后回大厅的落点）→ 语音预连 → 资源域 → 建房
             if (AccessTools.Field(typeof(UI_LobbyScene), "_section")
                     ?.GetValue(scene) is Define.ELobbySection section)
                 Managers.Network.ReturnLobbySection = section;
 
             var voiceTask = AccessTools.Method(typeof(UI_LobbyScene), "PrepareVoiceForRoomAsync")
-                ?.Invoke(scene, null) as System.Threading.Tasks.Task;   // 0.1.18c UI_LobbyScene.cs
+                ?.Invoke(scene, null) as System.Threading.Tasks.Task;
             if (voiceTask != null)
             {
                 while (!voiceTask.IsCompleted)
@@ -69,7 +54,7 @@ namespace DT_Tools.Commands.CreateRoom
                 Log.Warn("CreateRoom", "未找到 PrepareVoiceForRoomAsync，跳过语音预连。");
             }
 
-            var scopeTask = Managers.Resource.LoadScopeAsync("School");   // 0.1.18c ResourceManager.cs:220
+            var scopeTask = Managers.Resource.LoadScopeAsync("School");
             while (scopeTask != null && !scopeTask.IsCompleted)
                 yield return null;
             Managers.Data.LoadMapSet(EMapType.School);

@@ -2,13 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.MotionAfterimage
 {
-    /// <summary>
-    /// 运动残影：对齐莉莉安娜 SuperRazer（FlashVfx）的 ColorPlayerShadow 材质，
-    /// 按间隔持续刷出短命淡出剪影（站立也会刷，类似英雄联盟疾跑残影）。
-    /// </summary>
-    /// <remarks>
-    /// Survive / Detective 地图内均生效；Despawn 后保留黑色最后一帧，离开地图阶段清除。
-    /// </remarks>
     [PatchFeature(
         "运动残影：地图内（生存/调查）按间隔刷彩色淡出剪影；死亡后保留黑色最后一帧。",
         defaultEnabled: false,

@@ -7,25 +7,11 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
-    /// /api/config/* — 配置列表/更新/保存/重置/导入/导出 + 功能段日志。
-    /// </summary>
-    /// <remarks>
-    /// 数据源统一走 ConfigService（与 WebUI 同一协议）；API 层不认识任何具体功能。
-    /// </remarks>
     public static class ConfigApi
     {
         public static void HandleList(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, ConfigService.List(Engine.Config));
 
-        /// <summary>
-        /// 功能标签字典（分组、键、中文名、说明）。
-        /// </summary>
-        /// <remarks>
-        /// WebUI 据此渲染标签筛选。成员、键与中文名由后端给出；译文在 WebUI 的 i18n 总表，
-        /// 以 key / groupKey 查找，缺译时回退到 label / description / group。
-        /// </remarks>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleTags(HttpListenerContext ctx)
             => HttpServer.WriteJson(ctx.Response, FeatureTagCatalog.Entries.Select(e => new
             {
@@ -81,13 +67,11 @@ namespace DT_Tools.WebConsole.Api
             var body = ApiUtil.ParseBody(ctx);
             if (body == null)
             {
-                // 非法 JSON 不能静默当成空体——空 section/key 会触发全量重置
                 HttpServer.WriteJson(ctx.Response, new { ok = false, error = "invalid body" });
                 return;
             }
             string section = (string)body["section"] ?? "";
             string key = (string)body["key"] ?? "";
-            // 拒绝"有 key 无 section"：那会重置所有配置段中的同名键（含各段 Enabled）
             if (section == "" && key != "")
             {
                 HttpServer.WriteJson(ctx.Response, new { ok = false, error = "reset with key requires section" });
@@ -141,10 +125,6 @@ namespace DT_Tools.WebConsole.Api
             resp.OutputStream.Close();
         }
 
-        /// <summary>
-        /// /api/config/section/{段名}/log — 功能段日志（GET 读取；POST /log/clear 或 DELETE 清空）。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleSectionLog(HttpListenerContext ctx)
         {
             const string prefix = "/api/config/section/";
@@ -178,6 +158,5 @@ namespace DT_Tools.WebConsole.Api
             HttpServer.WriteJson(ctx.Response, new { ok = false, error = "unknown section endpoint" });
         }
 
-        // 请求体解析与值归一化统一走 WebConsole/ApiUtil（原本类内两份实现已收编）
     }
 }

@@ -4,13 +4,6 @@ using Protocol;
 
 namespace DT_Tools.Features.CanShowLie
 {
-    /// <summary>
-    /// BuildLieSection 前置：非黑幕没有收到过 S_CURRENT_MAP，LieRoomSet 为空；
-    /// 用缓存的 S_INIT_MAP 数据构造等价包喂给 InitBlackPropositionData（0.1.18c ClueManager.cs:35）。
-    /// </summary>
-    /// <remarks>
-    /// 私有方法，字符串定位：0.1.18c UI_GameTablet.cs。
-    /// </remarks>
     [HarmonyPatch(typeof(UI_GameTablet), "BuildLieSection")]
     internal static class CanShowLieBuildPatch
     {

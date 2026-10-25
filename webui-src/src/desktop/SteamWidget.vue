@@ -4,31 +4,24 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useSteamPlayers } from '../composables/useSteamPlayers.js';
 import IconX from '~icons/tabler/x';
 
-/**
- * Steam 在线人数小组件（插件式弹窗）：从顶栏托盘拆出——可拖动、可关闭，
- * 关闭后经底部 Dock 重新打开。红/绿霓虹光效替代原来的绿点：数据正常呼吸
- * 绿光，接口不可用转红光，一眼可辨。位置记忆在 localStorage（仅本浏览器），
- * 未拖动过时默认悬停右上角、与菜单栏留出间距。
- */
 const emit = defineEmits(['close']);
 
 const { count, ok } = useSteamPlayers();
 
 const STORE_KEY = 'dt_steam_widget_v1';
-// 与 Window.vue 的 TOPBAR_H / tokens.css --topbar-h 同步：弹窗不拖进顶栏之下
 const TOPBAR_H = 32;
 
 function load() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; }
 }
 
-const pos = ref(load().pos || null);   // {left, top}；null=默认右上角
+const pos = ref(load().pos || null);
 const rootEl = ref(null);
 
 function persist(closed) {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({ closed, pos: pos.value }));
-  } catch { /* 隐私模式忽略 */ }
+  } catch { }
 }
 
 onMounted(() => persist(false));
@@ -41,12 +34,10 @@ function close() {
 const posStyle = computed(() =>
   pos.value ? { left: pos.value.left + 'px', top: pos.value.top + 'px', right: 'auto' } : {});
 
-// ---- 标题栏拖动（视口内钳位） ----
-
 let drag = null;
 
 function onHeadDown(e) {
-  if (e.target.closest('button')) return;   // 关闭按钮不触发拖动
+  if (e.target.closest('button')) return;
   const r = rootEl.value.getBoundingClientRect();
   drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
   window.addEventListener('pointermove', onMove);
@@ -89,9 +80,8 @@ const countText = computed(() =>
 <style scoped>
 .steam-widget {
   position: fixed;
-  z-index: 4500;   /* 悬于窗口与粒子之上，低于顶栏/Dock */
+  z-index: 4500;
   width: 208px;
-  /* 默认悬停右上角，与菜单栏留出间距；拖动后由内联 left/top 接管（right:auto） */
   top: calc(var(--topbar-h) + 14px);
   right: 14px;
   border-radius: 14px;
@@ -102,7 +92,6 @@ const countText = computed(() =>
   user-select: none;
 }
 
-/* 红/绿霓虹（虚幻）光效：取代原托盘的绿点，状态一眼可辨 */
 .steam-widget.ok {
   border-color: rgba(71, 212, 185, 0.55);
   animation: neon-green 2.8s ease-in-out infinite;

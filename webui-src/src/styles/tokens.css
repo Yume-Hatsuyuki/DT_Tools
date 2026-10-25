@@ -1,41 +1,25 @@
-/*
-  设计令牌 —— 「深海数据流」主题：macOS 风格桌面壳 × Kali 终端配色。
-  壳层（顶栏/Dock/壁纸/窗口 chrome）取 NoriOS 深海青蓝（os.inori.ai 参考图的
-  深青底 + 亮青高光）；应用内部沿用 Kali 配色（0l1v3rr.github.io 的 kali-blue/
-  kali-red/kali-green，见 0l1v3rr 站），终端风格不受壳层改版影响。
-  历史变量名（accent-cyan 等）保留不变——日志颜色协议(color=cyan/white/red/orange)
-  与大量样式都挂在这些名字上，改名无收益。
-*/
 :root {
-  /* 桌面壳：默认壁纸为「深海数据流」预设（useWallpaper 'abyss-flow'），
-     此处是样式加载前的兜底色 */
   --desktop-bg-0: #0a1a24;
 
-  /* 壳层 chrome（顶栏 / Dock）：毛玻璃深青 */
   --topbar-h: 32px;
-  /* Dock（任务栏）总高 = 上下 padding 9+13 + 图标 52 + 边框 —— 平铺模式据此给它让位。
-     改 Dock.vue 的那几个数时必须同步这里。 */
   --dock-h: 76px;
   --topbar-bg: rgba(8, 15, 22, 0.72);
   --topbar-border: rgba(140, 220, 255, 0.14);
   --dock-bg: rgba(10, 20, 28, 0.52);
   --dock-border: rgba(150, 225, 255, 0.16);
 
-  /* 强调色（Kali 亮蓝为主调，应用内部沿用） */
   --accent-cyan: #277fff;
   --accent-cyan-dim: rgba(39, 127, 255, 0.5);
   --accent-magenta: #b18aff;
   --accent-green: #47d4b9;
   --accent-amber: #f5c542;
   --accent-red: #ff5252;
-  --kali-red: #ec0101;                 /* Kali 提示符用户段红（参考站 text-kali-red） */
-  --accent-blue-btn: #2471f3;          /* 实心按钮底色（kali-blue-bg） */
+  --kali-red: #ec0101;
+  --accent-blue-btn: #2471f3;
 
-  /* 壳层高光青（顶栏/Dock/背景光效的点亮色，参考图的水下青） */
   --shell-glow: #5fd9f6;
   --shell-glow-dim: rgba(95, 217, 246, 0.45);
 
-  /* 窗口 chrome：macOS 毛玻璃深青窗体（应用内容区仍是深蓝黑系） */
   --win-bg: rgba(13, 20, 30, 0.92);
   --win-border: rgba(150, 220, 255, 0.12);
   --win-border-active: rgba(95, 217, 246, 0.4);
@@ -44,7 +28,6 @@
   --menu-shadow: 0 16px 48px -10px rgba(2, 10, 18, 0.75), 0 0 0 1px rgba(150, 220, 255, 0.08);
   --win-radius: 12px;
 
-  /* 文字与内容区中性色：整体偏蓝的深色系（应用内部主用这套） */
   --text-0: #f2f4f8;
   --text-1: #b6bfce;
   --text-2: #7b869b;

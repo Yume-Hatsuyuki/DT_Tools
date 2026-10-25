@@ -8,32 +8,20 @@ using HarmonyLib;
 
 namespace DT_Tools.Commands.Modded
 {
-    /// <summary>
-    /// /modded 业务：收集各玩家的 modded 标记。房主读本机房间，客户端读房主广播的快照。
-    /// </summary>
-    /// <remarks>
-    /// 两条数据源的字段都是 0.1.21 才有的，编译目标的旧版本中可能不存在，
-    /// 所以类型与属性全部用反射访问。缺失时返回 null（=版本不支持），不抛异常。
-    /// </remarks>
     internal static class ModdedLogic
     {
-        /// <summary>服务端玩家的 IsModded（0.1.21c Server.Game/Player.cs:110）。</summary>
         private static readonly PropertyInfo IsModdedProp =
             AccessTools.Property(typeof(global::Server.Game.Player), "IsModded");
 
-        /// <summary>快照缓存入口（0.1.21c Server.Game/SnapshotMirror.cs:5）。</summary>
         private static readonly Type SnapshotMirrorType = AccessTools.TypeByName("Server.Game.SnapshotMirror");
 
-        /// <summary>快照解析入口（0.1.21c Server.Game/SnapshotCodec.cs:113 Parse）。</summary>
         private static readonly Type SnapshotCodecType = AccessTools.TypeByName("Server.Game.SnapshotCodec");
 
         private const string LogTag = "Modded";
 
         public enum CollectSource
         {
-            /// <summary>房主本机的房间数据。</summary>
             Host,
-            /// <summary>房主广播的最近一份房间快照。</summary>
             Snapshot,
         }
 
@@ -43,7 +31,6 @@ namespace DT_Tools.Commands.Modded
             public string Name;
             public bool IsHost;
             public bool IsSelf;
-            /// <summary>null=版本不支持（该版本没有 IsModded 字段）；true/false=真实标记。</summary>
             public bool? Modded;
         }
 
@@ -51,19 +38,12 @@ namespace DT_Tools.Commands.Modded
         {
             public CollectSource Source;
             public List<Entry> Players = new List<Entry>();
-            /// <summary>失败时的短错误码（小写英文）；成功为 null。</summary>
             public string ErrorCode;
-            /// <summary>失败时给人看的中文原因。</summary>
             public string ErrorMessage;
 
             public bool Ok => ErrorCode == null;
         }
 
-        /// <summary>
-        /// 房主走 GameRoom 本机数据；客户端走快照。快照每秒由房主广播一次，客户端只能读到它最近收到的那份。
-        /// </summary>
-        /// <param name="filterPid">只取该玩家 ID；0 表示全部。</param>
-        /// <returns>成功时 Ok 为 true，Players 为按 ID 升序的结果；失败时 ErrorCode 与 ErrorMessage 有值。</returns>
         public static CollectResult Collect(int filterPid)
         {
             if (HostGuard.IsHost)
@@ -120,12 +100,6 @@ namespace DT_Tools.Commands.Modded
             }
         }
 
-        /// <summary>
-        /// 从最近一份快照读取全员标记。快照里的 IsModded 与房主 Player.IsModded 来自同一份自报
-        /// （0.1.21c Server.Game/SnapshotCodec.cs:74 直接写入），两条路径的标记含义一致。
-        /// </summary>
-        /// <param name="filterPid">只取该玩家 ID；0 表示全部。</param>
-        /// <returns>读取成功返回玩家列表；快照缺失、版本不支持或解析失败时返回带错误码的结果。</returns>
         private static CollectResult FromSnapshot(int filterPid)
         {
             if (SnapshotMirrorType == null || SnapshotCodecType == null)
@@ -172,12 +146,6 @@ namespace DT_Tools.Commands.Modded
             }
         }
 
-        /// <summary>
-        /// 读取实例属性，用于兼容字段缺失的旧版本。
-        /// </summary>
-        /// <param name="target">要读取的对象，不能为 null。</param>
-        /// <param name="name">属性名。</param>
-        /// <returns>属性值；属性不存在时返回 null。</returns>
         private static object Read(object target, string name)
         {
             return AccessTools.Property(target.GetType(), name)?.GetValue(target);

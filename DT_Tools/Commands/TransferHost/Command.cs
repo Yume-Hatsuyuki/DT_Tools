@@ -9,15 +9,6 @@ using Steamworks;
 
 namespace DT_Tools.Commands.TransferHost
 {
-    /// <summary>
-    /// /transferhost #&lt;playerId> [owner]：将房主身份转让给指定玩家（大厅与局内均可，需房主）。
-    /// </summary>
-    /// <remarks>
-    /// 原版房主只在退出房间时自动迁移（GameRoom.HandleLeavePlayer 内 Host = Players.FirstOrDefault()，仅 Lobby 广播 S_SET_HOST）。本命令允许主动交出：服务端 GameRoom.Host 切换为目标，并向全员广播 S_SET_HOST（所有阶段）。
-    /// 转让后：目标获得房主权限（开局判定、踢人、再次转让），经服务端 Host 字段校验即刻生效；原房主留在房间继续游戏；客户端房主标记的局内同步由 Features/HostTransfer 补丁负责（需开启 [HostTransfer]）；原房主之后退出时按原版机制迁移给新房主，房间不解散。
-    /// 可选参数 owner（或 steam、大厅）：同时把 Steam 大厅 owner 转让给目标（依赖 [HostTransfer] 的防迁移拦截，不会触发全员误迁移）。
-    /// 按阶段向全员广播通知：#原房主 &lt;TransferText 配置> #新房主（仅房主权限 / 大厅 owner）；TransferText 默认“将房主转让给”。
-    /// </remarks>
     internal sealed class TransferHostCommand : ICommand
     {
         public string Name => "transferhost";
@@ -42,7 +33,6 @@ namespace DT_Tools.Commands.TransferHost
                 return CommandResult.Fail("invalid target");
             }
 
-            // 可选参数：owner（或 steam / 大厅）→ 同时转让 Steam 大厅 owner
             bool transferSteamOwner = ctx.Args.Length > 1 &&
                 (ctx.Args[1].Equals("owner", StringComparison.OrdinalIgnoreCase)
                 || ctx.Args[1].Equals("steam", StringComparison.OrdinalIgnoreCase)
@@ -84,8 +74,6 @@ namespace DT_Tools.Commands.TransferHost
                 return CommandResult.Fail("dummy target");
             }
 
-            // 客户端局内房主标记同步依赖 [HostTransfer] 功能（默认关闭），提示但不强拦：
-            // 服务端权限（开局/踢人/再转让）不依赖该功能开关。
             if (!Engine.EnabledOf(typeof(DT_Tools.Features.HostTransfer.HostTransferFeature)))
                 ctx.Warn("提示: 客户端 [HostTransfer] 功能未开启，局内房主标记不会同步（服务端权限转让已生效）。");
 
@@ -102,9 +90,6 @@ namespace DT_Tools.Commands.TransferHost
             }
             ctx.Reply($"房主已转让给 {target.Name}（#{target.PublicInfo.PlayerId}），已通知 {sent} 名玩家，阶段={room.State}。");
 
-            // 可选：同时转让 Steam 大厅 owner（原游戏房主权限转让不受影响）。
-            // 依赖客户端 [HostTransfer] 补丁的防迁移拦截（NetworkManager.OnHostChanged Prefix）：
-            // 否则普通客户端会把 owner 变化误判为"房主离开"触发全员误迁移。
             if (transferSteamOwner)
             {
                 ulong steamId = 0;
@@ -127,14 +112,8 @@ namespace DT_Tools.Commands.TransferHost
                 }
             }
 
-            // 全员转让通知：按阶段路由（大厅/裁判 → 聊天面板 NormalChat 全员；
-            // 生存 → 密聊浮层 SecretChat 存活真人；其余阶段客户端无显示链路）。
             SendTransferNotice(room, host, target, transferSteamOwner);
 
-            // 兜底：转让后给观战者补发当前区域包（S_AREA_PUBLIC）。
-            // 观战者（IsAlive=false）不因 Move 触发 ChangeArea，若其客户端
-            // CurrentArea 为空或区域状态异常，将黑屏；此处强制重发（幂等，
-            // 客户端同区域包自动跳过重复加载）。
             if (room.State != EGameState.Lobby)
             {
                 int republished = 0;
@@ -155,15 +134,6 @@ namespace DT_Tools.Commands.TransferHost
             return CommandResult.Success($"transferred to {targetId}");
         }
 
-        /// <summary>
-        /// 向全员广播自定义转让通知：
-        /// #原房主 &lt;TransferText 配置> #新房主 （仅房主权限/大厅owner）
-        /// PlayerId=0（系统发言，客户端不显示名字前缀，只显示文字）。
-        /// </summary>
-        /// <param name="room">当前房间。</param>
-        /// <param name="oldHost">原房主。</param>
-        /// <param name="newHost">新房主。</param>
-        /// <param name="transferSteamOwner">是否同时转让了 Steam 大厅 owner，通知会相应标注。</param>
         private static void SendTransferNotice(GameRoom room, Server.Game.Player oldHost, Server.Game.Player newHost, bool transferSteamOwner)
         {
             try
@@ -177,7 +147,6 @@ namespace DT_Tools.Commands.TransferHost
                 if (string.IsNullOrEmpty(text))
                     return;
 
-                // 阶段路由：与 /say 一致（NormalChat 仅 大厅/裁判 显示，SecretChat 仅 生存 显示）
                 EChatType channel;
                 global::System.Collections.Generic.IEnumerable<Server.Game.Player> targets;
                 switch (room.State)
@@ -206,7 +175,6 @@ namespace DT_Tools.Commands.TransferHost
                 };
                 if (channel == EChatType.SecretChat)
                 {
-                    // 生存浮层要求 Time >= SurvivalTime - 3，否则按"过期消息"跳过
                     packet.Time = TimeManager.Instance.SurviveTime;
                 }
 

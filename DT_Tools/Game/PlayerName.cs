@@ -6,30 +6,10 @@ using UnityEngine;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 玩家昵称行为助手（/nick、/myname 共用）：清洗、服务端改名、本机显示同步。
-    /// </summary>
-    /// <remarks>
-    /// 服务端无改名广播包（S_MODIFY_PLAYER 事件不含名字）——Server.Game.Player.Name
-    /// 为 private set 自动属性（0.1.18c Server.Game/Player.cs，仅构造时赋值），
-    /// 经属性 setter 反射写入；新名字对后续加入者（进房握手逐个下发 S_ADD_PLAYER，
-    /// 0.1.18c Server.Game/GameRoom.cs)生效，已在线客户端不做变更。
-    /// </remarks>
     public static class PlayerName
     {
-        /// <summary>
-        /// 服务端记录/命令链路统一上限（对齐 CustomRoomName 的 64 截断）。
-        /// </summary>
         public const int MaxLength = 64;
 
-        /// <summary>
-        /// 昵称清洗的唯一实现：trim → 去富文本 → trim → 截断
-        /// （0.1.18c Util.cs:172 NeutralizeRichText，与服务端进房清洗同一道）。
-        /// </summary>
-        /// <param name="raw">原始昵称。</param>
-        /// <param name="name">清洗后的昵称；失败时为 null。</param>
-        /// <param name="error">失败原因。</param>
-        /// <returns>清洗成功时为 true。</returns>
         public static bool TrySanitize(string raw, out string name, out string error)
         {
             name = null;
@@ -50,24 +30,12 @@ namespace DT_Tools.Game
             return true;
         }
 
-        /// <summary>
-        /// 服务端改名（反射写 private set；调用方负责已在线客户端不做变更的文案）。
-        /// </summary>
-        /// <param name="target">要改名的玩家。</param>
-        /// <param name="newName">新昵称。</param>
         public static void ApplyServerName(Server.Game.Player target, string newName)
         {
             AccessTools.Property(typeof(Server.Game.Player), nameof(Server.Game.Player.Name))
                 ?.SetValue(target, newName);
         }
 
-        /// <summary>
-        /// 房主本机客户端缓存同步（尽力而为）：客户端 Player.Name 为 protected set
-        /// （0.1.18c Player.cs:462），经 Traverse 写入后调 RefreshNameTag（public，:462）。
-        /// </summary>
-        /// <param name="playerId">玩家 PlayerId。</param>
-        /// <param name="newName">新昵称。</param>
-        /// <returns>本机缓存刷新成功时为 true；失败不影响服务端。</returns>
         public static bool TryRefreshLocalCache(int playerId, string newName)
         {
             try
@@ -88,12 +56,6 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>
-        /// 本地昵称（主页输入值）：写 PlayerManager.MyPlayerName（public set，:46）+
-        /// PlayerPrefs（键 = "LobbyNickname_"+LocalAccountKey，0.1.18c UI_LobbyScene.cs:530，
-        /// NetworkManager.cs:144）+ 大厅输入框同步（尽力而为，赋值触发原版校验链）。
-        /// </summary>
-        /// <param name="name">本地昵称。</param>
         public static void SetLocalName(string name)
         {
             Managers.Player.MyPlayerName = name;
@@ -113,14 +75,13 @@ namespace DT_Tools.Game
                 if (scene == null)
                     return;
                 var field = Traverse.Create(scene)
-                    .Method("GetInputField", new object[] { 1 })   // 昵称输入框：UI_Base.cs:98，使用处 UI_LobbyScene.cs:531
+                    .Method("GetInputField", new object[] { 1 })
                     .GetValue<TMPro.TMP_InputField>();
                 if (field != null)
                     field.text = name;
             }
             catch
             {
-                // 不在大厅场景时静默跳过
             }
         }
     }

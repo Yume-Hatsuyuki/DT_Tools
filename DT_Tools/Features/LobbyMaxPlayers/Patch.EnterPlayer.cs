@@ -11,21 +11,9 @@ using Steamworks;
 
 namespace DT_Tools.Features.LobbyMaxPlayers
 {
-    /// <summary>
-    /// HandleEnterPlayer 整替（0.1.18c GameRoom.cs:1037-1210）：
-    /// 唯一差异为进房上限 RoomMemberCountForMetadata() &gt;= 8 改为 &gt;= MaxMembers
-    /// （原版判断在 0.1.18c Server.Game/GameRoom.cs)，其余逐行对应原版。
-    /// 反射目标（0.1.18c GameRoom.cs，升级时全文搜索核对）：_pendingDisconnects:73 /
-    /// _bannedSteamIds:79 / _score_board_pkt:87 / _pendingBootstrapPlayers:89 /
-    /// HasSameAccountRemnant:981 / CheckDuplicationName:1025 / EnterSpectator:1212 /
-    /// SanitizeOwnedCharacters:1321 / AssignLobbyCharacter:1687 / EnterPlayer:2771。
-    /// </summary>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.HandleEnterPlayer))]
     internal static class LobbyMaxPlayersEnterPlayerPatch
     {
-        // 进房是高频路径，成员/方法进程内不变：static readonly 只查一次（typeinit 时完成），
-        // 兼具"失败标记"效果——AccessTools 未命中返回 null 且不再重查（原实现每次进房都现查）。
-        // 定位依据（0.1.18c GameRoom.cs）：字段 :73/:79/:87/:89；方法 :981/:1025/:1212/:1321/:1687/:2771。
         private static readonly FieldInfo FPendingDisconnects =
             AccessTools.Field(typeof(GameRoom), "_pendingDisconnects");
         private static readonly FieldInfo FBannedSteamIds =
@@ -52,10 +40,8 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             if (!Engine.Enabled<LobbyMaxPlayersFeature>())
                 return true;
 
-            // 已绑定非 Dummy 的重复 C_ENTER_GAME 忽略（原版 0.1.18c GameRoom.cs:1037）
             if (session.Player != null && !session.Player.IsDummy)
             {
-                // 原版英文文案："Duplicate enter ignored"
                 Log.Info<LobbyMaxPlayersFeature>(
                     $"忽略重复进房 pid={session.Player.PublicInfo.PlayerId} name={pkt.PlayerName}");
                 return false;
@@ -74,7 +60,6 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             pkt.PlayerName = Util.NeutralizeRichText(pkt.PlayerName);
             if (pendingDisconnects.Remove(session.SteamId))
             {
-                // 原版英文文案："Reject enter: steamId already left lobby"
                 Log.Info<LobbyMaxPlayersFeature>($"拒绝进房：steamId 已离开大厅（{session.SteamId}）");
                 s_ENTER_GAME.Success = false;
                 s_ENTER_GAME.Name = "ErrorRoomFull";
@@ -101,7 +86,6 @@ namespace DT_Tools.Features.LobbyMaxPlayers
                 s_ENTER_GAME.Success = false;
                 s_ENTER_GAME.Name = "ErrorDuplicateAccount";
             }
-            // RoomMemberCountForMetadata 为公开方法：0.1.18c GameRoom.cs:2795（上限判断原版在 :1078）
             else if ((!reclaimDummy && __instance.RoomMemberCountForMetadata() >= LobbyMaxPlayersFeature.MaxMembers)
                      || !ObjectUtils.HasFreeSeat())
             {
@@ -125,7 +109,6 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             {
                 s_ENTER_GAME.Success = false;
                 s_ENTER_GAME.Name = "ErrorBuildMismatch";
-                // 原版英文文案："[Host] Build mismatch on join"
                 Log.Info<LobbyMaxPlayersFeature>(
                     "进房版本不匹配：guest='" + guestBuild + "' vs host='" + hostBuild + "'");
             }
@@ -139,7 +122,6 @@ namespace DT_Tools.Features.LobbyMaxPlayers
                 spectating = true;
             }
 
-            // 原版英文文案："Enter decision"
             Log.Info<LobbyMaxPlayersFeature>(
                 $"进房判定 name={pkt.PlayerName} success={s_ENTER_GAME.Success} reason={s_ENTER_GAME.Name} " +
                 $"players={__instance.Players.Count} members={__instance.RoomMemberCountForMetadata()} " +
@@ -194,7 +176,6 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             {
                 pendingBootstrap.Add(player.PublicInfo.PlayerId);
             }
-            // 原版英文文案："[Tracking][Lifecycle] Host enter"
             Log.Info<LobbyMaxPlayersFeature>(
                 $"生命周期：房主机进房 pid={player.PublicInfo.PlayerId} name={player.Name} " +
                 $"state={__instance.State} playersCount={__instance.Players.Count}");
@@ -258,7 +239,6 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             return false;
         }
 
-        // HasSameAccountRemnant 为私有方法（out 参数需借数组回读）：0.1.18c GameRoom.cs:981
         private static bool InvokeHasSameAccountRemnant(
             GameRoom room, HostPeerSession session, string accountId, out bool allOwnDummies)
         {
@@ -268,31 +248,26 @@ namespace DT_Tools.Features.LobbyMaxPlayers
             return result;
         }
 
-        // CheckDuplicationName 为私有方法：0.1.18c GameRoom.cs:1025
         private static bool InvokeCheckDuplicationName(GameRoom room, string name, HostPeerSession session, string accountId)
         {
             return (bool)MiCheckDuplicationName.Invoke(room, new object[] { name, session, accountId });
         }
 
-        // SanitizeOwnedCharacters 为私有静态方法：0.1.18c GameRoom.cs:1321
         private static List<int> InvokeSanitizeOwnedCharacters(IEnumerable<int> ids)
         {
             return (List<int>)MiSanitizeOwnedCharacters.Invoke(null, new object[] { ids });
         }
 
-        // AssignLobbyCharacter 为私有方法：0.1.18c GameRoom.cs:1687
         private static int InvokeAssignLobbyCharacter(GameRoom room, Server.Game.Player player)
         {
             return (int)MiAssignLobbyCharacter.Invoke(room, new object[] { player });
         }
 
-        // EnterPlayer 为私有方法：0.1.18c GameRoom.cs:2771
         private static void InvokeEnterPlayer(GameRoom room, Server.Game.Player player)
         {
             MiEnterPlayer.Invoke(room, new object[] { player });
         }
 
-        // EnterSpectator 为私有方法：0.1.18c GameRoom.cs:1212
         private static void InvokeEnterSpectator(GameRoom room, Server.Game.Player player)
         {
             MiEnterSpectator.Invoke(room, new object[] { player });

@@ -16,28 +16,21 @@ namespace DT_Tools
     {
         private void Awake()
         {
-            // 用户数据统一在 BepInEx/config/DT_Tools/（见 DtPaths）。基类 Config 固定在 config 根目录，故自建。
-            // 热改只动内存；落盘仅通过显式 Save / 配置导入。
             DtPaths.EnsureRoot();
             var config = new ConfigFile(DtPaths.Cfg, saveOnInit: false) { SaveOnConfigSet = false };
 
-            // 主线程泵 + 协程宿主（常驻）：HTTP/文件监听线程投递的生命周期钩子
-            // （WireLifecycle）在此安全触碰 Unity API
             CoroutineHost.EnsureCreated();
 
             var result = Engine.Load(new Harmony(MyPluginInfo.PLUGIN_GUID), config, Logger);
             CommandRegistry.Load();
 
-            // 关闭自动保存后，首次运行需主动落盘生成 .cfg
             if (!File.Exists(DtPaths.Cfg))
                 config.Save();
 
-            // 自动化主线程 Tick（常驻）
             var go = new GameObject("DT_Tools");
             Object.DontDestroyOnLoad(go);
             go.AddComponent<AutomationRunner>();
 
-            // WebUI 控制台（按配置启停）
             if (DT_Tools.WebConsole.WebConsoleOptions.Enabled)
             {
                 var wcGo = new GameObject("DT_WebConsole");
@@ -49,7 +42,6 @@ namespace DT_Tools
                 Log.Info("Plugin", "WebConsole 已在配置中禁用，跳过启动。");
             }
 
-            // MCP 桥接独立监听（按配置启停；与 WebConsole 互不依赖）
             if (DT_Tools.WebConsole.Mcp.McpOptions.Enabled)
             {
                 var mcpGo = new GameObject("DT_Mcp");
@@ -61,7 +53,6 @@ namespace DT_Tools
                 Log.Info("Plugin", "MCP 桥接已在配置中禁用，跳过启动（/mcp 仍可经 WebConsole 端口兜底接入）。");
             }
 
-            // 装配摘要走 Log 门面：进全局环形缓冲，WebUI 日志应用可见启动结果
             if (result.FailedCount > 0)
             {
                 Log.Warn("Plugin",

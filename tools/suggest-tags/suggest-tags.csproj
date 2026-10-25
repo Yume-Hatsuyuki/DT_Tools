@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- 标签建议工具（开发期工具，不进游戏插件）。TFM 跟随仓库 global.json 的 SDK 7 → net7.0。 -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>

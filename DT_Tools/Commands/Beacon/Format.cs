@@ -7,9 +7,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.Beacon
 {
-    /// <summary>
-    /// /beacon 输出格式化：人类回复文本 + JSON 结果 DTO（匿名对象，键名沿用旧 JSON）。
-    /// </summary>
     internal static class BeaconFormat
     {
         public static string HelpAndSpawns(MapData mapData, MyPlayer my)
@@ -19,13 +16,11 @@ namespace DT_Tools.Commands.Beacon
             sb.AppendLine("瞬移到指定坐标。直接发包 C_MOVE，服务端无距离校验。");
             sb.AppendLine();
 
-            // 当前坐标
             sb.AppendLine("【当前位置】");
             var curRoom = RoomLabel.FromPos(my.PublicInfo.Pos);
             sb.AppendLine($"  ({my.PublicInfo.Pos.X:F0}, {my.PublicInfo.Pos.Y:F0})  状态={my.State}  区域=[{curRoom.localized}]");
             sb.AppendLine();
 
-            // 在线玩家（#id 即 /beacon player 的目标参数）
             sb.AppendLine("【在线玩家 Players】（用 /beacon player #id 瞬移到其身边）");
             int myId = my.PublicInfo.PlayerId;
             AppendPlayerLine(sb, myId, my.Name, my.PublicInfo.Pos, my.State, self: true);
@@ -36,7 +31,6 @@ namespace DT_Tools.Commands.Beacon
             }
             sb.AppendLine();
 
-            // 出生点
             sb.AppendLine("【默认出生点 StartPosList】（用 /beacon spawn #i 瞬移）");
             var list = mapData.StartPosList;
             if (list == null || list.Count == 0)
@@ -53,20 +47,17 @@ namespace DT_Tools.Commands.Beacon
             }
             sb.AppendLine();
 
-            // 大厅 / 兜底点
             sb.AppendLine("【其它坐标】");
             sb.AppendLine($"  lobby  (大厅点)  ({FormatPos(mapData.LobbyPos)})  →  {RoomLabel.FromPos(mapData.LobbyPos).localized}");
             sb.AppendLine($"  error  (兜底点)  ({FormatPos(mapData.ErrorPos)})  →  {RoomLabel.FromPos(mapData.ErrorPos).localized}");
             sb.AppendLine();
 
-            // 区域说明
             sb.AppendLine("【区域出生点】");
             sb.AppendLine("  区域（RoomData）无固定出生坐标：仅含 DataId/Type/AdjacentArea/PrefabName，");
             sb.AppendLine("  不含 Pos 字段；出生点统一存于 MapData.StartPosList（地图级，非区域级）。");
             sb.AppendLine("  房间名按 224 网格反查 MapArray → ERoomType → TextDic 本地化名得到。");
             sb.AppendLine();
 
-            // 用法
             sb.AppendLine("【用法】");
             sb.AppendLine("  /beacon              列出出生点 / 在线玩家坐标 + 帮助");
             sb.AppendLine("  /beacon <x> <y>      瞬移到指定坐标");
@@ -83,12 +74,6 @@ namespace DT_Tools.Commands.Beacon
             return sb.ToString();
         }
 
-        /// <summary>
-        /// 无参列表的 JSON（键名沿用旧实现）：spawns=数量，list=出生点，players=在线玩家。
-        /// </summary>
-        /// <param name="mapData">当前地图数据，用于读取出生点。</param>
-        /// <param name="my">本机玩家。</param>
-        /// <returns>列表 JSON：spawns 为出生点数量，list 为出生点，players 为在线玩家。</returns>
         public static object ListResult(MapData mapData, MyPlayer my)
         {
             var spawns = new List<object>();
@@ -116,13 +101,6 @@ namespace DT_Tools.Commands.Beacon
             return new { spawns = spawns.Count, list = spawns, players };
         }
 
-        /// <summary>
-        /// 瞬移成功的 JSON（键名沿用旧实现；targetId 仅 player 目标时回带）。
-        /// </summary>
-        /// <param name="pos">瞬移后的坐标。</param>
-        /// <param name="roomRaw">所在房间的原始枚举名。</param>
-        /// <param name="targetPlayerId">瞬移目标玩家的 ID；非玩家目标时不写入结果。</param>
-        /// <returns>瞬移成功的 JSON 结果。</returns>
         public static object TeleportResult(Protocol.PosInfo pos, string roomRaw, int targetPlayerId)
         {
             if (targetPlayerId > 0)

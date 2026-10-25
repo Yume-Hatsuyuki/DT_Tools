@@ -8,15 +8,6 @@ using Google.Protobuf.Reflection;
 
 namespace DT_Tools.Commands.PacketCall
 {
-    /// <summary>
-    /// /packets [C|S|包名|子串] — 运行期协议自省：反射枚举 C_*/S_* 包，经 protobuf
-    /// Descriptor 输出字段（名/JSON名/类型/序号/枚举取值）。
-    /// </summary>
-    /// <remarks>
-    /// 供手工构造 JSON 与
-    /// .github/skills/MCP/MCP.md 协议目录交叉核对（防游戏版本漂移）；未收录的包按同目录
-    /// SKILL.md 维护协议补录后再发。
-    /// </remarks>
     internal sealed class PacketsCommand : ICommand
     {
         public string Name => "packets";
@@ -47,7 +38,6 @@ namespace DT_Tools.Commands.PacketCall
 
             string first = args[0];
 
-            // C|S → 列表模式（可选第二个参数作子串过滤）
             if (first.Equals("C", StringComparison.OrdinalIgnoreCase)
                 || first.Equals("S", StringComparison.OrdinalIgnoreCase))
             {
@@ -61,7 +51,6 @@ namespace DT_Tools.Commands.PacketCall
                 return CommandResult.Success(new { kind = server ? "S" : "C", count = names.Count, names });
             }
 
-            // 精确包名 → 完整字段表
             bool serverPacket = first.StartsWith("S_", StringComparison.OrdinalIgnoreCase);
             if (PacketCallLogic.TryResolveType(serverPacket, first, out Type type, out _)
                 && type.Name.Equals(first, StringComparison.OrdinalIgnoreCase))
@@ -78,7 +67,6 @@ namespace DT_Tools.Commands.PacketCall
                 });
             }
 
-            // 其余参数 → 子串过滤两侧包名
             var hitC = Filter(PacketCallLogic.GetMap(false).Keys, first).OrderBy(n => n, StringComparer.Ordinal).ToList();
             var hitS = Filter(PacketCallLogic.GetMap(true).Keys, first).OrderBy(n => n, StringComparer.Ordinal).ToList();
             ctx.Reply($"C_* 命中 {hitC.Count} 个、S_* 命中 {hitS.Count} 个（子串 \"{first}\"）");
@@ -92,12 +80,6 @@ namespace DT_Tools.Commands.PacketCall
                 ? keys.ToList()
                 : keys.Where(n => n.IndexOf(substring, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
 
-        /// <summary>
-        /// protobuf Descriptor → 字段表。
-        /// </summary>
-        /// <remarks>
-        /// 枚举展开取值（AI 构造 JSON 时直接可抄）。
-        /// </remarks>
         private static (string Name, List<string> Lines, List<object> Fields) Describe(Type type, bool serverPacket)
         {
             var message = (IMessage)Activator.CreateInstance(type);

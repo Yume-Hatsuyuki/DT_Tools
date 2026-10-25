@@ -9,40 +9,18 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Mcp
 {
-    /// <summary>
-    /// MCP 桥接服务器：寄生于 WebConsole 的 HttpListener（同端口、同鉴权），新增 /mcp 路由。
-    /// </summary>
-    /// <remarks>
-    /// 传输 = MCP Streamable HTTP（无状态）：POST /mcp 收 JSON-RPC，application/json 回包；
-    /// 通知回 202 空包；GET/DELETE → 405（无服务端主动推送，不开 SSE 通道）。
-    /// 协议基准 2025-06-18，initialize 兼容协商 2024-11-05 / 2025-03-26。
-    /// 线程模型：本类只做协议解析（HTTP 线程可安全执行）；工具实现触 Unity API 的
-    /// 必须自走 WebConsole.RunOnMain（见 AGENTS.md §13）。
-    /// </remarks>
     internal static class McpServer
     {
         private const string LatestProtocol = "2025-06-18";
         private static readonly string[] SupportedProtocols = { "2024-11-05", "2025-03-26", LatestProtocol };
 
-        // 挂件状态面（McpStatusApi 同程序集读）：累计调用次数与最近调用的工具名
         internal static long _callCount;
         internal static string _lastCall = "（无）";
 
-        // 挂件调用日志环形缓冲（新→旧展示）：HTTP 线程池并发触达，锁内读写；
-        // 只在内存，不做持久化，容量取"滚动能看完全部近期动作"的最小够用量
         private const int CallLogCapacity = 30;
         private static readonly object _callLogLock = new object();
         private static readonly List<object> _callLog = new List<object>();
 
-        /// <summary>
-        /// 追加一条调用记录（供 /api/mcp/status 与挂件滚动日志）。
-        /// </summary>
-        /// <param name="time">调用时间文字。</param>
-        /// <param name="name">工具名。</param>
-        /// <param name="args">参数摘要。</param>
-        /// <param name="ok">调用是否成功。</param>
-        /// <param name="error">失败时的错误信息。</param>
-        /// <param name="ms">耗时，单位毫秒。</param>
         private static void PushCallLog(string time, string name, string args, bool ok, string error, long ms)
         {
             lock (_callLogLock)
@@ -53,13 +31,6 @@ namespace DT_Tools.WebConsole.Mcp
             }
         }
 
-        /// <summary>
-        /// 调用日志快照（新→旧）。
-        /// </summary>
-        /// <remarks>
-        /// 元素为匿名对象，由 Newtonsoft 序列化。
-        /// </remarks>
-        /// <returns>调用记录快照，按时间从新到旧排列。</returns>
         internal static List<object> SnapshotCallLog()
         {
             lock (_callLogLock)
@@ -68,14 +39,6 @@ namespace DT_Tools.WebConsole.Mcp
 
         private static bool _announced;
 
-        /// <summary>
-        /// 注册到一条路由面（可多次调用、不同 Router 实例）：MCP 独立监听与 WebConsole 路由
-        /// 各挂一份，共用同一套静态处理器——MCP 客户端走哪个门都等价。
-        /// </summary>
-        /// <remarks>
-        /// 就绪日志只打一次。
-        /// </remarks>
-        /// <param name="router">要注册路由的 Router 实例。</param>
         public static void RegisterRoutes(Router router)
         {
             McpToolLoader.Load();
@@ -117,7 +80,6 @@ namespace DT_Tools.WebConsole.Mcp
 
             if (root is JArray batch)
             {
-                // batch：逐条处理，通知不产生回包；全部为通知时回 202 空包
                 var responses = new JArray(batch.Select(item => ProcessMessage(item as JObject)).Where(r => r != null));
                 if (responses.Count == 0)
                 {
@@ -140,14 +102,6 @@ namespace DT_Tools.WebConsole.Mcp
         private static void WriteEmpty(HttpListenerResponse resp)
             => HttpServer.WriteRaw(resp, 202, "application/json", "");
 
-        /// <summary>
-        /// 处理一条 JSON-RPC 消息。
-        /// </summary>
-        /// <remarks>
-        /// 通知（无 id）处理后返回 null（不回包）。
-        /// </remarks>
-        /// <param name="msg">一条 JSON-RPC 消息。</param>
-        /// <returns>响应消息；通知（无 id）时为 null，不回包。</returns>
         private static JObject ProcessMessage(JObject msg)
         {
             if (msg == null || msg["method"] == null)
@@ -173,7 +127,6 @@ namespace DT_Tools.WebConsole.Mcp
                     case "tools/call":
                         return isNotification ? null : HandleToolCall(id, parameters);
                     default:
-                        // 未知通知按 JSON-RPC 约定静默忽略；未知请求回 -32601
                         return isNotification ? null : McpRpc.Error(id, McpRpc.MethodNotFound, $"unknown method: {method}");
                 }
             }
@@ -186,7 +139,6 @@ namespace DT_Tools.WebConsole.Mcp
 
         private static JObject BuildInitialize(JObject parameters)
         {
-            // 版本协商：客户端请求的版本在支持列表内则回显，否则回最新（客户端可拒绝）
             string requested = parameters?["protocolVersion"]?.ToString();
             string agreed = requested != null && SupportedProtocols.Contains(requested) ? requested : LatestProtocol;
             return new JObject
@@ -269,11 +221,6 @@ namespace DT_Tools.WebConsole.Mcp
             });
         }
 
-        /// <summary>
-        /// 参数摘要（key=value，超长截断）：进全局日志与挂件最近调用，不落全量 JSON。
-        /// </summary>
-        /// <param name="args">工具调用参数。</param>
-        /// <returns>参数摘要文字，超长部分截断。</returns>
         private static string SummarizeArgs(JObject args)
         {
             if (args == null || !args.HasValues)

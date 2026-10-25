@@ -4,14 +4,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Kick
 {
-    /// <summary>
-    /// /kick #&lt;playerId&gt; — 将指定玩家踢出当前房间（仅 Lobby、需房主）。
-    /// </summary>
-    /// <remarks>
-    /// 直接调用 GameRoom.KickPlayer（0.1.18c Server.Game/GameRoom.cs:1544），
-    /// 与游戏内房主踢人按钮走同一套逻辑：校验 Lobby 与 Host → 目标 SteamId 进黑名单
-    /// → 向目标发 S_KICKED 并断开连接。
-    /// </remarks>
     internal sealed class KickCommand : ICommand
     {
         public string Name => "kick";
@@ -54,7 +46,6 @@ namespace DT_Tools.Commands.Kick
             }
 
             string targetName = KickFormat.DisplayName(target, targetId);
-            // 与游戏内踢人按钮相同路径（room.Host 已在 TryResolveTarget 校验非空）
             room.KickPlayer(room.Host, targetId);
             ctx.Reply($"已踢出玩家 {targetName}（#{targetId}）。");
             return CommandResult.Success(KickFormat.Result(target, targetId));

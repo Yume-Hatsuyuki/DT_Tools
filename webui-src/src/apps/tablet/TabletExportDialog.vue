@@ -2,12 +2,9 @@
 import { ref, computed } from 'vue';
 import { chatSummary, clueId, clueSummary, groupByRound } from './tabletFormat.js';
 
-/**
- * 导出前的选择框：逐条打勾（默认全选），支持全选 / 全不选。确认后只返回选中的条目，保持原顺序。
- */
 const props = defineProps({
-  kind: { type: String, required: true },   // 'chat' | 'clue'
-  format: { type: String, required: true }, // 'text' | 'image'
+  kind: { type: String, required: true },
+  format: { type: String, required: true },
   items: { type: Array, default: () => [] },
   numbering: { type: Map, default: () => new Map() },
 });
@@ -17,25 +14,16 @@ function keyOf(item) {
   return props.kind === 'chat' ? item.seq : clueId(item);
 }
 
-/**
- * 选中状态只记录被勾选的 key；计数与全选框一律按当前可见的条目计算。
- * 聊天栏满员时最旧的条目会被挤掉，若直接用 Set 的大小计数，会把已不存在的 key 算进去。
- */
 const selected = ref(new Set(props.items.map(keyOf)));
 const count = computed(() => props.items.reduce((n, i) => n + (selected.value.has(keyOf(i)) ? 1 : 0), 0));
 const allChecked = computed(() => props.items.length > 0 && count.value === props.items.length);
 const groups = computed(() => groupByRound(props.items, props.numbering));
 
-/** 某局的勾选状态：全选 / 半选（部分勾选）/ 已选条数。 */
 function roundState(g) {
   const n = g.items.filter((i) => selected.value.has(keyOf(i))).length;
   return { all: n === g.items.length, some: n > 0 && n < g.items.length, n };
 }
 
-/**
- * 点击分局标题：该局已全选则整局取消；否则（未选或半选）整局选中。
- * 只作用于本局的条目，不影响其他局。
- */
 function toggleRound(g) {
   const all = roundState(g).all;
   const next = new Set(selected.value);

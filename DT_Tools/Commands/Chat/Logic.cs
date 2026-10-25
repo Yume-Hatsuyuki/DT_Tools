@@ -6,24 +6,8 @@ using UnityEngine;
 
 namespace DT_Tools.Commands.Chat
 {
-    /// <summary>
-    /// /chat 业务：打字机选取 + 占机/发言/释放发包序列。
-    /// </summary>
-    /// <remarks>
-    /// 包路径（已在 0.1.18c 源码中核对）：
-    /// C_INTERACT_CHATDEVICE → DeviceManager.Interact → ChatDevice.Enter
-    /// C_CHAT_MESSAGE(DeviceChat) → RelayDeviceChat（要求已占机）
-    /// C_HANDLE_CHATDEVICE → DeviceManager.HandleEvent → ChatDevice.Exit
-    /// </remarks>
     internal static class ChatLogic
     {
-        /// <summary>
-        /// 解析目标机台。
-        /// </summary>
-        /// <remarks>
-        /// 指定 ID 时校验存在且为本机 ChatDevice；
-        /// 随机时优先空闲（DeviceState==0），否则本机已占的，再否则任意一台。
-        /// </remarks>
         public static bool TryResolveDevice(ChatArgs args, int myPlayerId,
             out DeviceBase device, out string error)
         {
@@ -47,7 +31,6 @@ namespace DT_Tools.Commands.Chat
                     return false;
                 }
 
-                // 被他人占用时服务端 Interact 静默失败（ChatDevice.Interact 仅 _user==null 或自己可进）
                 int state = device.DeviceState;
                 if (state != 0 && state != myPlayerId)
                 {
@@ -57,7 +40,6 @@ namespace DT_Tools.Commands.Chat
                 return true;
             }
 
-            // 随机：空闲 → 本机已占 → 任意
             var free = all.Where(d => d.DeviceState == 0).ToList();
             if (free.Count > 0)
             {
@@ -72,21 +54,10 @@ namespace DT_Tools.Commands.Chat
                 return true;
             }
 
-            // 全部被他人占用——仍挑一台尝试（服务端会拒），给明确提示
             error = "当前全部打字机均被他人占用，请稍后再试或指定空闲 #id。";
             return false;
         }
 
-        /// <summary>
-        /// 发送序列：占机 → DeviceChat 消息 → 释放。
-        /// </summary>
-        /// <remarks>
-        /// 三包同帧发出，服务端 room.Push FIFO，Interact 先于 Chat 执行，占机状态可被 RelayDeviceChat 看到。
-        /// </remarks>
-        /// <param name="deviceId">打字机设备 ID。</param>
-        /// <param name="text">要发送的文字。</param>
-        /// <param name="error">失败时的中文原因说明。</param>
-        /// <returns>发送序列已发出返回 true；失败时返回 false，原因写入 error。</returns>
         public static bool TrySend(int deviceId, string text, out string error)
         {
             error = null;
@@ -105,14 +76,12 @@ namespace DT_Tools.Commands.Chat
 
             try
             {
-                // 1. 占机（IsSecret=false → 普通打字机，非密聊）
                 net.Send(new C_INTERACT_CHATDEVICE
                 {
                     DeviceId = deviceId,
                     IsSecret = false,
                 });
 
-                // 2. 发言（与 VoiceManager.SendDeviceChatMessage 同构）
                 net.Send(new C_CHAT_MESSAGE
                 {
                     Type = EChatType.DeviceChat,
@@ -120,7 +89,6 @@ namespace DT_Tools.Commands.Chat
                     DeviceId = deviceId,
                 });
 
-                // 3. 释放占机，避免长时间霸占
                 net.Send(new C_HANDLE_CHATDEVICE
                 {
                     DeviceId = deviceId,

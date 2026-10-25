@@ -4,26 +4,10 @@ using System.Linq;
 
 namespace DT_Tools.Core.Attributes
 {
-    /// <summary>
-    /// 功能标签字典：分组、中文名、说明。
-    /// </summary>
-    /// <remarks>
-    /// 枚举值只在 FeatureTag 定义，这里只做展示与校验。
-    /// 新增标签时两处同步：FeatureTag 追加一位，这里追加一条。
-    /// </remarks>
     public static class FeatureTagCatalog
     {
-        /// <summary>
-        /// 单个单元允许的最多标签数。
-        /// </summary>
         public const int MaxPerUnit = 3;
 
-        /// <summary>
-        /// 分组中文名 → 稳定的分组键。WebUI 按键取译文，中文名只在缺译时回退。
-        /// </summary>
-        /// <remarks>
-        /// 新增分组时在此追加一条。未登记的分组名原样作为键，不会崩溃，但 WebUI 找不到对应译文。
-        /// </remarks>
         private static readonly Dictionary<string, string> GroupKeys = new Dictionary<string, string>
         {
             { "玩家", "player" },
@@ -41,12 +25,6 @@ namespace DT_Tools.Core.Attributes
             public string Label;
             public string Description;
 
-            /// <summary>
-            /// 分组的稳定键（如 player、ui），由 Group 经 GroupKeys 映射得到。
-            /// </summary>
-            /// <remarks>
-            /// 映射缺失时回退为 Group 本身。
-            /// </remarks>
             public string GroupKey => GroupKeys.TryGetValue(Group, out var k) ? k : Group;
         }
 
@@ -93,19 +71,8 @@ namespace DT_Tools.Core.Attributes
                 new Entry { Tag = FeatureTag.Peripheral, Key = "Peripheral", Group = "外设", Label = "外设与输入", Description = "鼠标、键盘、手柄、宏、灵敏度、按键映射" },
         };
 
-        /// <summary>
-        /// 所有已定义标签的并集。
-        /// </summary>
         public static readonly ulong AllBits = Entries.Aggregate(0UL, (acc, e) => acc | (ulong)e.Tag);
 
-        /// <summary>
-        /// 校验单元的标签：至少 1 个、最多 MaxPerUnit 个、只含已定义的标签。
-        /// </summary>
-        /// <remarks>
-        /// 不合格直接抛出——与命名空间重复一样属于声明错误，禁止兜底。
-        /// </remarks>
-        /// <param name="tags">单元声明的标签集合（位标志）。</param>
-        /// <param name="owner">声明这些标签的单元名，用于校验失败时定位。</param>
         public static void Validate(FeatureTag tags, string owner)
         {
             ulong bits = (ulong)tags;
@@ -119,11 +86,6 @@ namespace DT_Tools.Core.Attributes
                 throw new InvalidOperationException($"{owner} 的 Tags 有 {count} 个，上限 {MaxPerUnit} 个。请只保留最主要的领域。");
         }
 
-        /// <summary>
-        /// 标签 → 键名数组（按字典顺序），供 JSON 与 WebUI 使用。
-        /// </summary>
-        /// <param name="tags">要转换的标签集合（位标志）。</param>
-        /// <returns>标签的键名数组，按字典顺序排列。</returns>
         public static string[] Names(FeatureTag tags)
         {
             if (tags == FeatureTag.None) return new string[0];

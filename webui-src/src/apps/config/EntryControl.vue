@@ -16,20 +16,13 @@ const options = computed(() => normalizeOptions(props.entry.accepts));
 const numeric = computed(() => isNumberType(props.entry.type));
 const isBool = computed(() => (props.entry.type || '').toLowerCase() === 'boolean');
 
-// 启发式：约定后缀 Track 结尾的字符串字段是"曲目来源"（url 或本地路径），
-// 才显示"选择文件"按钮。后端目前没有把
-// "这是路径"作为协议的一部分显式声明，这是前端按命名约定做的推断，
-// 不是通用协议——未来如果后端加上专门的 accepts.isPath 标记，这里改用那个更准。
 const looksLikePathField = computed(() =>
   !isBool.value && !options.value && (props.entry.type || '').toLowerCase() === 'string'
   && /Track$/.test(props.entry.key || ''));
 
-// 视频路径字段（字段名含 Video 且为路径型）：文件浏览器标题显示"选择视频文件"
 const looksLikeVideoPath = computed(() =>
   looksLikePathField.value && /Video/i.test(props.entry.key || ''));
 
-// 文件夹按钮 → WebUI 内置文件浏览器（原生对话框在游戏 Mono 里加载不了
-// System.Windows.Forms，改为浏览器内直接浏览本机目录；文本框手输路径始终可用）
 const browsing = ref(false);
 function onPicked(p) {
   browsing.value = false;
@@ -38,7 +31,7 @@ function onPicked(p) {
 }
 
 function commit() {
-  if (isBool.value) return;   // 布尔走独立开关，不经过这个 commit
+  if (isBool.value) return;
   let v = local.value;
   if (numeric.value && v !== '') {
     const n = Number(v);

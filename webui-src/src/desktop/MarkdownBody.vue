@@ -3,13 +3,6 @@ import { t } from '../i18n/index.js';
 import { h } from 'vue';
 import { parseMarkdown } from './markdownParse.mjs';
 
-/**
- * 更新说明的渲染组件。解析器输出语法树，这里用 h() 逐节点构建 VNode：
- * 文本由 Vue 转义，原始 HTML 只会显示为文字，所以不使用 v-html。
- * 链接的协议已由解析器限定为 http、https、mailto；统一加 target=_blank 与 rel=noopener noreferrer，
- * 防止新标签页通过 window.opener 操纵本页面。图片不自动加载（避免外部请求），只显示为链接。
- */
-
 const ALIGN_OK = new Set(['left', 'center', 'right']);
 
 function renderInline(nodes) {
@@ -60,7 +53,6 @@ function renderBlock(b) {
         const kids = it.children.map(renderBlock);
         if (!it.task) return h('li', null, kids);
         const box = h('input', { type: 'checkbox', class: 'md-check', checked: it.task === 'checked', disabled: true });
-        // 复选框与首段同行：段落是块级元素，单独放在前面会把文字挤到下一行
         const first = it.children[0];
         if (first && first.type === 'paragraph') {
           kids[0] = h('p', { class: 'md-p' }, [box, ...renderInline(first.children)]);
@@ -103,7 +95,6 @@ export default {
 </script>
 
 <style>
-/* 样式全部挂在 .md-body 下，避免影响页面其它部分 */
 .md-body { color: var(--text-1); font-size: 12px; line-height: 1.7; word-break: break-word; }
 .md-body .md-h { color: var(--text-0); font-weight: 700; margin: 8px 0 4px; line-height: 1.4; }
 .md-body .md-h1 { font-size: 15px; }

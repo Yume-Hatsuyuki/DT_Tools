@@ -5,21 +5,10 @@ using Protocol;
 
 namespace DT_Tools.Features.KahoWatch
 {
-    /// <summary>
-    /// KAHO 监视判定与提示发送（服务端进程内共享状态）。
-    /// </summary>
     internal static class KahoWatchLogic
     {
-        /// <summary>
-        /// 提示冷却记录：key = watcherId * 1000 + actionType（0 拔刀 / 1 拆电闸 / 2 刀人）。
-        /// </summary>
         private static readonly Dictionary<int, int> _lastNotifyMs = new Dictionary<int, int>();
 
-        /// <summary>
-        /// 查找正在监视 target 的 KAHO（KAHO 角色且 TracePlayers 包含 target），无则返回 null。
-        /// </summary>
-        /// <param name="target">被监视的玩家。</param>
-        /// <returns>正在监视 target 的 KAHO 玩家；无则为 null。</returns>
         public static Server.Game.Player FindWatcher(Server.Game.Player target)
         {
             if (target == null) return null;
@@ -35,13 +24,6 @@ namespace DT_Tools.Features.KahoWatch
             return null;
         }
 
-        /// <summary>
-        /// 给 KAHO 发私聊提示（带冷却；Text 为具体动作描述）。
-        /// </summary>
-        /// <param name="watcher">KAHO 玩家。</param>
-        /// <param name="actor">执行动作的玩家。</param>
-        /// <param name="actionType">动作类型编号。</param>
-        /// <param name="actionText">动作的具体描述文字。</param>
         public static void Notify(Server.Game.Player watcher, Server.Game.Player actor, int actionType, string actionText)
         {
             if (watcher == null || actor == null || watcher.Session == null) return;

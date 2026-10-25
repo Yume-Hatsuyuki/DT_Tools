@@ -4,16 +4,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.SpiritChannel
 {
-    /// <summary>
-    /// 亡者呢喃：EnqueueNormalChat 整替。
-    /// </summary>
-    /// <remarks>
-    /// 入队规则改为「发送者死亡 → _deadMessageQueue（不论本地生死），发送者存活 → _messageQueue」。
-    /// 私有队列字段字符串定位：_messageQueue 0.1.18c VoiceManager.cs:131、
-    /// _deadMessageQueue :133；ChatPayload 结构体 :35。
-    /// 公共成员用 nameof：EnqueueNormalChat、GetPlayerCache（PlayerManager.cs:193）、
-    /// KnownDeadIds（PlayerManager.cs:56）、DisplayName。
-    /// </remarks>
     [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.EnqueueNormalChat))]
     internal static class SpiritChannelGhostWhisperPatch
     {

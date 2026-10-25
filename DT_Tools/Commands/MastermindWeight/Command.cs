@@ -6,9 +6,6 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.MastermindWeight
 {
-    /// <summary>
-    /// /mastermind_weight &lt;玩家&gt; &lt;格子数&gt; | list | reset — 设置玩家的黑幕格子数（房主，需开启「黑幕概率」功能）。
-    /// </summary>
     internal sealed class MastermindWeightCommand : ICommand
     {
         public string Name => "mastermind_weight";

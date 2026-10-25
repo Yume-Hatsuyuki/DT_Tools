@@ -6,16 +6,6 @@ using UnityEngine;
 
 namespace DT_Tools.Features.ScanTime
 {
-    /// <summary>
-    /// StartScanning 整替：复刻 0.1.18c GameManagerEX.cs:814，仅读条时长可配置。
-    /// </summary>
-    /// <remarks>
-    /// 公共方法（nameof 可定位，此处经 nameof）。原版 ScanUp 读 Manager 单例
-    /// （Managers.Game.IsScanUp，0.1.18c GameManagerEX.cs:818），__instance 即该单例；
-    /// ScanningSlider 属性为 private set（:256），经 Traverse 回写。
-    /// UI_ScanningSlider.SetInfo：0.1.18c UI_ScanningSlider.cs:26；
-    /// MakeWorldSpaceUI：0.1.18c UIManager.cs:760。
-    /// </remarks>
     [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.StartScanning))]
     internal static class ScanTimePatch
     {
@@ -29,12 +19,9 @@ namespace DT_Tools.Features.ScanTime
 
             float t = Game.Casting.ClampSeconds(ScanTimeFeature.CastingTime, 0.1f, 0.1f);
 
-            // 原版：IsScanUp 时强制 0.5（0.1.18c GameManagerEX.cs:818）。
-            // 配置更短时不套用，避免“加速变成减速”。
             if (t >= 0.5f && __instance.IsScanUp)
                 t = 0.5f;
 
-            // 不写回 castingTime：原方法已被跳过，ref 回传无人消费
             Managers.Sound.PlayLoop("ScanningSfx");
             MyPlayer my = Managers.Player.MyPlayer;
             if (__instance.IsAlive)

@@ -2,12 +2,6 @@ using System.Collections.Generic;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// Unity KeyCode 与 Windows 虚拟键码（VK）的对照。数值已由游戏自带的 UnityEngine.CoreModule.dll 核对。
-    /// </summary>
-    /// <remarks>
-    /// 只收录映射常用的键，供手柄输出选择。扩展键（方向键、Insert 等）需要 KEYEVENTF_EXTENDEDKEY 标记。
-    /// </remarks>
     internal static class UnityKeys
     {
         private struct Entry
@@ -42,9 +36,6 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>
-        /// 可在映射里选择的全部键名（按展示顺序）。
-        /// </summary>
         public static IReadOnlyList<string> Names
         {
             get
@@ -56,32 +47,16 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>
-        /// 键名（如 "UpArrow"、"F5"）解析为虚拟键码。
-        /// </summary>
-        /// <param name="name">Unity KeyCode 的名称。</param>
-        /// <param name="vk">虚拟键码。</param>
-        /// <returns>名称有效时为 true。</returns>
         public static bool TryNameToVk(string name, out int vk)
         {
             return VkByName.TryGetValue(name, out vk);
         }
 
-        /// <summary>
-        /// 游戏动作读到的 KeyCode 数值转为虚拟键码。
-        /// </summary>
-        /// <param name="unityKeyCode">Unity KeyCode 的整数值。</param>
-        /// <returns>虚拟键码；不认识的键返回 0。</returns>
         public static int UnityToVk(int unityKeyCode)
         {
             return VkByUnity.TryGetValue(unityKeyCode, out int vk) ? vk : 0;
         }
 
-        /// <summary>
-        /// 该虚拟键是否为扩展键（注入时需要扩展标记）。
-        /// </summary>
-        /// <param name="vk">虚拟键码。</param>
-        /// <returns>扩展键返回 true。</returns>
         public static bool IsExtended(int vk) => ExtendedVk.Contains(vk);
 
         private static List<Entry> BuildTable()

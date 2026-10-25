@@ -6,12 +6,6 @@ using Protocol;
 
 namespace DT_Tools.Automation.AutoSpawnPoint
 {
-    /// <summary>
-    /// 业务逻辑：目标点解析 + 出生点目录（运行时读 MapData.StartPosList，供 WebUI 下拉）。
-    /// </summary>
-    /// <remarks>
-    /// 出生点房间名统一走 Game/RoomLabel.FromPos（224 网格反查 MapArray，与 /beacon 同源）。
-    /// </remarks>
     internal static class AutoSpawnPointLogic
     {
         public static bool TryResolveTarget(out PosInfo target, out string label)
@@ -46,10 +40,6 @@ namespace DT_Tools.Automation.AutoSpawnPoint
             return true;
         }
 
-        /// <summary>
-        /// OptionProviders 用：value 为 1-based 序号，label 为「#n  (x, y)  [房间]」。
-        /// </summary>
-        /// <returns>下拉选项：value 为从 1 开始的序号，label 为「#n (x, y) [房间]」。</returns>
         public static IReadOnlyList<ConfigOption> SpawnOptions()
         {
             var options = new List<ConfigOption>();
@@ -64,7 +54,6 @@ namespace DT_Tools.Automation.AutoSpawnPoint
                 {
                     var p = spawns[i];
                     if (p == null) continue;
-                    // 房间名与 /beacon 列表同源（RoomLabel.FromPos）；地图未就绪时统一回退其缺省文案「未知」
                     string room = RoomLabel.FromPos(p).localized;
                     options.Add(new ConfigOption(
                         (i + 1).ToString(CultureInfo.InvariantCulture),
@@ -73,7 +62,6 @@ namespace DT_Tools.Automation.AutoSpawnPoint
             }
             catch
             {
-                // 地图未就绪：返回空列表，前端自动退回数字输入框
             }
             return options;
         }

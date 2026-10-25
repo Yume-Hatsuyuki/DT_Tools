@@ -2,12 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.GhostView
 {
-    /// <summary>
-    /// 幽灵视角：IsGhostView 恒 true（原版为 !Managers.Game.IsAlive）。
-    /// </summary>
-    /// <remarks>
-    /// 调试向，可能干扰状态机。
-    /// </remarks>
     [PatchFeature(
         "幽灵视角：（⚠️奇怪的功能）化身幽灵。可能影响正常对局，建议仅本地调试。",
         defaultEnabled: false,

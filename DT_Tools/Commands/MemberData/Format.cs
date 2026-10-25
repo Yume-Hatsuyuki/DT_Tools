@@ -4,9 +4,6 @@ using System.Text;
 
 namespace DT_Tools.Commands.MemberData
 {
-    /// <summary>
-    /// /member_data 文本与结构化结果。
-    /// </summary>
     internal static class MemberDataFormat
     {
         public static string Help()

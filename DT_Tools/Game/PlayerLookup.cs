@@ -3,18 +3,8 @@ using System.Linq;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 房主侧玩家查找：按玩家 ID（数字）、账号名（精确）或 AccountID 定位。
-    /// </summary>
-    /// <remarks>
-    /// 名字重复时拒绝匹配并要求改用 ID，避免误改另一名玩家。
-    /// 玩家类型为服务端 Server.Game.Player（0.1.18c Server.Game/GameRoom.cs:47 Players 列表）。
-    /// </remarks>
     public static class PlayerLookup
     {
-        /// <summary>
-        /// 在候选玩家中定位目标。成功时 player 有值；失败时 error 给出中文原因。
-        /// </summary>
         public static bool TryResolve(IEnumerable<Server.Game.Player> players, string key,
             out Server.Game.Player player, out string error)
         {
@@ -48,10 +38,6 @@ namespace DT_Tools.Game
             return false;
         }
 
-        /// <summary>
-        /// 账号标识（AccountID）与他人相同时拒绝。假人的 AccountID 取其名字（Game/FakePlayers.cs:126），
-        /// 同名假人共用标识，按标识设置的权重或覆盖会串到另一人身上。
-        /// </summary>
         private static bool Accept(System.Collections.Generic.List<Server.Game.Player> list, Server.Game.Player target,
             out Server.Game.Player player, out string error)
         {

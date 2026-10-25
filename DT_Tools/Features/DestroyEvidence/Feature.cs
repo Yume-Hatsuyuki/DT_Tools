@@ -2,15 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.DestroyEvidence
 {
-    /// <summary>
-    /// 销毁证据读条。
-    /// </summary>
-    /// <remarks>
-    /// DeviceBase.UseSabotage 原版 2.5f（0.1.18c DeviceBase.cs:457）
-    /// → CastingTime（仅本地表现；服务端冷却与判定不受影响）。
-    /// 本功能管"单次破坏耗时多久"；"多久可以破坏一次"（冷却频率）是服务端的另一回事，
-    /// 见「DestroyEvidenceCooldownServer」。
-    /// </remarks>
     [PatchFeature(
         "专业清洁：可修改 Dark/Black 销毁证据读条时长（默认 2.5s，仅本地表现；'多久能破坏一次'的服务端冷却见「DestroyEvidenceCooldownServer」）。",
         defaultEnabled: false,

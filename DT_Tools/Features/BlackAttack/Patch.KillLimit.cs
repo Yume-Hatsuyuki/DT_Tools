@@ -5,12 +5,6 @@ using Server.Game;
 
 namespace DT_Tools.Features.BlackAttack
 {
-    /// <summary>
-    /// BlackKillLimit 改写：原版开局人数 &lt; BLACK_DOUBLE_KILL_MIN_PLAYER(6) 时 1，否则 2。
-    /// </summary>
-    /// <remarks>
-    /// 属性 getter，0.1.18c Server.Game/GameRoom.cs。
-    /// </remarks>
     [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.BlackKillLimit), MethodType.Getter)]
     internal static class BlackAttackKillLimitPatch
     {

@@ -1,8 +1,5 @@
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 运行时最近一帧的快照，供 WebUI 展示（不可变，线程安全地整体替换）。
-    /// </summary>
     internal sealed class GamepadLiveState
     {
         public static readonly GamepadLiveState Offline =

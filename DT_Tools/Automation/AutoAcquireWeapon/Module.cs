@@ -3,9 +3,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Automation.AutoAcquireWeapon
 {
-    /// <summary>
-    /// 进入 Survive 后自动从开放武器架取刀（C_INTERACT_ARMORY，无视距离）。
-    /// </summary>
     [AutomationModule("开局自动取刀",
         "进入生存阶段后自动对开放武器架发送 C_INTERACT_ARMORY（白方拔刀 / 黑幕截刀）。",
         side: FeatureSide.Client,

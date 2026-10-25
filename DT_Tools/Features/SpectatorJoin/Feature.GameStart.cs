@@ -15,16 +15,6 @@ namespace DT_Tools.Features.SpectatorJoin
 {
     public sealed partial class SpectatorJoinFeature
     {
-        /// <summary>
-        /// GameStart：观战者不参与出生点分配，进入幽灵观战模式（EnterSpectator）。
-        /// </summary>
-        /// <remarks>
-        /// 其余与原版 + LobbyMaxPlayers 对齐：StartPosList 打乱后分配，人数超出
-        /// 出生点时 i % Count 循环复用；RoundStartPlayerCount 只统计真实玩家，
-        /// 不影响黑方击杀上限。
-        /// </remarks>
-        /// <param name="__instance">被拦截的房间实例。</param>
-        /// <returns>为 false 时跳过原方法；为 true 时继续执行原方法。</returns>
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(GameRoom), nameof(GameRoom.GameStart))]
         [HarmonyPrefix]
@@ -97,12 +87,6 @@ namespace DT_Tools.Features.SpectatorJoin
             return false;
         }
 
-        /// <summary>
-        /// 观战者进入幽灵观战模式：EnterSpectator（幽灵化 + 观战引导包 + 幽灵可见性），
-        /// 并向其客户端下发 S_DEAD 完成"大厅存活观战 → 局内幽灵观战"的切换。
-        /// </summary>
-        /// <param name="room">所在房间。</param>
-        /// <param name="player">要进入观战的玩家。</param>
         private static void InvokeEnterSpectator(GameRoom room, GamePlayer player)
         {
             MethodInfo m = AccessTools.Method(typeof(GameRoom), "EnterSpectator");
@@ -115,15 +99,6 @@ namespace DT_Tools.Features.SpectatorJoin
             player.Session.Send(new S_DEAD());
         }
 
-        /// <summary>
-        /// 观战者显式指定游戏区域并下发 S_AREA_PUBLIC（黑屏修复）：
-        /// 观战者 IsAlive=false，Player.Move 不会触发 ChangeArea，服务端若不下发区域包，
-        /// 客户端 CurrentArea 恒为 null 且无法 ChangeRoom 加载地图（黑屏/不见场景）。
-        /// 这里 force:true 强制 LeavePlayer+EnterPlayer → SendAreaInfo → S_AREA_PUBLIC，
-        /// 客户端收到后按 RoomId 实例化房间 Prefab 并 Spawn 显示地图。
-        /// 位置优先取观战者当前有效坐标（进行中加入已随机到出生点），否则用出生点列表首点。
-        /// </summary>
-        /// <param name="player">观战玩家。</param>
         private static void InvokeChangeAreaToGameArea(GamePlayer player)
         {
             if (player == null)
@@ -152,14 +127,6 @@ namespace DT_Tools.Features.SpectatorJoin
             }
         }
 
-        /// <summary>
-        /// StartPick：观战者不进入存活池、不参与角色颜色分配、不会被随机为黑方/主谋。
-        /// </summary>
-        /// <remarks>
-        /// 其余与原版一致。
-        /// </remarks>
-        /// <param name="__instance">被拦截的房间实例。</param>
-        /// <returns>为 false 时跳过原方法；为 true 时继续执行原方法。</returns>
         [HarmonyPriority(Priority.First)]
         [HarmonyPatch(typeof(GameRoom), "StartPick")]
         [HarmonyPrefix]

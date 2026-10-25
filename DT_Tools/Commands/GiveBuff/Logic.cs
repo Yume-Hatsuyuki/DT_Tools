@@ -5,18 +5,8 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveBuff
 {
-    /// <summary>
-    /// /givebuff 业务：目标筛选、BUFF 添加/清除执行。
-    /// </summary>
     internal static class GiveBuffLogic
     {
-        /// <summary>
-        /// 对 all 或指定玩家执行 action。
-        /// </summary>
-        /// <remarks>
-        /// 失败返回 false（错误码与提示已给出）；成功返回处理人数。
-        /// requireAlive=true 时跳过/拒绝死亡玩家（添加 BUFF 需存活，清除不需要）。
-        /// </remarks>
         public static bool ApplyToTargets(
             GameRoom room,
             GiveBuffArgs args,
@@ -63,20 +53,6 @@ namespace DT_Tools.Commands.GiveBuff
             return true;
         }
 
-        /// <summary>
-        /// 添加 BUFF 并兜底到期。
-        /// </summary>
-        /// <remarks>
-        /// 原版 AddBuff 在已有同类时直接忽略，这里先强制移除再加
-        /// 以刷新时长；原版 Flush 只遍历 AlivePlayers，大厅列表为空导致不会自动到期，
-        /// 故额外 PushAfter(durationMs) 调 RemoveBuffForce 兜底
-        /// （0.1.18c Server.Game/BuffComponent.cs:93 AddBuff / :118 RemoveBuffForce，
-        /// Server.Game/JobSerializer.cs:98 PushAfter）。
-        /// </remarks>
-        /// <param name="room">所在房间。</param>
-        /// <param name="player">目标玩家。</param>
-        /// <param name="buffType">要添加的 BUFF 类型。</param>
-        /// <param name="durationMs">持续时间，单位毫秒。</param>
         public static void AddBuffWithRefresh(GameRoom room, Server.Game.Player player, EBuffType buffType, int durationMs)
         {
             if (player.BuffComponent.HasBuff(buffType))

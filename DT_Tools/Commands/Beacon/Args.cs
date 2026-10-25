@@ -3,9 +3,6 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Beacon
 {
-    /// <summary>
-    /// /beacon 参数形状：坐标 / 出生点序号 / 玩家号 / lobby / error（纯解析，不查游戏数据）。
-    /// </summary>
     internal sealed class BeaconArgs
     {
         public enum Mode
@@ -20,7 +17,7 @@ namespace DT_Tools.Commands.Beacon
         public Mode Kind { get; private set; }
         public float X { get; private set; }
         public float Y { get; private set; }
-        public int SpawnIndex { get; private set; }   // 1 起
+        public int SpawnIndex { get; private set; }
         public int PlayerId { get; private set; }
 
         public static bool TryParse(string[] args, out BeaconArgs parsed, out string error)
@@ -28,7 +25,6 @@ namespace DT_Tools.Commands.Beacon
             parsed = new BeaconArgs();
             error = null;
 
-            // beacon lobby | error（含中文别名）
             if (args.Length == 1)
             {
                 string key = args[0].ToLowerInvariant();
@@ -44,7 +40,6 @@ namespace DT_Tools.Commands.Beacon
                 }
             }
 
-            // beacon spawn <#i>
             if (args.Length == 2
                 && (args[0].Equals("spawn", StringComparison.OrdinalIgnoreCase) || args[0] == "出生"))
             {
@@ -58,7 +53,6 @@ namespace DT_Tools.Commands.Beacon
                 return true;
             }
 
-            // beacon player <#id>
             if (args.Length == 2
                 && (args[0].Equals("player", StringComparison.OrdinalIgnoreCase) || args[0] == "玩家"))
             {
@@ -72,7 +66,6 @@ namespace DT_Tools.Commands.Beacon
                 return true;
             }
 
-            // beacon <x> <y>
             if (args.Length == 2
                 && float.TryParse(args[0], out float x)
                 && float.TryParse(args[1], out float y))

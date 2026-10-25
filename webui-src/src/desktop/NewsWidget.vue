@@ -5,26 +5,20 @@ import { t, locale, localeInfo, intlLocale } from '../i18n/index.js';
 import IconX from '~icons/tabler/x';
 import IconRefresh from '~icons/tabler/refresh';
 
-/**
- * 游戏新闻挂件（桌面挂件，不是应用）：读取 Steam 新闻 RSS，经后端 /api/steam/news 中转。
- * 语言跟随全局界面语言（i18n），映射到 Steam 的 l= 参数；不再单独选择语言。
- * 可拖动、可关闭（经底部 Dock 再开）。位置记在 localStorage（仅本浏览器）。
- */
 const emit = defineEmits(['close']);
 
 const STORE_KEY = 'dt_news_widget_v1';
-// 与 Window.vue 的 TOPBAR_H / tokens.css --topbar-h 同步：挂件不拖进顶栏之下
 const TOPBAR_H = 32;
-const POLL_MS = 60000;   // 每 1 分钟拉取一次（与在线人数同频）；后端缓存短于此间隔
+const POLL_MS = 60000;
 
 function readStore() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; }
 }
 
 const saved = readStore();
-const pos = ref(saved.pos || null);   // {left, top}；null=默认停靠在 Dock 之上的右下角
+const pos = ref(saved.pos || null);
 const items = ref([]);
-const status = ref('loading');        // loading | ok | error
+const status = ref('loading');
 const fallback = ref(false);
 const rootEl = ref(null);
 
@@ -38,10 +32,9 @@ function fmtDate(iso) {
 function persist(closed) {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({ closed, pos: pos.value }));
-  } catch { /* 隐私模式忽略 */ }
+  } catch { }
 }
 
-// 序号防竞态：切换语言后，旧语言的响应到达时直接丢弃
 let seq = 0;
 async function fetchNews() {
   const requested = localeInfo.value.steam;
@@ -60,7 +53,6 @@ async function fetchNews() {
 
 const poller = createPoller(fetchNews, POLL_MS);
 
-// 全局语言变化：清空旧列表并按新语言重新拉取
 watch(locale, () => {
   items.value = [];
   fallback.value = false;
@@ -82,8 +74,6 @@ function close() {
   persist(true);
   emit('close');
 }
-
-// ---- 标题栏拖动（视口内钳位，与 SteamWidget 同款） ----
 
 let drag = null;
 
@@ -148,7 +138,7 @@ const posStyle = computed(() => (pos.value
 <style scoped>
 .news-widget {
   position: fixed;
-  z-index: 4500;   /* 与 SteamWidget 同层：悬于窗口与粒子之上，低于顶栏/Dock */
+  z-index: 4500;
   width: 320px;
   right: 14px;
   bottom: calc(var(--dock-h) + 14px);

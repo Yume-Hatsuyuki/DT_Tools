@@ -9,39 +9,20 @@ using Object = UnityEngine.Object;
 
 namespace DT_Tools.Commands.Screenshot
 {
-    /// <summary>
-    /// 截图实现（回调式，一次调用完成）。
-    /// </summary>
-    /// <remarks>
-    /// 游戏用 URP，Camera.Render() 系同步方案全灭（URP 不支持手动渲染，且会无视 clearFlags 清黑背缓冲）；Update 泵里直接 ReadPixels 背缓冲又不在绘制帧内（Unity 报 not inside drawing frame，未定义行为）。唯一合法点是帧末（WaitForEndOfFrame：本帧渲染完、UI 已画、呈现前），它必然晚于命令返回，故经 ctx.Defer() 延迟完成：命令占位返回，常驻协程在帧末捕获后回填结果，等待方一次拿到路径。
-    /// 读到纯色帧不判失败，只打 blank 标记（加载页等纯色画面是合法帧，是否可用由看图方决定）。窗口最小化时 Unity 停止渲染，WaitForEndOfFrame 不触发，由实时看门狗（5 秒）判失败。落盘目录选 BepInEx/cache（Paths.CachePath）：可写、随缓存清理、不污染插件目录。
-    /// </remarks>
     internal static class ScreenshotLogic
     {
-        /// <summary>
-        /// 实时看门狗超时：超时未等到帧末（窗口最小化/无新帧）按失败回填。
-        /// </summary>
         private const float WatchdogTimeoutSeconds = 5f;
 
         private sealed class PendingCapture
         {
             public int LongEdge;
-            public Action<string, int, int, bool, string> OnDone; // path, width, height, blank, error
+            public Action<string, int, int, bool, string> OnDone;
             public bool Finished;
         }
 
         private static readonly Queue<PendingCapture> _queue = new Queue<PendingCapture>();
         private static bool _pumpRunning;
 
-        /// <summary>
-        /// 发起帧捕获，完成后在主线程回调 onDone（error 非空 = 失败）。
-        /// </summary>
-        /// <remarks>
-        /// 多次并发请求排队，
-        /// 每帧帧末至多消化一个（单次捕获约几十毫秒，排队不堆积）。
-        /// </remarks>
-        /// <param name="longEdge">最长边的上限，单位像素。</param>
-        /// <param name="onDone">完成回调，参数依次为文件路径、宽度、高度、是否纯色帧与错误信息；错误信息非空表示失败。</param>
         public static void Capture(int longEdge, Action<string, int, int, bool, string> onDone)
         {
             _queue.Enqueue(new PendingCapture
@@ -52,9 +33,6 @@ namespace DT_Tools.Commands.Screenshot
             EnsurePump();
         }
 
-        /// <summary>
-        /// 常驻帧末泵：队列空时每帧只多一次 yield，零成本；有请求时在帧末消化。
-        /// </summary>
         private static void EnsurePump()
         {
             if (_pumpRunning)
@@ -75,7 +53,6 @@ namespace DT_Tools.Commands.Screenshot
 
         private static void CaptureNow(PendingCapture p)
         {
-            // 看门狗：最小化等场合帧末不再到来，超时按失败收尾（实时时钟，不依赖渲染）
             CoroutineHost.Start(Watchdog(p));
             try
             {
@@ -88,7 +65,7 @@ namespace DT_Tools.Commands.Screenshot
                 try
                 {
                     var prevActive = RenderTexture.active;
-                    RenderTexture.active = null; // null = 系统帧缓冲（本帧刚渲染完，含 Overlay UI）
+                    RenderTexture.active = null;
                     try
                     {
                         full.ReadPixels(new Rect(0, 0, screenW, screenH), 0, 0);
@@ -121,15 +98,6 @@ namespace DT_Tools.Commands.Screenshot
                 Finish(p, null, 0, 0, true, $"{WatchdogTimeoutSeconds} 秒未等到帧末（窗口最小化时 Unity 停止渲染）。恢复窗口显示后重试。");
         }
 
-        /// <summary>
-        /// 幂等收尾：看门狗与捕获竞争时只认第一个到达的。
-        /// </summary>
-        /// <param name="p">待完成的捕获请求。</param>
-        /// <param name="path">保存的文件路径；失败时为 null。</param>
-        /// <param name="width">图片宽度，单位像素。</param>
-        /// <param name="height">图片高度，单位像素。</param>
-        /// <param name="blank">是否为纯色帧，只打标记，不判失败。</param>
-        /// <param name="error">失败原因；成功时为 null。</param>
         private static void Finish(PendingCapture p, string path, int width, int height, bool blank, string error)
         {
             if (p.Finished)
@@ -142,17 +110,6 @@ namespace DT_Tools.Commands.Screenshot
             p.OnDone(path, width, height, blank, error);
         }
 
-        /// <summary>
-        /// 超长边缩到 longEdge（Blit 到临时 RT 再读回），写 PNG 落盘；毫秒级文件名防同秒覆盖。
-        /// </summary>
-        /// <param name="longEdge">最长边的上限，单位像素。</param>
-        /// <param name="source">源纹理。</param>
-        /// <param name="srcW">源宽度，单位像素。</param>
-        /// <param name="srcH">源高度，单位像素。</param>
-        /// <param name="path">保存的文件路径。</param>
-        /// <param name="width">输出宽度，单位像素。</param>
-        /// <param name="height">输出高度，单位像素。</param>
-        /// <returns>PNG 文件的完整路径。</returns>
         private static string Encode(int longEdge, Texture2D source, int srcW, int srcH, out string path, out int width, out int height)
         {
             path = null;
@@ -197,11 +154,6 @@ namespace DT_Tools.Commands.Screenshot
             }
         }
 
-        /// <summary>
-        /// 抽样判纯色帧：通道极差极小视为无内容（全黑/纯色，多半窗口最小化）。
-        /// </summary>
-        /// <param name="tex">要检查的纹理。</param>
-        /// <returns>几乎为纯色（全黑或单一颜色）时为 true。</returns>
         private static bool IsUniform(Texture2D tex)
         {
             try
@@ -220,7 +172,7 @@ namespace DT_Tools.Commands.Screenshot
             }
             catch
             {
-                return false; // 读不出像素就当有内容，让上层照常落盘
+                return false;
             }
         }
 

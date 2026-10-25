@@ -10,23 +10,18 @@ import IconUserCheck from '~icons/tabler/user-check';
 import IconUserMinus from '~icons/tabler/user-minus';
 import IconListCheck from '~icons/tabler/list-check';
 
-/**
- * 假人管理：多假人配置列表（昵称 + 角色下拉）→「准备」进场并就绪 →「选角」。
- * 行配置持久在 localStorage；假人本体走游戏原生 Dummy 语义——
- * 回大厅时游戏会自动清场（行配置保留，再点「准备」即可重新进场）。
- */
 const ROWS_KEY = 'dt_dummy_rows_v1';
 
 const rows = ref(loadRows());
-const characters = ref([]);            // [{id, label}]
+const characters = ref([]);
 const gameState = ref('NoneState');
 const isHost = ref(false);
 const capacity = ref(8);
-const livePlayers = ref([]);           // 房间快照中的全部玩家
+const livePlayers = ref([]);
 const loadError = ref('');
 const toast = reactive({ text: '', error: false });
 let toastTimer = null;
-const busyKey = ref('');               // 正在执行操作的行（防重复点击）
+const busyKey = ref('');
 
 let rowSeq = Date.now() % 100000;
 function nextRowId() { return `r${++rowSeq}`; }
@@ -41,12 +36,12 @@ function loadRows() {
         characterId: Number.isFinite(r.characterId) ? r.characterId : -2,
       }));
     }
-  } catch { /* 损坏即重建 */ }
+  } catch { }
   return [];
 }
 
 watch(rows, (val) => {
-  try { localStorage.setItem(ROWS_KEY, JSON.stringify(val)); } catch { /* 隐私模式忽略 */ }
+  try { localStorage.setItem(ROWS_KEY, JSON.stringify(val)); } catch { }
 }, { deep: true });
 
 function showToast(text, error = false) {
@@ -55,8 +50,6 @@ function showToast(text, error = false) {
   clearTimeout(toastTimer);
   if (text) toastTimer = setTimeout(() => { toast.text = ''; }, 2600);
 }
-
-// ---- 数据加载 ----
 
 const poller = createPoller(reload, 1000);
 
@@ -69,7 +62,6 @@ async function reload() {
   isHost.value = !!j.data?.isHost;
   capacity.value = j.data?.capacity || 8;
   livePlayers.value = j.data?.players || [];
-  // 角色目录未就绪时随轮询补拉（数据表在游戏加载完成后才可用）
   if (!characters.value.length) await loadCharacters();
 }
 
@@ -78,8 +70,6 @@ async function loadCharacters() {
   if (j.unauthorized) return;
   if (j.ok && Array.isArray(j.data?.characters)) characters.value = j.data.characters;
 }
-
-// ---- 行状态派生 ----
 
 function liveOf(row) {
   const name = row.name.trim();
@@ -90,11 +80,6 @@ const liveCount = computed(() => livePlayers.value.filter(p => p.ours).length);
 const canOperate = computed(() => isHost.value && gameState.value === 'Lobby');
 const canPick = computed(() => isHost.value && (gameState.value === 'Lobby' || gameState.value === 'PickCharacter'));
 const inPickPhase = computed(() => gameState.value === 'PickCharacter');
-/**
- * 假人可用席位 = 房间人数上限 − 非本应用创建的玩家数。
- * 真人（含房主）与游戏原生假人（真实玩家掉线的残留体）都占席位，动态扣减；
- * 未进房时按房主 1 席兜底。与后端判定等价：Players.Count（全员）< 上限才可再创建。
- */
 const occupiedByOthers = computed(() => Math.max(1, livePlayers.value.filter(p => !p.ours).length));
 const usableCapacity = computed(() => Math.max(0, capacity.value - occupiedByOthers.value));
 
@@ -150,9 +135,6 @@ async function ejectRow(row, live) {
   showToast(j.data?.message || '已移出');
 }
 
-// ---- 行操作 ----
-
-/** 准备：未进场 → 创建假人 + 自动就绪；已进场 → 切换就绪态。 */
 async function prepare(row) {
   const name = row.name.trim();
   if (!name) { showToast('昵称不能为空', true); return; }
@@ -167,7 +149,6 @@ async function prepare(row) {
     const j = await API.dummyCreate(name, row.characterId);
     if (j.unauthorized) return;
     if (!j.ok) { showToast(j.data?.message || j.error || '创建失败', true); return; }
-    // 创建成功即就绪（大厅开局要求除房主外全员准备）
     const rj = await API.dummyReady(name, true);
     handleResult(rj, true);
   } finally {
@@ -175,7 +156,6 @@ async function prepare(row) {
   }
 }
 
-/** 选角：大厅换角 / 选角阶段锁定角色。 */
 async function pick(row) {
   const live = liveOf(row);
   if (!live) { showToast('该行还没有进场的假人', true); return; }
@@ -209,10 +189,6 @@ async function removeAll() {
   }
 }
 
-/**
- * 一键准备：遍历全部行——未进场 = 创建+自动就绪；已进场未准备 = 就绪；
- * 已准备/昵称为空 = 跳过。中途失败不中断，汇总 toast。
- */
 async function prepareAll() {
   if (busyKey.value) return;
   busyKey.value = '@all';
@@ -243,9 +219,6 @@ async function prepareAll() {
   }
 }
 
-/**
- * 一键取消准备：遍历已进场且已准备的行，取消就绪。失败不中断，汇总 toast。
- */
 async function unreadyAll() {
   if (busyKey.value) return;
   busyKey.value = '@all';
@@ -266,10 +239,6 @@ async function unreadyAll() {
   }
 }
 
-/**
- * 一键选角：遍历已进场的行，按各自所选角色选角（选角阶段锁定 / 大厅换装）。
- * 大厅换角会自动取消准备（游戏规则），选完后如需开局再点一键准备。
- */
 async function pickAll() {
   if (busyKey.value) return;
   busyKey.value = '@all';
@@ -290,7 +259,6 @@ async function pickAll() {
   }
 }
 
-/** 批量操作中途刷一次状态，让下一行的 liveOf 尽量新鲜（失败重试也走最新快照）。 */
 async function refreshSoon() {
   await reload();
 }
