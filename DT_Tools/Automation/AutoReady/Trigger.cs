@@ -3,9 +3,6 @@ using Protocol;
 
 namespace DT_Tools.Automation.AutoReady
 {
-    /// <summary>
-    /// 触发器：监测进入 / 离开大厅的时刻，维护阶段跟踪并驱动动作。
-    /// </summary>
     internal static class AutoReadyTrigger
     {
         public static void Tick()

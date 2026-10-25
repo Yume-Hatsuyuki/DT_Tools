@@ -29,24 +29,11 @@ import IconMinimize from '~icons/tabler/minimize';
 import IconX from '~icons/tabler/x';
 import IconDownload from '~icons/tabler/download';
 
-/**
- * 顶栏（macOS 菜单栏 / Kali 面板位）。
- * 左：DT 龙标（Kali 应用菜单风大面板：搜索 + 分类「应用/小组件/系统」+ 功能列表）
- *     + 静态品牌名 DT_Tools（图3 效果，不挂任何菜单）；
- *     面板底部用户栏 = 可点用户行（弹出账户菜单：改名/头像/退出，图2 效果）
- *     + 独立退出游戏按钮（红，右下角，Kali 电源键位）。
- * 中：运行中窗口标签（点击 聚焦/最小化 切换；右键 独立窗口操作菜单：
- *     切换前置/最大化/最小化/关闭窗口——与桌面、Dock 的右键菜单互不相通）。
- * 右：连接状态（图标式：绿=已连接 / 红=连接中）+ 中文时间（x月x日周x HH:mm）。
- */
 const props = defineProps({
-  /** 桌面应用注册表 [{id,title,icon}]（Kali 面板的"应用"类目）。 */
   apps: { type: Array, required: true },
   windows: { type: Array, required: true },
-  /** Steam 在线小组件是否开着（面板里的开关态展示）。 */
   steamWidgetOpen: { type: Boolean, default: false },
   mcpWidgetOpen: { type: Boolean, default: false },
-  /** 平铺模式是否开启（tray 的切换按钮据此换图标与高亮）。 */
   tileMode: { type: Boolean, default: false },
 });
 const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpaper', 'reset-wallpaper', 'toggle-widget', 'launch', 'toggle-tile', 'open-language']);
@@ -54,11 +41,10 @@ const emit = defineEmits(['focus-window', 'about', 'show-update', 'change-wallpa
 const conn = useConnectionStatus();
 const shell = useShellUser();
 const cropper = useCropper();
-const upd = useUpdateCheck();   // 更新徽标/气泡只读全局状态（轮询由 Desktop 启动）
+const upd = useUpdateCheck();
 const metaStore = useSectionMeta();
-const wm = useWindowManager();   // 窗口操作（模块级单例，与 Desktop 持有同一份状态）
+const wm = useWindowManager();
 
-// 中文时间（学习 NoriOS 顶栏：9月30日周三 13:28），1s 刷新
 const now = ref(new Date());
 let timer = null;
 onMounted(() => { timer = setInterval(() => { now.value = new Date(); }, 1000); });
@@ -70,7 +56,6 @@ const clock = computed(() => {
   return new Intl.DateTimeFormat(intlLocale(), { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
 });
 
-// ---- 菜单开合（Kali 面板 / 面板底部账户菜单；外点关闭）----
 const logoOpen = ref(false);
 const acctOpen = ref(false);
 
@@ -86,8 +71,6 @@ function closeMenus() {
   acctOpen.value = false;
 }
 
-// ---- 更新徽标 / 气泡（有新版本时出现在品牌名旁；点击打开更新弹窗并收起气泡）----
-
 const latestTag = computed(() => (upd.state.latest && upd.state.latest.tag) || '');
 
 function openUpdate() {
@@ -96,8 +79,6 @@ function openUpdate() {
   emit('show-update');
 }
 
-// 外点关闭：菜单挂在顶栏组件里，点桌面/窗口不经过顶栏的 @click，
-// 需文档级捕获监听（点在顶栏与面板内不放行——菜单项的 click 先于卸载发生）
 function onDocPointerDown(e) {
   const t = e.target;
   if (t.closest && (t.closest('.topbar') || t.closest('.topbar-menu'))) return;
@@ -109,12 +90,9 @@ watch([logoOpen, acctOpen], ([l, a]) => {
 });
 onUnmounted(() => document.removeEventListener('pointerdown', onDocPointerDown, true));
 
-// ---- 运行标签右键菜单：窗口操作（独立菜单，不复用桌面 .ctx-menu）----
-
-const winMenu = ref(null);   // { x, y, id }
+const winMenu = ref(null);
 
 function onTabContextMenu(e, w) {
-  // stopPropagation：不让事件冒泡到 .desktop，否则桌面默认菜单会跟着弹出
   e.preventDefault();
   e.stopPropagation();
   winMenu.value = {
@@ -138,8 +116,6 @@ const winMenuItems = computed(() => {
     { label: t('window.closeWindow'), icon: IconX, danger: true, action: () => { closeWinMenu(); wm.close(w.id); } },
   ];
 });
-
-// ---- Kali 风面板：分类 + 搜索 + 功能列表 ----
 
 const CATS = [
   { id: 'app', get label() { return t('cat.app'); }, icon: IconLayoutGrid },
@@ -177,7 +153,6 @@ const kmItems = computed(() => {
     }
   };
   if (q) {
-    // 搜索：跨类过滤（结果行右侧带分类标注）
     pushApps(true);
     if ('steam 在线'.toLowerCase().includes(q) || 'steam'.includes(q) || '小组件'.includes(q))
       rows.push({ kind: 'widget', id: 'steam', label: t('widget.steamShort'), icon: IconPuzzle, tag: t('cat.widget') });
@@ -216,8 +191,6 @@ function runItem(item) {
   else if (item.id === 'language') emit('open-language');
   else if (item.id === 'exit') exitGame();
 }
-
-// ---- 账户操作（面板底部用户栏）----
 
 async function renameUser() {
   closeMenus();
@@ -407,7 +380,6 @@ async function exitGame() {
   place-items: center;
   width: 24px;
   height: 24px;
-  /* 必须清掉浏览器默认 button padding（1px 6px）——它会把 17px 的图标挤离中心 */
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
@@ -427,8 +399,6 @@ async function exitGame() {
   color: var(--text-0);
   user-select: none;
 }
-
-/* ---- 更新徽标 + 气泡（有新版本时出现）---- */
 
 .upd-badge {
   display: grid;
@@ -450,7 +420,6 @@ async function exitGame() {
   50% { box-shadow: 0 0 8px 2px rgba(71, 212, 185, 0.35); }
 }
 
-/* 气泡锚在品牌行正下方（topbar-left 已设 relative）；箭头大致对准徽标 */
 .upd-bubble {
   position: absolute;
   top: calc(100% + 9px);
@@ -535,8 +504,6 @@ async function exitGame() {
 .topbar-menu button:hover { background: rgba(150, 225, 255, 0.10); color: var(--text-0); }
 .topbar-menu button svg { width: 15px; height: 15px; color: var(--shell-glow); flex-shrink: 0; }
 
-/* ---- Kali 应用菜单风面板 ---- */
-
 .kali-panel {
   left: 8px;
   width: 540px;
@@ -603,7 +570,6 @@ async function exitGame() {
 .km-side-icon { width: 15px; height: 15px; color: var(--shell-glow); flex-shrink: 0; }
 .km-side-grow { flex: 1; }
 
-/* 底部用户栏：可点用户行 + 独立退出按钮 */
 .km-user {
   position: relative;
   display: flex;
@@ -636,8 +602,6 @@ async function exitGame() {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 独立退出键：常红（破坏性操作一眼可辨），与用户行同高对齐。
-   选择器带 .km-user 提高特异性——否则会被 .topbar-menu button 的 text-1 覆盖 */
 .km-user .km-exit {
   width: 30px;
   height: 30px;
@@ -654,7 +618,6 @@ async function exitGame() {
 .km-user .km-exit svg { width: 15px; height: 15px; color: var(--accent-red); }
 .km-user .km-exit:hover { background: rgba(236, 1, 1, 0.14); border-color: rgba(236, 1, 1, 0.35); filter: drop-shadow(0 0 5px rgba(255, 82, 82, 0.45)); }
 
-/* 账户菜单：锚在用户行上方弹出（行在面板底部，向上展开才不越界） */
 .km-acct-menu {
   position: absolute;
   left: 0;
@@ -736,7 +699,6 @@ async function exitGame() {
 .topbar-tab.minimized { opacity: 0.5; }
 .topbar-tab-icon { width: 12px; height: 12px; color: var(--shell-glow); flex-shrink: 0; }
 
-/* 运行标签右键菜单（Teleport 到 body；造型与桌面/Dock 菜单同源，实例相互独立） */
 .win-menu-mask { position: fixed; inset: 0; z-index: 9998; }
 .win-menu {
   position: fixed;
@@ -766,7 +728,6 @@ async function exitGame() {
 }
 .win-menu button:hover { background: rgba(150, 225, 255, 0.10); color: var(--text-0); }
 .win-menu button .win-menu-icon { width: 14px; height: 14px; color: var(--shell-glow); flex-shrink: 0; }
-/* 关闭窗口：破坏性操作，红色可辨 */
 .win-menu button.danger { color: var(--accent-red); }
 .win-menu button.danger .win-menu-icon { color: var(--accent-red); }
 .win-menu button.danger:hover { background: rgba(236, 1, 1, 0.12); color: var(--accent-red); }
@@ -779,13 +740,11 @@ async function exitGame() {
   color: var(--text-2);
 }
 .tray-item { display: flex; align-items: center; gap: 6px; }
-/* 平铺模式开关：无边框图标按钮，开启时点青（与其它 tray 项的静默风格一致） */
 .tray-btn { background: none; border: none; padding: 0 3px; cursor: pointer; color: var(--text-1); }
 .tray-btn svg { width: 15px; height: 15px; }
 .tray-btn:hover { color: var(--text-0); }
 .tray-btn.on { color: var(--accent-cyan); }
 
-/* 连接状态：图标式（学习 NoriOS 顶栏的信号图标），绿=已连接 / 红=连接中 */
 .tray-item.conn svg { width: 15px; height: 15px; color: var(--accent-red); }
 .tray-item.conn.ok svg {
   color: var(--accent-green);

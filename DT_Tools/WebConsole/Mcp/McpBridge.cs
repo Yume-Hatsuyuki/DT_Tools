@@ -3,30 +3,14 @@ using UnityEngine;
 
 namespace DT_Tools.WebConsole.Mcp
 {
-    /// <summary>
-    /// MCP 独立监听组件：装配（Auth/Router/HttpServer）并持有生命周期。
-    /// </summary>
-    /// <remarks>
-    /// 与 WebConsole 平级但互不依赖——WebConsole 停用时 MCP 照常工作；传输层复用
-    /// WebConsole 的 HttpServer/Router/Auth。/mcp 与 status/toggle 同时注册在两条路由面
-    /// （本监听 + WebConsole 路由），共用同一套静态处理器，MCP 客户端走哪个门都等价。
-    /// 线程模型同 WebConsole：监听线程 + ThreadPool 派发；工具触 Unity API 自走 RunOnMain。
-    /// </remarks>
     public sealed class McpBridge : MonoBehaviour
     {
         public static McpBridge Instance { get; private set; }
 
         private HttpServer _server;
 
-        /// <summary>
-        /// 监听是否已拉起（status 展示用：启动时已停用则本监听不在，仅 WebConsole 门可用）。
-        /// </summary>
         public static bool Running => Instance != null;
 
-        /// <summary>
-        /// 由 Plugin 在 McpOptions.Enabled 时调用。
-        /// </summary>
-        /// <param name="log">BepInEx 的日志来源。</param>
         public void Init(ManualLogSource log)
         {
             if (Instance != null)
@@ -44,7 +28,6 @@ namespace DT_Tools.WebConsole.Mcp
             _server = new HttpServer(router, "DT_Mcp");
             _server.Start(McpOptions.ListenIp, McpOptions.Port);
 
-            // 与 WebConsole 同口径的运行前置：失焦不停摆 + 暴露面警告
             if (McpOptions.RunInBackground && !Application.runInBackground)
             {
                 Application.runInBackground = true;

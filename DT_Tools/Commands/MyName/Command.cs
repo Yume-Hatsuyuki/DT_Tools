@@ -7,16 +7,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.MyName
 {
-    /// <summary>
-    /// /myname &lt;新昵称&gt; — 更改自己的昵称（任何阶段可用）。
-    /// </summary>
-    /// <remarks>
-    /// 三层生效范围：
-    /// ① 本地昵称（MyPlayerName + PlayerPrefs + 大厅输入框）——总是立即生效，下次进房上报；
-    /// ② 在房内且自己是房主：同步服务端记录（同 /nick 路径），新进入房间的玩家可见；
-    /// ③ 在房内且是普通客户端：额外刷新本机显示；服务端记录在重新进出房间时
-    /// 随 C_ENTER_GAME（0.1.18c NetworkManager.cs:1243）携带新名字自然更新。
-    /// </remarks>
     internal sealed class MyNameCommand : ICommand
     {
         public string Name => "myname";
@@ -44,7 +34,7 @@ namespace DT_Tools.Commands.MyName
             PlayerName.SetLocalName(newName);
 
             string effect;
-            if (Managers.Network?.GameServer != null)   // 在房内（NetworkManager.InRoom 为 private，GameServer 是其公开判据）
+            if (Managers.Network?.GameServer != null)
             {
                 if (HostGuard.IsHost && GameRoom.Instance?.Host?.PublicInfo != null)
                 {

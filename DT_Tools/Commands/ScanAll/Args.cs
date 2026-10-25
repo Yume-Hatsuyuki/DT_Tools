@@ -2,17 +2,8 @@ using System.Globalization;
 
 namespace DT_Tools.Commands.ScanAll
 {
-    /// <summary>
-    /// /scan_all 参数：发包间隔（秒）。
-    /// </summary>
-    /// <remarks>
-    /// 0=同帧一次发完，&gt;0=每包间隔。
-    /// </remarks>
     internal static class ScanAllArgs
     {
-        /// <summary>
-        /// 间隔上限：超过只会让协程挂更久，无任何收益，拦下明显手滑的输入。
-        /// </summary>
         private const float MaxInterval = 60f;
 
         public static bool TryParseInterval(string raw, out float interval, out string error)

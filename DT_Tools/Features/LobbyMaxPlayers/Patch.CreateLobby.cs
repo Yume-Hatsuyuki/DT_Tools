@@ -6,19 +6,9 @@ using Steamworks;
 
 namespace DT_Tools.Features.LobbyMaxPlayers
 {
-    /// <summary>
-    /// CreateLobby 整替：pending 字段按原版顺序填充后，Lobby 容器上限改用
-    /// EffectiveSteamMemberLimit（原版恒 16：0.1.18c DummyClient/SteamLobbyManager.cs）。
-    /// </summary>
-    /// <remarks>
-    /// pending 字段为私有：_pendingCreateCallback:60 / _pendingRoomCode:70 / _pendingRoomName:72 /
-    /// _pendingMic:74 / _pendingLang:76 / _pendingIsPrivate:78 / _createEnterPending:82。
-    /// </remarks>
     [HarmonyPatch(typeof(SteamLobbyManager), nameof(SteamLobbyManager.CreateLobby))]
     internal static class LobbyMaxPlayersCreateLobbyPatch
     {
-        // 顺序契约见 CustomRoomCode.CreateLobby 注释：整替 Prefix 靠后执行，才能读到
-        // 改参 Prefix 修改后的 roomCode/roomName
         [HarmonyPriority(400)]
         private static bool Prefix(
             SteamLobbyManager __instance,

@@ -11,14 +11,6 @@ using Object = UnityEngine.Object;
 
 namespace DT_Tools.WebConsole
 {
-    /// <summary>
-    /// 内嵌 WebUI 控制台组件：装配（Auth/Router/HttpServer）+ 命令主线程队列。
-    /// </summary>
-    /// <remarks>
-    /// 线程模型：/api/run 工作线程入队并同步等待（≤5s），Update() 在主线程消费执行，
-    /// 命令因此可以安全访问 Unity API 与游戏单例。API 层的主线程投递统一走
-    /// Core/CoroutineHost.Post（本类不再自建第二套动作泵）。
-    /// </remarks>
     public sealed class WebConsole : MonoBehaviour
     {
         public static WebConsole Instance { get; private set; }
@@ -29,29 +21,12 @@ namespace DT_Tools.WebConsole
         private readonly object _pendLock = new object();
         private HttpServer _server;
 
-        /// <summary>
-        /// 供 API 层（HTTP 线程）把需要 Unity API 的动作投递到主线程执行，
-        /// 泵由 Core/CoroutineHost 承载（与命令队列各自独立，互不阻塞）。
-        /// </summary>
-        /// <param name="action">要在主线程执行的动作。</param>
         public static void Post(Action action)
         {
             if (Instance == null || action == null) return;
             CoroutineHost.Post(action);
         }
 
-        /// <summary>
-        /// 供 API 层在 HTTP 线程同步执行一段需要主线程的工作并取回结果（复用 /api/run 的
-        /// 队列 + 超时保护）。
-        /// </summary>
-        /// <remarks>
-        /// 成功返回 work 的结果；主线程停摆超时 / WebConsole 未装配时
-        /// 返回 Fail。注意：超时后 work 仍会在主线程稍后执行（结果被丢弃），work 必须
-        /// 可重入无害；延迟执行发生时会显式告警，不再静默生效。
-        /// </remarks>
-        /// <param name="work">要在主线程执行的工作。</param>
-        /// <param name="timeoutMs">等待结果的超时时间，单位毫秒。</param>
-        /// <returns>工作的执行结果；超时时返回超时错误。</returns>
         public static CommandResult RunOnMain(Func<CommandResult> work, int timeoutMs = RunTimeoutMs)
         {
             if (work == null) return CommandResult.Fail("empty action");
@@ -60,21 +35,18 @@ namespace DT_Tools.WebConsole
 
             var done = new ManualResetEventSlim(false);
             CommandResult result = null;
-            // 共享取消标记：HTTP 线程超时回包后置位，主线程晚到的执行据此告警
-            // （bool 写原子且此处无重排风险：晚几十毫秒置位也只是少一条日志）
             bool timedOut = false;
             CoroutineHost.Post(() =>
             {
                 if (timedOut)
                     Log.Warn("WebConsole", "主线程动作在超时回包后仍被延迟执行（如 /api/dummy/create 的写操作可能已实际生效）——结果与用户预期可能背离。");
-                // 延迟完成通道：work 返回占位结果时由回调稍后回填（同在主线程的异步收尾）
                 DeferredCompletion.Begin(r =>
                 {
                     result = r;
                     if (timedOut)
                         Log.Warn("WebConsole", "延迟完成的结果在超时回包后到达，已丢弃。");
                     try { done.Set(); }
-                    catch (ObjectDisposedException) { /* 超时路径已回包 Fail("timeout") */ }
+                    catch (ObjectDisposedException) { }
                 });
                 try { result = work(); }
                 catch (Exception ex)
@@ -84,10 +56,9 @@ namespace DT_Tools.WebConsole
                 }
                 finally { DeferredCompletion.End(); }
                 if (result != null && result.IsDeferred)
-                    return; // 占位结果：等待方由上面的回调在异步收尾时唤醒
-                // 竞态防护同 Complete()：HTTP 线程超时后已 Dispose，晚到的 Set() 必须吞掉
+                    return;
                 try { done.Set(); }
-                catch (ObjectDisposedException) { /* 超时路径已回包 Fail("timeout") */ }
+                catch (ObjectDisposedException) { }
             });
 
             if (!done.Wait(timeoutMs))
@@ -100,10 +71,6 @@ namespace DT_Tools.WebConsole
             return result ?? CommandResult.Fail("action error");
         }
 
-        /// <summary>
-        /// 由 Plugin 在启用 WebConsole 时调用（读取 WebConsoleOptions 已由引擎绑定）。
-        /// </summary>
-        /// <param name="log">BepInEx 的日志来源。</param>
         public void Init(ManualLogSource log)
         {
             if (Instance != null)
@@ -120,22 +87,11 @@ namespace DT_Tools.WebConsole
 
             _server = new HttpServer(router);
             _server.Start(WebConsoleOptions.ListenIp, WebConsoleOptions.Port);
-            // WebSocket 实时流独立通道（Mono 的 HttpListener 不支持 WS 升级）：
-            // 自管 TCP 完成握手后与 HTTP 路径共用 LogStreamApi 的客户端逻辑
             WsServer.Start(WebConsoleOptions.ListenIp, WebConsoleOptions.WsPort, auth);
-            // 日志实时流：Log 门面每写一条即触发，广播到全部 WebSocket 客户端（只入队不阻塞）
             Log.EntryAppended += Api.LogStreamApi.Broadcast;
             ApplyRuntimeToggles();
         }
 
-        /// <summary>
-        /// 远程/后台使用的前置条件：游戏窗口失焦时 Unity 默认可能暂停主线程（玩家循环停摆），
-        /// 队列泵随之停转——表现为所有 /api/run 统一 5 秒超时。
-        /// </summary>
-        /// <remarks>
-        /// 按配置强制开启后台运行。
-        /// 非回环监听 + 空密码时给出暴露面警告。
-        /// </remarks>
         private void ApplyRuntimeToggles()
         {
             if (WebConsoleOptions.RunInBackground && !Application.runInBackground)
@@ -152,8 +108,8 @@ namespace DT_Tools.WebConsole
         private void RegisterRoutes(Router router, Auth auth)
         {
             router.Add("POST", "/api/run", HandleRun);
-            router.Add("GET", "/api/log/ws", Api.LogStreamApi.Handle);   // WebSocket 实时流（先于 /api/log 前缀匹配）
-            router.Add("GET", "/api/log", Api.LogsApi.Handle);           // 增量兜底（首屏/断线补齐）
+            router.Add("GET", "/api/log/ws", Api.LogStreamApi.Handle);
+            router.Add("GET", "/api/log", Api.LogsApi.Handle);
             router.Add("GET", "/api/commands", Api.CommandsApi.HandleList);
             router.Add("*", "/api/config/section/", Api.ConfigApi.HandleSectionLog);
             router.Add("GET", "/api/config/list", Api.ConfigApi.HandleList);
@@ -168,14 +124,11 @@ namespace DT_Tools.WebConsole
             router.Add("*", "/api/automation/modules/", Api.AutomationApi.HandleModule);
             router.Add("GET", "/api/steam/players", Api.SteamApi.Handle);
             router.Add("GET", "/api/steam/news", Api.SteamNewsApi.Handle);
-            // 更新检测与下载（GitHub Releases latest）：状态轮询 / 手动检查 / 后台下载 / 定位文件
             router.Add("GET", "/api/update/status", Api.UpdateApi.HandleStatus);
             router.Add("POST", "/api/update/check", Api.UpdateApi.HandleCheck);
             router.Add("POST", "/api/update/download", Api.UpdateApi.HandleDownload);
             router.Add("POST", "/api/update/reveal", Api.UpdateApi.HandleReveal);
-            router.Add("GET", "/api/fs/list", Api.FsApi.HandleList);   // WebUI 内置文件选择器（只读目录浏览）
-            // 随身MP3：全部端点经 RunOnMain 主线程执行。playlist/* 必须注册在 play 之前——
-            // Router 前缀匹配，/api/mp3/play 会截走 /api/mp3/playlist/*
+            router.Add("GET", "/api/fs/list", Api.FsApi.HandleList);
             router.Add("POST", "/api/mp3/playlist/add", Api.Mp3Api.HandlePlaylistAdd);
             router.Add("POST", "/api/mp3/playlist/remove", Api.Mp3Api.HandlePlaylistRemove);
             router.Add("POST", "/api/mp3/playlist/move", Api.Mp3Api.HandlePlaylistMove);
@@ -185,17 +138,14 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/mp3/netease/info", Api.Mp3Api.HandleNeteaseInfo);
             router.Add("GET", "/api/mp3/netease/settings", Api.Mp3Api.HandleNeteaseSettings);
             router.Add("POST", "/api/mp3/netease/settings", Api.Mp3Api.HandleNeteaseSettingsSet);
-            // 歌单库：路径不以 /api/mp3/play 为前缀，注册顺序无冲突
             router.Add("POST", "/api/mp3/lists/create", Api.Mp3Api.HandleListCreate);
             router.Add("POST", "/api/mp3/lists/rename", Api.Mp3Api.HandleListRename);
             router.Add("POST", "/api/mp3/lists/delete", Api.Mp3Api.HandleListDelete);
             router.Add("POST", "/api/mp3/lists/select", Api.Mp3Api.HandleListSelect);
-            // 手柄应用：配置面（手柄本身由 Features/Gamepad 的后台线程处理）
             router.Add("GET", "/api/gamepad/state", Api.GamepadApi.HandleState);
             router.Add("POST", "/api/gamepad/bind", Api.GamepadApi.HandleBind);
             router.Add("POST", "/api/gamepad/toggle", Api.GamepadApi.HandleToggle);
             router.Add("POST", "/api/gamepad/reset", Api.GamepadApi.HandleReset);
-            // 平板电脑应用（实验性）：状态轮询、发言、照片上传与下载、清理
             router.Add("GET", "/api/tablet/state", Api.WebTabletApi.HandleState);
             router.Add("POST", "/api/tablet/send", Api.WebTabletApi.HandleSend);
             router.Add("POST", "/api/tablet/photo", Api.WebTabletApi.HandlePhotoUpload);
@@ -213,9 +163,6 @@ namespace DT_Tools.WebConsole
             router.Add("POST", "/api/mp3/local", Api.Mp3Api.HandleLocal);
             router.Add("POST", "/api/mp3/mode", Api.Mp3Api.HandleMode);
             router.Add("POST", "/api/mp3/stop", Api.Mp3Api.HandleStop);
-            // 假人管理（假人应用）：全部经 RunOnMain 在主线程读写 GameRoom。
-            // remove-all 必须注册在 remove 之前——Router 按注册顺序做前缀匹配，
-            // 否则 /api/dummy/remove-all 会被更短的 /api/dummy/remove 截走报 invalid body
             router.Add("POST", "/api/dummy/remove-all", Api.DummyApi.HandleRemoveAll);
             router.Add("GET", "/api/dummy/state", Api.DummyApi.HandleState);
             router.Add("GET", "/api/dummy/characters", Api.DummyApi.HandleCharacters);
@@ -226,8 +173,6 @@ namespace DT_Tools.WebConsole
             router.Add("GET", "/api/meta", Api.SystemApi.HandleMeta);
             router.Add("POST", "/api/game/exit", Api.SystemApi.HandleExit);
 
-            // MCP 桥接子域（挂件状态面 + /mcp 兜底门）：MCP 另有独立监听（McpBridge，
-            // 独立 Port/ListenIp/Password），两条路由面共用同一套处理器
             Mcp.McpServer.RegisterRoutes(router);
         }
 
@@ -252,22 +197,18 @@ namespace DT_Tools.WebConsole
             var pending = new PendingRequest
             {
                 Command = raw,
-                // 会话 id 由前端随 /api/run 头携带：执行期间 Log 写出的条目带 Session，
-                // 前端据此把输出隔离回发起命令的那个控制台窗口
                 Session = ctx.Request.Headers["X-DT-Session"],
                 Done = new ManualResetEventSlim(false),
             };
             lock (_pendLock)
                 _pending.Enqueue(pending);
 
-            // 超时保护：主线程卡死时不无限挂起 HTTP 线程
             if (pending.Done.Wait(RunTimeoutMs))
             {
                 HttpServer.WriteJson(ctx.Response, CommandResult.Success(pending.Result));
             }
             else
             {
-                // 超时必留痕：最常见原因是游戏窗口失焦后主线程停摆（RunInBackground 被关）
                 Log.Warn("WebConsole", $"命令 {RunTimeoutMs / 1000} 秒未被执行（主线程卡顿或失焦停摆？）：{pending.Command}");
                 HttpServer.WriteJson(ctx.Response, CommandResult.Fail("timeout"));
             }
@@ -295,7 +236,6 @@ namespace DT_Tools.WebConsole
             string session = pending.Session;
             if (!string.IsNullOrEmpty(session))
                 CommandSession.Begin(session);
-            // 延迟完成通道：命令经 ctx.Defer() 占位返回时，真实结果由异步收尾经此回调回填
             DeferredCompletion.Begin(r => Complete(pending, r));
             try
             {
@@ -303,7 +243,6 @@ namespace DT_Tools.WebConsole
             }
             catch (Exception ex)
             {
-                // 泵内未预期异常不能吞掉挂起请求——否则 HTTP 线程必然白等 5 秒超时
                 Log.Exception("WebConsole", ex, $"命令主线程执行异常: {raw}");
                 Complete(pending, CommandResult.Fail("command error"));
             }
@@ -315,15 +254,6 @@ namespace DT_Tools.WebConsole
             }
         }
 
-        /// <summary>
-        /// 命令文本执行核心：剥前缀 → 引号感知分词 → 查表 → 执行。
-        /// </summary>
-        /// <remarks>
-        /// 只在主线程调用；
-        /// 供本类命令队列泵与 MCP 的 run_command 工具共用（单一实现，行为不漂移）。
-        /// </remarks>
-        /// <param name="raw">命令原始文本，可带前缀。</param>
-        /// <returns>命令执行结果。</returns>
         internal static CommandResult ExecuteCommandText(string raw)
         {
             if (raw.StartsWith("/") || raw.StartsWith("!"))
@@ -348,20 +278,15 @@ namespace DT_Tools.WebConsole
 
         private static void Complete(PendingRequest pending, CommandResult result)
         {
-            // 延迟完成占位：跳过回填，等待方由 CommandResult.Complete 的回调稍后唤醒
             if (result != null && result.IsDeferred)
                 return;
             pending.Result = result;
-            // 竞态防护：HTTP 线程 Wait(5000) 超时后已 Dispose 掉 Done，而主线程卡顿（如加载
-            // 场景）时命令仍会稍后执行完毕，这里晚到的 Set() 若不吞 ObjectDisposedException，
-            // 异常会抛在 Unity 主线程 Update()（无 try/catch），中断当帧队列后续项。
             try
             {
                 pending.Done?.Set();
             }
             catch (ObjectDisposedException)
             {
-                // 超时路径已回包 Fail("timeout")，无需处理
             }
         }
 

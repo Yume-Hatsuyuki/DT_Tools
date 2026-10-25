@@ -6,20 +6,11 @@ import IconCheck from '~icons/tabler/check';
 import IconCopy from '~icons/tabler/copy';
 import IconX from '~icons/tabler/x';
 
-/**
- * MCP 桥接小组件（插件式弹窗，Steam 在线同款）：可拖动、可关闭，Dock 重开。
- * 展示桥接状态（启用/停用）、端点 URL、通用 MCP 接入配置片段（一键复制）、工具计数与
- * 调用滚动日志（后端环形缓冲，随轮询流入）；配置区（端口/监听/密码）与「DT 配置」页读写
- * 同一份 Mcp 段（都走 ConfigService），
- * 两处天然同步——本组件 5 秒轮询拉回对方改动，未聚焦的字段自动跟随。
- * 端口/监听/密码为监听参数，热改不重绑，应用后提示重启生效。
- */
 const emit = defineEmits(['close']);
 
 const STORE_KEY = 'dt_mcp_widget_v1';
 const TOPBAR_H = 32;
 
-/** 配置区字段 → Mcp 段配置键（与引擎推导键名逐字一致）。 */
 const CFG_KEYS = { port: 'Port', listenIp: 'ListenIp', password: 'Password' };
 
 function load() {
@@ -29,16 +20,16 @@ function load() {
 const pos = ref(load().pos || null);
 const rootEl = ref(null);
 let timer = null;
-const status = ref(null);   // {ok,enabled,running,url,port,listenIp,password,callCount,lastCall,calls,tools}
+const status = ref(null);
 const copied = ref(false);
-const cfg = ref({ port: '', listenIp: '', password: '' });   // 编辑缓冲
+const cfg = ref({ port: '', listenIp: '', password: '' });
 const focusedKey = ref(null);
 const restartHint = ref(false);
 
 function persist(closed) {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({ closed, pos: pos.value }));
-  } catch { /* 隐私模式忽略 */ }
+  } catch { }
 }
 
 onMounted(() => {
@@ -55,7 +46,6 @@ onUnmounted(() => {
 async function refresh() {
   const s = await API.mcpStatus();
   status.value = s;
-  // 跟随另一处（DT 配置页/其他挂件实例）的改动；正在编辑的字段不覆盖
   if (s) {
     if (focusedKey.value !== 'port') cfg.value.port = s.port;
     if (focusedKey.value !== 'listenIp') cfg.value.listenIp = s.listenIp;
@@ -63,7 +53,6 @@ async function refresh() {
   }
 }
 
-/** 失焦时若与后端值不同才应用（写 Mcp 段 + 落盘），避免轮询期间空写。 */
 async function onBlur(key) {
   focusedKey.value = null;
   const raw = String(cfg.value[key] ?? '');
@@ -103,13 +92,11 @@ async function copySnippet() {
     await navigator.clipboard.writeText(snippet.value);
     copied.value = true;
     setTimeout(() => { copied.value = false; }, 1600);
-  } catch { /* 剪贴板不可用时静默 */ }
+  } catch { }
 }
 
 const posStyle = computed(() =>
   pos.value ? { left: pos.value.left + 'px', top: pos.value.top + 'px', right: 'auto' } : {});
-
-// ---- 标题栏拖动（视口内钳位，SteamWidget 同款） ----
 
 let drag = null;
 
@@ -199,7 +186,6 @@ function onUp() {
   position: fixed;
   z-index: 4500;
   width: 236px;
-  /* 默认悬停右上角 SteamWidget 的下方；拖动后由内联 left/top 接管 */
   top: calc(var(--topbar-h) + 140px);
   right: 14px;
   border-radius: 14px;
@@ -311,7 +297,6 @@ function onUp() {
 .mw-stats { margin-top: 10px; }
 .mw-line { font-size: 10.5px; color: var(--text-1); line-height: 1.7; }
 
-/* 调用滚动日志：后端环形缓冲 30 条，5 秒轮询自然流入；单条=元信息行+参数行 */
 .mw-log {
   margin-top: 5px;
   max-height: 150px;

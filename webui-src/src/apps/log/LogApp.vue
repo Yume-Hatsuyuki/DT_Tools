@@ -2,11 +2,6 @@
 import { ref, computed, nextTick, onUnmounted } from 'vue';
 import { useLogStream } from '../../composables/useLogStream.js';
 
-/**
- * 日志应用（全量日志唯一归口）：控制台只显示各自会话的命令输出后，
- * 这里收全部日志（含全局与各会话）。级别筛选 + 文本搜索 + 暂停跟随 +
- * 清屏（只清本地视图，不动服务端环形缓冲）。
- */
 const LEVEL_COLOR = {
   WARN: 'var(--accent-amber)',
   ERROR: 'var(--accent-red)',
@@ -19,9 +14,9 @@ const entries = ref([]);
 const MAX_ENTRIES = 5000;
 const TRIM_STEP = 1000;
 
-const levelFilter = ref('ALL');   // ALL / INFO / WARN / ERROR
+const levelFilter = ref('ALL');
 const query = ref('');
-const paused = ref(false);        // 暂停后新条目丢弃不入视图（再次点击恢复）
+const paused = ref(false);
 
 function pass(e) {
   if (paused.value) return false;
@@ -38,7 +33,7 @@ function onStreamEntry(e) {
   if (entries.value.length > MAX_ENTRIES) entries.value.splice(0, TRIM_STEP);
   maybeScroll();
 }
-stream.replay(onStreamEntry);   // 补齐窗口打开前的日志
+stream.replay(onStreamEntry);
 onUnmounted(stream.onEntry(onStreamEntry));
 
 const filtered = computed(() => {
@@ -47,8 +42,6 @@ const filtered = computed(() => {
   return entries.value.filter(e =>
     e.msg.toLowerCase().includes(q) || (e.tag || '').toLowerCase().includes(q));
 });
-
-// ── 吸底滚动（与控制台同一套判断：贴底且无选区才跟随）──
 
 const logEl = ref(null);
 const stick = ref(true);

@@ -4,22 +4,8 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Say
 {
-    /// <summary>
-    /// /say 业务：通道自动路由 + S_CHAT_MESSAGE 构造与直发
-    /// （绕过原版聊天校验与冷却，复用游戏自带文字显示链路）。
-    /// </summary>
     internal static class SayLogic
     {
-        /// <summary>
-        /// 通道按当前阶段自动选择——客户端在每个阶段只有一条可用链路：
-        /// Lobby/Trial → normal（聊天按钮面板）；Survive → secret（黑/暗密聊屏幕浮层）；
-        /// Detective/PickCharacter/TotalResult 无显示链路，拒绝发送。
-        /// </summary>
-        /// <param name="state">当前游戏阶段。</param>
-        /// <param name="channel">选中的聊天通道。</param>
-        /// <param name="code">无可用通道时的错误码。</param>
-        /// <param name="text">无可用通道时的提示文字。</param>
-        /// <returns>选中可用通道时为 true。</returns>
         public static bool TryPickChannel(EGameState state, out EChatType channel, out string code, out string text)
         {
             switch (state)
@@ -43,16 +29,6 @@ namespace DT_Tools.Commands.Say
             return true;
         }
 
-        /// <summary>
-        /// 构造 S_CHAT_MESSAGE。
-        /// </summary>
-        /// <remarks>
-        /// PlayerId 恒为 0：客户端 GetPlayerCache(0) 查不到玩家
-        /// → 名字为空 → 只显示文字，等同"系统发言"。
-        /// </remarks>
-        /// <param name="channel">聊天通道。</param>
-        /// <param name="text">聊天文字。</param>
-        /// <returns>可直接发送的聊天包。</returns>
         public static S_CHAT_MESSAGE BuildPacket(EChatType channel, string text)
         {
             var packet = new S_CHAT_MESSAGE
@@ -64,21 +40,11 @@ namespace DT_Tools.Commands.Say
             };
             if (channel == EChatType.SecretChat)
             {
-                // 生存浮层要求 Time >= SurvivalTime - 3，否则按"过期消息"跳过
-                // （0.1.18c Server.Game/TimeManager.cs:16 SurviveTime）
                 packet.Time = TimeManager.Instance.SurviveTime;
             }
             return packet;
         }
 
-        /// <summary>
-        /// 全员发送：生存阶段发存活真人（对齐 AlivePlayers），大厅/裁判发房间全员。
-        /// </summary>
-        /// <param name="room">当前房间。</param>
-        /// <param name="channel">聊天通道。</param>
-        /// <param name="packet">要发送的聊天包。</param>
-        /// <param name="onSendFailure">单个玩家发送失败时的回调，传入失败原因。</param>
-        /// <returns>成功发送的人数。</returns>
         public static int SendAll(GameRoom room, EChatType channel, S_CHAT_MESSAGE packet, Action<string> onSendFailure)
         {
             var targets = channel == EChatType.SecretChat ? room.AlivePlayers : room.Players;
@@ -100,13 +66,6 @@ namespace DT_Tools.Commands.Say
             return sent;
         }
 
-        /// <summary>
-        /// 单发目标 Session（真·私密：不记录 SecretChatLog，不重连/迁移重放）。
-        /// </summary>
-        /// <param name="player">目标玩家。</param>
-        /// <param name="packet">要发送的聊天包。</param>
-        /// <param name="sendError">发送失败时的原因。</param>
-        /// <returns>发送成功时为 true。</returns>
         public static bool SendOne(Server.Game.Player player, S_CHAT_MESSAGE packet, out string sendError)
         {
             try

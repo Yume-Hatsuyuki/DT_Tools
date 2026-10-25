@@ -3,10 +3,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.LobbyMaxPlayers
 {
-    /// <summary>
-    /// 房间人数上限：进房上限（HandleEnterPlayer 整替）、Steam Lobby 容器（CreateLobby 整替）、
-    /// 开局出生点循环复用（GameStart 整替）三处联动。
-    /// </summary>
     [PatchFeature(
         "房间人数上限：可修改开房最多人数。",
         defaultEnabled: false,

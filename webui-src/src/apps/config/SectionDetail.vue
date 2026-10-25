@@ -11,7 +11,6 @@ import IconHistory from '~icons/tabler/history';
 
 const props = defineProps({
   section: { type: Object, required: true },
-  /** 返回目标显示名（上级分类名；从搜索结果进入时为"全部配置"）。 */
   backLabel: { type: String, default: '全部配置' },
 });
 const emit = defineEmits(['back', 'updated', 'reset', 'toast']);
@@ -27,7 +26,6 @@ const filteredEntries = computed(() => {
     (e.key || '').toLowerCase().includes(q) || (e.description || '').toLowerCase().includes(q));
 });
 
-/** 备忘录级显示名（WebUI 层，不触配置）。 */
 const alias = computed(() => sectionMetaStore.displayName(props.section.section));
 
 async function commitEntry(entry, value) {
@@ -43,7 +41,6 @@ async function resetSection() {
   if (!confirm(`恢复段 [${props.section.section}] 全部默认值？（仅做临时调整，如需持久化请使用保存功能。）`)) return;
   const j = await API.configReset(props.section.section);
   if (j.unauthorized) return;
-  // 通知父级 reload：详情页打开期间自动刷新被 isEditing 抑制，不主动刷就一直是旧值
   if (j.ok) { emit('reset'); emit('toast', { text: `已重置 ${j.reset} 项` }); }
   else emit('toast', { text: j.error || '重置失败', error: true });
 }
@@ -81,8 +78,6 @@ const logOpen = ref(false);
 </template>
 
 <style scoped>
-/* flex 子项排在 .toolbar 之后：必须 flex:1 + min-height:0 占据剩余空间，
-   height:100% 会把工具栏高度叠加成整体溢出，列表底部被窗口永久裁掉（滚动/缩放均不可见）。 */
 .section-detail { display: flex; flex-direction: column; flex: 1; min-height: 0; background: var(--surface-0); }
 
 .detail-header {

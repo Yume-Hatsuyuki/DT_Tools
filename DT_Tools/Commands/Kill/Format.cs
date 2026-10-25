@@ -5,9 +5,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Kill
 {
-    /// <summary>
-    /// /kill 输出格式化：人类回复文本 + JSON 结果 DTO（Newtonsoft 序列化）。
-    /// </summary>
     internal static class KillFormat
     {
         public static string Reply(bool all, List<Server.Game.Player> targets, bool isTrial)

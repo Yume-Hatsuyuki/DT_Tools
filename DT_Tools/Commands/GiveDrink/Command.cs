@@ -5,13 +5,6 @@ using Server.Game;
 
 namespace DT_Tools.Commands.GiveDrink
 {
-    /// <summary>
-    /// /givedrink &lt;all|#id&gt; [item] — 给所有/指定玩家发放手持道具（含武器与任务道具）。
-    /// </summary>
-    /// <remarks>
-    /// 不带参数时打印可用道具列表，不执行发放。发放走 ItemManager.CreateAndInsertInven
-    /// 原生链路，客户端背包可见、可使用/攻击。
-    /// </remarks>
     internal sealed class GiveDrinkCommand : ICommand
     {
         public string Name => "givedrink";
@@ -44,10 +37,6 @@ namespace DT_Tools.Commands.GiveDrink
                 return CommandResult.Fail("invalid item");
             }
 
-            // 发放前校验 DataId 存在：Item 构造用 ItemDic.Values.FirstOrDefault 匹配，未知 DataId
-            // 会得到 Data=null 的脏 Item（0.1.18c Server.Game/Item.cs），而 ItemManager.
-            // CreateAndInsertInven 先 Items.Add 再解引用 item.Data.Type（0.1.18c ItemManager.cs:17-22），
-            // 脏 Item 会永久留在 Host 的 Items 列表。itemId<=0 是清空语义，不查表。
             if (args.ItemId > 0 && Managers.Data?.ItemDic?.ContainsKey(args.ItemId) != true)
             {
                 ctx.Reply($"未知道具 DataId={args.ItemId}：不在 ItemDic 表中，已拒绝发放。");

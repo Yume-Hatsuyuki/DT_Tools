@@ -8,26 +8,18 @@ import IconFile from '~icons/tabler/file';
 import IconArrowUp from '~icons/tabler/arrow-up';
 import IconX from '~icons/tabler/x';
 
-/**
- * 本机文件选择弹窗（WebUI 内置浏览器）——游戏 Mono 加载不了 System.Windows.Forms，
- * 原生对话框方案已整体移除，选择文件一律走这里：数据源 GET /api/fs/list
- * （只读目录列举，本机后端代为浏览）。
- * 必须整块 Teleport 到 body：窗口外壳 .win 带 backdrop-filter，会成为 fixed 后代的
- * 包含块，留在窗口内遮罩只能盖住所在窗口（同 FolderGrid 菜单的教训）。
- */
 const props = defineProps({
-  /** 初始位置：本地文件路径→落到所在目录；本地目录路径→进入该目录；空/在线链接→盘符根视图。 */
   startPath: { type: String, default: '' },
   title: { type: String, default: '选择文件' },
 });
 const emit = defineEmits(['select', 'close']);
 
-const cur = ref('');        // 当前目录（""=盘符根视图）
+const cur = ref('');
 const parent = ref(null);
 const entries = ref([]);
 const truncated = ref(false);
-const sel = ref(null);      // 选中的文件完整路径
-const addr = ref('');       // 地址栏
+const sel = ref(null);
+const addr = ref('');
 const loading = ref(false);
 const err = ref('');
 

@@ -4,10 +4,6 @@ import { t, LOCALES, localePref, setLocalePref, locale } from '../i18n/index.js'
 import IconX from '~icons/tabler/x';
 import IconCheck from '~icons/tabler/check';
 
-/**
- * 语言弹窗：界面语言。默认「跟随浏览器」；选择某个语言后立即生效并保存在本浏览器。
- * 语言切换是响应式的，整个界面（包括本弹窗）会即时刷新。
- */
 const emit = defineEmits(['close']);
 
 const pref = computed(() => localePref());

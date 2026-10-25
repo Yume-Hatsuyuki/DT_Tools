@@ -6,12 +6,6 @@ using UnityEngine;
 
 namespace DT_Tools.Features.AutoFishMine
 {
-    /// <summary>
-    /// 一键钓鱼挖矿的三个补丁（同一功能，三个入口）：
-    /// 1) AutoStartPatch：DeviceManager.SearchInteractDevice Postfix，走近钓鱼点（Fishing）或矿机（Miner）自动 InteractBase 开始（Fishing.cs:45、Mineral.cs:34）。
-    /// 2) AutoFishingPatch：UI_FishingSlider.Update Postfix，钓鱼小游戏四阶段（0.1.18c UI_FishingSlider.cs:77）：Bite(1) 自动提竿；Reeling(3) 每帧 AddGauge（+0.05）模拟连按，满则自动收获。
-    /// 3) AutoMiningPatch：UI_MineralSlider.Update Postfix（0.1.18c UI_MineralSlider.cs:74）：滑块进入目标区（CheckCatch）时自动按成功分支，累计 3 次后发 C_HANDLE_MINERAL(IsSuccess=true) 并 StopCasting 收获。所有协议均为游戏原生请求，失败只记录日志，不中断。
-    /// </summary>
     [HarmonyPatch(typeof(DeviceManager), nameof(DeviceManager.SearchInteractDevice))]
     internal static class AutoStartPatch
     {
@@ -39,7 +33,7 @@ namespace DT_Tools.Features.AutoFishMine
                 return;
 
             if (Managers.Game == null || Managers.Game.CastingSlider != null)
-                return; // 正在读条，由游戏原生状态防重
+                return;
             if (AutoFishMineFeature.Throttle > 0f
                 && Time.unscaledTime - _lastTriggerAt < AutoFishMineFeature.Throttle)
                 return;
@@ -49,9 +43,6 @@ namespace DT_Tools.Features.AutoFishMine
         }
     }
 
-    /// <summary>
-    /// 自动钓鱼：咬钩自动提竿，收线自动连按。
-    /// </summary>
     [HarmonyPatch(typeof(UI_FishingSlider), "Update")]
     internal static class AutoFishingPatch
     {
@@ -61,13 +52,13 @@ namespace DT_Tools.Features.AutoFishMine
                 return;
 
             int phase = GetPhase(__instance);
-            if (phase == 1) // Phase.Bite：咬钩瞬间自动提竿
+            if (phase == 1)
             {
-                TryInvoke(__instance, "EnterCatchIntro"); // 0.1.18c UI_FishingSlider.cs:164
+                TryInvoke(__instance, "EnterCatchIntro");
             }
-            else if (phase == 3) // Phase.Reeling：自动连按收线
+            else if (phase == 3)
             {
-                TryInvoke(__instance, "AddGauge"); // 0.1.18c UI_FishingSlider.cs:205
+                TryInvoke(__instance, "AddGauge");
             }
         }
 
@@ -75,7 +66,7 @@ namespace DT_Tools.Features.AutoFishMine
         {
             try
             {
-                return Convert.ToInt32(Traverse.Create(popup).Field("_phase").GetValue<object>()); // 0.1.18c UI_FishingSlider.cs:40
+                return Convert.ToInt32(Traverse.Create(popup).Field("_phase").GetValue<object>());
             }
             catch (Exception ex)
             {
@@ -97,9 +88,6 @@ namespace DT_Tools.Features.AutoFishMine
         }
     }
 
-    /// <summary>
-    /// 自动挖矿：滑块进入目标区自动连击，3 次成功自动收获。
-    /// </summary>
     [HarmonyPatch(typeof(UI_MineralSlider), "Update")]
     internal static class AutoMiningPatch
     {
@@ -109,20 +97,19 @@ namespace DT_Tools.Features.AutoFishMine
                 return;
             try
             {
-                if (!Traverse.Create(__instance).Field("_isCatch").GetValue<bool>()) // 0.1.18c UI_MineralSlider.cs:28
+                if (!Traverse.Create(__instance).Field("_isCatch").GetValue<bool>())
                     return;
                 if (!__instance.CheckCatch())
-                    return; // 滑块未到位，等它摆回来
+                    return;
 
-                // 滑块到位：执行与"按键成功"等价的分支（0.1.18c UI_MineralSlider.cs)
                 Managers.Sound.PlaySystem("AxeSfx");
-                Traverse.Create(__instance).Field("_mineral").GetValue<Mineral>()?.PlayAxeEffect(); // _mineral: 0.1.18c UI_MineralSlider.cs:22
+                Traverse.Create(__instance).Field("_mineral").GetValue<Mineral>()?.PlayAxeEffect();
 
-                int count = Traverse.Create(__instance).Field("_successCount").GetValue<int>() + 1; // _successCount: 0.1.18c UI_MineralSlider.cs:24
+                int count = Traverse.Create(__instance).Field("_successCount").GetValue<int>() + 1;
                 Traverse.Create(__instance).Field("_successCount").SetValue(count);
                 if (count < 3)
                 {
-                    Traverse.Create(__instance).Method("Refresh").GetValue(); // 0.1.18c UI_MineralSlider.cs:65
+                    Traverse.Create(__instance).Method("Refresh").GetValue();
                 }
                 else
                 {

@@ -23,10 +23,9 @@ const hostEnabled = ref(false);
 const modules = ref([]);
 const loadError = ref('');
 const query = ref('');
-const openModuleId = ref(null);   // 展开中的模块 id，null=文件夹网格视图
+const openModuleId = ref(null);
 const logOpen = ref(false);
 const sectionMeta = useSectionMeta();
-// 网格/列表视图状态与切换：与 DT 配置页**共用一份**（切换按钮在各自页面的工具栏上）
 const { viewMode, toggleView } = useFolderView();
 
 async function reload() {
@@ -36,7 +35,6 @@ async function reload() {
   loadError.value = '';
   hostEnabled.value = !!data.hostEnabled;
   modules.value = data.modules || [];
-  // 展开中的模块用最新数据顶替，自动刷新时字段值实时回写
   if (openModuleId.value) {
     const fresh = modules.value.find(m => m.id === openModuleId.value);
     if (fresh) currentModule.value = fresh;
@@ -107,7 +105,6 @@ async function resetModule() {
   if (!confirm(`恢复模块 [${m.section}] 全部默认值？（仅做临时调整，如需持久化请使用保存功能。）`)) return;
   const j = await API.configReset(m.section);
   if (j.unauthorized) return;
-  // 模块详情打开期间自动刷新被 isEditing 抑制，重置后必须主动 reload 否则一直显示旧值
   if (j.ok) { dirty.value = true; showToast(`已重置 ${j.reset} 项`); await reload(); }
   else showToast(j.error || '重置失败', true);
 }
@@ -115,7 +112,6 @@ async function resetModule() {
 const modMeta = computed(() => {
   const m = currentModule.value;
   if (!m) return { author: '', side: '', desc: '' };
-  // 开关键名走协议字段（后端 Engine.EnabledKey），不硬编码 'Enabled'
   const enabledEntry = (m.entries || []).find(e => e.key === (m.enabledKey || 'Enabled'));
   const parsed = enabledEntry ? splitDesc(enabledEntry.description) : { author: '', side: '', text: '' };
   return {
@@ -131,13 +127,6 @@ onMounted(async () => {
 });
 onUnmounted(stopAutoRefresh);
 
-/**
- * 列表视图每行的说明：与模块详情页**同一来源** ——
- * 优先用协议给的模块描述，退回开关键描述里 splitDesc 出来的正文。
- *
- * ⚠️ 参数是 FolderGrid 的 **item 对象**（不是 key 字符串）—— 与 DT 配置页的 descOf 同一约定。
- * 早先这里收的是 key，而组件传的是整个 item ⇒ find 永不命中、整列说明为空。
- */
 function moduleInfoText(item) {
   const m = modules.value.find(x => x.id === item.key);
   if (!m) return '';

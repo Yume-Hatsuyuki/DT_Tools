@@ -9,13 +9,6 @@ import IconFolderOpen from '~icons/tabler/folder-open';
 import IconX from '~icons/tabler/x';
 import MarkdownBody from './MarkdownBody.vue';
 
-/**
- * 更新信息弹窗：列出新版本信息（版本号、发布时间、更新说明、安装包资产），
- * 并提供下载（后台线程，进度轮询）与"打开所在文件夹"。数据来自全局单例
- * useUpdateCheck（顶栏徽标/气泡与关于弹窗共用），本组件不自持状态。
- * 更新说明是 GitHub Release 的 Markdown 正文，由 MarkdownBody 渲染（解析为语法树后用 h() 构建节点，
- * 不使用 v-html，原始 HTML 只显示为文字）。
- */
 const emit = defineEmits(['close']);
 
 const upd = useUpdateCheck();
@@ -190,7 +183,6 @@ function fmtDate(text) {
 .upd-idle.ok { color: var(--accent-green); }
 .upd-idle.err { color: var(--accent-red); }
 
-/* ---- 更新说明 ---- */
 .upd-notes { margin-top: 12px; }
 .upd-notes-title { font-size: 12px; color: var(--text-2); margin-bottom: 5px; }
 .upd-notes-body {
@@ -204,7 +196,6 @@ function fmtDate(text) {
   line-height: 1.7;
   color: var(--text-1);
 }
-/* ---- 下载区 ---- */
 .upd-dl {
   margin-top: 12px;
   padding-top: 10px;
@@ -267,7 +258,6 @@ function fmtDate(text) {
 .upd-mini-btn.link { color: var(--shell-glow); }
 .upd-inline-err { font-size: 11.5px; color: var(--accent-red); }
 
-/* ---- 底部 ---- */
 .upd-foot { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
 .upd-foot-grow { flex: 1; }
 .upd-close-btn {

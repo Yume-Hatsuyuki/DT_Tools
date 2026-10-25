@@ -6,14 +6,6 @@ using DT_Tools.Features.BanList;
 
 namespace DT_Tools.Commands.BanList
 {
-    /// <summary>
-    /// /unban — 解除封禁，让被踢的玩家能重新加入。
-    /// </summary>
-    /// <remarks>
-    /// 直接从 GameRoom._bannedSteamIds 移除（BanList.TryUnban）。解封后对方的下一条
-    /// C_ENTER_GAME 即可正常通过封禁校验（0.1.18c Server.Game/GameRoom.cs:1037），
-    /// 需要对方自行经房间码 / 邀请重新加入；其余进房条件（人数上限、房间状态）照原版走。
-    /// </remarks>
     internal sealed class UnbanCommand : ICommand
     {
         public string Name => "unban";
@@ -54,8 +46,6 @@ namespace DT_Tools.Commands.BanList
                 return CommandResult.Success(new { count = bans.Count, unbanned = items });
             }
 
-            // 先按首段解析；失败且带多个参数时按整行重试（带空格的昵称没加引号时的兜底），
-            // 两路都失败则报首段的错误——那才是用户指定的目标。
             bool resolved = BanListLogic.TryResolve(ctx.Args[0], bans, out var target, out string error);
             if (!resolved && ctx.Args.Length > 1)
                 resolved = BanListLogic.TryResolve(string.Join(" ", ctx.Args), bans, out target, out _);

@@ -2,16 +2,8 @@ using System.Text;
 
 namespace DT_Tools.Commands.WorldExecute
 {
-    /// <summary>
-    /// /world.execute 帮助与成功文案。
-    /// </summary>
-    /// <remarks>
-    /// 视觉参考社区终端 MV（world.execute-me-ascii 的 EXECUTE 大字与 PROCESS TERMINATED 收束），
-    /// 结构贴近歌曲 MV 伪 Java（GodDrinksJava）会话，避免整段堆砌歌词。
-    /// </remarks>
     internal static class WorldExecuteFormat
     {
-        // 精简 block 字模（约 56 列，适配 WebUI 控制台常见宽度）
         private static readonly string[] Banner =
         {
             @" ███████╗██╗  ██╗███████╗ ██████╗██╗   ██╗████████╗███████╗",
@@ -25,7 +17,7 @@ namespace DT_Tools.Commands.WorldExecute
         public static string Help()
         {
             var sb = new StringBuilder();
-            sb.AppendLine(); // 首行空行：时间戳单独占一行，字模从下一行起排
+            sb.AppendLine();
             foreach (var line in Banner)
                 sb.AppendLine(line);
             sb.AppendLine();

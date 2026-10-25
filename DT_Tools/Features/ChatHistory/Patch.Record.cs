@@ -3,13 +3,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.ChatHistory
 {
-    /// <summary>
-    /// 打字机公开频道记录点：SendDeviceChatMessage 无本地拒绝分支（0.1.18c VoiceManager.cs:1286
-    /// 直接 SendChatPacket），Postfix 即实际发出。
-    /// </summary>
-    /// <remarks>
-    /// 打字机历史独立成池，不与全局聊天混用。
-    /// </remarks>
     [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.SendDeviceChatMessage))]
     internal static class ChatHistoryRecordInterphoneOpenPatch
     {
@@ -21,15 +14,6 @@ namespace DT_Tools.Features.ChatHistory
         }
     }
 
-    /// <summary>
-    /// 打字机秘密频道记录点：SendSecretChatMessage 冷却未就绪时静默拒绝不发包
-    /// （0.1.18c VoiceManager.cs:1293-1297），故 Prefix 存 IsSecretChatReady 快照、
-    /// Postfix 仅在就绪时记录，避免把被拒消息写进历史。
-    /// </summary>
-    /// <remarks>
-    /// IsSecretChatReady 为公开属性
-    /// （0.1.18c VoiceManager.cs，UI_ChatDevicePopup.cs:278 亦调用）。
-    /// </remarks>
     [HarmonyPatch(typeof(VoiceManager), nameof(VoiceManager.SendSecretChatMessage))]
     internal static class ChatHistoryRecordInterphoneSecretPatch
     {

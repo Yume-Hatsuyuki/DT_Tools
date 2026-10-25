@@ -3,13 +3,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.UnlockEmotes
 {
-    /// <summary>
-    /// 原版对 id&lt;=0 返回 false、默认装备表情 true、其余查库存确认
-    /// （public，可用 nameof）：0.1.18c SteamInventorySource.cs。
-    /// </summary>
-    /// <remarks>
-    /// id&gt;0 整替为恒 true。
-    /// </remarks>
     [HarmonyPatch(typeof(SteamInventorySource), nameof(SteamInventorySource.IsEmoticonOwned))]
     internal static class UnlockEmotesIsEmoticonOwnedPatch
     {

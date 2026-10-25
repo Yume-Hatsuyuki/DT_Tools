@@ -5,12 +5,6 @@ using UnityEngine;
 
 namespace DT_Tools.Automation.AutoPickCharacter
 {
-    /// <summary>
-    /// 动作：选角阶段延迟后按间隔重发 C_PICK_CHARACTER（服务端 StartPick 的 SyncAllPlayer 回调前
-    /// _pickReady=false，过早的包会被静默忽略；达到 MaxAttempts 停止，服务端对已选玩家幂等）；
-    /// 大厅按需发 C_MODIFY_PLAYER ChangeCharacter 同步模型——失败/未生效同样按间隔重试，
-    /// 但尝试次数与选角阶段共用 MaxAttempts 上限，达到即停止并告警（避免无限刷包）。
-    /// </summary>
     internal static class AutoPickCharacterAction
     {
         public static void AutoPick()
@@ -75,8 +69,6 @@ namespace DT_Tools.Automation.AutoPickCharacter
             if (Time.realtimeSinceStartup < AutoPickCharacterState.NextLobbyTryRealtime)
                 return;
 
-            // 大厅换角与选角阶段共用 MaxAttempts 上限：目标角色被占用 / 服务端拒绝时
-            // 停止重试，超限只告警一次，重新进大厅（EnterLobby）后才重置
             int maxLobbyAttempts = Mathf.Max(1, AutoPickCharacterModule.MaxAttempts);
             if (AutoPickCharacterState.LobbyAttempts >= maxLobbyAttempts)
             {
@@ -108,7 +100,6 @@ namespace DT_Tools.Automation.AutoPickCharacter
                     return;
                 }
 
-                // 每次实际发包（无论成败）都计入大厅尝试数，发包失败 / 异常 / 发了不生效共用同一上限
                 AutoPickCharacterState.LobbyAttempts++;
                 if (!ClientPackets.TrySend(new C_MODIFY_PLAYER
                 {
@@ -141,7 +132,6 @@ namespace DT_Tools.Automation.AutoPickCharacter
 
             int fixedId = AutoPickCharacterModule.CharacterId;
 
-            // 后半次尝试回退随机，避免目标角色已被占用时一直空选
             if (AutoPickCharacterModule.FallbackToRandom && AutoPickCharacterState.Attempts > 0)
             {
                 int maxAttempts = Mathf.Max(1, AutoPickCharacterModule.MaxAttempts);

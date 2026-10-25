@@ -11,31 +11,10 @@ using Steamworks;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 假人（测试玩家）行为助手：房主本机把“没有真实网络连接的玩家”接入 GameRoom，供 WebUI「假人管理」使用。
-    /// </summary>
-    /// <remarks>
-    /// 只做行为，不含配置与补丁。
-    /// 与旧版 Playertest 插件的关键差异（修复开局卡帧）：
-    /// 1. 创建即 ConvertToDummy。游戏原生 CompleteWaitCount 只统计非 Dummy 玩家，状态切换只等真实客户端确认；旧版即时 ACK 会把开局流程压进同一帧，并在 Broadcast 的 foreach 内重入（JobSerializer.CompletePacket，0.1.18c Server.Game/JobSerializer.cs:50）。
-    /// 2. 玩家 ID 走 ObjectUtils 座位表（1..16，0.1.18c Server/ObjectUtils.cs），与真实玩家同一 ID 空间；旧版随机 100000+ 不占座位、无法释放。
-    /// 3. 移除走 HandleLeavePlayer 完整清理（广播 S_LEAVE_GAME、释放座位、清可见性与存活表，0.1.18c Server.Game/GameRoom.cs:1486）。假会话是安全的：SessionManager 全为空实现（0.1.18c Server/SessionManager.cs），HostPeerSession.Disconnect 为空（0.1.18c Server.Game/HostPeerSession.cs:74）。
-    /// 回大厅时游戏自行移除所有假人，本类台账经 Prune 同步失效；WebUI 的行配置保留，重新点「准备」即可再次进场。所有方法须在 Unity 主线程调用（WebConsole.RunOnMain / 命令泵内）。
-    /// </remarks>
     public static class FakePlayers
     {
-        /// <summary>
-        /// 随机选角协议值（0.1.18c Server.Game/GameRoom.cs:1717，PickCharacter 原生支持）。
-        /// </summary>
         public const int RandomCharacterId = -2;
 
-        /// <summary>
-        /// 假人发包出口：IsDummy 不参与 CompletePacket 等待，广播包到此即终结，
-        /// 无需任何 ACK/回包逻辑（旧版在此即时 ACK 是卡帧根因，已移除）。
-        /// </summary>
-        /// <remarks>
-        /// 依据：DummyClient/IPacketSink.cs 只要求 void Send(IMessage)。
-        /// </remarks>
         private sealed class FakePacketSink : IPacketSink
         {
             public void Send(IMessage packet)
@@ -43,28 +22,8 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>
-        /// 本助手创建、仍存活于房间内的假人台账（仅主线程访问）。
-        /// </summary>
         private static readonly List<Server.Game.Player> Created = new List<Server.Game.Player>();
 
-        /// <summary>
-        /// 创建假人并接入大厅。
-        /// </summary>
-        /// <remarks>
-        /// 流程对齐真实入房（0.1.18c Server.Game/GameRoom.cs
-        /// HandleEnterPlayer 的大厅分支）：座位 ID → 角色 → 进房 → InitLobby → S_ADD_PLAYER 环
-        /// → ConvertToDummy。characterId 传 RandomCharacterId 表示随机空闲角色。
-        /// capacity = 有效房间人数上限（由 API 层解析：解除上限功能开启时为其 MaxMembers，
-        /// 否则原生 8——Game 层禁止反向引用 Features）；座位表 16 仍是硬顶（ObjectUtils.cs:68-73）。
-        /// </remarks>
-        /// <param name="rawName">假人昵称。</param>
-        /// <param name="characterId">假人角色 ID。</param>
-        /// <param name="capacity">房间容量。</param>
-        /// <param name="created">创建成功的假人；失败时为 null。</param>
-        /// <param name="error">失败的错误码。</param>
-        /// <param name="text">失败的提示文字。</param>
-        /// <returns>创建成功时为 true；失败时为 false，原因写入 error 与 text。</returns>
         public static bool TryCreate(string rawName, int characterId, int capacity, out Server.Game.Player created, out string error, out string text)
         {
             created = null;
@@ -120,9 +79,6 @@ namespace DT_Tools.Game
 
             var session = new HostPeerSession(new FakePacketSink())
             {
-                // AccountID 取 session.PlayerID（Player 构造，0.1.18c Server.Game/Player.cs:566）。
-                // 真实玩家的 AccountID 是 Steam 账号串，昵称不会与之冲突，
-                // 也就不会误触进房的同账号重入校验（GameRoom.cs:981-1014）。
                 PlayerID = name,
                 SteamId = new CSteamID(0),
             };
@@ -136,10 +92,6 @@ namespace DT_Tools.Game
 
             try
             {
-                // 角色在进房前经 CharacterId 属性写入：属性 setter 会按角色表分配技能
-                // （0.1.18c Server.Game/Player.cs:356-372）——旧版直写 PublicInfo.CharacterId
-                // 绕过了 AllocateSkill。顺序对齐 HandleEnterPlayer（GameRoom.cs:1132-1135）：
-                // 进房前赋值，S_ADD_PLAYER 携带给各客户端。
                 if (characterId != 0 && characterId != RandomCharacterId)
                 {
                     if (Managers.Data?.CharacterDic == null || !Managers.Data.CharacterDic.ContainsKey(characterId))
@@ -155,19 +107,11 @@ namespace DT_Tools.Game
                     player.CharacterId = RandomFreeCharacter(room, player);
                 }
 
-                // 进房：EnterPlayer 为 private（0.1.18c Server.Game/GameRoom.cs:2771），
-                // 等效两步 = Players.Add + 名单脏标记。
                 room.Players.Add(player);
                 room.MarkRosterDirty();
 
-                // InitLobby：给假人发 S_INIT_MAP / S_LOBBY_PRESET（进假 sink 即终结），
-                // 并复位存活/状态/技能——与真实入房同一调用（GameRoom.cs:1172）。
                 player.InitLobby();
 
-                // S_ADD_PLAYER 环：让已在线客户端的名单/画面出现假人
-                // （对齐 HandleEnterPlayer，0.1.18c Server.Game/GameRoom.cs:1037-1063）。
-                // 原版还会把各现有玩家的就绪态发给新进玩家——假 sink 丢弃入站包，
-                // 无需复刻；假人自身的就绪态变化由 Ready 属性 setter 广播给各客户端。
                 var addPacket = new S_ADD_PLAYER
                 {
                     PlayerId = player.PublicInfo.PlayerId,
@@ -182,13 +126,6 @@ namespace DT_Tools.Game
                     other.Session.Send(addPacket);
                 }
 
-                // 大厅场景可见性：真实客户端进厅后会发 C_MOVE，服务端 Move →
-                // AreaManager.SearchAndUpdatePlayer（0.1.18c Server.Game/AreaManager.cs:59-72）
-                // 对每个其他玩家调 AddPlayer——按其语义（Player.cs:672-689，"把调用者的
-                // S_SPAWN 发给对方会话"）这就是彼此身体出现的时机。假人永远不发
-                // C_MOVE，这条链路不会为它触发，必须显式双向 AddPlayer：
-                //   player.AddPlayer(other) → 各客户端收到 S_SPAWN(假人)（场景出现假人）
-                //   other.AddPlayer(player) → 假人侧服务端可见性状态对称
                 foreach (var other in room.Players)
                 {
                     if (other == player || other.Session == null)
@@ -197,8 +134,6 @@ namespace DT_Tools.Game
                     other.AddPlayer(player);
                 }
 
-                // 标记为原生假人：IsDummy=true + 广播 S_PLAYER_DUMMY_CHANGED + 名单脏标记
-                // （0.1.18c Server.Game/Player.cs:503-519；OnDamagedEvent/Trial 通知在大厅均为无害分支）。
                 player.ConvertToDummy();
 
                 Created.Add(player);
@@ -207,9 +142,8 @@ namespace DT_Tools.Game
             }
             catch (Exception ex)
             {
-                // 失败回滚：完整原生清理（释放座位/广播离场/清可见性），不留半成品玩家
                 try { room.HandleLeavePlayer(player.Session, player); }
-                catch { /* 回滚失败也只能放弃：台账已剔除，状态由游戏侧兜底 */ }
+                catch { }
                 Created.Remove(player);
                 Log.Exception("FakePlayer", ex, $"创建假人「{name}」失败");
                 error = "create failed";
@@ -218,17 +152,6 @@ namespace DT_Tools.Game
             }
         }
 
-        /// <summary>
-        /// 移除假人（昵称或 #座位ID）。
-        /// </summary>
-        /// <remarks>
-        /// 走 HandleLeavePlayer 完整清理，对局中移除等价于
-        /// 真实玩家掉线转假人后的离场流程，房间状态不会被搞乱。
-        /// </remarks>
-        /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
-        /// <param name="error">失败的错误码。</param>
-        /// <param name="text">失败的提示文字。</param>
-        /// <returns>移除成功时为 true。</returns>
         public static bool TryRemove(string nameOrId, out string error, out string text)
         {
             error = null;
@@ -242,10 +165,6 @@ namespace DT_Tools.Game
             return true;
         }
 
-        /// <summary>
-        /// 移除本助手创建的全部假人。
-        /// </summary>
-        /// <returns>被移除的假人数量。</returns>
         public static int RemoveAll()
         {
             var room = GameRoom.Instance;
@@ -269,14 +188,6 @@ namespace DT_Tools.Game
             return removed;
         }
 
-        /// <summary>
-        /// 设置就绪态（大厅限定；Ready 属性 setter 会广播 S_READY，0.1.18c Player.cs:110-130）。
-        /// </summary>
-        /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
-        /// <param name="ready">目标就绪状态。</param>
-        /// <param name="error">失败的错误码。</param>
-        /// <param name="text">失败的提示文字。</param>
-        /// <returns>设置成功时为 true。</returns>
         public static bool TrySetReady(string nameOrId, bool ready, out string error, out string text)
         {
             error = null;
@@ -294,20 +205,6 @@ namespace DT_Tools.Game
             return true;
         }
 
-        /// <summary>
-        /// 为假人选角色。
-        /// </summary>
-        /// <remarks>
-        /// 选角阶段直接走原生 PickCharacter（支持 -2 随机/占用校验，
-        /// 0.1.18c Server.Game/GameRoom.cs:2371-2421）；大厅阶段走 ModifyPlayer 换角
-        /// （0.1.18c Server.Game/Player.cs:1713 方法头；ChangeCharacter 分支 :1713-1717，
-        /// 要求未准备），随机先解析成具体角色。
-        /// </remarks>
-        /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
-        /// <param name="characterId">要选的角色 ID，-2 表示随机。</param>
-        /// <param name="error">失败的错误码。</param>
-        /// <param name="text">失败的提示文字。</param>
-        /// <returns>选角成功时为 true。</returns>
         public static bool TryPick(string nameOrId, int characterId, out string error, out string text)
         {
             error = null;
@@ -326,9 +223,6 @@ namespace DT_Tools.Game
                 }
                 room.PickCharacter(player, characterId);
 
-                // PickCharacter 对"角色已被占用 / 该玩家已锁定"是静默忽略
-                // （0.1.18c Server.Game/GameRoom.cs），读私有台账核对是否真的锁定，
-                // 给用户诚实反馈（范本：Game/PlayerName 的 AccessTools 私有成员用法）。
                 var picked = AccessTools.Field(typeof(GameRoom), "_pickPlayers")?.GetValue(room) as List<int>;
                 var randomPicked = AccessTools.Field(typeof(GameRoom), "_randomPickPlayers")?.GetValue(room) as HashSet<int>;
                 bool locked = characterId == RandomCharacterId
@@ -354,8 +248,6 @@ namespace DT_Tools.Game
                 return false;
             }
 
-            // 大厅换角要求未准备（Player.ModifyPlayer 的 ChangeCharacter 分支）；
-            // 已准备时先自动取消准备，避免用户多一步操作。
             if (player.Ready)
                 room.HandleReady(player, false);
 
@@ -376,14 +268,6 @@ namespace DT_Tools.Game
             return true;
         }
 
-        /// <summary>
-        /// 房间快照（WebUI 轮询用）：阶段、房主标记、容量、全部玩家的假人标记与就绪态。
-        /// </summary>
-        /// <remarks>
-        /// capacity 由 API 层解析传入（同 TryCreate 的约定）。
-        /// </remarks>
-        /// <param name="capacity">房间容量，由 API 层传入。</param>
-        /// <returns>房间快照的 JSON 对象。</returns>
         public static object Snapshot(int capacity)
         {
             var room = GameRoom.Instance;
@@ -416,26 +300,11 @@ namespace DT_Tools.Game
             };
         }
 
-        /// <summary>
-        /// 台账清理：游戏在回大厅（StartLobby）时会自行移除所有假人
-        /// （0.1.18c Server.Game/GameRoom.cs），台账里已不在房间的条目在此剔除。
-        /// </summary>
-        /// <param name="room">当前房间。</param>
-        /// <returns>被清理的台账条目数量。</returns>
         private static int Prune(GameRoom room)
         {
             return Created.RemoveAll(p => p == null || !room.Players.Contains(p));
         }
 
-        /// <summary>
-        /// 按昵称或 #座位ID 定位台账中的假人。
-        /// </summary>
-        /// <param name="nameOrId">假人昵称或 #座位 ID。</param>
-        /// <param name="room">找到的房间；失败时为 null。</param>
-        /// <param name="player">找到的假人；失败时为 null。</param>
-        /// <param name="error">失败的错误码。</param>
-        /// <param name="text">失败的提示文字。</param>
-        /// <returns>找到假人时为 true。</returns>
         private static bool Resolve(string nameOrId, out GameRoom room, out Server.Game.Player player, out string error, out string text)
         {
             player = null;
@@ -474,13 +343,6 @@ namespace DT_Tools.Game
             return true;
         }
 
-        /// <summary>
-        /// 从角色表挑一个未被占用的角色（对齐 PickRandomOwnedCharacter 的三级回退：
-        /// 未占用非梅德琳 → 全部未占用 → 全表，0.1.18c Server.Game/GameRoom.cs）。
-        /// </summary>
-        /// <param name="room">当前房间。</param>
-        /// <param name="self">要选角的玩家。</param>
-        /// <returns>未被占用的角色 DataId。</returns>
         private static int RandomFreeCharacter(GameRoom room, Server.Game.Player self)
         {
             var taken = new HashSet<int>();

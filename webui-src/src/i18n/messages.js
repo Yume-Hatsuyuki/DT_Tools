@@ -1,13 +1,6 @@
-/**
- * 界面文字总表。每行一个键，9 列依次为：
- * zh-CN, zh-TW, en, es, fr, ja, ko, pt-BR, ru
- * 游戏已有官方译法的词（设置、取消、确定、语言、平板电脑、线索、命题、学级裁判）直接沿用游戏文本。
- * 新增键时必须填满 9 列（测试会检查）；占位符用 {name}。
- */
 const COLS = ['zh-CN', 'zh-TW', 'en', 'es', 'fr', 'ja', 'ko', 'pt-BR', 'ru'];
 
 const ROWS = {
-  // ---- 通用 ----
   'common.close': ['关闭', '關閉', 'Close', 'Cerrar', 'Fermer', '閉じる', '닫기', 'Fechar', 'Закрыть'],
   'common.closeHint': ['关闭（可从底部 Dock 再次打开）', '關閉（可從底部 Dock 再次開啟）', 'Close (reopen from the Dock)', 'Cerrar (se puede reabrir desde el Dock)', 'Fermer (rouvrir depuis le Dock)', '閉じる（下部 Dock から再度開けます）', '닫기 (하단 Dock에서 다시 열 수 있음)', 'Fechar (reabra pelo Dock)', 'Закрыть (можно открыть снова из Dock)'],
   'common.minimize': ['最小化', '最小化', 'Minimize', 'Minimizar', 'Réduire', '最小化', '최소화', 'Minimizar', 'Свернуть'],
@@ -22,7 +15,6 @@ const ROWS = {
   'common.about': ['关于', '關於', 'About', 'Acerca de', 'À propos', '情報', '정보', 'Sobre', 'О программе'],
   'common.appMenu': ['应用菜单', '應用程式選單', 'App menu', 'Menú de aplicaciones', 'Menu des applications', 'アプリメニュー', '앱 메뉴', 'Menu de apps', 'Меню приложений'],
 
-  // ---- 应用与小组件名称 ----
   'app.terminal': ['控制台', '控制台', 'Console', 'Consola', 'Console', 'コンソール', '콘솔', 'Console', 'Консоль'],
   'app.console': ['控制台（旧版）', '控制台（舊版）', 'Console (legacy)', 'Consola (antigua)', 'Console (ancienne)', 'コンソール（旧版）', '콘솔(구버전)', 'Console (legado)', 'Консоль (старая)'],
   'app.config': ['DT 配置', 'DT 設定', 'DT Config', 'Config DT', 'Config DT', 'DT 設定', 'DT 설정', 'Config DT', 'Настройки DT'],
@@ -37,7 +29,6 @@ const ROWS = {
   'widget.mcp': ['MCP 桥接（AI 接入）', 'MCP 橋接（AI 接入）', 'MCP bridge (AI access)', 'Puente MCP (acceso IA)', 'Pont MCP (accès IA)', 'MCP ブリッジ（AI 接続）', 'MCP 브리지(AI 연결)', 'Ponte MCP (acesso IA)', 'Мост MCP (доступ ИИ)'],
   'widget.news': ['游戏新闻（Steam 公告）', '遊戲新聞（Steam 公告）', 'Game news (Steam announcements)', 'Noticias del juego (anuncios de Steam)', 'Actualités du jeu (annonces Steam)', 'ゲームニュース（Steam のお知らせ）', '게임 뉴스(Steam 공지)', 'Notícias do jogo (anúncios Steam)', 'Новости игры (объявления Steam)'],
 
-  // ---- 桌面 / Dock 菜单 ----
   'menu.openTerminal': ['打开终端', '開啟終端機', 'Open terminal', 'Abrir terminal', 'Ouvrir le terminal', 'ターミナルを開く', '터미널 열기', 'Abrir terminal', 'Открыть терминал'],
   'menu.wallpaper': ['更换壁纸…', '更換桌布…', 'Change wallpaper…', 'Cambiar fondo…', 'Changer le fond d’écran…', '壁紙を変更…', '배경화면 변경…', 'Alterar papel de parede…', 'Сменить обои…'],
   'menu.resetWallpaper': ['恢复默认壁纸', '還原預設桌布', 'Reset wallpaper', 'Restablecer fondo', 'Rétablir le fond par défaut', '壁紙を初期化', '기본 배경화면으로 복원', 'Restaurar papel de parede', 'Сбросить обои'],
@@ -63,12 +54,10 @@ const ROWS = {
   'error.exitFailed': ['退出指令发送失败：{msg}', '結束指令傳送失敗：{msg}', 'Failed to send the exit command: {msg}', 'No se pudo enviar el comando de salida: {msg}', 'Échec de l’envoi de la commande de sortie : {msg}', '終了コマンドの送信に失敗しました：{msg}', '종료 명령 전송 실패: {msg}', 'Falha ao enviar o comando de saída: {msg}', 'Не удалось отправить команду выхода: {msg}'],
   'error.unknown': ['未知错误', '未知錯誤', 'Unknown error', 'Error desconocido', 'Erreur inconnue', '不明なエラー', '알 수 없는 오류', 'Erro desconhecido', 'Неизвестная ошибка'],
 
-  // ---- 裁切 ----
   'crop.wallpaper': ['裁切壁纸', '裁切桌布', 'Crop wallpaper', 'Recortar fondo', 'Recadrer le fond d’écran', '壁紙をトリミング', '배경화면 자르기', 'Recortar papel de parede', 'Обрезать обои'],
   'crop.avatar': ['裁切头像', '裁切頭像', 'Crop avatar', 'Recortar avatar', 'Recadrer l’avatar', 'アバターをトリミング', '아바타 자르기', 'Recortar avatar', 'Обрезать аватар'],
   'crop.icon': ['裁切应用图标', '裁切應用程式圖示', 'Crop app icon', 'Recortar icono de la aplicación', 'Recadrer l’icône de l’application', 'アプリアイコンをトリミング', '앱 아이콘 자르기', 'Recortar ícone do app', 'Обрезать значок приложения'],
 
-  // ---- 顶栏 ----
   'upd.bubble': ['发现新版本 {tag}，点击查看更新内容', '發現新版本 {tag}，點擊查看更新內容', 'New version {tag} is available. Click to view the changes.', 'Nueva versión {tag} disponible. Haz clic para ver los cambios.', 'Nouvelle version {tag} disponible. Cliquez pour voir les changements.', '新しいバージョン {tag} があります。クリックして更新内容を確認', '새 버전 {tag} 사용 가능. 클릭하여 변경 사항 보기', 'Nova versão {tag} disponível. Clique para ver as mudanças.', 'Доступна новая версия {tag}. Нажмите, чтобы посмотреть изменения.'],
   'upd.newVersionHint': ['发现新版本 {tag}，点击查看', '發現新版本 {tag}，點擊查看', 'New version {tag} available, click to view', 'Nueva versión {tag}, haz clic para ver', 'Nouvelle version {tag}, cliquez pour voir', '新しいバージョン {tag}、クリックで確認', '새 버전 {tag}, 클릭하여 보기', 'Nova versão {tag}, clique para ver', 'Новая версия {tag}, нажмите, чтобы посмотреть'],
   'upd.dismiss': ['知道了', '知道了', 'Got it', 'Entendido', 'Compris', 'わかりました', '확인', 'Entendi', 'Понятно'],
@@ -85,7 +74,6 @@ const ROWS = {
   'cat.system': ['系统', '系統', 'System', 'Sistema', 'Système', 'システム', '시스템', 'Sistema', 'Система'],
   'about.menu': ['关于 DT_Tools…', '關於 DT_Tools…', 'About DT_Tools…', 'Acerca de DT_Tools…', 'À propos de DT_Tools…', 'DT_Tools について…', 'DT_Tools 정보…', 'Sobre o DT_Tools…', 'О DT_Tools…'],
 
-  // ---- 关于弹窗 ----
   'about.product': ['Deadly Trick 游戏工具插件', 'Deadly Trick 遊戲工具外掛', 'Deadly Trick game tools plugin', 'Plugin de herramientas para Deadly Trick', 'Plugin d’outils pour Deadly Trick', 'Deadly Trick ゲームツールプラグイン', 'Deadly Trick 게임 도구 플러그인', 'Plugin de ferramentas do Deadly Trick', 'Плагин инструментов для Deadly Trick'],
   'about.version': ['当前版本 v{v}', '目前版本 v{v}', 'Version v{v}', 'Versión v{v}', 'Version v{v}', 'バージョン v{v}', '버전 v{v}', 'Versão v{v}', 'Версия v{v}'],
   'about.check': ['检查更新', '檢查更新', 'Check for updates', 'Buscar actualizaciones', 'Rechercher les mises à jour', '更新を確認', '업데이트 확인', 'Verificar atualizações', 'Проверить обновления'],
@@ -96,12 +84,10 @@ const ROWS = {
   'about.storage': ['所有配置 / 重命名 / 壁纸 / 图标仅存于本浏览器。', '所有設定 / 重新命名 / 桌布 / 圖示僅儲存於本瀏覽器。', 'Settings, names, wallpaper and icons are stored only in this browser.', 'La configuración, los nombres, el fondo y los iconos solo se guardan en este navegador.', 'Les paramètres, noms, fonds et icônes ne sont enregistrés que dans ce navigateur.', '設定・名前・壁紙・アイコンはこのブラウザにのみ保存されます。', '설정, 이름, 배경화면, 아이콘은 이 브라우저에만 저장됩니다.', 'Configurações, nomes, papel de parede e ícones ficam salvos apenas neste navegador.', 'Настройки, имена, обои и значки хранятся только в этом браузере.'],
   'about.themeRefs': ['主题参考：', '主題參考：', 'Theme references:', 'Referencias de temas:', 'Références des thèmes :', 'テーマの参考：', '테마 참고:', 'Referências de tema:', 'Источники тем:'],
 
-  // ---- 设置 ----
   'settings.followBrowser': ['跟随浏览器', '跟隨瀏覽器', 'Follow browser', 'Seguir el navegador', 'Suivre le navigateur', 'ブラウザに従う', '브라우저 설정 따르기', 'Seguir o navegador', 'Как в браузере'],
   'settings.followBrowserHint': ['当前浏览器语言：{lang}', '目前瀏覽器語言：{lang}', 'Current browser language: {lang}', 'Idioma actual del navegador: {lang}', 'Langue actuelle du navigateur : {lang}', '現在のブラウザの言語：{lang}', '현재 브라우저 언어: {lang}', 'Idioma atual do navegador: {lang}', 'Текущий язык браузера: {lang}'],
   'settings.storeHint': ['语言设置仅保存在本浏览器。游戏内的内容仍以游戏语言显示。', '語言設定僅儲存於本瀏覽器。遊戲內的內容仍以遊戲語言顯示。', 'The language setting is saved only in this browser. In-game content still uses the game language.', 'La configuración de idioma solo se guarda en este navegador. El contenido del juego sigue en el idioma del juego.', 'Le réglage de langue n’est enregistré que dans ce navigateur. Le contenu du jeu reste dans la langue du jeu.', '言語の設定はこのブラウザにのみ保存されます。ゲーム内の内容はゲームの言語で表示されます。', '언어 설정은 이 브라우저에만 저장됩니다. 게임 내 콘텐츠는 게임 언어로 표시됩니다.', 'A configuração de idioma fica salva apenas neste navegador. O conteúdo do jogo continua no idioma do jogo.', 'Настройка языка сохраняется только в этом браузере. Содержимое игры по-прежнему отображается на языке игры.'],
 
-  // ---- 软件更新 ----
   'update.title': ['软件更新', '軟體更新', 'Software update', 'Actualización de software', 'Mise à jour du logiciel', 'ソフトウェアの更新', '소프트웨어 업데이트', 'Atualização de software', 'Обновление ПО'],
   'update.current': ['当前版本', '目前版本', 'Current version', 'Versión actual', 'Version actuelle', '現在のバージョン', '현재 버전', 'Versão atual', 'Текущая версия'],
   'update.latest': ['最新版本', '最新版本', 'Latest version', 'Última versión', 'Dernière version', '最新バージョン', '최신 버전', 'Versão mais recente', 'Последняя версия'],
@@ -119,7 +105,6 @@ const ROWS = {
   'update.releasePage': ['前往发布页', '前往發佈頁', 'Go to release page', 'Ir a la página de versiones', 'Aller à la page de la version', 'リリースページへ', '릴리스 페이지로 이동', 'Ir para a página de versões', 'Перейти на страницу выпуска'],
   'update.lastChecked': ['上次检测：{date}（每 3 分钟自动检测一次）', '上次檢測：{date}（每 3 分鐘自動檢測一次）', 'Last checked: {date} (checks automatically every 3 minutes)', 'Última comprobación: {date} (se comprueba cada 3 minutos)', 'Dernière vérification : {date} (vérification automatique toutes les 3 minutes)', '前回の確認: {date}（3 分ごとに自動確認）', '마지막 확인: {date} (3분마다 자동 확인)', 'Última verificação: {date} (verifica a cada 3 minutos)', 'Последняя проверка: {date} (автоматически каждые 3 минуты)'],
 
-  // ---- 小组件 ----
   'steam.title': ['《Deadly Trick》在线', '《Deadly Trick》在線', '《Deadly Trick》 online', '《Deadly Trick》 en línea', '《Deadly Trick》 en ligne', '《Deadly Trick》 オンライン', '《Deadly Trick》 접속자', '《Deadly Trick》 online', '《Deadly Trick》 онлайн'],
   'steam.sub': ['Steam 全球在线玩家 · 每分钟刷新', 'Steam 全球在線玩家 · 每分鐘更新', 'Steam players worldwide · refreshes every minute', 'Jugadores en Steam en todo el mundo · se actualiza cada minuto', 'Joueurs Steam dans le monde · actualisé chaque minute', 'Steam 全世界のオンラインプレイヤー · 毎分更新', '전 세계 Steam 접속자 · 1분마다 갱신', 'Jogadores no Steam no mundo · atualiza a cada minuto', 'Игроки Steam по всему миру · обновляется каждую минуту'],
   'mcp.running': ['运行中', '執行中', 'Running', 'En ejecución', 'En cours', '実行中', '실행 중', 'Em execução', 'Работает'],
@@ -143,17 +128,14 @@ const ROWS = {
   'news.fallback': ['该语言暂无公告，已显示英文', '此語言暫無公告，已顯示英文', 'No announcements in this language. Showing English.', 'No hay anuncios en este idioma. Se muestra en inglés.', 'Aucune annonce dans cette langue. Affichage en anglais.', 'この言語のお知らせはありません。英語を表示しています。', '이 언어의 공지가 없어 영어로 표시합니다.', 'Sem anúncios neste idioma. Exibindo em inglês.', 'Объявлений на этом языке нет. Показан английский.'],
   'news.source': ['Steam 新闻 · 分钟级刷新', 'Steam 新聞 · 分鐘級更新', 'Steam News · minute-level refresh', 'Noticias de Steam · actualización por minuto', 'Actualités Steam · actualisation par minute', 'Steam ニュース · 分単位で更新', 'Steam 뉴스 · 분 단위 갱신', 'Notícias da Steam · atualização por minuto', 'Новости Steam · обновление по минутам'],
 
-  // ---- Markdown ----
   'markdown.image': ['图片：', '圖片：', 'Image: ', 'Imagen: ', 'Image : ', '画像：', '이미지: ', 'Imagem: ', 'Изображение: '],
 
-  // ---- 功能标签：分组（键来自后端 groupKey）----
   'tag.group.player': ['玩家', '玩家', 'Player', 'Jugador', 'Joueur', 'プレイヤー', '플레이어', 'Jogador', 'Игрок'],
   'tag.group.ui': ['界面', '介面', 'Interface', 'Interfaz', 'Interface', 'インターフェース', '인터페이스', 'Interface', 'Интерфейс'],
   'tag.group.game': ['玩法', '玩法', 'Gameplay', 'Jugabilidad', 'Gameplay', 'ゲームプレイ', '게임플레이', 'Jogabilidade', 'Геймплей'],
   'tag.group.sys': ['系统', '系統', 'System', 'Sistema', 'Système', 'システム', '시스템', 'Sistema', 'Система'],
   'tag.group.peripheral': ['外设', '外設', 'Peripherals', 'Periféricos', 'Périphériques', '周辺機器', '주변기기', 'Periféricos', 'Периферия'],
 
-  // ---- 功能标签：名称（键为 FeatureTag 枚举名）----
   'tag.label.PlayerMove': ['移动与位置', '移動與位置', 'Movement & position', 'Movimiento y posición', 'Déplacement et position', '移動と位置', '이동과 위치', 'Movimento e posição', 'Движение и положение'],
   'tag.label.PlayerCombat': ['攻击与近战', '攻擊與近戰', 'Attack & melee', 'Ataque y cuerpo a cuerpo', 'Attaque et mêlée', '攻撃と近接', '공격과 근접', 'Ataque e corpo a corpo', 'Атака и ближний бой'],
   'tag.label.PlayerAbility': ['角色能力', '角色能力', 'Character abilities', 'Habilidades del personaje', 'Capacités du personnage', 'キャラクター能力', '캐릭터 능력', 'Habilidades do personagem', 'Способности персонажа'],
@@ -194,7 +176,6 @@ const ROWS = {
   'tag.label.SysDebug': ['开发调试', '開發除錯', 'Dev & debugging', 'Desarrollo y depuración', 'Développement et débogage', '開発・デバッグ', '개발·디버그', 'Desenvolvimento e depuração', 'Разработка и отладка'],
   'tag.label.Peripheral': ['外设与输入', '周邊與輸入', 'Peripherals & input', 'Periféricos y entrada', 'Périphériques et saisie', '周辺機器と入力', '주변기기와 입력', 'Periféricos e entrada', 'Периферия и ввод'],
 
-  // ---- 功能标签：说明（悬停提示，键同上）----
   'tag.desc.PlayerMove': ['移速、穿墙、瞬移、出生点', '移速、穿牆、瞬移、出生點', 'Move speed, wall clipping, teleport, spawn point', 'Velocidad, atravesar muros, teletransporte, punto de aparición', 'Vitesse, traversée des murs, téléportation, point d’apparition', '移動速度、壁抜け、瞬間移動、出現地点', '이동 속도, 벽 통과, 순간이동, 출현 지점', 'Velocidade, atravessar paredes, teleporte, ponto de surgimento', 'Скорость, проход сквозь стены, телепорт, точка появления'],
   'tag.desc.PlayerCombat': ['攻击距离、攻击判定、近战击杀能力', '攻擊距離、攻擊判定、近戰擊殺能力', 'Attack range, hit detection, melee kill ability', 'Alcance de ataque, detección de golpes, capacidad de eliminación cuerpo a cuerpo', 'Portée d’attaque, détection des coups, capacité de mise à mort en mêlée', '攻撃範囲、命中判定、近接キル能力', '공격 범위, 피격 판정, 근접 처치 능력', 'Alcance de ataque, detecção de acerto, capacidade de abate corpo a corpo', 'Дальность атаки, определение попаданий, способность убивать в ближнем бою'],
   'tag.desc.PlayerAbility': ['角色专属技能与被动（Hasung、KAHO、Seol、SOI、Louis、本杰明）', '角色專屬技能與被動（夏誠、華帆、雪、素伊、路易斯、本傑明）', 'Character-specific skills and passives (Hasung, Kaho, Seol, Soi, Louis, Benjamin)', 'Habilidades y pasivas propias de cada personaje (Hasung, Kaho, Seol, Soi, Louis, Benjamin)', 'Compétences et passifs propres aux personnages (Hasung, Kaho, Seol, Soi, Louis, Benjamin)', 'キャラクター専用のスキルとパッシブ（ハスン、かほ、ソル、ソイ、ルイス、ベンジャミン）', '캐릭터 전용 스킬과 패시브 (하성, 카호, 설, 소이, 루이스, 벤자민)', 'Habilidades e passivas exclusivas (Hasung, Kaho, Seol, Soi, Louis, Benjamin)', 'Уникальные навыки и пассивки персонажей (Хасон, Кахо, Соль, Сои, Луис, Бенджамин)'],
@@ -235,7 +216,6 @@ const ROWS = {
   'tag.desc.SysDebug': ['测试模式、协议自检、截图、日志、帮助', '測試模式、協定自檢、截圖、日誌、說明', 'Test mode, protocol self-check, screenshots, logs, help', 'Modo de prueba, autocomprobación de protocolo, capturas, registros, ayuda', 'Mode test, autotest du protocole, captures d’écran, journaux, aide', 'テストモード、プロトコルの自己診断、スクリーンショット、ログ、ヘルプ', '테스트 모드, 프로토콜 자체 점검, 스크린샷, 로그, 도움말', 'Modo de teste, autoverificação de protocolo, capturas de tela, logs, ajuda', 'Тестовый режим, самопроверка протокола, скриншоты, логи, справка'],
   'tag.desc.Peripheral': ['鼠标、键盘、手柄、宏、灵敏度、按键映射', '滑鼠、鍵盤、手把、巨集、靈敏度、按鍵對應', 'Mouse, keyboard, gamepad, macros, sensitivity, key mapping', 'Ratón, teclado, mando, macros, sensibilidad, asignación de teclas', 'Souris, clavier, manette, macros, sensibilité, mappage des touches', 'マウス、キーボード、ゲームパッド、マクロ、感度、キー割り当て', '마우스, 키보드, 게임패드, 매크로, 감도, 키 매핑', 'Mouse, teclado, controle, macros, sensibilidade, mapeamento de teclas', 'Мышь, клавиатура, геймпад, макросы, чувствительность, назначение клавиш'],
 
-  // ---- 配置页：标签栏界面文字 ----
   'config.tags.title': ['标签筛选', '標籤篩選', 'Tag filter', 'Filtro de etiquetas', 'Filtre par tags', 'タグで絞り込み', '태그 필터', 'Filtro de tags', 'Фильтр по тегам'],
   'config.tags.status': ['状态', '狀態', 'Status', 'Estado', 'État', '状態', '상태', 'Status', 'Статус'],
   'config.tags.side': ['作用面', '作用面', 'Side', 'Lado', 'Côté', '作用面', '적용 대상', 'Lado', 'Сторона'],
@@ -258,7 +238,6 @@ const ROWS = {
   'config.tags.linePrefix': ['【{tags}】{text}', '【{tags}】{text}', '[{tags}] {text}', '[{tags}] {text}', '[{tags}] {text}', '【{tags}】{text}', '[{tags}] {text}', '[{tags}] {text}', '[{tags}] {text}'],
   'config.searchPlaceholder': ['搜索功能 / 标签 / 字段…', '搜尋功能 / 標籤 / 欄位…', 'Search features / tags / fields…', 'Buscar funciones / etiquetas / campos…', 'Rechercher fonctions / tags / champs…', '機能・タグ・項目を検索…', '기능 / 태그 / 필드 검색…', 'Pesquisar recursos / tags / campos…', 'Поиск функций / тегов / полей…'],
 
-  // ---- 平板电脑：照片确认与查看器 ----
   'tablet.photo.confirmTitle': ['发送图片？', '傳送圖片？', 'Send this photo?', '¿Enviar esta foto?', 'Envoyer cette photo ?', '写真を送信しますか？', '사진을 보낼까요?', 'Enviar esta foto?', 'Отправить фото?'],
   'tablet.photo.confirmHint': ['发送后所有人都能看到，无法撤回。', '傳送後所有人都能看到，無法撤回。', 'Everyone can see it after sending. It can’t be recalled.', 'Todos podrán verla al enviarla y no se puede retirar.', 'Tout le monde pourra la voir après l’envoi ; elle ne peut pas être retirée.', '送信後は全員に表示され、取り消すことはできません。', '보내면 모두에게 보이며 취소할 수 없습니다.', 'Todos poderão vê-la após o envio. Não é possível desfazer.', 'После отправки её увидят все. Отозвать нельзя.'],
   'tablet.photo.notAllowed': ['当前阶段不能发送照片。', '目前階段不能傳送照片。', 'Photos can’t be sent in the current phase.', 'No se pueden enviar fotos en esta fase.', 'Les photos ne peuvent pas être envoyées à cette phase.', '現在のフェーズでは写真を送信できません。', '현재 단계에서는 사진을 보낼 수 없습니다.', 'Não é possível enviar fotos nesta fase.', 'На этом этапе отправлять фото нельзя.'],
@@ -281,7 +260,6 @@ const ROWS = {
   'tablet.viewer.actual': ['原始大小', '原始大小', '100%', '100 %', '100 %', '100%', '100%', '100%', '100%'],
 };
 
-/** 按列构建每个语言的词典：{ 'zh-CN': { key: text }, ... }。 */
 export function buildMessages() {
   const out = Object.fromEntries(COLS.map((c) => [c, {}]));
   for (const [key, cells] of Object.entries(ROWS)) {

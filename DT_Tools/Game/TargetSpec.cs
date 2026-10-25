@@ -2,12 +2,6 @@ using System;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 命令目标解析：all / (#数字 或 纯数字)。
-    /// </summary>
-    /// <remarks>
-    /// 全项目唯一实现。
-    /// </remarks>
     public static class TargetSpec
     {
         public static bool IsAll(string raw)

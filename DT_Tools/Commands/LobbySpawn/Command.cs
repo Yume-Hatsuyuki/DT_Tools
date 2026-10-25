@@ -8,9 +8,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.LobbySpawn
 {
-    /// <summary>
-    /// /lobby_spawn &lt;玩家&gt; &lt;中央广场|教室|默认&gt; | list | reset — 设置玩家进入大厅的位置（房主，需开启「大厅出生点」功能）。
-    /// </summary>
     internal sealed class LobbySpawnCommand : ICommand
     {
         public string Name => "lobby_spawn";

@@ -6,13 +6,6 @@ using Google.Protobuf;
 
 namespace DT_Tools.Commands.PacketCall
 {
-    /// <summary>
-    /// /call_s &lt;all|#id&gt; &lt;S_*包名&gt; [json] — 服务端 → 客户端：构造 S_* 包并
-    /// Send / 全员各发一份。
-    /// </summary>
-    /// <remarks>
-    /// 仅房主。
-    /// </remarks>
     internal sealed class CallSCommand : ICommand
     {
         public string Name => "call_s";

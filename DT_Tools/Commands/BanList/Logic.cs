@@ -4,23 +4,10 @@ using DT_Tools.Features.BanList;
 
 namespace DT_Tools.Commands.BanList
 {
-    /// <summary>
-    /// /banlist /unban 业务：目标解析（#序号 / SteamId / 名字）。
-    /// </summary>
     internal static class BanListLogic
     {
-        /// <summary>
-        /// /unban all：全部解封。
-        /// </summary>
         public const string AllKeyword = "all";
 
-        /// <summary>
-        /// 把参数解析成封禁条目。
-        /// </summary>
-        /// <remarks>
-        /// #序号 = /banlist 列表里的序号；
-        /// 纯数字 = SteamId（SteamID64 是 17 位长数字，不会与序号语义混淆）；其余按名字匹配。
-        /// </remarks>
         public static bool TryResolve(string arg, List<BanListFeature.BanEntry> bans,
             out BanListFeature.BanEntry target, out string error)
         {
@@ -48,7 +35,6 @@ namespace DT_Tools.Commands.BanList
                 return true;
             }
 
-            // 名字：精确匹配优先，其次唯一子串匹配（OrdinalIgnoreCase）
             List<BanListFeature.BanEntry> exact =
                 bans.FindAll(e => string.Equals(e.Name, arg, StringComparison.OrdinalIgnoreCase));
             if (exact.Count == 1)

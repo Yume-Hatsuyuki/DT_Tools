@@ -5,12 +5,6 @@ using Protocol;
 
 namespace DT_Tools.Features.CanShowLie
 {
-    /// <summary>
-    /// LoadAllArea 后置：缓存 S_INIT_MAP.AreaInfos。
-    /// </summary>
-    /// <remarks>
-    /// 公共方法（nameof 定位），0.1.18c MapManager.cs。
-    /// </remarks>
     [HarmonyPatch(typeof(MapManager), nameof(MapManager.LoadAllArea))]
     internal static class CanShowLieCachePatch
     {

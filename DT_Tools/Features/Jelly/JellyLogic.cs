@@ -5,12 +5,6 @@ using UnityEngine.UI;
 
 namespace DT_Tools.Features.Jelly
 {
-    /// <summary>
-    /// 单个果冻对象的状态：采集的视觉基准、是否动过 localPosition。
-    /// </summary>
-    /// <remarks>
-    /// Target=果冻作用节点；Collider 系列仅根视觉设备（矿山/窗帘）的反缩放补偿使用。
-    /// </remarks>
     internal sealed class JellyState
     {
         public bool Captured;
@@ -24,63 +18,27 @@ namespace DT_Tools.Features.Jelly
         public Vector2 BaseColliderOffset;
     }
 
-    /// <summary>
-    /// 果冻周期：全员同相位（Time.unscaledTime 取模），下压段 smoothstep + 回弹段阻尼余弦，每帧绝对赋值 scale。
-    /// </summary>
-    /// <remarks>
-    /// 玩家目标：挂 SkeletonAnimation 的视觉子节点（0.1.18c Player.cs:302/608）。主游戏不写该节点的 scale/localPosition；
-    /// 碰撞体、UIGroup、EffectGroup 都是它的兄弟节点，Spine 也不写 transform scale。绝对赋值因此不会被覆盖，晚加入或重生的角色无需额外挂钩。
-    /// 设备目标（IncludeDevices）：优先 SkeletonAnimation 子节点（Corpse.cs:127、Chair.cs:31）；掉落物与根视觉设备（Mineral/Curtain）缩根；
-    /// 其余找 "Body" 主视觉与图标叶子节点（Battery/Slot/Slots/Required）。设备交互判定是纯矩形（DeviceManager.cs:692-746），与 scale 无关，设备一律不改 localPosition。
-    /// 柜子、门等视觉与视线遮挡 collider 同在根上的设备永远跳过：缩放会改变遮挡判定。
-    /// 地形装饰（IncludeDecorations）：只处理当前房间（MapManager.CurrentPrefab）的 SpriteRenderer，跳过 Tilemap，以及带 Collider2D 或 layer=Block(12)/Transmission(13) 的节点。
-    /// 视线遮挡 collider 与移动碰撞由 prefab 序列化，无法从代码判断 sprite 与 collider 是否同节点，所以凡带 collider 一律不碰（MyPlayer.cs:1533 等 mask=12288）。
-    /// </remarks>
     internal static class JellyLogic
     {
-        /// <summary>
-        /// 横向幅度为纵向的 0.8 倍（体积守恒近似）。
-        /// </summary>
         private const float XRatio = 0.8f;
 
-        /// <summary>
-        /// 回弹包络衰减率：终点幅值 e^-4.6 ≈ 1%，肉眼不可见。
-        /// </summary>
         private const float DecayRate = 4.6f;
 
-        /// <summary>
-        /// 碰撞体反缩放时的分母下限（幅度 1.0 会把 sy 压到 0，除法防炸）。
-        /// </summary>
         private const float ColliderClamp = 0.05f;
 
-        /// <summary>
-        /// 设备面板物品图标叶子节点名（Charger/Bio 电池、Miner/Storage/Drink 槽位）。
-        /// </summary>
         private static readonly string[] IconNodeNames = { "Battery", "Slot", "Slots", "Required" };
 
         private static readonly Dictionary<int, List<JellyState>> States = new Dictionary<int, List<JellyState>>();
         private static readonly Dictionary<int, List<JellyState>> DeviceStates = new Dictionary<int, List<JellyState>>();
         private static readonly Dictionary<Transform, JellyState> DecorStates = new Dictionary<Transform, JellyState>();
 
-        /// <summary>
-        /// UI 按钮果冻状态（Transform 键：按钮无 id，按实例跟踪）。
-        /// </summary>
         private static readonly Dictionary<Transform, JellyState> UiStates = new Dictionary<Transform, JellyState>();
 
-        /// <summary>
-        /// UI 按钮扫描节流：弹窗/切场景动态增减，每秒增量补扫。
-        /// </summary>
         private static float _nextUiScan;
 
-        /// <summary>
-        /// 自己的状态走对象键：大厅里 MyPlayer 可能尚无 PublicInfo（无 id），也能果冻。
-        /// </summary>
         private static Player _myStateOwner;
         private static JellyState _myState;
 
-        /// <summary>
-        /// 装饰枚举脏标志：换房后重扫当前房间。
-        /// </summary>
         private static bool _decorDirty = true;
 
         public static void Reset()
@@ -154,13 +112,6 @@ namespace DT_Tools.Features.Jelly
                 RestoreAll();
         }
 
-        /// <summary>
-        /// 关闭/清理：把所有被跟踪对象（玩家+设备+装饰）的视觉基准写回。
-        /// </summary>
-        /// <remarks>
-        /// 返回写回成功的数量。
-        /// </remarks>
-        /// <returns>写回成功的对象数量。</returns>
         public static int RestoreAll()
         {
             int restored = 0;
@@ -178,10 +129,6 @@ namespace DT_Tools.Features.Jelly
             return restored;
         }
 
-        /// <summary>
-        /// 玩家退场（Despawn 后调用，Players 字典已移除）：写回后清缓存。
-        /// </summary>
-        /// <param name="id">退场的玩家 PlayerId。</param>
         public static void Forget(int id)
         {
             if (States.Count == 0 || !States.TryGetValue(id, out var list))
@@ -196,11 +143,6 @@ namespace DT_Tools.Features.Jelly
             States.Remove(id);
         }
 
-        /// <summary>
-        /// 设备退场（Despawn/DespawnTemporary 的 Prefix 调用：原方法会把 Cache 条目移除，
-        /// 移除后就找不到了，必须赶在前面写回）。
-        /// </summary>
-        /// <param name="id">退场的设备 ID。</param>
         public static void ForgetDevice(int id)
         {
             if (DeviceStates.Count == 0 || !DeviceStates.TryGetValue(id, out var list))
@@ -212,25 +154,18 @@ namespace DT_Tools.Features.Jelly
             DeviceStates.Remove(id);
         }
 
-        /// <summary>
-        /// 换图 Clear()：所有设备对象随即被 Destroy，写回无意义，直接清缓存。
-        /// </summary>
         public static void OnDevicesCleared()
         {
             DeviceStates.Clear();
             _decorDirty = true;
         }
 
-        /// <summary>
-        /// 房间切换/重建（MapManager.ChangeRoom）：装饰集合失效，下一帧重扫。
-        /// </summary>
         public static void OnRoomChanged() => _decorDirty = true;
 
         private static int ApplySelf(MyPlayer my)
         {
             if (!ReferenceEquals(_myStateOwner, my))
             {
-                // 对象更换（重进房间/重建 MyPlayer）：旧对象存活则先写回，避免残留变形
                 if (_myState != null && _myStateOwner != null)
                     WriteBack(_myStateOwner, _myState);
                 _myStateOwner = my;
@@ -272,7 +207,6 @@ namespace DT_Tools.Features.Jelly
 
             if (!DeviceStates.TryGetValue(id, out var list))
             {
-                // 解析失败（未激活/无独立视觉）不缓存，每帧重试；成功才建档
                 var targets = FindDeviceVisuals(device);
                 if (targets.Count == 0)
                     return 0;
@@ -283,9 +217,6 @@ namespace DT_Tools.Features.Jelly
                 DeviceStates[id] = list;
             }
 
-            // 缩根才补偿（矿山/窗帘/柜子/门等），保持世界碰撞形状恒定；
-            // 唯一例外 ItemHolder：其 collider 本地 size 是拾取矩形数据源
-            // （ItemHolder.cs:68-83），动了污染判定。子节点目标（Body/图标/SA）无 collider 不涉及
             bool compensateCollider = false;
             if (!(device is ItemHolder))
             {
@@ -305,12 +236,6 @@ namespace DT_Tools.Features.Jelly
             return touched > 0 ? 1 : 0;
         }
 
-        /// <summary>
-        /// 设备视觉节点启发式（见类注释）：SkeletonAnimation 优先 → 掉落物/根视觉设备缩根 →
-        /// "Body" 主视觉 + 物品图标叶子；都没有返回空（跳过）。
-        /// </summary>
-        /// <param name="device">要查找视觉节点的设备。</param>
-        /// <returns>设备的视觉节点列表。</returns>
         private static List<Transform> FindDeviceVisuals(DeviceBase device)
         {
             var result = new List<Transform>();
@@ -322,16 +247,12 @@ namespace DT_Tools.Features.Jelly
                 return result;
             }
 
-            // 矿山/窗帘：SpriteRenderer 在根上无子节点可缩；交互判定=数据表 Rects（position
-            // 偏移，DeviceBase.cs:18/140）与 scale 无关；根 collider 由反缩放补偿抵消
             if (device is Mineral || device is Curtain)
             {
                 result.Add(device.transform);
                 return result;
             }
 
-            // 掉落物（电池/鱼/饮料）：根 collider 无物理依赖且其本地 size 是判定矩形来源
-            // （ItemHolder.cs:68-83），绝不能动 collider → 不做反缩放补偿
             if (device is ItemHolder)
             {
                 result.Add(device.transform);
@@ -349,17 +270,12 @@ namespace DT_Tools.Features.Jelly
                     result.Add(icon);
             }
 
-            // 柜子/门/通风管等"视觉+碰撞体同在根上"的设备：缩根，
-            // 根 collider 由反缩放补偿保持世界形状恒定（躲藏玩家是全透明渲染，无暴露风险）
             if (result.Count == 0)
                 result.Add(device.transform);
 
             return result;
         }
 
-        /// <summary>
-        /// 装饰集合脏时重扫当前房间，按安全过滤建档（规则见类注释）。
-        /// </summary>
         private static void EnsureDecorScan()
         {
             if (!_decorDirty)
@@ -376,11 +292,6 @@ namespace DT_Tools.Features.Jelly
             {
                 var go = sr.gameObject;
 
-                // 地板（tag Room）/墙（tag Wall）是 TilemapRenderer 节点、无 SpriteRenderer，
-                // 天然不进本集合（墙进移动碰撞合体，MapManager.cs:69-72，绝不能缩）
-
-                // 自身或子树带碰撞体、或节点在视线遮挡 layer（Block=12/Transmission=13）：
-                // sprite 与视线遮挡 collider 的同节点关系无法从代码证明，凡带 collider 不碰
                 if (go.GetComponentInChildren<Collider2D>() != null)
                     continue;
                 if (go.layer == 12 || go.layer == 13)
@@ -390,12 +301,6 @@ namespace DT_Tools.Features.Jelly
             }
         }
 
-        /// <summary>
-        /// UI 按钮增量补扫（节流 1 秒）：只新增不删除；已销毁按钮的伪 null 条目顺手清掉。
-        /// </summary>
-        /// <remarks>
-        /// 不做全量重建——先还原再变形会造成周期性抖动。
-        /// </remarks>
         private static void EnsureUiScan()
         {
             if (Time.unscaledTime < _nextUiScan)
@@ -434,17 +339,6 @@ namespace DT_Tools.Features.Jelly
             return restored;
         }
 
-        /// <summary>
-        /// 核心：对目标节点施加当前相位的果冻系数。
-        /// </summary>
-        /// <remarks>
-        /// 返回 1=已施加。
-        /// </remarks>
-        /// <param name="t">要施加果冻系数的节点。</param>
-        /// <param name="st">果冻状态。</param>
-        /// <param name="allowPosComp">是否允许同时补偿位置，默认允许。</param>
-        /// <param name="compensateCollider">是否同时补偿碰撞体，默认不补偿。</param>
-        /// <returns>1 表示已施加果冻系数。</returns>
         private static int ApplyScale(Transform t, JellyState st, bool allowPosComp = true, bool compensateCollider = false)
         {
             if (t == null)
@@ -479,7 +373,6 @@ namespace DT_Tools.Features.Jelly
 
             if (st.Collider != null)
             {
-                // 世界尺寸 = size × lossyScale：本地 size/offset 除以缩放系数即保持世界恒定
                 float ix = 1f / Mathf.Max(ColliderClamp, sx);
                 float iy = 1f / Mathf.Max(ColliderClamp, sy);
                 st.Collider.size = new Vector2(st.BaseColliderSize.x * ix, st.BaseColliderSize.y * iy);
@@ -489,7 +382,6 @@ namespace DT_Tools.Features.Jelly
             float comp = JellyFeature.FootCompensation;
             if (allowPosComp && comp > 0f)
             {
-                // 压扁时按高度损失上移视觉节点，保证脚底贴地（pivot 不在脚底时用）
                 t.localPosition = st.BaseLocalPos + new Vector3(0f, (1f - sy) * comp, 0f);
                 st.PosTouched = true;
             }
@@ -497,9 +389,6 @@ namespace DT_Tools.Features.Jelly
             return 1;
         }
 
-        /// <summary>
-        /// 周期函数：下压段 smoothstep 压扁；回弹段阻尼余弦（τ=0 精确接续压扁谷，按次数往复衰减）。
-        /// </summary>
         private static void Evaluate(float p, float squash, float press, int bounces, float decay,
             out float sx, out float sy)
         {
@@ -521,7 +410,6 @@ namespace DT_Tools.Features.Jelly
                 sy = 1f - squash * env * osc;
                 sx = 1f + squash * env * osc * XRatio;
             }
-            // 空闲段：sx=sy=1，停顿到周期结束
         }
 
         private static bool WriteBack(Player player, JellyState st)

@@ -7,27 +7,20 @@ import IconPlus from '~icons/tabler/plus';
 
 const props = defineProps({
   win: { type: Object, required: true },
-  /** 平铺模式：窗口铺满「顶栏之下、Dock 之上」，不接受拖动/缩放（标签页式的简洁切换）。 */
   tiled: { type: Boolean, default: false },
-  /** 平铺模式下是否为当前激活窗口；非激活窗口保持挂载但隐藏，切换标签不丢应用内状态。 */
   active: { type: Boolean, default: true },
 });
 const emit = defineEmits(['close', 'focus', 'minimize', 'toggle-maximize', 'update-geometry']);
 
-// 给窗口内应用（如终端的 exit 内置命令）一个受控的自我操作通道
-// （最小化/最大化走窗口 chrome 与 TopBar 菜单，不经此通道）
 provide('winApi', {
   close: () => emit('close'),
 });
 
 const MIN_W = 360;
 const MIN_H = 240;
-// 与 tokens.css --topbar-h 同步：窗口不得拖进/放大到顶栏之下
 const TOPBAR_H = 32;
 
 const style = computed(() => {
-  // 平铺模式：只让激活窗口占满工作区，其余隐藏但**不卸载** ——
-  // 终端历史、输入框草稿这类应用内状态不能因为切一下标签就没了。
   if (props.tiled) {
     if (!props.active) return { display: 'none' };
     return {
@@ -39,7 +32,6 @@ const style = computed(() => {
     };
   }
   if (props.win.maximized) {
-    // macOS 全屏语义近似：盖过 Dock 但给顶栏（菜单栏）让位
     return {
       left: '0',
       top: TOPBAR_H + 'px',
@@ -77,10 +69,6 @@ function onTitlebarPointerDown(e) {
   window.addEventListener('pointerup', onUp);
 }
 
-/**
- * 八方向缩放：n/s/e/w 四边 + 四角。统一走一份几何计算——
- * 各方向决定 x/y/w/h 中哪些量跟随鼠标，其余保持；越界按最小尺寸回推。
- */
 const DIRS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 
 function onResizePointerDown(dir, e) {
@@ -101,7 +89,6 @@ function onResizePointerDown(dir, e) {
     if (goEast) patch.w = Math.max(MIN_W, s.w + dx);
     if (goSouth) patch.h = Math.max(MIN_H, s.h + dy);
     if (goWest) {
-      // 宽度到最小值后继续向右拖：窗口跟着右移，保持光标下的边不"脱手"
       const w = Math.max(MIN_W, s.w - dx);
       patch.w = w;
       patch.x = s.x + (s.w - w);
@@ -173,7 +160,6 @@ function onResizePointerDown(dir, e) {
   min-height: 240px;
 }
 .win.maximized { border-radius: 0; border: none; }
-/* 平铺：去掉圆角/阴影/毛玻璃 —— 它此刻就是工作区本身，不是什么浮在上面的窗 */
 .win.tiled {
   border-radius: 0;
   border: none;
@@ -198,7 +184,6 @@ function onResizePointerDown(dir, e) {
 }
 .win:active .win-titlebar { cursor: grabbing; }
 
-/* macOS 交通灯：红关 / 黄最小化 / 绿最大化；悬停亮起符号 */
 .traffic {
   display: flex;
   align-items: center;
@@ -249,7 +234,6 @@ function onResizePointerDown(dir, e) {
   color: var(--text-0);
 }
 
-/* 八方向缩放柄：贴边热区 + hover 高亮（壳层高光青），四角比边更宽以易命中 */
 .win-rz { position: absolute; z-index: 10; }
 .win-rz:hover { background: rgba(95, 217, 246, 0.22); }
 .rz-n { left: 10px; right: 10px; top: 0; height: 5px; cursor: ns-resize; }

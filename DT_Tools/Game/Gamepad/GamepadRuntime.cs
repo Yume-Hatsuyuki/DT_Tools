@@ -5,14 +5,6 @@ using DT_Tools.Core;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 手柄运行时：后台线程轮询 XInput，经映射得到按键集合，再经 SendInput 注入。
-    /// </summary>
-    /// <remarks>
-    /// 线程只读 volatile 的映射快照与动作键缓存，不直接触碰 Unity。
-    /// 动作键（玩家在游戏里设置的键位）由主线程读取：RequestKeyRefresh 经 postToMain 投递，回填缓存。
-    /// 失焦、断连、停止时抬起全部自己按下的输出，避免按键卡住。
-    /// </remarks>
     internal sealed class GamepadRuntime
     {
         private const string Tag = "Gamepad";
@@ -31,19 +23,10 @@ namespace DT_Tools.Game
         private Action<Action> _postToMain;
         private Func<int, int> _readActionKeyOnMain;
 
-        /// <summary>最近一帧的快照。</summary>
         public GamepadLiveState Live => _live;
 
-        /// <summary>线程是否在运行。</summary>
         public bool Running => _running;
 
-        /// <summary>
-        /// 启动线程。已在运行时只替换映射。
-        /// </summary>
-        /// <param name="profile">映射快照。</param>
-        /// <param name="tuning">每帧读取的可调参数。</param>
-        /// <param name="postToMain">把动作投递到 Unity 主线程（CoroutineHost.Post）。</param>
-        /// <param name="readActionKeyOnMain">读取动作的当前键位（必须在主线程调用），返回 KeyCode 数值。</param>
         public void Start(GamepadProfile profile, Func<GamepadTuning> tuning, Action<Action> postToMain, Func<int, int> readActionKeyOnMain)
         {
             lock (_gate)
@@ -56,7 +39,6 @@ namespace DT_Tools.Game
                     return;
                 _keysDirty = true;
                 _running = true;
-                // 每个线程持有自己的代次：旧线程若因 join 超时尚未退出，也只会认自己的代次，不会与新线程并存
                 object gen = new object();
                 _generation = gen;
                 _thread = new Thread(() => Loop(gen)) { IsBackground = true, Name = "DT_Tools.Gamepad" };
@@ -65,10 +47,6 @@ namespace DT_Tools.Game
             Log.Info(Tag, "手柄输入线程已启动");
         }
 
-        /// <summary>
-        /// 停止线程并等待其抬起全部按键。
-        /// </summary>
-        /// <param name="joinMs">最长等待毫秒数。</param>
         public void Stop(int joinMs = 1000)
         {
             Thread t;
@@ -84,18 +62,11 @@ namespace DT_Tools.Game
             _live = GamepadLiveState.Offline;
         }
 
-        /// <summary>
-        /// 替换映射快照（保存映射后调用）。
-        /// </summary>
-        /// <param name="profile">新映射快照。</param>
         public void SetProfile(GamepadProfile profile)
         {
             _profile = profile;
         }
 
-        /// <summary>
-        /// 键位可能已变（KeyBindings.OnChanged）。须在主线程调用，下一轮会重新读取。
-        /// </summary>
         public void MarkKeysDirty()
         {
             _keysDirty = true;

@@ -6,28 +6,10 @@ using Server.Game;
 
 namespace DT_Tools.Commands.Power
 {
-    /// <summary>
-    /// /blackout、/restore_power 共用业务（对应旧 PowerControlHelper；房主门禁由框架统一执行）。
-    /// </summary>
-    /// <remarks>
-    /// 原版：Dark 剪完破坏任务电箱（Fusebox.DeviceInfo.MissionType == -1）全部线后，C_INTERACT_FUSEBOX → Fusebox.Interact（0.1.18c Server.Game/Fusebox.cs:16）→ DisconnetCable（:114）。断开第 2 个电箱时 AreaManager.RefreshLight 把所有 Area.IsLight 置 false，Area.IsLight setter 向区域内玩家单播 S_AREA_PUBLIC，客户端 Managers.Game.Darkness=true：关全局灯、中断读条，只剩身边小聚光灯。
-    /// 修复走 Fusebox.ConnetCable（:97）；DeviceManager.RefuseAllFuse（0.1.18c Server.Game/DeviceManager.cs:308）重连全部已断开电箱，计数归 0 时全区亮灯、播放 FuseOnSfx，并安排 60 秒后重新发放 3 个破坏任务。
-    /// </remarks>
     internal static class PowerLogic
     {
-        /// <summary>
-        /// 触发全场停电所需的断开电箱数量（与 AreaManager.RefreshLight 阈值一致）。
-        /// </summary>
         private const int RequiredDisconnectedFuses = 2;
 
-        /// <summary>
-        /// 活动房间 / 屏障 / 生存阶段统一校验，失败返回 null 并已输出提示。
-        /// </summary>
-        /// <remarks>
-        /// 电力逻辑只存在于 Host 端，且仅在生存阶段有游戏意义。
-        /// </remarks>
-        /// <param name="ctx">命令上下文，失败时提示通过它输出。</param>
-        /// <returns>活动房间；失败时为 null 且已输出提示。</returns>
         private static GameRoom Validate(CommandContext ctx)
         {
             var room = GameRoom.Instance;
@@ -49,23 +31,11 @@ namespace DT_Tools.Commands.Power
             return room;
         }
 
-        /// <summary>
-        /// 触发全场停电。
-        /// </summary>
-        /// <remarks>
-        /// 复用 Dark 剪线的原版完整路径
-        /// （Fusebox.Interact → DisconnetCable → AreaManager.RefreshLight），
-        /// 断开第 2 个电箱时全体区域灭灯并广播 FuseOffSfx / 电箱指路箭头。
-        /// </remarks>
-        /// <param name="ctx">命令上下文，结果通过它输出。</param>
-        /// <returns>命令执行结果。</returns>
         public static CommandResult Blackout(CommandContext ctx)
         {
             var room = Validate(ctx);
             if (room == null) return CommandResult.Fail("invalid state");
 
-            // 用全名限定：程序集里另有客户端 DeviceManager（Managers.Device，全局命名空间），
-            // 这里需要的是 Host 端 Server.Game.DeviceManager（0.1.18c Server.Game/DeviceManager.cs:10/:38）
             var deviceManager = Server.Game.DeviceManager.Instance;
             int disconnected = deviceManager.GetDisconnectFuseCount();
             if (disconnected >= RequiredDisconnectedFuses)
@@ -76,9 +46,6 @@ namespace DT_Tools.Commands.Power
 
             int need = RequiredDisconnectedFuses - disconnected;
 
-            // 仅完好（IsLight）的电箱可断开；优先使用已发放破坏任务（MissionType==-1）的，
-            // 与 Dark 手动剪线完全同路径；任务已被清空（如修复后 60 秒刷新间隔内）时，
-            // 先按原版 StartMission 路径补发任务再断开。
             var lightFuses = deviceManager.Fuseboxes.Where(f => f.IsLight).ToList();
             var targets = lightFuses
                 .Where(f => f.DeviceInfo.MissionType == -1)
@@ -98,8 +65,6 @@ namespace DT_Tools.Commands.Power
                 if (fusebox.DeviceInfo.MissionType != -1)
                     fusebox.StartMission();
 
-                // player=null：DisconnetCable 内仅在 player!=null 时记录成就，
-                // Device.RecordLastUsingPlayer 亦有 player!=null 保护；Packet 只需非空实例。
                 fusebox.Interact(null, new global::Packet());
             }
 
@@ -116,13 +81,6 @@ namespace DT_Tools.Commands.Power
             return CommandResult.Fail("blackout not triggered", new { disconnected = after });
         }
 
-        /// <summary>
-        /// 恢复电力。直接复用原版 DeviceManager.RefuseAllFuse：
-        /// 重连全部已断开电箱，计数归 0 时全区亮灯、播放 FuseOnSfx，
-        /// 并安排 60 秒后重新随机发放 3 个破坏任务。
-        /// </summary>
-        /// <param name="ctx">命令上下文，结果通过它输出。</param>
-        /// <returns>命令执行结果。</returns>
         public static CommandResult RestorePower(CommandContext ctx)
         {
             var room = Validate(ctx);
@@ -136,7 +94,6 @@ namespace DT_Tools.Commands.Power
                 return CommandResult.Fail("power is on", new { disconnected = 0 });
             }
 
-            // 原版公共方法：遍历全部 IsLight==false 的电箱执行 ConnetCable
             deviceManager.RefuseAllFuse();
 
             int after = deviceManager.GetDisconnectFuseCount();

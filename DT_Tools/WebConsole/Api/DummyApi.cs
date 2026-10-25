@@ -9,27 +9,11 @@ using Newtonsoft.Json.Linq;
 
 namespace DT_Tools.WebConsole.Api
 {
-    /// <summary>
-    /// /api/dummy/* — 假人管理应用的后端（Game/FakePlayers 的 HTTP 面）。
-    /// </summary>
-    /// <remarks>
-    /// GameRoom 及其玩家只能在 Unity 主线程读写：所有端点经 WebConsole.RunOnMain
-    /// 同步执行（复用 /api/run 的队列与 5 秒超时保护）。
-    /// 响应沿用命令信封 {ok, error, data}；错误码小写英文短词，中文详情在 data.message。
-    /// </remarks>
     public static class DummyApi
     {
-        /// <summary>
-        /// GET /api/dummy/state — 房间快照：阶段/房主/容量/玩家与假人标记。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleState(HttpListenerContext ctx)
             => WriteMain(ctx, () => CommandResult.Success(FakePlayers.Snapshot(ResolveRoomCapacity())));
 
-        /// <summary>
-        /// GET /api/dummy/characters — 角色目录（含随机项），下拉数据源。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleCharacters(HttpListenerContext ctx)
             => WriteMain(ctx, () => CommandResult.Success(new
             {
@@ -38,10 +22,6 @@ namespace DT_Tools.WebConsole.Api
                     .ToArray(),
             }));
 
-        /// <summary>
-        /// POST /api/dummy/create {name, characterId} — 创建假人并进场。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleCreate(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -54,10 +34,6 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
-        /// POST /api/dummy/remove {name} — 移除假人（昵称或 #座位ID）。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleRemove(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -69,10 +45,6 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
-        /// POST /api/dummy/ready {name, ready} — 假人就绪/取消就绪。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleReady(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -90,10 +62,6 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
-        /// POST /api/dummy/pick {name, characterId} — 为假人选角（选角阶段/大厅换角通吃）。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandlePick(HttpListenerContext ctx)
         {
             if (!ParseBody(ctx, out var body)) return;
@@ -106,10 +74,6 @@ namespace DT_Tools.WebConsole.Api
             });
         }
 
-        /// <summary>
-        /// POST /api/dummy/remove-all — 移除全部假人（不动 WebUI 行配置）。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
         public static void HandleRemoveAll(HttpListenerContext ctx)
             => WriteMain(ctx, () =>
             {
@@ -118,16 +82,6 @@ namespace DT_Tools.WebConsole.Api
                 return Op(true, null, text, new { removed });
             });
 
-        /// <summary>
-        /// 有效房间人数上限：「房间人数上限」功能（LobbyMaxPlayers）开启时用其 MaxMembers
-        /// （1–16，其 GameStart 补丁已做出生点循环复用，>8 不越界）；关闭时回原生 8
-        /// （0.1.18c Define.cs)。
-        /// </summary>
-        /// <remarks>
-        /// Game 层禁止反向引用 Features（AGENTS.md §4），
-        /// 故在 API 顶层解析后作为参数传给 FakePlayers；座位表 16 为硬顶。
-        /// </remarks>
-        /// <returns>有效的房间人数上限，取值 1 到 16。</returns>
         private static int ResolveRoomCapacity()
         {
             try
@@ -142,22 +96,9 @@ namespace DT_Tools.WebConsole.Api
             return Define.MAX_PLAYER_COUNT;
         }
 
-        /// <summary>
-        /// 统一执行壳：RunOnMain 包裹（结果信封原样回写）。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
-        /// <param name="work">要在主线程执行的命令逻辑。</param>
         private static void WriteMain(HttpListenerContext ctx, Func<CommandResult> work)
             => HttpServer.WriteJson(ctx.Response, WebConsole.RunOnMain(work));
 
-        /// <summary>
-        /// 成功/失败 → 命令信封；中文详情进 data.message 并写一条全局日志（日志应用可见）。
-        /// </summary>
-        /// <param name="ok">操作是否成功。</param>
-        /// <param name="error">失败时的错误码。</param>
-        /// <param name="text">中文详情，写入 data.message 并记入全局日志。</param>
-        /// <param name="data">附加的数据对象。</param>
-        /// <returns>命令结果信封。</returns>
         private static CommandResult Op(bool ok, string error, string text, object data)
         {
             if (!string.IsNullOrEmpty(text))
@@ -175,12 +116,6 @@ namespace DT_Tools.WebConsole.Api
             catch { return 0; }
         }
 
-        /// <summary>
-        /// 解析 JSON 请求体；缺失/非法直接回 "invalid body"（统一解析在 ApiUtil）。
-        /// </summary>
-        /// <param name="ctx">HTTP 请求上下文，请求与响应都通过它读写。</param>
-        /// <param name="body">解析出的请求体；失败时为 null。</param>
-        /// <returns>解析成功时为 true；失败时已回复 invalid body。</returns>
         private static bool ParseBody(HttpListenerContext ctx, out JObject body)
         {
             body = ApiUtil.ParseBody(ctx);

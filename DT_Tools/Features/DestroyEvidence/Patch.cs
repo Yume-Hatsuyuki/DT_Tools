@@ -4,13 +4,6 @@ using Protocol;
 
 namespace DT_Tools.Features.DestroyEvidence
 {
-    /// <summary>
-    /// UseSabotage 整替：改读条时长，收尾动作与原版一致
-    /// （PlaySystem("SabotageSfx") + C_DESTROY_EVIDENCE，0.1.18c DeviceBase.cs:457-470）。
-    /// </summary>
-    /// <remarks>
-    /// protected virtual，字符串定位。
-    /// </remarks>
     [HarmonyPatch(typeof(DeviceBase), "UseSabotage")]
     internal static class DestroyEvidencePatch
     {
@@ -21,7 +14,6 @@ namespace DT_Tools.Features.DestroyEvidence
             if (!Engine.Enabled<DestroyEvidenceFeature>())
                 return true;
 
-            // 与原版守卫一致：已有读条在跑就不重复开（0.1.18c DeviceBase.cs)
             if (Managers.Game.CastingSlider != null)
                 return false;
 

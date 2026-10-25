@@ -2,11 +2,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { t } from '../../i18n/index.js';
 
-/**
- * 发送前确认：展示将要发出的那一份图片（与实际发送的 JPEG 相同），用户点击「发送」才真正发出。
- * 默认焦点在「取消」，回车不会误发；Esc 或点击遮罩取消。冷却中、阶段不符或发送中，「发送」不可用。
- * 点击预览图可放大查看（由父组件打开查看器）。
- */
 const props = defineProps({
   src: { type: String, required: true },
   canSend: { type: Boolean, default: false },

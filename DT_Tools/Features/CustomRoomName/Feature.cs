@@ -2,13 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.CustomRoomName
 {
-    /// <summary>
-    /// 自定义房间名：建房与已在房内时写入 Steam Lobby 的 name。
-    /// </summary>
-    /// <remarks>
-    /// RoomName 配置热改即触发写入（Feature 订阅底层 ConfigEntry 的 SettingChanged），
-    /// WebUI / 配置文件修改后即时生效。
-    /// </remarks>
     [PatchFeature(
         "自定义房间名：配置 RoomName 后建房即用该名；修改配置会立刻写入当前房间（需房主，0.1.18c 起游戏内房间名显示同步更新）。",
         defaultEnabled: false,

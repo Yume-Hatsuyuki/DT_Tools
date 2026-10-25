@@ -2,9 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.WebConsole
 {
-    /// <summary>
-    /// WebConsole 服务器配置（段名自动推导为 "WebConsole"）。
-    /// </summary>
     [ConfigSection("内嵌 WebUI 控制台服务器。启动后用浏览器打开 http://<ListenIp>:<Port>/")]
     public sealed class WebConsoleOptions
     {

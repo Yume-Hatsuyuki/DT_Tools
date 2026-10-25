@@ -2,15 +2,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { createPoller } from '../../api.js';
 
-/**
- * 段/模块日志面板：挂载即拉取，3 秒轮询跟随（页面隐藏自动暂停），
- * 关闭即停。数据形状 = 后端 {ok, section, seq, lines:["HH:mm:ss [LEVEL] msg"]}。
- * （旧版按数组解析导致永远显示"无日志"的 BUG 在此修正并集中到这一个组件。）
- */
 const props = defineProps({
-  /** () => Promise<{ok, lines?}> —— 调用方绑定 sectionLog / moduleLog。 */
   fetch: { type: Function, required: true },
-  /** async () => void —— 清空回调（父级负责调 API 并处理错误）。 */
   clear: { type: Function, required: true },
 });
 

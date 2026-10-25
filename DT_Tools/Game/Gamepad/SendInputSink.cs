@@ -1,8 +1,5 @@
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 生产用注入端：经 Win32 SendInput 发送。
-    /// </summary>
     internal sealed class SendInputSink : IInputSink
     {
         public void KeyDown(int vk) => Win32Input.SendKey(vk, true, UnityKeys.IsExtended(vk));

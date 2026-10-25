@@ -7,23 +7,17 @@ import { useFolderView } from '../../composables/useFolderView.js';
 import IconFolder from '~icons/tabler/folder';
 
 const props = defineProps({
-  /** [{ key, label, count, enabled: bool|null }] —— key 是稳定标识（段名/模块 id）。 */
   items: { type: Array, required: true },
-  /**
-   * 列表视图每行右侧的说明文字（item → string）；不传则列表只显示名字与计数。
-   * 各页自备来源：DT 配置页给分类说明 / 段摘要，自动化页给模块说明。
-   */
   descOf: { type: Function, default: null },
 });
 const emit = defineEmits(['open']);
 
 const sectionMeta = useSectionMeta();
 const cropper = useCropper();
-// 网格/列表共用一份状态：切换按钮在各自页面的工具栏上（useFolderView）
 const { viewMode } = useFolderView();
 
-const menu = ref(null);   // { x, y, item }
-const renaming = ref(null);   // { key, value }
+const menu = ref(null);
+const renaming = ref(null);
 
 function labelOf(item) {
   return sectionMeta.displayName(item.key) || item.label;
@@ -31,7 +25,6 @@ function labelOf(item) {
 
 function openMenu(e, item) {
   e.preventDefault();
-  // 视口右/下边缘内收，避免菜单被裁掉
   const x = Math.min(e.clientX, window.innerWidth - 190);
   const y = Math.min(e.clientY, window.innerHeight - 190);
   menu.value = { x, y, item };
@@ -86,7 +79,7 @@ const menuItems = computed(() => {
   return items;
 });
 
-const filtered = computed(() => props.items);   // 过滤由父级完成（父级还要搜字段）
+const filtered = computed(() => props.items);
 </script>
 
 <template>
@@ -254,7 +247,6 @@ const filtered = computed(() => props.items);   // 过滤由父级完成（父�
 .folder-tile:hover .tile-label { color: var(--text-0); }
 .tile-count { font-size: 10px; color: var(--text-2); }
 
-/* 列表视图：一条一行，右侧带说明（分类说明 / 功能摘要 / 模块说明） */
 .folder-list {
   display: flex;
   flex-direction: column;

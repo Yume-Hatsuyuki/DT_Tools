@@ -4,13 +4,6 @@ using Protocol;
 
 namespace DT_Tools.Commands.Beacon
 {
-    /// <summary>
-    /// /beacon [x y | spawn &lt;#i> | player &lt;#id> | lobby | error]：战略信标，瞬移到指定坐标（跟随控制台 / 客户端，非房主可用，仅作用于本机）。
-    /// </summary>
-    /// <remarks>
-    /// 机制（按《分析MOD客户端功能数据包》第 8 节“传送”伪造路径）：服务端 GameRoom.HandleMove → Player.Move(pos) 无距离校验，只拒绝 Hide/Sit/MoveLock；位置非法时仅在 Survive/Detective fallback 到 MapData.ErrorPos，其余阶段整包静默丢弃（0.1.18c Server.Game/GameRoom.cs:2321、:2349-2354，Server.Game/Player.cs:733）。
-    /// 客户端 PlayerManager.HandleMove 忽略本机 MyPlayer（0.1.18c PlayerManager.cs:467、:469），S_MOVE 不会回拉本机坐标，因此需本地主动落位，统一走 Game/Teleport.TryTeleport（本地落位 + C_MOVE + 相机跟随，同官方 HandleRespawn）。
-    /// </remarks>
     internal sealed class BeaconCommand : ICommand
     {
         public string Name => "beacon";
@@ -24,7 +17,6 @@ namespace DT_Tools.Commands.Beacon
 
         public CommandResult Execute(CommandContext ctx)
         {
-            // 1. 校验本机玩家 + 网络链路
             if (!LocalPlayer.TryGetPlayer(out var my, out string localError))
             {
                 ctx.Reply(localError);
@@ -38,14 +30,12 @@ namespace DT_Tools.Commands.Beacon
                 return CommandResult.Fail("no mapdata");
             }
 
-            // 2. 无参数 → 列出出生点 / 在线玩家 + 帮助
             if (ctx.Args.Length == 0)
             {
                 ctx.Reply(BeaconFormat.HelpAndSpawns(mapData, my));
                 return CommandResult.Success(BeaconFormat.ListResult(mapData, my));
             }
 
-            // 3. 解析目标坐标
             if (!BeaconArgs.TryParse(ctx.Args, out var target, out string parseError))
             {
                 ctx.Reply(parseError);
@@ -58,19 +48,16 @@ namespace DT_Tools.Commands.Beacon
                 return CommandResult.Fail("bad args");
             }
 
-            // 4. 状态门禁：Hide/Sit 服务端会拒收 C_MOVE
             if (my.State == EPlayerState.Hide || my.State == EPlayerState.Sit)
             {
                 ctx.Warn($"当前状态 {my.State} 无法瞬移（服务端 HandleMove 拒收 Hide/Sit）。请先脱离藏身处/座位。");
                 return CommandResult.Fail("state locked");
             }
 
-            // 5. 越界预警（不阻断：仅生存/调查阶段服务端兜底 ErrorPos，其余阶段丢弃移动）
             string oob = BeaconLogic.OutOfBoundsWarning(pos, mapData);
             if (oob != null)
                 ctx.Warn(oob);
 
-            // 6. 瞬移（本地落位 + C_MOVE + 相机，与官方 HandleRespawn 同款）
             if (!Teleport.TryTeleport(my, pos, out string teleportError))
             {
                 ctx.Warn($"瞬移失败: {teleportError}");

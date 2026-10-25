@@ -2,13 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.ShowTrueName
 {
-    /// <summary>
-    /// 吾之真名：本机名字常显。
-    /// </summary>
-    /// <remarks>
-    /// ChangeMyPlayer 进对局后原版会关掉自己的 NameTag
-    /// （0.1.18c PlayerManager.cs)，此处强制打开；可选死后仍显（GameManagerEX.Dead，:333）。
-    /// </remarks>
     [PatchFeature(
         "吾之真名：进入游戏后头顶名字持续可见。",
         defaultEnabled: false,

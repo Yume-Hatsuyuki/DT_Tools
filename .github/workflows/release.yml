@@ -1,7 +1,5 @@
 name: Release
 
-# 1) 推送 v*.*.* tag → 编译并发布
-# 2) Actions 手动 Run workflow，填入 tag（可基于当前 main 新建 tag）
 on:
   push:
     tags:
@@ -16,7 +14,6 @@ on:
 permissions:
   contents: write
 
-# 同一 tag 重复触发时取消旧运行，避免重复发布
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
@@ -31,7 +28,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 表达式一律经 env 传入 shell，避免把 inputs / ref 名直接拼进脚本（注入风险）
       - name: 校验发布来源分支
         shell: bash
         env:
@@ -79,26 +75,20 @@ jobs:
           echo "version=$ASSEMBLY_VERSION" >> "$GITHUB_OUTPUT"
           echo "informational=$INFO_VERSION" >> "$GITHUB_OUTPUT"
 
-      # 显式安装并固定 Node 版本（与本地开发环境 Node 24 保持一致）
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: npm
-          # setup-node v5 起默认启用 package-manager 缓存，与上方 cache: npm 冲突，显式关闭
           package-manager-cache: false
           cache-dependency-path: webui-src/package-lock.json
 
-      # 先于 dotnet build 构建前端：产物写入 DT_Tools/WebUI，
-      # 保证 csproj 里 <None Include="WebUI/**"> 在求值时就能看到这些文件。
       - name: Build WebUI
         working-directory: webui-src
         run: |
           npm ci
           npm run build
 
-      # 版本以仓库根目录 global.json 为唯一来源（rollForward=disable，必须精确匹配）。
-      # 注意不要再同时写 dotnet-version，否则两个版本都会被安装。
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
@@ -107,7 +97,6 @@ jobs:
       - name: Restore
         run: dotnet restore DT_Tools/DT_Tools.csproj
 
-      # 前端已在上面显式构建，跳过 csproj 内的 BuildWebUI，避免重复执行 npm
       - name: Build
         env:
           ASSEMBLY_VERSION: ${{ steps.ver.outputs.version }}
@@ -184,7 +173,6 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
-          # 手动触发且 tag 尚不存在时，让新 tag 落在被构建的那个提交上
           target_commitish: ${{ github.sha }}
           name: DT_Tools ${{ steps.ver.outputs.tag }}
           generate_release_notes: true

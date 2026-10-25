@@ -3,10 +3,6 @@ using HarmonyLib;
 
 namespace DT_Tools.Features.GhostView
 {
-    /// <summary>
-    /// 原版 IsGhostView 返回 !Managers.Game.IsAlive（public override，可用 nameof）：
-    /// 0.1.18c MyPlayer.cs。整替为恒 true。
-    /// </summary>
     [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.IsGhostView))]
     internal static class GhostViewPatch
     {

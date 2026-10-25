@@ -2,47 +2,19 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.PhotoSend
 {
-    /// <summary>
-    /// 照片缩放模式。
-    /// </summary>
     public enum ScaleModeType
     {
-        /// <summary>
-        /// 按分辨率自适应：大图缩小到长边 MaxSide，小图放大到短边 MinSide（推荐）。
-        /// </summary>
         Auto = 0,
-        /// <summary>
-        /// 固定：只把超过 MaxSide 的大图缩小，小图不放大。
-        /// </summary>
         Fixed,
-        /// <summary>
-        /// 原样：尽量保持原分辨率（仅靠降质量压体积，超 160KB 会报错）。
-        /// </summary>
         Original
     }
 
-    /// <summary>
-    /// GIF 解码器：两种实现都只取第一帧，输出一致，按环境与偏好二选一。
-    /// </summary>
     public enum GifDecoderType
     {
-        /// <summary>
-        /// 系统 GDI+（游戏自带的 System.Drawing）：代码少、覆盖全面，依赖 Windows 自带的 gdiplus.dll（默认）。
-        /// </summary>
         SystemDrawing = 0,
-        /// <summary>
-        /// 内置纯托管解码：零依赖、所有边界都检查，已与 Pillow 逐像素对比验证。
-        /// </summary>
         Builtin,
     }
 
-    /// <summary>
-    /// 照片发送器（PhotoSend）：游戏内聊天输入 `![文字](路径)`（严格 markdown 括号对）。
-    /// </summary>
-    /// <remarks>
-    /// 文字非空时先发一条普通聊天消息，再从路径直发照片；文字可空（`![](路径)`），路径不允许为空。路径支持本地文件、相对图片目录（BepInEx/config/DT_Tools/photos/）的文件名，或 http(s) 链接。
-    /// 实现：读图（LoadImage；GIF 由配置 GifDecoder 选择的解码器取第一帧）→ 缩放（保证 JPEG ≤160KB 原版上限）→ 构造 C_CHAT_PHOTO 直发（SlotIndex=-1，不触碰相册）→ 房主转 S_CHAT_PHOTO 全房广播。完全走原版照片协议：无需房主权限、无需对方安装本 mod，庭审阶段也可直接发。
-    /// </remarks>
     [PatchFeature(
         "照片发送器：聊天输入 ![文字](路径)（markdown 格式），文字非空先发一条文字再直发照片，文字可空、路径必填；" +
         "图片支持本地路径、相对图片目录的文件名或 http(s) 网络链接；格式为 jpg / png，gif 只发第一帧（静态），解码器见配置 GifDecoder。\n" +

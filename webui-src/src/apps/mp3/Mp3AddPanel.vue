@@ -22,7 +22,6 @@ const neteaseInput = ref('');
 const neteaseName = ref('');
 const neteaseReady = computed(() => neteaseInput.value.trim().length > 0);
 
-/** 与 tools/nextmusic-dl.mjs / NeteaseMusic.Levels 对齐的兜底列表 */
 const FALLBACK_LEVELS = [
   { value: 'standard', label: '标准音质' },
   { value: 'higher', label: '较高音质' },
@@ -47,7 +46,6 @@ const settings = ref({
 });
 const settingsLoaded = ref(false);
 
-/** 下拉选项：优先用后端 levelOptions，否则用 levels 码 + 本地中文表 */
 const levelSelectOptions = computed(() => {
   const opts = settings.value.levelOptions;
   if (Array.isArray(opts) && opts.length && opts[0]?.value != null) return opts;
@@ -60,7 +58,6 @@ async function loadSettings() {
   const j = await API.mp3NeteaseSettings();
   if (j.ok) {
     const data = j.data || {};
-    // 旧后端只有 levels 字符串数组时，仍可显示
     if (!data.levelOptions && Array.isArray(data.levels)) {
       const map = new Map(FALLBACK_LEVELS.map((x) => [x.value, x.label]));
       data.levelOptions = data.levels.map((v) => ({ value: v, label: map.get(v) || v }));
@@ -247,7 +244,6 @@ function addNetease() {
 </template>
 
 <style scoped>
-/* 与平板导出框 / FileBrowser / 语言弹窗统一：深色毛玻璃面板 + 设计令牌 */
 .mask {
   position: absolute;
   inset: 0;

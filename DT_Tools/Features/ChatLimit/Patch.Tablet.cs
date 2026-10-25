@@ -4,13 +4,6 @@ using TMPro;
 
 namespace DT_Tools.Features.ChatLimit
 {
-    /// <summary>
-    /// UI_GameTablet.Init 后置：抬高平板聊天输入框上限。
-    /// </summary>
-    /// <remarks>
-    /// 公共方法（nameof 定位），0.1.18c UI_GameTablet.cs:864（:871 写 characterLimit = 100）。
-    /// GetInputField 为 UI_Base 的 protected 方法（0.1.18c UI_Base.cs:98），Traverse 定位。
-    /// </remarks>
     [HarmonyPatch(typeof(UI_GameTablet), nameof(UI_GameTablet.Init))]
     internal static class ChatLimitTabletPatch
     {
@@ -27,7 +20,6 @@ namespace DT_Tools.Features.ChatLimit
             }
             catch (global::System.Exception ex)
             {
-                // UI 未就绪等异常记诊断，等 TMP OnEnable / ActivateInputField 兜底
                 Log.Debug<ChatLimitFeature>($"平板输入框抬限失败: {ex.Message}");
             }
         }

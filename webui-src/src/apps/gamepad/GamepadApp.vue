@@ -2,10 +2,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { API, createPoller } from '../../api.js';
 
-/**
- * 手柄应用：配置手柄按钮映射（普通 / 光标两层），并实时显示手柄读数。
- * 手柄只控制游戏，不操作 WebUI；这里只负责配置。映射保存后即时生效。
- */
 const enabled = ref(false);
 const running = ref(false);
 const connected = ref(false);
@@ -48,7 +44,6 @@ async function reload() {
   actions.value = d.actions || [];
   keys.value = d.keys || [];
   mouse.value = d.mouse || [];
-  // 只在映射真的变化时替换，避免轮询把正在打开的下拉框刷掉
   const next = d.bindings || [];
   if (JSON.stringify(next) !== JSON.stringify(bindings.value)) bindings.value = next;
 }
@@ -80,7 +75,6 @@ const resetAll = () => {
   act(() => API.gamepadReset(), '已恢复默认映射');
 };
 
-// 下拉框分组：不输出 / 游戏动作（读玩家实际键位）/ 固定键 / 鼠标
 const outputOptions = computed(() => [
   { group: '不输出', items: [{ value: 'none', label: '（无）' }] },
   { group: '游戏动作（读取玩家在游戏里设置的键位）', items: actions.value.map(a => ({ value: a.token, label: a.label })) },
@@ -88,7 +82,6 @@ const outputOptions = computed(() => [
   { group: '鼠标', items: mouse.value.map(m => ({ value: m.token, label: m.label })) },
 ]);
 
-// 光标层多一项「跟随普通模式」：未单独设置的按钮显示普通层的输出（虚线框），选它可恢复跟随
 const cursorOptions = computed(() => [
   { group: '跟随', items: [{ value: 'inherit', label: '（跟随普通模式）' }] },
   ...outputOptions.value,
@@ -188,7 +181,6 @@ onUnmounted(() => poller.stop());
 
 <style scoped>
 .gp-app { position: relative; display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 12px 14px; box-sizing: border-box; background: var(--surface-0); color: var(--text-1); overflow-x: hidden; overflow-y: auto; }
-/* 子块不参与压缩：窗口变矮时由 .gp-app 出现滚动条，而不是把 overflow:hidden 的映射表裁掉 */
 .gp-app > * { flex-shrink: 0; }
 .status-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 11px; color: var(--text-2); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }

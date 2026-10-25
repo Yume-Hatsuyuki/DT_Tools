@@ -2,14 +2,6 @@ using System;
 
 namespace DT_Tools.Game
 {
-    /// <summary>
-    /// 每帧的映射逻辑（纯计算，不碰系统输入）。
-    /// </summary>
-    /// <remarks>
-    /// 左摇杆：普通模式输出 MoveUp/Down/Left/Right 动作；光标模式输出方向键。摇杆方向带滞回，避免边界抖动。
-    /// 右摇杆：仅光标模式，按速度与时间积分为整数像素移动。
-    /// 切换键：仅在按下边沿切换光标模式；首帧只记录，避免刚连接时误切换。
-    /// </remarks>
     internal sealed class GamepadMapper
     {
         private const float DigitalEnter = 0.5f;
@@ -33,14 +25,8 @@ namespace DT_Tools.Game
         private float _accX;
         private float _accY;
 
-        /// <summary>
-        /// 当前是否处于光标模式。
-        /// </summary>
         public bool CursorMode { get; private set; }
 
-        /// <summary>
-        /// 失焦、断连、停止后调用：清空方向与积分，光标模式回到普通。
-        /// </summary>
         public void Reset()
         {
             _primed = false;
@@ -49,15 +35,6 @@ namespace DT_Tools.Game
             CursorMode = false;
         }
 
-        /// <summary>
-        /// 推进一帧。
-        /// </summary>
-        /// <param name="s">本帧手柄读数。</param>
-        /// <param name="dt">距上一帧的秒数（调用方限幅）。</param>
-        /// <param name="profile">编译后的映射快照。</param>
-        /// <param name="tuning">可调参数。</param>
-        /// <param name="actionVk">动作下标 → 玩家实际绑定的虚拟键码（未知返回 0）。</param>
-        /// <returns>本帧结果。</returns>
         public GamepadFrame Tick(GamepadState s, float dt, GamepadProfile profile, GamepadTuning tuning, Func<int, int> actionVk)
         {
             var frame = new GamepadFrame();

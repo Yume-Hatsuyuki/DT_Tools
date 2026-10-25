@@ -6,20 +6,10 @@ using Protocol;
 
 namespace DT_Tools.Features.SoiDoubleSteal
 {
-    /// <summary>
-    /// SOI 偷技能计数与恢复（服务端进程内共享状态）。
-    /// </summary>
     internal static class SoiDoubleStealLogic
     {
-        /// <summary>
-        /// 各 SOI 玩家（PlayerId）本局已偷次数。
-        /// </summary>
         private static readonly Dictionary<int, int> _stealCount = new Dictionary<int, int>();
 
-        /// <summary>
-        /// UseRuleBreaker 前缀：记录本次偷技能次数。
-        /// </summary>
-        /// <param name="owner">偷技能的 SOI 玩家。</param>
         public static void OnSteal(Server.Game.Player owner)
         {
             if (owner == null) return;
@@ -28,11 +18,6 @@ namespace DT_Tools.Features.SoiDoubleSteal
             _stealCount[id] = count + 1;
         }
 
-        /// <summary>
-        /// 判断该玩家是否正在使用偷来的技能（SOI 且已偷过、当前技能不是 RuleBreaker）。
-        /// </summary>
-        /// <param name="owner">要判断的玩家。</param>
-        /// <returns>正在使用偷来的技能时为 true。</returns>
         public static bool IsUsingStolenSkill(Server.Game.Player owner)
         {
             if (owner?.SkillComponent?.Data == null) return false;
@@ -41,20 +26,14 @@ namespace DT_Tools.Features.SoiDoubleSteal
                 && owner.SkillComponent.Data.Type != ESkillType.RuleBreaker;
         }
 
-        /// <summary>
-        /// 偷来的技能使用后恢复 RuleBreaker（未偷满才恢复；偷满后不再恢复，整局即止）。
-        /// </summary>
-        /// <param name="owner">使用偷来技能的 SOI 玩家。</param>
         public static void RestoreRuleBreaker(Server.Game.Player owner)
         {
             if (owner == null || owner.SkillComponent == null) return;
             int id = owner.PublicInfo.PlayerId;
             if (!_stealCount.TryGetValue(id, out int count) || count <= 0) return;
             if (count >= SoiDoubleStealFeature.MaxSteals)
-                return; // 已偷满：保持偷来的技能，之后无法再偷
+                return;
 
-            // 用 SOI 原角色数据重新分配技能 → Data 恢复为 RuleBreaker，并同步
-            // SendChangeSkill / SkillState / CanUseSkill / 清理偷来技能的被动 buff
             var soi = Managers.Data.CharacterDic.Values
                 .FirstOrDefault(x => x.Type == ECharacterType.Soi);
             if (soi == null)
@@ -67,9 +46,6 @@ namespace DT_Tools.Features.SoiDoubleSteal
         }
     }
 
-    /// <summary>
-    /// 偷技能计数（0.1.18c SkillComponent.UseRuleBreaker(int)，private）。
-    /// </summary>
     [HarmonyPatch(typeof(Server.Game.SkillComponent), "UseRuleBreaker")]
     internal static class SoiDoubleStealCountPatch
     {
@@ -88,10 +64,6 @@ namespace DT_Tools.Features.SoiDoubleSteal
         }
     }
 
-    /// <summary>
-    /// 技能使用入口（0.1.18c SkillComponent.UseSkill(C_USE_SKILL)，public）：正在使用
-    /// 偷来的技能（Data.Type != RuleBreaker）时，用完后恢复 RuleBreaker，使其可偷下一个。
-    /// </summary>
     [HarmonyPatch(typeof(Server.Game.SkillComponent), "UseSkill")]
     internal static class SoiDoubleStealUsePatch
     {

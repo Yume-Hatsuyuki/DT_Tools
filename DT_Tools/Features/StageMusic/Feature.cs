@@ -2,21 +2,6 @@ using DT_Tools.Core.Attributes;
 
 namespace DT_Tools.Features.StageMusic
 {
-    /// <summary>
-    /// 阶段音乐（客户端，实验性）：按游戏阶段播放自定义音乐（来源由 TrackSource 指定：http 链接或本地文件，仅本地收听）。
-    /// </summary>
-    /// <remarks>
-    /// 触发点（2026-09 补充审计，已对照 0.1.18c 源码核对行号）：
-    /// 击杀 Handle_S_KILL_PLAYER（只发凶手，PacketHandler.cs:965）；递刀 UseHandWeapon（MyPlayer.cs:779）；阶段切换 GameManagerEX.StartState（GameManagerEX.cs:386，六阶段）；
-    /// 处刑 UI_TrialEvent.TrialResult（UI_TrialEvent.cs:1214）；大厅 UI_LobbyScene.OnEnable（UI_LobbyScene.cs:2209）与 StartLobby（GameManagerEX.cs:452）；
-    /// 审判子阶段 UI_TrialEvent.StartState（UI_TrialEvent.cs:1652，TrialResult 沿用处刑触发）；发现尸体 Handle_S_DISCOVER_CORPSE（PacketHandler.cs:833，仅发现者）；
-    /// 自己死亡 Handle_S_DEAD（PacketHandler.cs:404，仅死者；S_NOTIFY_DEAD 是灵媒通知，不能作为本机死亡信号）；结局 Handle_S_ENDING_CAMERA（PacketHandler.cs:604，IsEnd=true）；
-    /// 黑幕继承 Handle_S_NOTIFY_BLACK（PacketHandler.cs:494，非递刀时按收包瞬间的本机 Dark 与存活判定）。
-    /// 播放槽：同曲目播放中不重播（防连杀重复），切阶段只保留一首，限长到点停止。
-    /// 原版 BGM 可选静音（各阶段原版会播 DetectiveBGM、TrialMainBGM、Beta_Result_BGM 等，含 MainTitleBGM）。
-    /// 麦克风广播（MicBroadcast 配置，默认关）：经 Game/MicBroadcast 混入全房；随播放槽启停，与 /mic_music 互斥（后触发者接管）。
-    /// 未来扩展：新增阶段 = 加 MusicStage 成员 + 对应 [Config] 字段 + 触发补丁。
-    /// </remarks>
     [PatchFeature(
         "[实验性] 阶段音乐：按游戏阶段播放自定义音乐（TrackSource 统一选择在线链接或本地文件，" +
         "17 个阶段独立配置曲目/音量/时长上限——原 8 阶段 + 选角/审判四子阶段/发现尸体/" +
@@ -192,9 +177,6 @@ namespace DT_Tools.Features.StageMusic
         [Config("阶段音乐麦克风广播：开启后阶段音乐同时经虚拟麦克风混入你的语音发往全房（无需说话，游戏内麦克风不能静音；与 /mic_music 共用引擎，手动点歌会被阶段切换顶替）。默认关。")]
         public static bool MicBroadcast = false;
 
-        /// <summary>
-        /// 运行时关闭：停播并销毁 AudioSource 与音频缓存、复位混音状态（有持续音频/对象副作用必须清理）。
-        /// </summary>
         private static void OnDisabled()
         {
             StageMusicPlayer.Shutdown();

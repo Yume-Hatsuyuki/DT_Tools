@@ -5,19 +5,9 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Agent
 {
-    /// <summary>
-    /// /agent [all|任务ID|名|#设备号|stop]：特工，按任务链自动推进（一步做不完就跳过做下一个）。
-    /// </summary>
-    /// <remarks>
-    /// 优先级：无等待 / 仓储获取物 / 采矿 > 设备生成 > 计时类 > 摇酒（移动）最后。手空时“顺手牵羊”获取仓储与地面任务道具。
-    /// 实现拆分（原 11 个文件，逻辑未改）：Args（参数/别名）、Logic.Types（Pri / AgentFilter / AgentStep / AddDel）、Logic.ItemHelper（道具/矿石/花工具、任务链关联、扫描仪颜色）、Logic.MissionState（任务激活状态的权威数据源，Host 反射 MissionManager，客户端 MissionMirror）、Logic.DeliveryChain（交付链）、Logic.VacuumChain（顺手牵羊）、Logic.InstantChain（无道具直清）、Logic.GenerateChain（生成源，含挖矿冷却字段）、Logic.Planner（PlanAll/Next/Peek 调度）、Logic.Runner（MonoBehaviour tick 驱动）。
-    /// </remarks>
     internal sealed class AgentCommand : ICommand
     {
         public string Name => "agent";
-        // 注意：旧版 AgentCommand 与 GiveMissionCommand 都声明了别名 "mission"
-        //（旧注册表静默覆盖，新 CommandRegistry 会抛冲突异常），此处让出 "mission"，
-        // 保留 "特工"/"任务"；如需归还请与 GiveMission 协调。
         public string[] Aliases => new[] { "特工", "任务" };
         public string Usage => "agent [all|任务ID|名|#设备号|stop]";
         public string Description => "特工：按任务链自动推进（一步做不完就跳过做下一个）。";
@@ -62,7 +52,6 @@ namespace DT_Tools.Commands.Agent
 
             if (ctx.Args.Length == 0)
             {
-                // 无参：预览本 tick 可执行步骤 + 诊断（不启动 Runner）
                 var preview = AgentPlanner.Peek(default);
                 ctx.Reply(BuildHelp(preview));
                 return CommandResult.Success(new { next = preview.Count });

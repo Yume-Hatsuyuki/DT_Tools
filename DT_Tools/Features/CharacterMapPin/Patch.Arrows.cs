@@ -5,13 +5,6 @@ using Protocol;
 
 namespace DT_Tools.Features.CharacterMapPin
 {
-    /// <summary>
-    /// HUD LateUpdate 后置（常驻角色箭头，独立开关 ShowCharacterArrow）。
-    /// </summary>
-    /// <remarks>
-    /// LateUpdate 私有：0.1.18c UI_GameScene.cs:789；构建/更新/回收在 Ui，
-    /// 追踪过滤在 Logic.ShouldTrack。与本目录 WhitePins 补丁同挂一方法，互不影响。
-    /// </remarks>
     [HarmonyPatch(typeof(UI_GameScene), "LateUpdate")]
     internal static class CharacterMapPinArrowsPatch
     {

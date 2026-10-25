@@ -5,36 +5,17 @@ using Protocol;
 
 namespace DT_Tools.Features.HasungBoost
 {
-    /// <summary>
-    /// Hasung 冲刺能量累积与移速加成（服务端进程内共享状态）。
-    /// </summary>
     internal static class HasungBoostLogic
     {
-        /// <summary>
-        /// 各 Hasung 玩家（PlayerId）的当前冲刺能量。
-        /// </summary>
         private static readonly Dictionary<int, int> _energy = new Dictionary<int, int>();
 
-        /// <summary>
-        /// 已启动循环 tick 的玩家集合（防重复注册）。
-        /// </summary>
         private static readonly HashSet<int> _ticked = new HashSet<int>();
 
-        /// <summary>
-        /// 获取玩家当前能量（无记录视为 0）。
-        /// </summary>
-        /// <param name="playerId">玩家 PlayerId。</param>
-        /// <returns>当前能量；无记录时为 0。</returns>
         public static int GetEnergy(int playerId)
             => _energy.TryGetValue(playerId, out int e) ? e : 0;
 
-        /// <summary>
-        /// 每秒 tick：奔跑（消耗体力）累积能量，停跑衰减；结束后自动注册下一次。
-        /// </summary>
-        /// <param name="owner">拥有该能力的玩家。</param>
         public static void Tick(Server.Game.Player owner)
         {
-            // 循环：注册下一次 tick（玩家死亡/离开后自然停止）
             Server.Game.TimeManager.Instance.PushSurvivalJob(1, () => Tick(owner));
 
             try
@@ -62,7 +43,7 @@ namespace DT_Tools.Features.HasungBoost
                 }
                 _energy[pid] = cur;
                 if (cur > 0)
-                    owner.BuffComponent.RefreshSpeed(); // 触发 Postfix 应用最新加成
+                    owner.BuffComponent.RefreshSpeed();
             }
             catch (global::System.Exception ex)
             {
@@ -70,10 +51,6 @@ namespace DT_Tools.Features.HasungBoost
             }
         }
 
-        /// <summary>
-        /// 确保该玩家已启动循环 tick（首次遇到时）。
-        /// </summary>
-        /// <param name="owner">拥有该能力的玩家。</param>
         public static void EnsureTick(Server.Game.Player owner)
         {
             if (owner == null || owner.Data == null) return;
@@ -83,13 +60,6 @@ namespace DT_Tools.Features.HasungBoost
         }
     }
 
-    /// <summary>
-    /// 移速计算点（0.1.18c BuffComponent.RefreshSpeed，public）：Hasung 且持有点数时，
-    /// 在计算结果上追加冲刺加成并广播最新移速。
-    /// </summary>
-    /// <remarks>
-    /// 同时惰性启动每秒 tick。
-    /// </remarks>
     [HarmonyPatch(typeof(Server.Game.BuffComponent), "RefreshSpeed")]
     internal static class HasungBoostSpeedPatch
     {
@@ -110,7 +80,6 @@ namespace DT_Tools.Features.HasungBoost
                 if (energy <= 0)
                     return;
 
-                // 每点加成 = BoostPerPoint/100 档 SpeedDelta = (BoostPerPoint/100f)*560f 速度
                 float extra = energy * (HasungBoostFeature.BoostPerPoint / 100f) * 560f;
                 if (extra <= 0f)
                     return;

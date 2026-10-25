@@ -2,9 +2,6 @@ using DT_Tools.Game;
 
 namespace DT_Tools.Commands.Kill
 {
-    /// <summary>
-    /// /kill 参数：all 或 (#数字 / 纯数字)。
-    /// </summary>
     internal sealed class KillArgs
     {
         public bool All { get; private set; }

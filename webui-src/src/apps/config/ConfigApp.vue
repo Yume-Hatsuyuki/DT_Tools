@@ -18,27 +18,19 @@ import IconList from '~icons/tabler/list';
 import IconChevronDown from '~icons/tabler/chevron-down';
 import IconChevronUp from '~icons/tabler/chevron-up';
 
-/**
- * 功能标签字典（分组 / 键 / 中文名 / 说明）由后端 FeatureTagCatalog 给出（/api/config/tags）。
- * 标签的成员与键由后端决定；译文在 i18n 总表（tag.label.<键> / tag.desc.<键> / tag.group.<分组键>）。
- * 新增标签时须同步补译文，缺译时回退后端给出的中文。
- */
 const tagCatalog = ref([]);
-/** 选中的标签键。空 = 不筛选；多选为「任一命中」。 */
 const activeTags = ref([]);
 
 const sections = ref([]);
 const query = ref('');
-const openSection = ref(null);   // 展开中的段名，null = 段列表
+const openSection = ref(null);
 const currentSection = ref(null);
 const sectionMeta = useSectionMeta();
 
-// 网格/列表视图状态与切换：与自动化页**共用一份**（切换按钮在各自页面的工具栏上）
 const { viewMode, toggleView } = useFolderView();
 
 const tagByKey = computed(() => new Map(tagCatalog.value.map(tag => [tag.key, tag])));
 
-/** t() 找不到键时返回键名本身；此时改用后端给出的中文，保证新增标签未译时仍可读。 */
 function localized(key, fallback) {
   const text = t(key);
   return text === key ? fallback : text;
@@ -52,7 +44,6 @@ function tagTitle(tag) {
 }
 function sideLabel(side) { return t(SIDE_KEY[side]); }
 
-/** 标签按领域分组（分组键来自后端 groupKey），保持字典顺序。 */
 const tagGroups = computed(() => {
   const groups = new Map();
   for (const tag of tagCatalog.value) {
@@ -63,10 +54,8 @@ const tagGroups = computed(() => {
 });
 function groupName(g) { return localized(`tag.group.${g.key}`, g.name); }
 
-/** 功能段（不含自动化段）。 */
 const featureSections = computed(() => sections.value.filter(s => s.group !== 'automation'));
 
-/** 每个标签下有多少功能段（芯片上的计数）。 */
 const tagCounts = computed(() => {
   const counts = new Map();
   for (const s of featureSections.value) {
@@ -75,13 +64,11 @@ const tagCounts = computed(() => {
   return counts;
 });
 
-/* ---- 标签栏：隐藏未使用标签、自由调高、收起 ---- */
 const TAG_BAR_HEIGHT_KEY = 'dt.config.tagBarHeight';
 const TAG_BAR_COLLAPSED_KEY = 'dt.config.tagBarCollapsed';
-const TAG_BAR_MIN = 96;   // 至少能容下状态与作用面两行，再小就看不清了
+const TAG_BAR_MIN = 96;
 const SIDE_KEY = { client: 'config.tags.sideClient', host: 'config.tags.sideHost', both: 'config.tags.sideBoth' };
 
-/** 读写失败（存储被禁用等）时只是不记忆，不影响筛选功能本身。 */
 function readStored(key) {
   try { return localStorage.getItem(key); } catch (e) { return null; }
 }
@@ -89,7 +76,7 @@ function writeStored(key, value) {
   try {
     if (value === null) localStorage.removeItem(key);
     else localStorage.setItem(key, String(value));
-  } catch (e) { /* 忽略 */ }
+  } catch (e) { }
 }
 
 const storedHeight = Number(readStored(TAG_BAR_HEIGHT_KEY));
@@ -97,22 +84,16 @@ const tagBarHeight = ref(readStored(TAG_BAR_HEIGHT_KEY) !== null && Number.isFin
 const tagBarCollapsed = ref(readStored(TAG_BAR_COLLAPSED_KEY) === '1');
 const tagBarEl = ref(null);
 const rootEl = ref(null);
-/* 窗口尺寸变化时递增，让依赖配置页高度的样式重新计算 */
 const viewTick = ref(0);
 function onWindowResize() { viewTick.value++; }
 onMounted(() => window.addEventListener('resize', onWindowResize));
 
-/**
- * 上限取配置页自身高度的 70%。不能用视口高度：配置页是桌面窗口，比视口矮，
- * 按视口计算会把分隔条推到窗口下方，鼠标和键盘都够不着。
- */
 function tagBarMax() {
   const h = rootEl.value ? rootEl.value.clientHeight : window.innerHeight;
   return Math.round(h * 0.7);
 }
 function clampTagBarHeight(h) { return Math.max(TAG_BAR_MIN, Math.min(tagBarMax(), Math.round(h))); }
 
-/** null 表示自动高度（由内容决定），与首次打开的默认外观一致。 */
 const tagBarStyle = computed(() => {
   void viewTick.value;
   if (tagBarCollapsed.value || tagBarHeight.value === null) return {};
@@ -133,7 +114,6 @@ function resetTagBarHeight() {
   writeStored(TAG_BAR_HEIGHT_KEY, null);
 }
 
-/* 拖动分隔条：指针捕获保证鼠标移出分隔条时仍能继续拖动；松开时才写入存储，避免拖动中频繁写盘 */
 let resizeFrom = null;
 function onResizeStart(e) {
   if (e.button !== 0) return;
@@ -154,7 +134,6 @@ function onResizeEnd() {
   if (resizeFrom && tagBarHeight.value !== null) writeStored(TAG_BAR_HEIGHT_KEY, tagBarHeight.value);
   resizeFrom = null;
 }
-/* 键盘微调：方向键每次 16px，按住 Shift 为 48px */
 function onResizeKey(e) {
   const step = e.shiftKey ? 48 : 16;
   const cur = tagBarEl.value ? tagBarEl.value.getBoundingClientRect().height : TAG_BAR_MIN;
@@ -169,14 +148,12 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onWindowResize);
 });
 
-/** 未被任何功能段使用的标签不显示，空分组一并隐藏；正在生效的筛选标签即使无人使用也保留，便于清除。 */
 const visibleTagGroups = computed(() => tagGroups.value
   .map(g => ({ key: g.key, name: g.name, tags: g.tags.filter(tag => (tagCounts.value.get(tag.key) || 0) > 0 || activeTags.value.includes(tag.key)) }))
   .filter(g => g.tags.length > 0));
 
 const hasActiveFilter = computed(() => activeTags.value.length > 0 || !!statusFilter.value || !!sideFilter.value);
 
-/** 收起时显示在摘要行里的当前筛选。 */
 const filterSummary = computed(() => {
   const parts = [];
   if (statusFilter.value) parts.push(t(statusFilter.value === 'on' ? 'config.tags.on' : 'config.tags.off'));
@@ -192,9 +169,7 @@ function toggleTag(key) {
 }
 function clearFilters() { activeTags.value = []; statusFilter.value = null; sideFilter.value = null; }
 
-/** 启用状态过滤：null = 不筛选，'on' = 仅启用，'off' = 仅未启用。与标签过滤为「且」关系。 */
 const statusFilter = ref(null);
-/** 启用 / 未启用的段数（只统计带开关的功能段；无开关的段两者都不计）。 */
 const statusCounts = computed(() => {
   let on = 0, off = 0;
   for (const s of featureSections.value) {
@@ -211,9 +186,7 @@ function matchStatus(s) {
   return statusFilter.value === 'on' ? e === true : e === false;
 }
 
-/** 作用面过滤：null = 不筛选；'client' = 客户端，'host' = 服务端，'both' = 双端。与其它过滤为「且」关系。 */
 const sideFilter = ref(null);
-/** 各作用面的功能段数（无作用面的段不计）。 */
 const sideCounts = computed(() => {
   const counts = { client: 0, host: 0, both: 0 };
   for (const s of featureSections.value) {
@@ -243,7 +216,6 @@ async function reload() {
 const { dirty, autoRefresh, toast, showToast, save, exportCfg, importFile, resetAll, startAutoRefresh, stopAutoRefresh }
   = useConfigToolbar({ flag: 'config', reload, isEditing: () => !!openSection.value });
 
-/** FolderGrid 抛出的是磁贴摘要 {key,label,count,enabled}，需按 key 找回完整段对象。 */
 function openDetail(item) {
   const sec = sections.value.find(s => s.section === item.key);
   if (!sec) return;
@@ -256,11 +228,9 @@ function closeSection() {
 }
 
 function onUpdated() { dirty.value = true; }
-/** 段级重置：除标脏外立即 reload——否则界面停在旧值，与"已重置"的提示相反。 */
 async function onReset() { dirty.value = true; await reload(); }
 function onToast(toast) { showToast(toast.text, toast.error); }
 
-/** 段磁贴摘要（key=段名，FolderGrid 经 useSectionMeta 显示别名/图标）。 */
 function toSectionTile(s) {
   return {
     key: s.section,
@@ -270,16 +240,11 @@ function toSectionTile(s) {
   };
 }
 
-/** 段有任一选中标签即命中；无选中标签则不筛选。 */
 function matchTags(s) {
   if (!activeTags.value.length) return true;
   return (s.tags || []).some(tag => activeTags.value.includes(tag));
 }
 
-/**
- * 搜索匹配：别名、标签名、段内字段。
- * 标签名同时匹配“当前语言译文”与“后端中文名”：界面切到英文后，中文搜索仍然有效（与改动前一致）。
- */
 function matchSection(s, q) {
   if (!q) return true;
   const alias = (sectionMeta.displayName(s.section) || '').toLowerCase();
@@ -297,17 +262,11 @@ const visibleSections = computed(() => {
 });
 
 function enabledOf(section) {
-  // 开关键名走协议字段（后端 Engine.EnabledKey），不硬编码 'Enabled'
   const key = section.enabledKey || 'Enabled';
   const e = (section.entries || []).find(en => en.key === key);
   return e ? !!e.value : null;
 }
 
-/**
- * 列表行的右侧说明：段说明取自该段开关键（enabledKey）的描述，
- * 并用 splitDesc 剥掉「Author: … / Side: …」元数据行。
- * 行首附上功能标签，便于一眼看出功能所属领域。
- */
 function descOf(item) {
   const s = sections.value.find(x => x.section === item.key);
   if (!s) return '';
@@ -493,7 +452,6 @@ onUnmounted(stopAutoRefresh);
 
 .tag-wrap { display: flex; flex-direction: column; flex-shrink: 0; border-bottom: 1px solid var(--line); }
 .tag-bar {
-  /* 分组名列宽取所有分组名中最宽者，各行芯片因此对齐（需 subgrid：Chrome/Edge 117+、Firefox 71+、Safari 16+） */
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   align-content: start;

@@ -3,35 +3,20 @@ using System.Collections.Generic;
 
 namespace DT_Tools.Commands.GiveDrink
 {
-    /// <summary>
-    /// /givedrink 参数：&lt;all|#id&gt; [item]。
-    /// </summary>
-    /// <remarks>
-    /// 目标缺省 all，道具缺省 can01；
-    /// 第一参不是 all / #id 时视为道具名（即 "/givedrink knife" = 全体发匕首）。
-    /// </remarks>
     internal sealed class GiveDrinkArgs
     {
         public bool All { get; private set; }
         public int PlayerId { get; private set; }
         public int ItemId { get; private set; }
 
-        /// <summary>
-        /// 道具定义条目：唯一数据源——别名解析（TryParseItem）与无参道具列表
-        /// （GiveDrinkFormat.ItemList）都由它生成，消除双份表口径漂移
-        /// （历史上出现过 shaker 1039 双名、icewater 1028 热水/冰水两种写法）。
-        /// </summary>
         internal sealed class ItemDef
         {
-            public string[] Aliases;   // 首个为主别名（列表展示用），其余为等价别名
-            public int Id;             // DataId（0=清空手持物）
-            public string Label;       // 中文说明
-            public string Group;       // 分组标题
+            public string[] Aliases;
+            public int Id;
+            public string Label;
+            public string Group;
         }
 
-        // 原则：Define.cs 中 ITEM_ID_* 全量收录（ITEM_ID_START=1000 是区间哨兵值，非真实道具，排除）；
-        // 另收录 ITEM_SMAHO=4001（不以 ITEM_ID_ 命名，但原版扫描/开平板时确实作为手持物显示）。
-        // 所有值均为 DataId，可直接传入 ItemManager.CreateAndInsertInven。常量核对：0.1.18c Define.cs。
         internal static readonly List<ItemDef> ItemDefs = new List<ItemDef>
         {
             new ItemDef { Aliases = new[]{ "usb" }, Id = Define.ITEM_ID_USB, Label = "U盘", Group = "任务/设备道具" },
@@ -99,9 +84,6 @@ namespace DT_Tools.Commands.GiveDrink
             new ItemDef { Aliases = new[]{ "question_flower", "questionflower" }, Id = Define.ITEM_ID_QUESTION_FLOWER, Label = "问号花", Group = "特殊" },
         };
 
-        /// <summary>
-        /// 清空语义（0=清空手持物），不进列表主体、由列表脚注展示。
-        /// </summary>
         private static readonly Dictionary<string, int> ClearAliases = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             { "none", 0 }, { "clear", 0 }, { "empty", 0 },
@@ -150,7 +132,6 @@ namespace DT_Tools.Commands.GiveDrink
                     parsed.PlayerId = pid;
                     index = 1;
                 }
-                // 否则视为 item 参数，target 保持 all
             }
 
             if (index < args.Length)

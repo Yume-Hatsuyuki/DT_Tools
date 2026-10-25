@@ -1,10 +1,5 @@
 import { reactive } from 'vue';
 
-/**
- * 桌面壳身份：终端提示符（user@hostname）、左下角用户铭牌共用。
- * 纯 WebUI 层状态（localStorage），不进游戏配置——后端 /api/commands 不感知，
- * whoami / hostname / user 三条内置命令（见 TerminalApp）与本状态双向同步。
- */
 const STORAGE_KEY = 'dt_shell_user_v1';
 const DEFAULTS = { user: 'root', hostname: 'DT_Tools', avatar: null };
 
@@ -25,10 +20,9 @@ function load() {
 const state = reactive(load());
 
 function persist() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* 隐私模式忽略 */ }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { }
 }
 
-/** 名字合法性：非空、无空白、≤32 字符——进提示符与铭牌，保持单行可读。 */
 function sanitizeShellName(v) {
   const s = String(v ?? '').trim();
   if (!s) return { ok: false, error: '名称不能为空' };

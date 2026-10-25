@@ -5,29 +5,14 @@ using UnityEngine;
 
 namespace DT_Tools.Features.DeathResist
 {
-    /// <summary>
-    /// 死亡抗拒补丁：仅客户端。
-    /// </summary>
-    /// <remarks>
-    /// 会话内用 _active 标记本局是否已假活。
-    /// </remarks>
     internal static class DeathResistPatches
     {
-        /// <summary>
-        /// 本局已执行过假活（到大厅/清局重置）。
-        /// </summary>
         private static bool _active;
 
         internal static bool IsSessionActive =>
             _active && Engine.Enabled<DeathResistFeature>();
 
-        /// <summary>
-        /// 0.1.20a GameManagerEX.Dead（GameManagerEX.cs:352-355）改播 KillFx.PlayVictim()
-        /// （CoVictim：DeathSfx + HideMyGhost 隐藏鬼魂 + 黑场，约 2.9s）。DeathResist 假活
-        /// （Postfix 置回 IsAlive=true）后这段演出与「假活」冲突——画面仍黑场、鬼魂仍被隐藏，
-        /// 启用时直接跳过。
-        /// </summary>
-        [HarmonyPatch(typeof(KillFx), "PlayVictim")] // 0.1.20a KillFx.cs:160
+        [HarmonyPatch(typeof(KillFx), "PlayVictim")]
         internal static class PlayVictimPatch
         {
             private static bool Prefix()
@@ -43,10 +28,6 @@ namespace DT_Tools.Features.DeathResist
             }
         }
 
-        /// <summary>
-        /// 0.1.18c GameManagerEX.Dead（GameManagerEX.cs:334）：先 IsAlive=false / CanControl=false，
-        /// 再 HidePlayer、CancelAllInteract、HideAll 等。Postfix 在整段之后改标志。
-        /// </summary>
         [HarmonyPatch(typeof(GameManagerEX), nameof(GameManagerEX.Dead))]
         internal static class DeadPatch
         {
@@ -68,13 +49,13 @@ namespace DT_Tools.Features.DeathResist
                 {
                     if (DeathResistFeature.RestoreVisible)
                     {
-                        try { my.HidePlayer(isHide: false); } catch { /* ignore */ }
+                        try { my.HidePlayer(isHide: false); } catch { }
                         try
                         {
                             if (my.NameTag != null)
                                 my.NameTag.gameObject.SetActive(true);
                         }
-                        catch { /* ignore */ }
+                        catch { }
                     }
 
                     if (DeathResistFeature.RestoreIdleState
@@ -91,10 +72,6 @@ namespace DT_Tools.Features.DeathResist
             }
         }
 
-        /// <summary>
-        /// 0.1.18c MyPlayer.IsGhostView（MyPlayer.cs:1884-1886）：原版 return !Managers.Game.IsAlive。
-        /// 假活后若不强制，会失去幽灵渲染。
-        /// </summary>
         [HarmonyPatch(typeof(MyPlayer), nameof(MyPlayer.IsGhostView))]
         internal static class IsGhostViewPatch
         {
@@ -106,10 +83,6 @@ namespace DT_Tools.Features.DeathResist
             }
         }
 
-        /// <summary>
-        /// 0.1.18c MyPlayer.FixedUpdate（MyPlayer.cs:1703-1714）：!IsAlive 时走 FixedUpdateGhostMove。
-        /// 假活后默认走活人移动；KeepGhostMove 时改为继续幽灵移动。
-        /// </summary>
         [HarmonyPatch(typeof(MyPlayer), "FixedUpdate")]
         internal static class FixedUpdatePatch
         {
@@ -119,7 +92,6 @@ namespace DT_Tools.Features.DeathResist
                     return true;
                 if (Managers.Game == null)
                     return true;
-                // 仅在本应「已死」的会话里接管移动
                 if (Managers.Game.State != EGameState.Survive
                     && Managers.Game.State != EGameState.Detective)
                     return true;

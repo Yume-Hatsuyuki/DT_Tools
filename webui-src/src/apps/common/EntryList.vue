@@ -2,11 +2,6 @@
 import EntryControl from '../config/EntryControl.vue';
 import { splitDesc } from '../config/configUtils.js';
 
-/**
- * 配置字段行列表：Config（功能段）与 Automation（模块）共用。
- * 描述统一过 splitDesc——Enabled 项描述头里的 Author:/Side: 元数据在此拆掉，
- * 普通描述不受影响（仅去掉首尾空行）。
- */
 const props = defineProps({
   entries: { type: Array, required: true },
 });

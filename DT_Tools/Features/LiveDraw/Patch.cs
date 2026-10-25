@@ -12,44 +12,38 @@ using UnityEngine;
 
 namespace DT_Tools.Features.LiveDraw
 {
-    /// <summary>
-    /// 庭审画布“动态照片”补丁集合（原 DT_LiveDraw v1.0.0 移植）：
-    /// 1. Managers.Update Postfix：仅庭审讨论阶段处理按键（F9 画下一张 / F10 沸腾开关 / F11 手动波浪；聊天框打开时不抢按键）；阶段切换时停止动画并作废进行中的绘制。
-    /// 2. 绘制协程（CoroutineHost.Start）：ClearMine 清空自己层 → 按笔画逐点落笔（对齐原版 64 点/包、0.09s 间隔 &lt; 房主 12 包/秒限速）→ FlushOutbox 收尾。
-    /// 3. 动画（TickBoil / SendBoilFrame）：按配置帧率发 C_DRAW_REPLACE 变形帧（基准点正弦偏移 + 周期波浪），复用原笔画 StrokeId。DrawingMirror.Replace（0.1.18c Server.Game/DrawingMirror.cs:47 静态）同步服务端镜像（房主迁移后能恢复到当前动画帧，非房主为空镜像写入无害）；UpsertFromProto（DrawingManager 私有方法，反射调用）同步本地模型并触发重绘。照片→笔画管线见 Draw.cs；配置与开关见 Feature.cs（defaultEnabled:false，需手动开启）。
-    /// </summary>
     internal static class Patch
     {
         private const float CanvasHalfW = 439.5f;
         private const float CanvasHalfH = 348f;
-        private const float ClampX = 437f;   // 动画偏移后强制夹回，防止越界整包被房主丢弃
+        private const float ClampX = 437f;
         private const float ClampY = 346f;
         private const float Margin = 32f;
 
         private const float WaveDur = 1.8f;
 
-        private static MethodInfo _upsert; // DrawingManager.UpsertFromProto(DrawStroke)，私有：动画帧同步本地模型用
+        private static MethodInfo _upsert;
 
         private static readonly List<string> Photos = new List<string>();
         private static int _photoIndex = -1;
 
         private static readonly List<LiveStroke> Plan = new List<LiveStroke>();
-        private static bool _drawing;        // 静态绘制协程进行中
-        private static bool _boiling;        // 本张照片的动画已激活（且仍处在本轮庭审）
-        private static bool _boilOn = true;  // F10 开关
-        private static float _bt;            // 动画时钟
+        private static bool _drawing;
+        private static bool _boiling;
+        private static bool _boilOn = true;
+        private static float _bt;
         private static float _boilAcc;
         private static float _waveT = -1f;
         private static float _autoWaveTimer;
         private static bool _warnedDead;
 
         private enum LiveFx { None, Bounce, Replay, Heartbeat, Float, Dissolve }
-        private const float BounceDur = 0.9f;     // 弹跳闪光时长
-        private const float HeartbeatDur = 1.1f;  // 心跳呼吸时长
-        private const float DissolveDur = 2.6f;   // 溶解消散时长（消失+重聚）
+        private const float BounceDur = 0.9f;
+        private const float HeartbeatDur = 1.1f;
+        private const float DissolveDur = 2.6f;
         private static LiveFx _fx = LiveFx.None;
-        private static float _fxT;                // 特效计时（秒）
-        private static int[] _fxDissolveOrder;    // 溶解的随机笔画顺序（Plan 索引）
+        private static float _fxT;
+        private static int[] _fxDissolveOrder;
 
         [HarmonyPatch(typeof(Managers), "Update")]
         internal static class LiveDrawUpdatePatch
@@ -71,12 +65,12 @@ namespace DT_Tools.Features.LiveDraw
                     }
                     if (!discuss)
                     {
-                        _drawing = false; // 阶段切换直接作废进行中的绘制
+                        _drawing = false;
                         return;
                     }
 
                     var game = Managers.Game;
-                    if (game != null && game.IsChat) return; // 聊天框打开时不抢按键
+                    if (game != null && game.IsChat) return;
 
                     if (Input.GetKeyDown(LiveDrawFeature.DrawKey) && LiveDrawFeature.DrawKey != KeyCode.None) TryStartNextPhoto();
                     if (Input.GetKeyDown(LiveDrawFeature.AnimToggleKey) && LiveDrawFeature.AnimToggleKey != KeyCode.None)
@@ -88,7 +82,6 @@ namespace DT_Tools.Features.LiveDraw
 
                     if (_boiling && !_drawing)
                     {
-                        // 漂浮是可切换的持续效果（开/关），其余是一次性效果
                         if (Input.GetKeyDown(LiveDrawFeature.FloatKey) && LiveDrawFeature.FloatKey != KeyCode.None)
                         {
                             if (_fx == LiveFx.Float) StopFx();
@@ -181,9 +174,6 @@ namespace DT_Tools.Features.LiveDraw
             catch (Exception e) { Log.Error<LiveDrawFeature>($"扫描照片目录失败: {e.Message}"); }
         }
 
-        /// <summary>
-        /// 照片目录：配置了 PhotoFolder 用配置路径，否则用默认目录（BepInEx/config/DT_Tools/photos/，与照片发送器共用）。
-        /// </summary>
         private static string PhotoDirectory => DtPaths.ResolvePhotoFolder(LiveDrawFeature.PhotoFolder);
 
         private static IEnumerator DrawRoutine(List<LiveStroke> plan)
@@ -196,7 +186,7 @@ namespace DT_Tools.Features.LiveDraw
                 DrawingManager mgr = Managers.Drawing;
                 if (mgr == null) yield break;
 
-                mgr.ClearMine(); // 清空自己的层（C_DRAW_CLEAR 不耗令牌），8000 点预算立即回满
+                mgr.ClearMine();
                 yield return new WaitForSeconds(0.2f);
                 if (!InDrawPhase()) yield break;
 
@@ -217,7 +207,7 @@ namespace DT_Tools.Features.LiveDraw
                     {
                         mgr.AddLocalPoint(s.Base[p]);
                         flushGuard++;
-                        if (flushGuard >= 64)   // 与原版 AddLocalPoint 的 64 点/包对齐，0.09s 间隔 < 房主 12 包/秒
+                        if (flushGuard >= 64)
                         {
                             flushGuard = 0;
                             yield return new WaitForSeconds(0.09f);
@@ -252,12 +242,11 @@ namespace DT_Tools.Features.LiveDraw
         {
             _fx = fx;
             _fxT = 0f;
-            _boilOn = true; // 特效需要动画帧才能发送
+            _boilOn = true;
             if (fx == LiveFx.Dissolve)
             {
                 _fxDissolveOrder = new int[Plan.Count];
                 for (int i = 0; i < Plan.Count; i++) _fxDissolveOrder[i] = i;
-                // Fisher-Yates 洗牌
                 for (int i = Plan.Count - 1; i > 0; i--)
                 {
                     int j = UnityEngine.Random.Range(0, i + 1);
@@ -276,10 +265,6 @@ namespace DT_Tools.Features.LiveDraw
             _fxDissolveOrder = null;
         }
 
-        /// <summary>
-        /// 当前特效的单次时长；Float 为持续效果返回 -1（不自动结束）。
-        /// </summary>
-        /// <returns>特效单次时长，单位秒；持续效果返回 -1，不自动结束。</returns>
         private static float FxDuration()
         {
             switch (_fx)
@@ -330,7 +315,7 @@ namespace DT_Tools.Features.LiveDraw
                 if (_fx != LiveFx.None && _fx != LiveFx.Float) _fxT += interval;
                 SendBoilFrame(_bt);
                 float dur = FxDuration();
-                if (dur > 0f && _fxT >= dur) StopFx(); // 一次性特效播完自动恢复全量
+                if (dur > 0f && _fxT >= dur) StopFx();
             }
         }
 
@@ -343,22 +328,22 @@ namespace DT_Tools.Features.LiveDraw
                 float wv = _waveT >= 0f ? Mathf.Sin(Mathf.PI * Mathf.Min(1f, _waveT / WaveDur)) : 0f;
 
                 float fxS = 1f, fxDy = 0f, fxRot = 0f;
-                int fxVisible = int.MaxValue;  // Replay：只显示前 fxVisible 笔
-                int fxKeep = int.MaxValue;     // Dissolve：随机序前 fxKeep 笔存活
+                int fxVisible = int.MaxValue;
+                int fxKeep = int.MaxValue;
                 if (_fx == LiveFx.Bounce)
                 {
                     float k = Mathf.Min(1f, _fxT / BounceDur);
-                    fxS = 1f + 0.15f * Mathf.Sin(Mathf.PI * k) * (1f - k); // 弹跳衰减
+                    fxS = 1f + 0.15f * Mathf.Sin(Mathf.PI * k) * (1f - k);
                 }
                 else if (_fx == LiveFx.Heartbeat)
                 {
                     float k = Mathf.Min(1f, _fxT / HeartbeatDur);
-                    fxS = 1f + 0.032f * Mathf.Abs(Mathf.Sin(2f * Mathf.PI * k)) * (1f - k * 0.5f); // 双心跳
+                    fxS = 1f + 0.032f * Mathf.Abs(Mathf.Sin(2f * Mathf.PI * k)) * (1f - k * 0.5f);
                 }
                 else if (_fx == LiveFx.Float)
                 {
-                    fxDy = 16f * Mathf.Sin(t * 1.3f);        // 上下漂移
-                    fxRot = 0.045f * Mathf.Sin(t * 0.9f);    // 轻微摇晃
+                    fxDy = 16f * Mathf.Sin(t * 1.3f);
+                    fxRot = 0.045f * Mathf.Sin(t * 0.9f);
                 }
                 else if (_fx == LiveFx.Replay)
                 {
@@ -367,7 +352,7 @@ namespace DT_Tools.Features.LiveDraw
                 else if (_fx == LiveFx.Dissolve)
                 {
                     float k = Mathf.Min(1f, _fxT / DissolveDur);
-                    float frac = k < 0.5f ? 1f - 2f * k : 2f * k - 1f; // 先消失后重聚
+                    float frac = k < 0.5f ? 1f - 2f * k : 2f * k - 1f;
                     fxKeep = Mathf.CeilToInt(frac * Plan.Count);
                 }
                 float cs = Mathf.Cos(fxRot), sn = Mathf.Sin(fxRot);
@@ -381,7 +366,6 @@ namespace DT_Tools.Features.LiveDraw
                     LiveStroke s = Plan[i];
                     removed.Add(s.Id);
 
-                    // 可见性过滤（Replay 逐笔出现 / Dissolve 逐笔消失）
                     if (_fx == LiveFx.Replay && i >= fxVisible) continue;
                     if (_fx == LiveFx.Dissolve && _fxDissolveOrder != null && _fxDissolveOrder[i] >= fxKeep) continue;
 
@@ -405,7 +389,6 @@ namespace DT_Tools.Features.LiveDraw
                             y += wv * 30f * Mathf.Sin((p.x / (CanvasHalfW * 2f)) * 4f * Mathf.PI - t * 9f);
                             x += wv * 6f * Mathf.Sin(t * 5f + p.y / 90f);
                         }
-                        // 特效：整体缩放 → 旋转 → 位移（围绕画布原点）
                         if (fxS != 1f || fxRot != 0f || fxDy != 0f)
                         {
                             float rx = x * fxS, ry = y * fxS;
@@ -426,7 +409,7 @@ namespace DT_Tools.Features.LiveDraw
                 Managers.Network?.GameServer?.Send(pkt);
                 try
                 {
-                    DrawingMirror.Replace(myId, removed, newStrokes); // 房主迁移后能恢复到当前动画帧
+                    DrawingMirror.Replace(myId, removed, newStrokes);
                 }
                 catch (Exception ex)
                 {
@@ -434,7 +417,7 @@ namespace DT_Tools.Features.LiveDraw
                 }
 
                 for (int i = 0; i < newStrokes.Count; i++)
-                    _upsert.Invoke(Managers.Drawing, new object[] { newStrokes[i] }); // 同步本地模型+触发重绘
+                    _upsert.Invoke(Managers.Drawing, new object[] { newStrokes[i] });
             }
             catch (Exception ex)
             {
@@ -442,15 +425,6 @@ namespace DT_Tools.Features.LiveDraw
             }
         }
 
-        /// <summary>
-        /// 客户端阶段判断：庭审且处于讨论（作画）阶段。
-        /// </summary>
-        /// <remarks>
-        /// 用客户端 Managers.Game.State +
-        /// 静态单例 TrialManager.Instance.State（0.1.18c Server.Game/GameRoom.cs:45 s_instance，State 为独立
-        /// 字段不依赖 GameRoom），任何玩家（含非房主）都能画；房主进程同样有效。
-        /// </remarks>
-        /// <returns>处于庭审讨论（作画）阶段时为 true。</returns>
         private static bool InDrawPhase()
         {
             var game = Managers.Game;

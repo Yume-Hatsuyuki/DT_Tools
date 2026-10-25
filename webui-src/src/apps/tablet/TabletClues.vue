@@ -3,10 +3,6 @@ import { computed } from 'vue';
 import { avatarSrc } from './tabletAvatars.js';
 import { clueId, groupByRound } from './tabletFormat.js';
 
-/**
- * 平板电脑的线索栏。按局分段（较早的局在前，段首为「第 N 局」），局内按游戏内时间从早到晚，同一时间命题在前。
- * 数据已由 orderClues 排好序；numbering 为局号到显示编号的对照表。
- */
 const props = defineProps({
   clues: { type: Array, default: () => [] },
   numbering: { type: Map, default: () => new Map() },

@@ -4,14 +4,6 @@ using DummyClient;
 
 namespace DT_Tools.Commands.RoomList
 {
-    /// <summary>
-    /// /room_list 输出格式化：公开房间列表人类文本。
-    /// </summary>
-    /// <remarks>
-    /// 查询是异步回调，
-    /// 结果统一经 ctx.Reply 走日志通道输出（无独立 JSON DTO——异步命令的机器
-    /// 结果在 Command.Execute 里即时返回 "已受理"，见 Command.cs）。
-    /// </remarks>
     internal static class RoomListFormat
     {
         public static string Reply(List<LobbyListEntry> rooms)

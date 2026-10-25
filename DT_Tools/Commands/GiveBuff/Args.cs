@@ -5,20 +5,8 @@ using Protocol;
 
 namespace DT_Tools.Commands.GiveBuff
 {
-    /// <summary>
-    /// /givebuff 参数：&lt;all|#id&gt; &lt;buff|clear&gt; [seconds|clear|0]
-    /// 别名表对照 Protocol.EBuffType 全量收录（0.1.18c Protocol/EBuffType.cs，
-    /// enum 声明在第 5 行、收尾括号在第 39 行，Slow..Footprint 全 16 项）。
-    /// </summary>
     internal sealed class GiveBuffArgs
     {
-        /// <summary>
-        /// 单次添加 BUFF 的最大时长（秒）。
-        /// </summary>
-        /// <remarks>
-        /// 与原版 Raasrush/DetailCheck/MindControl
-        /// 等被动技能挂载时长一致（3600000 ms）。
-        /// </remarks>
         public const int MaxDurationSeconds = 3600;
 
         public bool All { get; private set; }
@@ -26,9 +14,6 @@ namespace DT_Tools.Commands.GiveBuff
         public GiveBuffAction Action { get; private set; }
         public EBuffType BuffType { get; private set; }
         public int Seconds { get; private set; }
-        /// <summary>
-        /// 显式秒数超过上限被钳制时为 true（用于提示）。
-        /// </summary>
         public bool Clamped { get; private set; }
 
         private static readonly Dictionary<string, EBuffType> BuffAliases =
@@ -63,11 +48,6 @@ namespace DT_Tools.Commands.GiveBuff
             { "footprint",      EBuffType.Footprint },
         };
 
-        /// <summary>
-        /// 清除令牌（第二参=清全部；第三参=清该 BUFF）。
-        /// </summary>
-        /// <param name="s">命令参数文字。</param>
-        /// <returns>是清除令牌时为 true。</returns>
         public static bool IsClearToken(string s)
             => s.Equals("clear", StringComparison.OrdinalIgnoreCase)
                || s.Equals("remove", StringComparison.OrdinalIgnoreCase)
@@ -80,13 +60,6 @@ namespace DT_Tools.Commands.GiveBuff
                    && Enum.IsDefined(typeof(EBuffType), buffType);
         }
 
-        /// <summary>
-        /// args 非空（目标 + buff 两参必备，第三参可选）。
-        /// </summary>
-        /// <param name="args">命令参数数组，目标与 BUFF 两项必备，第三项可选。</param>
-        /// <param name="parsed">解析结果。</param>
-        /// <param name="error">失败时的中文原因说明。</param>
-        /// <returns>参数合法时返回 true；不合法时返回 false，原因写入 error。</returns>
         public static bool TryParse(string[] args, out GiveBuffArgs parsed, out string error)
         {
             parsed = new GiveBuffArgs();
@@ -97,7 +70,6 @@ namespace DT_Tools.Commands.GiveBuff
             }
             else if (target.StartsWith("#") && int.TryParse(target.Substring(1), out int pid))
             {
-                // 与旧实现一致：目标仅接受 all / #id（纯数字不算目标）
                 parsed.All = false;
                 parsed.PlayerId = pid;
             }
@@ -121,7 +93,6 @@ namespace DT_Tools.Commands.GiveBuff
             }
             parsed.BuffType = buffType;
 
-            // 第三参（可选）：clear / 0 → 清该 BUFF；正整数秒 → 添加；省略 → 使用最大时长
             if (args.Length < 3)
             {
                 parsed.Action = GiveBuffAction.Add;

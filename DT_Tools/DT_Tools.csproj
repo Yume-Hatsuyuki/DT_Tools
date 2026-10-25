@@ -7,17 +7,10 @@
     <Version>2.0.0.10</Version>
     <LangVersion>latest</LangVersion>
     <TargetName>$(AssemblyName)_$(Configuration)_$(Version)</TargetName>
-    <!-- 相对 csproj 所在目录，上一级的 libs -->
     <GameManaged Condition="'$(GameManaged)' == ''">$(MSBuildThisFileDirectory)..\libs</GameManaged>
-    <!-- WebUI 前端源码工程（Vue 3 + Vite + npm），构建产物直出 DT_Tools/WebUI -->
     <WebUISrc Condition="'$(WebUISrc)' == ''">$(MSBuildThisFileDirectory)..\webui-src</WebUISrc>
   </PropertyGroup>
 
-  <!--
-    前端增量构建（AGENTS.md §3）：源码晚于产物时经 npm 重建，产物直出 DT_Tools/WebUI，
-    产物拷贝由下方 DT_CopyWebUI 目标完成。SkipWebUIBuild=true 整体跳过（CI 已显式构建前端、
-    或多代理并行作业禁止构建时使用）。需要 Node/npm 环境。
-  -->
   <Target Name="BuildWebUI"
           BeforeTargets="BeforeBuild"
           Condition="'$(SkipWebUIBuild)' != 'true'"
@@ -27,10 +20,6 @@
     <Exec WorkingDirectory="$(WebUISrc)" Command="npm run build" />
   </Target>
 
-  <!--
-    WebUI 产物拷贝（AGENTS.md §3）。在 Build 之后、目标内展开文件列表：
-    项目级 None Include 在求值阶段展开，首次构建时 WebUI 尚未生成会漏拷。
-  -->
   <Target Name="DT_CopyWebUI" AfterTargets="Build"
           Condition="Exists('$(MSBuildProjectDirectory)\WebUI')">
     <ItemGroup>
@@ -61,7 +50,6 @@
       <HintPath>$(GameManaged)\UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <!-- /shot 截图：EncodeToPNG 所在模块（Commands/Screenshot/Logic.cs） -->
     <Reference Include="UnityEngine.ImageConversionModule">
       <HintPath>$(GameManaged)\UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>false</Private>
@@ -90,7 +78,6 @@
       <HintPath>$(GameManaged)\UnityEngine.AudioModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <!-- 大厅屏幕视频（LobbyScreenVideo）：Unity VideoPlayer / VideoClip -->
     <Reference Include="UnityEngine.VideoModule">
       <HintPath>$(GameManaged)\UnityEngine.VideoModule.dll</HintPath>
       <Private>false</Private>
@@ -143,15 +130,10 @@
     </Reference>
   </ItemGroup>
 
-  <!-- 可坐椅子（SitOnChairs）：岛屿地图数据（原版+11条椅子设备）内嵌进 dll，运行时注入，无需外部 data 文件夹 -->
   <ItemGroup>
     <EmbeddedResource Include="Features/SitOnChairs/data/**" />
   </ItemGroup>
 
-  <!--
-    静默失败保护：内嵌规则匹配不到数据时编译仍会成功（2.0.0.0 就是这样悄悄少了数据）。
-    这里要求 7 个岛屿数据文件都存在，并且全部真的进入 EmbeddedResource，否则直接编译失败。
-  -->
   <ItemGroup>
     <_SitOnChairsRequiredData Include="MapData_Island.json;RoomData_Island.json;DeviceData_Island.json;Device_DoorData_Island.json;TileData_Island.json;MissionData_Island.json;MapByte_Island.txt" />
   </ItemGroup>
@@ -165,8 +147,6 @@
            Text="可坐椅子内嵌数据未全部收录：EmbeddedResource 收录 @(_SitOnChairsEmbedded->Count()) 个，应为 @(_SitOnChairsRequiredData->Count()) 个。请检查 csproj 中 EmbeddedResource 的路径是否与数据目录一致。" />
   </Target>
 
-  <!-- 游戏自带的 System.Drawing 与 netstandard2.1 参考包同名，SDK 的引用冲突解析会丢掉前者；
-       这里直接把游戏版本加进编译参考，别名 GameDrawing 供 GifSystemDrawing.cs 的 extern alias 使用。 -->
   <Target Name="AddGameSystemDrawingReference" AfterTargets="ResolveAssemblyReferences" BeforeTargets="CoreCompile">
     <ItemGroup>
       <ReferencePath Include="$(GameManaged)\System.Drawing.dll" Aliases="GameDrawing" Private="false" CopyLocal="false" />
