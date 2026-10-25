@@ -158,6 +158,9 @@ cd webui-src && npm run build
 | `build.yml` | push、PR，分支为 `main` 与 `dev-*` | 必定构建 WebUI。仓库里有 `libs/` 时，才编译后端 |
 | `release.yml` | 打 tag：`vMAJOR.MINOR.PATCH[.BUILD]` | 发布 Release |
 
+`release.yml` 的编译产物分两个版本：`Version` 只取 tag 的数字段（`MyPluginInfo.PLUGIN_VERSION`，供 BepInEx 与 MCP 使用）；`InformationalVersion` 为去掉 `v` 后的完整 tag，剔除 `+` 等非法字符（如 `2.0.0.10-v2`）。
+更新检测（`UpdateService`）以完整版本比较：数字段相同时比较修订后缀，所以同数字的重建包发 `-vN` 即可被已安装用户识别。
+
 打包目录名的大小写必须是 `WebUI`。Linux CI 区分大小写。
 
 ### 分支
