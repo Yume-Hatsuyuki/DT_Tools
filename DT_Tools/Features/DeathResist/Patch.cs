@@ -1,3 +1,4 @@
+using System.Reflection;
 using DT_Tools.Core;
 using HarmonyLib;
 using Protocol;
@@ -12,9 +13,21 @@ namespace DT_Tools.Features.DeathResist
         internal static bool IsSessionActive =>
             _active && Engine.Enabled<DeathResistFeature>();
 
-        [HarmonyPatch(typeof(KillFx), "PlayVictim")]
+        // KillFx 为 0.1.21 新增；0.1.18 无此类型。禁止 typeof(KillFx)，否则挂载阶段 TypeLoadException。
+        [HarmonyPatch]
         internal static class PlayVictimPatch
         {
+            private static bool Prepare()
+            {
+                return AccessTools.TypeByName("KillFx") != null
+                    && AccessTools.Method(AccessTools.TypeByName("KillFx"), "PlayVictim") != null;
+            }
+
+            private static MethodBase TargetMethod()
+            {
+                return AccessTools.Method(AccessTools.TypeByName("KillFx"), "PlayVictim");
+            }
+
             private static bool Prefix()
             {
                 if (!Engine.Enabled<DeathResistFeature>())

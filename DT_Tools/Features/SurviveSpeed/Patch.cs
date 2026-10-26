@@ -26,6 +26,10 @@ namespace DT_Tools.Features.SurviveSpeed
         private static readonly FieldInfo MouseMoveActiveField =
             AccessTools.Field(typeof(MyPlayer), "_mouseMoveActive");
 
+        // 0.1.21 增加；兼容旧版。
+        private static readonly MethodInfo IsInteractAllCancelByMoveOf =
+            AccessTools.Method(typeof(UIManager), "IsInteractAllCancelByMove");
+
         private static bool Prefix(MyPlayer __instance)
         {
             if (!Engine.Enabled<SurviveSpeedFeature>())
@@ -67,28 +71,8 @@ namespace DT_Tools.Features.SurviveSpeed
                     return false;
 
                 case EPlayerState.Interact:
-                    if (Managers.UI != null && Managers.UI.IsInteractAllCancelByMove())
-                    {
-                        if (WaitMoveReleaseField != null
-                            && (bool)WaitMoveReleaseField.GetValue(__instance)
-                            && (KeyBindings.MoveAxis() != Vector2.zero
-                                || (MouseMoveActiveField != null
-                                    && (bool)MouseMoveActiveField.GetValue(__instance))))
-                        {
-                            __instance.SetRigidBodyVelocity(Vector2.zero);
-                            return false;
-                        }
-                        if (WaitMoveReleaseField != null)
-                        {
-                            WaitMoveReleaseField.SetValue(__instance, false);
-                        }
-                        FixedUpdateMoveOf(__instance, 1f);
-                        if (__instance.Moving)
-                        {
-                            __instance.ChangeMyPlayerState(EPlayerState.Idle);
-                        }
-                        return false;
-                    }
+                    if (IsInteractAllCancelByMoveOf != null)
+                        return HandleInteractCancelByMove(__instance);
                     __instance.SetRigidBodyVelocity(Vector2.zero);
                     return false;
 
@@ -109,6 +93,34 @@ namespace DT_Tools.Features.SurviveSpeed
                 default:
                     return false;
             }
+        }
+
+        private static bool HandleInteractCancelByMove(MyPlayer __instance)
+        {
+            bool cancelByMove = Managers.UI != null
+                && (bool)IsInteractAllCancelByMoveOf.Invoke(Managers.UI, null);
+
+            if (cancelByMove)
+            {
+                if (WaitMoveReleaseField != null
+                    && (bool)WaitMoveReleaseField.GetValue(__instance)
+                    && (KeyBindings.MoveAxis() != Vector2.zero
+                        || (MouseMoveActiveField != null
+                            && (bool)MouseMoveActiveField.GetValue(__instance))))
+                {
+                    __instance.SetRigidBodyVelocity(Vector2.zero);
+                    return false;
+                }
+                if (WaitMoveReleaseField != null)
+                    WaitMoveReleaseField.SetValue(__instance, false);
+                FixedUpdateMoveOf(__instance, 1f);
+                if (__instance.Moving)
+                    __instance.ChangeMyPlayerState(EPlayerState.Idle);
+                return false;
+            }
+
+            __instance.SetRigidBodyVelocity(Vector2.zero);
+            return false;
         }
     }
 }
