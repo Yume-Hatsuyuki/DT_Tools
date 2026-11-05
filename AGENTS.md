@@ -39,8 +39,9 @@ Skill dir: `skills/`
 
 - `main` is the release branch. Do not develop on it.
 - `dev-N.x` is the development branch, maintained by the repository owner.
-- Mod submissions MUST target a branch named with the pure numeric game version. For example, game version `0.1.21h` maps to branch `0.1.21`. Open PRs against that version branch.
-- Direct PRs against `dev-N.x` are no longer accepted. The repository owner merges the version branch into the matching `dev-N.x` and `main`.
+- Mod submissions SHOULD first target a branch named with the pure numeric game version. For example, game version `0.1.21h` maps to branch `0.1.21`. Open PRs against that version branch when it exists.
+- If the version branch has not yet been created in the repository (the upstream may lag behind the game release), submissions MAY temporarily target the matching `dev-N.x` branch.
+- Once the version branch is created, submissions temporarily held on `dev-N.x` MUST be rebased or re-targeted onto that version branch before merging. The repository owner merges the version branch into the matching `dev-N.x` and `main`.
 - A rebuilt package for an existing version number uses a `-vN` suffix (for example `2.0.0.10-v2`). Without the suffix, users who already installed that version cannot see the update.
 - The frontend output directory MUST be named `WebUI`. Linux CI is case-sensitive.
 
