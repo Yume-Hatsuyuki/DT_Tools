@@ -25,16 +25,16 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         }
     }
 
+    // 原版先跑，保留持武器/侦探查看/黑方原生破坏提示；只补原版对额外身份不显示的锁门与拆电源提示。
     [HarmonyPatch(typeof(UI_GameScene), "ShowInteractSabotageText")]
     internal static class SabotagePromptPatch
     {
-        private static bool Prefix(UI_GameScene __instance)
+        private static void Postfix(UI_GameScene __instance)
         {
             if (!Engine.Enabled<SabotageButtonUnlockFeature>())
-                return true;
+                return;
 
             SabotageButtonUnlockLogic.RefreshSabotagePrompt(__instance);
-            return false;
         }
     }
 }

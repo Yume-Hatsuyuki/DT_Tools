@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using DT_Tools.Core;
 using HarmonyLib;
 using Protocol;
@@ -9,6 +10,14 @@ namespace DT_Tools.Features.SabotageButtonUnlock
 {
     internal static class SabotageButtonUnlockLogic
     {
+        // 与服务端 DoorLockServer 的自动解锁时长一致，仅用于本地剩余时间提示。
+        private const float LockSeconds = 20f;
+
+        private static readonly Dictionary<int, float> _localLockExpiry = new Dictionary<int, float>();
+
+        private static int _cooltimeStartSurvivalTime;
+        private static int _cooltimeEndSurvivalTime;
+
         public static bool ColorAllowedForDevice(DeviceBase device, EPlayerColor color)
         {
             if (color == EPlayerColor.Dark)
@@ -42,7 +51,7 @@ namespace DT_Tools.Features.SabotageButtonUnlock
                 return "";
             AccessTools.Property(typeof(DeviceBase), nameof(DeviceBase.IsActiveInteractSabotageKey))
                 ?.SetValue(device, true);
-            return AccessTools.Method(device.GetType(), "GetInteractSabotageMessage")
+            return AccessTools.Method(typeof(DeviceBase), "GetInteractSabotageMessage")
                 ?.Invoke(device, new object[] { index }) as string ?? "";
         }
 
@@ -66,56 +75,39 @@ namespace DT_Tools.Features.SabotageButtonUnlock
 
         public static void RefreshSabotagePrompt(UI_GameScene scene)
         {
-            var t = HarmonyLib.Traverse.Create(scene);
-            var myPlayer = Managers.Player.MyPlayer;
-            Go(scene, 22).SetVisible(visible: false, layoutIgnore: true);
-            if (t.Field("_carryTrickPromptActive").GetValue<bool>())
-            {
-                Go(scene, 22).SetVisible(true);
-                Txt(scene, 20).text = Managers.GetText("DeadlyTrickInteract");
-                Txt(scene, 20).color = Color.white;
-                Txt(scene, 9).text = KeyBindings.Label(Define.EInputAction.Special);
-                Go(scene, 23).SetVisible(true);
-                scene.gameObject.RebuildLayout();
+            var myPlayer = Managers.Player?.MyPlayer;
+            if (myPlayer == null || myPlayer.InteractDevice == null)
                 return;
-            }
+            if (myPlayer.State == EPlayerState.Interact || myPlayer.State == EPlayerState.Casting)
+                return;
 
-            if (myPlayer.InteractDevice == null)
+            var t = HarmonyLib.Traverse.Create(scene);
+            if (t.Field("_carryTrickPromptActive").GetValue<bool>() || myPlayer.CanHandWeapon)
                 return;
+            if (myPlayer.Color == EPlayerColor.Dark)
+                return;
+
             var dev = myPlayer.InteractDevice;
             bool blackBase = myPlayer.Color == EPlayerColor.Black
                 && (dev.DeviceType == EDeviceType.ChatDevice
                     || dev.DeviceType == EDeviceType.Corpse
                     || dev.IsDestroyEvidenceTarget);
-            bool extended = ColorAllowedForDevice(dev, myPlayer.Color);
-            if ((myPlayer.Color != EPlayerColor.Dark && !blackBase && !extended)
-                || myPlayer.State == EPlayerState.Interact
-                || myPlayer.State == EPlayerState.Casting)
-            {
+            if (blackBase || !ColorAllowedForDevice(dev, myPlayer.Color))
                 return;
-            }
 
-            string message = extended && myPlayer.Color != EPlayerColor.Dark && !blackBase
-                ? EvaluateMessage(dev, myPlayer.InteractDeviceIndex)
-                : dev.GetInteractSabotageMessageBase(myPlayer.InteractDeviceIndex);
-            if (!string.IsNullOrEmpty(message))
-            {
-                Go(scene, 22).SetVisible(true);
-                Txt(scene, 20).text = message;
-                int cooltime = dev.InteractSabotageCooltime;
-                if (cooltime > 0)
-                {
-                    Txt(scene, 9).text = cooltime.ToString();
-                    Txt(scene, 20).color = Color.gray;
-                }
-                else
-                {
-                    Txt(scene, 9).text = KeyBindings.Label(Define.EInputAction.Special);
-                    Txt(scene, 20).color = Color.white;
-                }
-                bool isActive = dev.IsActiveInteractSabotageKey;
-                Go(scene, 23).SetVisible(isActive, !isActive);
-            }
+            string message = EvaluateMessage(dev, myPlayer.InteractDeviceIndex);
+            if (string.IsNullOrEmpty(message))
+                return;
+
+            Go(scene, 21).SetVisible(true);
+            Txt(scene, 20).text = message;
+            int cooltime = RemainingCooltime();
+            Txt(scene, 20).color = cooltime > 0 ? Color.gray : Color.white;
+            Txt(scene, 9).text = cooltime > 0
+                ? cooltime.ToString()
+                : KeyBindings.Label(Define.EInputAction.Special);
+            bool isActive = dev.IsActiveInteractSabotageKey;
+            Go(scene, 22).SetVisible(isActive, !isActive);
             scene.gameObject.RebuildLayout();
         }
 
@@ -125,24 +117,78 @@ namespace DT_Tools.Features.SabotageButtonUnlock
         private static TMPro.TMP_Text Txt(UI_GameScene scene, int index)
             => AccessTools.Method(typeof(UI_Base), "GetText")?.Invoke(scene, new object[] { index }) as TMPro.TMP_Text;
 
-        private static float _lastAckRealtime = float.NegativeInfinity;
-
-        public static void RecordLockAttempt()
+        public static void RecordLockAttempt(Door door)
         {
+            if (door == null || door.DoorData == null)
+                return;
             float attempt = Time.realtimeSinceStartup;
-            CoroutineHost.Start(CoVerifyLock(attempt));
+            _localLockExpiry[door.DoorData.DataId] = attempt + LockSeconds;
+            CoroutineHost.Start(CoVerifyLock(door));
         }
 
-        public static void RecordLockAck()
+        public static int RemainingLockSeconds(Door door)
         {
-            _lastAckRealtime = Time.realtimeSinceStartup;
+            if (door == null || door.DoorData == null)
+                return 0;
+            int doorId = door.DoorData.DataId;
+            float left = _localLockExpiry.TryGetValue(doorId, out float expiry)
+                ? expiry - Time.realtimeSinceStartup
+                : 0f;
+            if (left <= 0f || door.DeviceState != 2)
+            {
+                _localLockExpiry.Remove(doorId);
+                return 0;
+            }
+            return Mathf.CeilToInt(left);
         }
 
-        private static IEnumerator CoVerifyLock(float attemptRealtime)
+        // 每玩家全局冷却，与 c 版同语义：只在本机生存阶段推进，新一局归零。
+        public static int RemainingCooltime()
         {
-            yield return new WaitForSecondsRealtime(2f);
-            if (_lastAckRealtime >= attemptRealtime)
-                yield break;
+            if (SabotageButtonUnlockFeature.LockCooltime <= 0 || _cooltimeEndSurvivalTime <= 0)
+                return 0;
+            if (Managers.Game == null)
+                return 0;
+            int now = Managers.Game.SurvivalTime;
+            if (now < _cooltimeStartSurvivalTime)
+            {
+                ResetCooltime();
+                return 0;
+            }
+            int left = _cooltimeEndSurvivalTime - now;
+            if (left <= 0)
+            {
+                ResetCooltime();
+                return 0;
+            }
+            return left;
+        }
+
+        private static void BeginCooltime()
+        {
+            if (SabotageButtonUnlockFeature.LockCooltime <= 0 || Managers.Game == null)
+                return;
+            _cooltimeStartSurvivalTime = Managers.Game.SurvivalTime;
+            _cooltimeEndSurvivalTime = _cooltimeStartSurvivalTime + SabotageButtonUnlockFeature.LockCooltime;
+        }
+
+        private static void ResetCooltime()
+        {
+            _cooltimeStartSurvivalTime = 0;
+            _cooltimeEndSurvivalTime = 0;
+        }
+
+        private static IEnumerator CoVerifyLock(Door door)
+        {
+            for (int i = 0; i < 20; i++)
+            {
+                yield return new WaitForSecondsRealtime(0.1f);
+                if (door != null && door.DeviceState == 2)
+                {
+                    BeginCooltime();
+                    yield break;
+                }
+            }
 
             const string hint = "锁门未生效：需房主启用「DoorLockServer」且档位（Mode）放行该身份";
             Log.Warn<SabotageButtonUnlockFeature>(hint);

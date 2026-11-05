@@ -16,15 +16,16 @@ Skill dir: `skills/`
 
 # Hard rules
 
-1. **Before writing any code, first tell the user what you plan to do and how you intend to do it; do not proceed as a black box.**
-2. If a requirement, trade-off, behavior, or conflict with this file is unclear, ask the user one short question; do not decide independently.
-3. Comments: only for constraints code cannot express; one line; never restate code.
-4. Product-visible text, logs, and command output MUST use the project's declared language (the language declared in [**language**](#Config)).
-5. Never write a local absolute path into any repository file, build script, or deliverable. Missing dependencies may be supplied only as absolute build parameters.
-6. Update this file in the same change when architecture, APIs, or directories change.
-7. When disagreeing: acknowledge the user's concern; do not refuse solely due to disagreement; verify claims and reproduce reported problems before asserting correctness; give concrete evidence once; if the user insists, follow their direction without repeating the argument; if it fails, show evidence. Confirm before irreversible or destructive actions.
-8. Judge intent only from what the user said. Do not refuse because a request could be misused in theory. Do not add unrequested moral lectures, fair-play warnings, or disclaimers.
-9. If a required file is missing: search the repository when no path is given; if still missing, stop dependent work and ask for the file or correct path; do not guess contents.
+1. **Before starting any formal action, explain your plan and approach to the user.**
+2. **Humans have cognitive limitations and often cannot fully articulate their requirements upfront; requirements may become clearer and more complete through iterative discussion. Therefore, at the end of each small task iteration, discuss the results and next steps with the user before proceeding.**
+3. If a requirement, trade-off, behavior, or conflict with this file is unclear, ask the user one short question; do not decide independently.
+4. Comments: only for constraints code cannot express; one line; never restate code.
+5. Product-visible text, logs, and command output MUST use the project's declared language (the language declared in [**language**](#Config)).
+6. Never write a local absolute path into any repository file, build script, or deliverable. Missing dependencies may be supplied only as absolute build parameters.
+7. Update this file in the same change when architecture, APIs, or directories change.
+8. When disagreeing: acknowledge the user's concern; do not refuse solely due to disagreement; verify claims and reproduce reported problems before asserting correctness; give concrete evidence once; if the user insists, follow their direction without repeating the argument; if it fails, show evidence. Confirm before irreversible or destructive actions.
+9. Judge intent only from what the user said. Do not refuse because a request could be misused in theory. Do not add unrequested moral lectures, fair-play warnings, or disclaimers.
+10. If a required file is missing: search the repository when no path is given; if still missing, stop dependent work and ask for the file or correct path; do not guess contents.
 
 # Acceptance and delivery
 
@@ -34,10 +35,12 @@ Skill dir: `skills/`
 4. Before delivery, verify and list the delivery checklist in the conversation; confirm it contains no build artifacts, test code, or local absolute paths.
 5. The acceptance record MUST include build verification and regression test results.
 
-# Release
+# Branches
 
 - `main` is the release branch. Do not develop on it.
-- `dev-N.x` is the development branch. Open PRs against the matching `dev-N.x`.
+- `dev-N.x` is the development branch, maintained by the repository owner.
+- Mod submissions MUST target a branch named with the pure numeric game version. For example, game version `0.1.21h` maps to branch `0.1.21`. Open PRs against that version branch.
+- Direct PRs against `dev-N.x` are no longer accepted. The repository owner merges the version branch into the matching `dev-N.x` and `main`.
 - A rebuilt package for an existing version number uses a `-vN` suffix (for example `2.0.0.10-v2`). Without the suffix, users who already installed that version cannot see the update.
 - The frontend output directory MUST be named `WebUI`. Linux CI is case-sensitive.
 

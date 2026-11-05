@@ -17,29 +17,13 @@ namespace DT_Tools.Features.WebTablet
             try
             {
                 WebTabletBridge.RecordClue(ownerId, info, isProposition);
+                // 0.1.21h 移除了 AddPropositionMessage，提交命题只走 AddClue(isProposition:true)。
+                if (isProposition)
+                    WebTabletBridge.RecordProposition(ownerId, info);
             }
             catch (Exception ex)
             {
-                Log.Warn<WebTabletFeature>(ex, "线索记录失败");
-            }
-        }
-    }
-
-    [HarmonyPatch(typeof(UI_GameTablet), nameof(UI_GameTablet.AddPropositionMessage))]
-    internal static class WebTabletPropositionPatch
-    {
-        private static void Postfix(int playerId, string name, string sentence, PropositionInfo proposition)
-        {
-            if (!Engine.Enabled<WebTabletFeature>())
-                return;
-
-            try
-            {
-                WebTabletBridge.RecordProposition(playerId, name, sentence, proposition);
-            }
-            catch (Exception ex)
-            {
-                Log.Warn<WebTabletFeature>(ex, "命题记录失败");
+                Log.Warn<WebTabletFeature>(ex, "线索/命题记录失败");
             }
         }
     }

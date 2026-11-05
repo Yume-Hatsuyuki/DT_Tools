@@ -10,7 +10,8 @@ namespace DT_Tools.Game
         {
             player = null;
             error = null;
-            string k = (key ?? string.Empty).Trim();
+            string raw = (key ?? string.Empty).Trim();
+            string k = raw.Length > 1 && raw[0] == '#' ? raw.Substring(1) : raw;
             if (k.Length == 0)
             {
                 error = "玩家名或 ID 不能为空。";
@@ -30,11 +31,11 @@ namespace DT_Tools.Game
                 return Accept(list, byName[0], out player, out error);
             if (byName.Count > 1)
             {
-                error = $"「{k}」对应多名玩家，请改用玩家 ID。";
+                error = $"「{raw}」对应多名玩家，请改用玩家 ID。";
                 return false;
             }
 
-            error = $"未找到玩家「{k}」。";
+            error = $"未找到玩家「{raw}」。";
             return false;
         }
 

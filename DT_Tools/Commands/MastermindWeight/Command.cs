@@ -10,7 +10,7 @@ namespace DT_Tools.Commands.MastermindWeight
     {
         public string Name => "mastermind_weight";
         public string[] Aliases => new[] { "黑幕概率", "mw" };
-        public string Usage => "mastermind_weight <玩家名|ID> <格子数>  |  mastermind_weight list  |  mastermind_weight reset";
+        public string Usage => "mastermind_weight <#id|玩家名> <格子数>  |  mastermind_weight list  |  mastermind_weight reset";
         public string Description => "设置玩家的黑幕格子数（默认见配置「默认格子数」）：格子越多越可能成为黑幕，0 为不会被选中。list 查看本局概率，reset 清空。需先开启「黑幕概率」功能。";
         public string Author => "梦初雪";
         public FeatureTag Tags => FeatureTag.GameRound | FeatureTag.PlayerIdentity;

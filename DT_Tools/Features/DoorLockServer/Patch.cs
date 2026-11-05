@@ -1,16 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using global::System.Reflection.Emit;
 using DT_Tools.Core;
-using DT_Tools.Game;
 using HarmonyLib;
 using Protocol;
 using Server.Game;
 
 namespace DT_Tools.Features.DoorLockServer
 {
+    internal static class DoorLockRules
+    {
+        // 原版 Door 数据的 StateList[1] 为 20，客户端「已锁（N 秒）」也以此为上限。
+        internal const int LockSeconds = 20;
+    }
+
     [HarmonyPatch(typeof(Server.Game.Door), nameof(Server.Game.Door.HandleEvent))]
     internal static class DoorLockServerHandleEventPatch
     {
@@ -18,6 +18,12 @@ namespace DT_Tools.Features.DoorLockServer
         {
             if (!Engine.Enabled<DoorLockServerFeature>())
                 return true;
+            if (__instance?.DoorData == null || player == null)
+                return true;
+            if (__instance.DoorData.Type != EDoorType.NormalDoor)
+                return true;
+            if (GameRoom.Instance == null || GameRoom.Instance.State != EGameState.Survive)
+                return false;
 
             var mode = DoorLockServerFeature.Mode;
             bool allowed = player.Color == EPlayerColor.Dark
@@ -32,56 +38,44 @@ namespace DT_Tools.Features.DoorLockServer
 
             player.CanSabotage = false;
             player.SabotageCooltimeEndTick = TimeManager.Instance.SurviveTime + DoorLockServerFeature.Interval;
-            TimeManager.Instance.PushSurvivalJob(DoorLockServerFeature.Interval, delegate
+            if (DoorLockServerFeature.Interval > 0)
+            {
+                TimeManager.Instance.PushSurvivalJob(DoorLockServerFeature.Interval, delegate
+                {
+                    player.CanSabotage = true;
+                });
+            }
+            else
             {
                 player.CanSabotage = true;
-            });
-            player.Session.Send(new S_COOLTIME_SABOTAGE
-            {
-                Cooltime = DoorLockServerFeature.Interval
-            });
-            __instance.DeviceInfo.StateList[2] = 0;
-            __instance.LockDoor();
-            var tickDoor = AccessTools.Method(typeof(Server.Game.Door), "TickDoor");
-            TimeManager.Instance.PushSurvivalJob(1, delegate
-            {
-                tickDoor?.Invoke(__instance, null);
-            });
-            Log.Info<DoorLockServerFeature>(
-                $"放行锁门：{player.Name}(pid={player.PublicInfo.PlayerId},{player.Color}) 门={__instance.ID} 房间={__instance.RoomID}");
-            return false;
-        }
-
-        [HarmonyTranspiler]
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var codes = instructions.ToList();
-            FieldInfo interval = AccessTools.Field(
-                typeof(DoorLockServerFeature), nameof(DoorLockServerFeature.Interval));
-
-            int hits = 0;
-            for (int i = 0; i < codes.Count; i++)
-            {
-                if (!IsLdcOf(codes[i], 40))
-                    continue;
-                codes[i].opcode = OpCodes.Ldsfld;
-                codes[i].operand = interval;
-                hits++;
             }
 
-            if (hits != 3)
-                Log.Error<DoorLockServerFeature>(
-                    $"HandleEvent: 冷却常量 40 匹配到 {hits}/3 处，ldc 序列 [{DumpLdc(codes)}]（锚点：Server.Game/Door.cs:69/70/76）");
-            return codes;
+            __instance.LockDoor();
+            TimeManager.Instance.PushSurvivalJob(DoorLockRules.LockSeconds, delegate
+            {
+                __instance.UnlockDoor();
+            });
+            Log.Info<DoorLockServerFeature>(
+                $"锁门：{player.Name}(pid={player.PublicInfo.PlayerId},{player.Color}) 门={__instance.ID} 房间={__instance.RoomID}");
+            return false;
         }
+    }
 
-        private static bool IsLdcOf(CodeInstruction code, int value)
-            => (code.opcode == OpCodes.Ldc_I4_S || code.opcode == OpCodes.Ldc_I4)
-               && (code.operand is int i && i == value || code.operand is sbyte b && b == value);
+    // 迁移恢复后门仍是 State=2，但生存计时任务已清空，需要重新排一次自动解锁。
+    [HarmonyPatch(typeof(Server.Game.Device), nameof(Server.Game.Device.OnMigrationResume))]
+    internal static class DoorLockServerMigrationPatch
+    {
+        private static void Postfix(Server.Game.Device __instance)
+        {
+            if (!Engine.Enabled<DoorLockServerFeature>())
+                return;
+            if (!(__instance is Server.Game.Door door) || door.State != 2)
+                return;
 
-        private static string DumpLdc(IEnumerable<CodeInstruction> codes)
-            => string.Join(" | ", codes
-                .Where(c => c.opcode.Name.StartsWith("ldc.i4", StringComparison.Ordinal))
-                .Select(c => $"{c.opcode.Name}={c.operand}({c.operand?.GetType().Name ?? "null"})"));
+            TimeManager.Instance.PushSurvivalJob(DoorLockRules.LockSeconds, delegate
+            {
+                door.UnlockDoor();
+            });
+        }
     }
 }

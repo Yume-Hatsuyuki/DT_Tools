@@ -1,35 +1,36 @@
-using System.Collections;
 using System.Reflection;
 using DT_Tools.Core;
 using HarmonyLib;
 using Protocol;
-using UnityEngine;
 
 namespace DT_Tools.Features.SabotageButtonUnlock
 {
-    [HarmonyPatch(typeof(Door), "UseSabotage")]
-    internal static class DoorLockAttemptPatch
+    // 0.1.21h 的 Door 不再重写 UseSabotage，字符串目标会退化到基类；显式挂基类并限定普通门。
+    [HarmonyPatch(typeof(DeviceBase), "UseSabotage")]
+    internal static class DoorLockDispatchPatch
     {
-        private static void Prefix()
+        private static bool Prefix(DeviceBase __instance)
         {
             if (!Engine.Enabled<SabotageButtonUnlockFeature>())
-                return;
-            if (Managers.Player.MyPlayer.Color == EPlayerColor.Dark)
-                return;
+                return true;
+            if (!(__instance is Door door) || door.DoorData == null || door.DoorData.Type != EDoorType.NormalDoor)
+                return true;
+            if (door.DeviceState == 2)
+                return false;
 
-            SabotageButtonUnlockLogic.RecordLockAttempt();
-        }
-    }
+            MyPlayer my = Managers.Player?.MyPlayer;
+            if (my == null || !SabotageButtonUnlockLogic.ColorAllowedForDevice(door, my.Color))
+                return true;
+            if (SabotageButtonUnlockLogic.RemainingCooltime() > 0)
+                return false;
 
-    [HarmonyPatch]
-    internal static class SabotageCooltimeAckPatch
-    {
-        private static MethodBase TargetMethod()
-            => AccessTools.Method(AccessTools.TypeByName("PacketHandler"), "Handle_S_COOLTIME_SABOTAGE");
-
-        private static void Postfix()
-        {
-            SabotageButtonUnlockLogic.RecordLockAck();
+            Managers.Sound.PlaySystem("SabotageSfx");
+            Managers.Network.GameServer.Send(new C_HANDLE_DOOR
+            {
+                DoorId = door.DoorData.DataId
+            });
+            SabotageButtonUnlockLogic.RecordLockAttempt(door);
+            return false;
         }
     }
 
