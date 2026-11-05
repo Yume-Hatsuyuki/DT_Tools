@@ -80,15 +80,13 @@ namespace DT_Tools.Features.ChatHistory
 
         private static void ScanAll()
         {
-            foreach (var chat in UnityEngine.Object.FindObjectsByType<UI_DirectChat>(UnityEngine.FindObjectsSortMode.None))
+            foreach (var chat in UnityEngine.Object.FindObjectsByType<UI_TrialChat>(UnityEngine.FindObjectsSortMode.None))
             {
                 var input = Traverse.Create(chat).Field<TMP_InputField>("_input").Value;
-                Ensure(input, ChatHistorySource.ChatBar, ChatHistoryChannel.GlobalChat);
-            }
-            foreach (var tablet in UnityEngine.Object.FindObjectsByType<UI_GameTablet>(UnityEngine.FindObjectsSortMode.None))
-            {
-                var input = Util.FindChild<TMP_InputField>(tablet.gameObject, "ChatInputField", recursive: true);
-                Ensure(input, ChatHistorySource.Tablet, ChatHistoryChannel.GlobalChat);
+                var source = chat.GetComponentInParent<UI_TrialEvent>() != null
+                    ? ChatHistorySource.Tablet
+                    : ChatHistorySource.ChatBar;
+                Ensure(input, source, ChatHistoryChannel.GlobalChat);
             }
             foreach (var popup in UnityEngine.Object.FindObjectsByType<UI_ChatDevicePopup>(UnityEngine.FindObjectsSortMode.None))
             {

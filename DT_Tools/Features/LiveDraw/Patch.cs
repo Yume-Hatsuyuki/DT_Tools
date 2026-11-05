@@ -186,7 +186,7 @@ namespace DT_Tools.Features.LiveDraw
                 DrawingManager mgr = Managers.Drawing;
                 if (mgr == null) yield break;
 
-                mgr.ClearMine();
+                mgr.ClearBoard();
                 yield return new WaitForSeconds(0.2f);
                 if (!InDrawPhase()) yield break;
 
@@ -357,7 +357,9 @@ namespace DT_Tools.Features.LiveDraw
                 }
                 float cs = Mathf.Cos(fxRot), sn = Mathf.Sin(fxRot);
 
-                var pkt = new C_DRAW_REPLACE();
+                // 0.1.21h 起画板支持多页，替换包与镜像都需要带上当前页。
+                int page = Traverse.Create(Managers.Drawing).Field("_page").GetValue<int>();
+                var pkt = new C_DRAW_REPLACE { Page = page };
                 var newStrokes = new List<DrawStroke>();
                 var removed = new List<int>();
 
@@ -409,7 +411,7 @@ namespace DT_Tools.Features.LiveDraw
                 Managers.Network?.GameServer?.Send(pkt);
                 try
                 {
-                    DrawingMirror.Replace(myId, removed, newStrokes);
+                    DrawingMirror.Replace(myId, page, removed, newStrokes);
                 }
                 catch (Exception ex)
                 {
