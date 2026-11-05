@@ -12,7 +12,7 @@ namespace DT_Tools.Commands.LobbySpawn
     {
         public string Name => "lobby_spawn";
         public string[] Aliases => new[] { "大厅出生点" };
-        public string Usage => "lobby_spawn <玩家名|ID> <房间名|默认>  |  lobby_spawn list  |  lobby_spawn rooms  |  lobby_spawn reset";
+        public string Usage => "lobby_spawn <#id|玩家名> <房间名|默认>  |  lobby_spawn list  |  lobby_spawn rooms  |  lobby_spawn reset";
         public string Description => "设置玩家进入大厅后的位置（房间中文名或枚举名，见 lobby_spawn rooms），默认为地图大厅点。下次进入大厅时生效。需先开启「大厅出生点」功能。";
         public string Author => "梦初雪";
         public FeatureTag Tags => FeatureTag.PlayerMove | FeatureTag.SysRoom;

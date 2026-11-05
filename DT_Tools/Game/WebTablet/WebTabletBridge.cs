@@ -49,6 +49,12 @@ namespace DT_Tools.Game.WebTablet
             }, $"P:{playerId}:{info.PlayerId}:{info.RoomId}:{info.Time}");
         }
 
+        public static void RecordProposition(int playerId, PropositionInfo info)
+        {
+            Player player = Managers.Player?.GetPlayerCache(playerId);
+            RecordProposition(playerId, NameOf(player), PropositionSentence(playerId, info), info);
+        }
+
         public static void RecordClue(int ownerId, PropositionInfo info, bool isProposition)
         {
             Player owner = Managers.Player?.GetPlayerCache(ownerId);
@@ -78,6 +84,8 @@ namespace DT_Tools.Game.WebTablet
             if (shot == null || shot.Jpeg == null || shot.Jpeg.Length == 0) return;
             Player player = Managers.Player?.GetPlayerCache(shot.PlayerId);
             int key = WebTabletStore.AddPhoto(shot.Jpeg);
+            // 服务端会带 Data 广播一次、再空 Data 补发一次，用主机照片 ID 去重。
+            string dedupe = shot.HostPhotoId != 0 ? $"F:{shot.PlayerId}:{shot.HostPhotoId}" : $"K:{shot.Key}";
             WebTabletStore.AddLine(new WebTabletLine
             {
                 Kind = WebTabletKind.Photo,
@@ -88,7 +96,7 @@ namespace DT_Tools.Game.WebTablet
                 IsMine = IsMine(shot.PlayerId),
                 IsDead = shot.IsDead,
                 PhotoKey = key,
-            });
+            }, dedupe);
         }
 
         public static void RecordStateChange(EGameState state)

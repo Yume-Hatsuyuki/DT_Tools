@@ -85,7 +85,7 @@ namespace DT_Tools.Features.TabletQol
             }
 
             Log.Info<TabletQolFeature>(
-                $"平板列表已挂滚动条：{label}（{reason}；{(vertical ? "右侧竖条" : "底部横条")}，宽 {width}px，内缩 {inset}px，" +
+                $"列表已挂滚动条：{label}（{reason}；{(vertical ? "右侧竖条" : "底部横条")}，宽 {width}px，内缩 {inset}px，" +
                 $"{(TabletQolFeature.BarAlwaysVisible ? "常驻" : "内容超出时才出现")}，" +
                 $"{(TabletQolFeature.BarTrackClickPages ? "轨道可点翻页" : "轨道不吃点击")}；" +
                 $"当时轴=竖{scroll.vertical}/横{scroll.horizontal}{(axisForced ? "（都没开，按竖排处理）" : "")}）");

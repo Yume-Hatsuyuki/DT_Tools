@@ -21,21 +21,24 @@ namespace DT_Tools.Features.TabletQol
         public static bool Suppress;
 
         private static GameObject _root;
+        private static System.Action _onConfirm;
 
         public static void Hide()
         {
             if (_root != null)
                 UnityEngine.Object.Destroy(_root);
             _root = null;
+            _onConfirm = null;
         }
 
-        public static void Show(UI_ClueSubItem card)
+        public static void Show(UI_ClueSubItem card, Transform parentOverride, System.Action onConfirm)
         {
             Hide();
-            if (card == null)
+            Transform parent = parentOverride != null ? parentOverride : (card != null ? TabletRoot(card) : null);
+            if (parent == null)
                 return;
 
-            Transform parent = TabletRoot(card);
+            _onConfirm = onConfirm;
             float tabletW = (parent as RectTransform)?.rect.width ?? 0f;
             if (tabletW <= 1f)
                 tabletW = 900f;
@@ -65,7 +68,7 @@ namespace DT_Tools.Features.TabletQol
             UI_Base.BindEvent(dim, _ => Hide());
 
             Vector2 cardSize = Vector2.zero;
-            UI_ClueSubItem embedded = TabletQolFeature.ConfirmShowCard
+            UI_ClueSubItem embedded = (card != null && TabletQolFeature.ConfirmShowCard)
                 ? EmbedCard(card, rootRt, maxPanelW, out cardSize)
                 : null;
 
@@ -108,7 +111,7 @@ namespace DT_Tools.Features.TabletQol
 
             float btnW = Mathf.Min(panelW * 0.32f, 260f);
             MakeCloneButton(card, panelRt, "确认提交", new Vector2(-btnW * 0.58f, Padding), new Vector2(btnW, btnH),
-                () => ConfirmAndSubmit(card));
+                ConfirmAndSubmit);
             MakeCloneButton(card, panelRt, "取消", new Vector2(btnW * 0.58f, Padding), new Vector2(btnW, btnH), Hide);
         }
 
@@ -134,10 +137,6 @@ namespace DT_Tools.Features.TabletQol
                 UI_ClueSubItem embedded = Managers.UI.MakeSubItem<UI_ClueSubItem>(parent);
                 var clue = source.Clue;
                 embedded.SetInfo(clue);
-
-                GameObject submitGo = Traverse.Create(embedded).Method("GetObject", new object[] { 3 }).GetValue<GameObject>();
-                if (submitGo != null)
-                    submitGo.SetActive(false);
 
                 RectTransform rt = (RectTransform)embedded.transform;
                 rt.anchorMin = new Vector2(0.5f, 0.5f);
@@ -210,11 +209,10 @@ namespace DT_Tools.Features.TabletQol
         private static void MakeCloneButton(UI_ClueSubItem source, Transform parent, string label,
             Vector2 pos, Vector2 size, Action onClick)
         {
-            GameObject src = Traverse.Create(source).Method("GetObject", new object[] { 3 }).GetValue<GameObject>();
-            GameObject clone = src != null ? UnityEngine.Object.Instantiate(src, parent)
-                                           : new GameObject($"Button_{label}", typeof(RectTransform), typeof(Image));
+            // 0.1.21h 的线索卡片不再自带提交按钮，这里直接生成带文字的按钮。
+            GameObject button = new GameObject($"Button_{label}", typeof(RectTransform), typeof(Image));
 
-            RectTransform rt = (RectTransform)clone.transform;
+            RectTransform rt = (RectTransform)button.transform;
             rt.SetParent(parent, false);
             rt.anchorMin = new Vector2(0.5f, 0f);
             rt.anchorMax = new Vector2(0.5f, 0f);
@@ -223,43 +221,57 @@ namespace DT_Tools.Features.TabletQol
             rt.anchoredPosition = pos;
             rt.localScale = Vector3.one;
 
-            Image img = clone.GetComponent<Image>();
-            if (img != null)
-            {
-                Sprite normal = Managers.Resource.Load<Sprite>("clue_submit_normal.sprite");
-                if (normal != null)
-                    img.sprite = normal;
-                img.color = new Color(0.863f, 0.902f, 0.961f, Mathf.Clamp01(TabletQolFeature.ButtonAlpha));
-            }
+            Image img = button.GetComponent<Image>();
+            Sprite normal = Managers.Resource.Load<Sprite>("clue_submit_normal.sprite");
+            if (normal != null)
+                img.sprite = normal;
+            img.color = new Color(0.863f, 0.902f, 0.961f, Mathf.Clamp01(TabletQolFeature.ButtonAlpha));
 
-            TMP_Text[] texts = clone.GetComponentsInChildren<TMP_Text>(true);
-            if (texts.Length > 0)
-                texts[0].text = label;
+            GameObject textGo = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            RectTransform textRt = (RectTransform)textGo.transform;
+            textRt.SetParent(rt, false);
+            textRt.anchorMin = Vector2.zero;
+            textRt.anchorMax = Vector2.one;
+            textRt.offsetMin = Vector2.zero;
+            textRt.offsetMax = Vector2.zero;
+            textRt.localScale = Vector3.one;
 
-            Button btn = clone.GetComponent<Button>();
-            if (btn != null)
-                btn.onClick = new Button.ButtonClickedEvent();
+            TextMeshProUGUI text = textGo.GetComponent<TextMeshProUGUI>();
+            TMP_Text sample = source != null ? source.GetComponentInChildren<TMP_Text>(true) : null;
+            if (sample != null && sample.font != null)
+                text.font = sample.font;
+            text.text = label;
+            text.fontSize = 22f;
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.white;
+            text.raycastTarget = false;
 
-            UI_Base.BindEvent(clone, _ => onClick());
+            UI_Base.BindEvent(button, _ => onClick());
         }
 
-        private static void ConfirmAndSubmit(UI_ClueSubItem card)
+        private static void ConfirmAndSubmit()
         {
+            Action onConfirm = _onConfirm;
             Hide();
-            if (card == null)
+            try
+            {
+                onConfirm?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Log.Error<TabletQolFeature>(ex, "确认后执行原版提交失败");
+            }
+        }
+
+        public static void Submit(UI_TrialScreenPopup popup)
+        {
+            if (popup == null)
                 return;
 
             try
             {
-                MethodInfo target = AccessTools.Method(typeof(UI_ClueSubItem), "OnClickPropositionButton");
-                if (target == null)
-                {
-                    Log.Error<TabletQolFeature>("找不到 UI_ClueSubItem.OnClickPropositionButton，无法提交");
-                    return;
-                }
-
                 Suppress = true;
-                target.Invoke(card, new object[] { null });
+                Traverse.Create(popup).Method("SubmitFocusedClue").GetValue();
                 Log.Info<TabletQolFeature>(
                     $"确认提交：已调用原版提交函数（IsSubmitProposition={Managers.Game.IsSubmitProposition}）");
             }
