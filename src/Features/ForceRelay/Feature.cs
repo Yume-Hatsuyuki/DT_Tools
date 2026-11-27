@@ -1,125 +1,103 @@
-// 作用：声明隐私保护强制中继功能、配置项与启用状态；不实现补丁与运行时逻辑。
+// 作用：声明房间内解锁流媒体中继开关的功能，并在启停时开关原生中继设置；不实现补丁拦截与配置绑定。
+using System;
 using DT_Tools.Core;
 using DT_Tools.Core.Attributes;
-using Steamworks;
+using HarmonyLib;
+using UnityEngine;
 
 namespace DT_Tools.Features.ForceRelay
 {
     [PatchFeature(
-        "隐私保护强制中继：关闭 ICE 直连，P2P 仅走 Steam SDR 中继，避免暴露真实 IP（两端各自生效）。",
+        "解锁房间内的流媒体开关置灰并自动开启仅中继；关闭功能时恢复启用前的设置；仅影响之后建立的连接。",
         defaultEnabled: false,
         side: FeatureSide.Both,
         Tags = FeatureTag.SysNetwork,
         Author = "梦初雪")]
-    public sealed class ForceRelayFeature
+    public sealed class UnlockRelayToggleFeature
     {
-        const int VanillaIceEnable = -1;
-        const int VanillaIcePenalty = 0;
-        const int VanillaSdrPenalty = 1000;
+        private static bool? _originalRelay;
 
-        const int ForceIceEnable = 0;
-        const int ForceIcePenalty = 100000;
-        const int ForceSdrPenalty = 0;
+        internal static bool Restoring;
 
         public static void OnPatched()
         {
-            try
-            {
-                if (Engine.Enabled<ForceRelayFeature>())
-                    ApplyForceRelay(log: true);
-            }
-            catch (global::System.Exception ex)
-            {
-                Log.Warn(Engine.SectionOf(typeof(ForceRelayFeature)), ex, "OnPatched 应用中继配置失败（将在进房 Init 时重试）");
-            }
+            if (Engine.Enabled<UnlockRelayToggleFeature>())
+                Apply(log: true);
         }
 
         public static void OnEnabled()
         {
-            try { ApplyForceRelay(log: true); }
-            catch (global::System.Exception ex)
-            {
-                Log.Warn(Engine.SectionOf(typeof(ForceRelayFeature)), ex, "OnEnabled 应用失败");
-            }
+            Apply(log: true);
         }
 
         public static void OnDisabled()
         {
-            try { RestoreVanilla(); }
-            catch (global::System.Exception ex)
-            {
-                Log.Warn(Engine.SectionOf(typeof(ForceRelayFeature)), ex, "OnDisabled 恢复失败");
-            }
+            Restore();
         }
 
-        internal static void ApplyForceRelay(bool log = false)
+        private static void Apply(bool log)
         {
-            if (Managers.Steam == null || !Managers.Steam.IsInitialized)
-            {
-                if (log)
-                    Log.Info(Engine.SectionOf(typeof(ForceRelayFeature)),
-                        "Steam 未初始化，跳过本次强制中继配置");
-                return;
-            }
-
-            bool okIce = SetGlobalInt32(
-                ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
-                ForceIceEnable);
-            bool okPen = SetGlobalInt32(
-                ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_P2P_Transport_ICE_Penalty,
-                ForceIcePenalty);
-            bool okSdr = SetGlobalInt32(
-                ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_P2P_Transport_SDR_Penalty,
-                ForceSdrPenalty);
-
-            if (log)
-            {
-                if (okIce && okSdr)
-                    Log.Info(Engine.SectionOf(typeof(ForceRelayFeature)),
-                        $"已强制 SDR 中继（ICE=Disable/{ForceIceEnable}, ICE penalty={ForceIcePenalty}, SDR penalty={ForceSdrPenalty}） ice={okIce} pen={okPen} sdr={okSdr}");
-                else
-                    Log.Warn(Engine.SectionOf(typeof(ForceRelayFeature)),
-                        $"强制中继配置部分失败 ice={okIce} pen={okPen} sdr={okSdr}");
-            }
-        }
-
-        internal static void RestoreVanilla()
-        {
-            if (Managers.Steam == null || !Managers.Steam.IsInitialized)
-                return;
-
-            bool ok = SetGlobalInt32(
-                    ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
-                    VanillaIceEnable)
-                && SetGlobalInt32(
-                    ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_P2P_Transport_ICE_Penalty,
-                    VanillaIcePenalty)
-                && SetGlobalInt32(
-                    ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_P2P_Transport_SDR_Penalty,
-                    VanillaSdrPenalty);
-            if (ok)
-                Log.Info(Engine.SectionOf(typeof(ForceRelayFeature)),
-                    "已恢复原版传输选择（ICE=user-default, ICE penalty=0, SDR penalty=1000）");
-            else
-                Log.Warn(Engine.SectionOf(typeof(ForceRelayFeature)), "恢复原版传输选择失败");
-        }
-
-        static bool SetGlobalInt32(ESteamNetworkingConfigValue key, int value)
-        {
-            global::System.IntPtr ptr = global::System.Runtime.InteropServices.Marshal.AllocHGlobal(4);
             try
             {
-                global::System.Runtime.InteropServices.Marshal.WriteInt32(ptr, value);
-                return SteamNetworkingUtils.SetConfigValue(
-                    key,
-                    ESteamNetworkingConfigScope.k_ESteamNetworkingConfig_Global,
-                    global::System.IntPtr.Zero,
-                    ESteamNetworkingConfigDataType.k_ESteamNetworkingConfig_Int32,
-                    ptr);
+                if (_originalRelay == null)
+                    _originalRelay = StreamerMode.RelayOnly;
+
+                StreamerMode.SetRelayOnly(true);
+                RefreshSettingUi();
+
+                if (log)
+                    Log.Info(Engine.SectionOf(typeof(UnlockRelayToggleFeature)),
+                        $"已开启原生仅中继设置（启用前 RelayOnly={_originalRelay.Value}）");
             }
-            finally
+            catch (Exception ex)
             {
-                global::System.Runtime.InteropServices.Marshal.FreeHGlobal(ptr);
+                Log.Warn(Engine.SectionOf(typeof(UnlockRelayToggleFeature)), ex, "开启原生仅中继设置失败");
+            }
+        }
+
+        private static void Restore()
+        {
+            if (_originalRelay == null)
+                return;
+
+            try
+            {
+                bool original = _originalRelay.Value;
+                _originalRelay = null;
+                Restoring = true;
+                try
+                {
+                    StreamerMode.SetRelayOnly(original);
+                }
+                finally
+                {
+                    Restoring = false;
+                }
+                RefreshSettingUi();
+                Log.Info(Engine.SectionOf(typeof(UnlockRelayToggleFeature)),
+                    $"已恢复启用前的仅中继设置（RelayOnly={original}）");
+            }
+            catch (Exception ex)
+            {
+                Log.Warn(Engine.SectionOf(typeof(UnlockRelayToggleFeature)), ex, "恢复原生仅中继设置失败");
+            }
+        }
+
+        private static void RefreshSettingUi()
+        {
+            try
+            {
+                foreach (UI_Setting_ETC ui in UnityEngine.Object.FindObjectsByType<UI_Setting_ETC>(
+                             FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    if (ui == null || !ui.isActiveAndEnabled)
+                        continue;
+                    Traverse.Create(ui).Method("SyncStreamerMode").GetValue();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn(Engine.SectionOf(typeof(UnlockRelayToggleFeature)), ex, "同步设置页开关状态失败");
             }
         }
     }
