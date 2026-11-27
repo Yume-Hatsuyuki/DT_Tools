@@ -38,7 +38,20 @@ namespace DT_Tools.Features.EmoteNoCd
                 EmoticonId = __instance.EmotionId
             });
             if (Managers.Game.State != EGameState.Trial)
+            {
                 Managers.Player.MyPlayer.UseEmotion(__instance.EmotionId);
+                if (Managers.Game.IsAlive)
+                {
+                    Managers.Record.Recording(ESnapShotType.EmoteShot, new SnapShot
+                    {
+                        Emote = new EmoteSnapShot
+                        {
+                            PlayerId = Managers.Player.MyPlayer.PublicInfo.PlayerId,
+                            EmoticonId = __instance.EmotionId
+                        }
+                    });
+                }
+            }
 
             return false;
         }
