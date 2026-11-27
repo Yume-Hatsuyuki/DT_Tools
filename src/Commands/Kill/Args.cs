@@ -1,0 +1,30 @@
+// 作用：解析 /Kill 命令的参数；不负责命令执行与注册。
+using DT_Tools.Game;
+
+namespace DT_Tools.Commands.Kill
+{
+    internal sealed class KillArgs
+    {
+        public bool All { get; private set; }
+        public int PlayerId { get; private set; }
+
+        public static bool TryParse(string raw, out KillArgs args, out string error)
+        {
+            args = new KillArgs();
+            if (TargetSpec.IsAll(raw))
+            {
+                args.All = true;
+                error = null;
+                return true;
+            }
+            if (TargetSpec.TryParseId(raw, out int id))
+            {
+                args.PlayerId = id;
+                error = null;
+                return true;
+            }
+            error = $"无效的目标: {raw}（应为 all 或 #数字 / 纯数字）";
+            return false;
+        }
+    }
+}

@@ -1,0 +1,287 @@
+{
+  "_说明": "游戏/模组类型 → 功能标签的规则表。rules 按简单类名正则匹配（一个类名可命中多条规则，同一标签对同一类型只计一次）。members 按 \"类型.成员\" 精确覆盖。修改后无需重新编译工具。",
+  "rules": [
+    {
+      "pattern": "Tablet|TabletQol",
+      "tags": [
+        "UiTablet"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Pin|MapIcon|Minimap|Arrow",
+      "tags": [
+        "UiMapPin"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Chat|Typewriter|Secret|Morse|Subitem.*Chat",
+      "tags": [
+        "UiChat"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Shop|Purchase|Sku",
+      "tags": [
+        "UiShop"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Draw|Canvas|Stroke|Pen",
+      "tags": [
+        "UiDraw"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Popup|Dialog|Setting|Confirm|Notice|Infomation|Report",
+      "tags": [
+        "UiPopup"
+      ],
+      "weight": 0.8
+    },
+    {
+      "pattern": "Ping|Stamina|Hud|Scoreboard|Gauge|Slider|Casting|Scanning|Loading|Replay|NameTag|Bubble|Dropdown|Scroll|Window",
+      "tags": [
+        "UiHud"
+      ],
+      "weight": 0.7
+    },
+    {
+      "pattern": "^UI_|^UIManager$|^UIHologram",
+      "tags": [
+        "UiHud"
+      ],
+      "weight": 0.3
+    },
+    {
+      "pattern": "Input",
+      "tags": [
+        "UiInput"
+      ],
+      "weight": 0.8
+    },
+    {
+      "pattern": "Emot|Emoticon|Emote|Taunt",
+      "tags": [
+        "PlayerEmote"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Chair|Sofa|Bench|Seat",
+      "tags": [
+        "GameDevice"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Door",
+      "tags": [
+        "GameDoor"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Fuse|Breaker|Blackout",
+      "tags": [
+        "GameFuse"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Dark|Fog|Vignette|Light",
+      "tags": [
+        "GameDarkness"
+      ],
+      "weight": 0.8
+    },
+    {
+      "pattern": "Armory|Weapon|Knife|Trophy",
+      "tags": [
+        "GameWeapon"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Corpse",
+      "tags": [
+        "GameCorpse"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Clue|Evidence|Scan|Scanner|Photo|Forensic|Sample|Memo",
+      "tags": [
+        "GameEvidence"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Ghost|Spirit|Afterlife",
+      "tags": [
+        "GameGhost"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Mission",
+      "tags": [
+        "GameMission"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Trial|Vote|Verdict|Judge",
+      "tags": [
+        "GameVote"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Fishing|Mineral|Miner|Harvest|Cabinet|Charger|Computer|Boiler|Alchemist|Craft|Collector|Mirror|Mushroom|Nintendo|Occult|Summon|Vent|Lever|Curtain|Cancer|Flower|Hope|Device|Shelf|Drink|Potion|Rune|Item",
+      "tags": [
+        "GameDevice"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Buff|Skill",
+      "tags": [
+        "GameBuff"
+      ],
+      "weight": 0.8
+    },
+    {
+      "pattern": "Sabotage|Destroy",
+      "tags": [
+        "GameSabotage"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Kill|Murder|Poison|Execut|Death|Die",
+      "tags": [
+        "GameKill"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Round|Phase|GameState|Stage|Scenario|Timeline|Timer|GameManager|Flow",
+      "tags": [
+        "GameRound"
+      ],
+      "weight": 0.9
+    },
+    {
+      "pattern": "Intel|Radar|Watch|Faction|Alive",
+      "tags": [
+        "GameIntel"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Walk|Run|Speed|Move|Movement|Collision|Wall|Teleport|Warp|Spawn",
+      "tags": [
+        "PlayerMove"
+      ],
+      "weight": 0.9
+    },
+    {
+      "pattern": "Attack|Range|Hit|Combat",
+      "tags": [
+        "PlayerCombat"
+      ],
+      "weight": 0.9
+    },
+    {
+      "pattern": "Afterimage|Jelly|Visual|Outline|Glow",
+      "tags": [
+        "PlayerVisual"
+      ],
+      "weight": 0.9
+    },
+    {
+      "pattern": "Player|Character|Nickname|Role|Color|Identity|Avatar|Name",
+      "tags": [
+        "PlayerIdentity"
+      ],
+      "weight": 0.5
+    },
+    {
+      "pattern": "Steam|Network|Replicator|Transport|P2P|Relay|Socket|Dissonance",
+      "tags": [
+        "SysNetwork"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Packet|Session|Protocol",
+      "tags": [
+        "SysNetwork"
+      ],
+      "weight": 0.4
+    },
+    {
+      "pattern": "Lobby|Room|Member|Join|Spectat",
+      "tags": [
+        "SysRoom"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Host|Ban|Kick|Transfer",
+      "tags": [
+        "SysHost"
+      ],
+      "weight": 0.8
+    },
+    {
+      "pattern": "Sound|Audio|Voice|Music|Bgm|Mic|Opus|Speaker",
+      "tags": [
+        "SysAudio"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Save|Record|ResourceManager|DataManager|Config|Preference|Persist|Table",
+      "tags": [
+        "SysData"
+      ],
+      "weight": 0.8
+    },
+    {
+      "pattern": "Inventory|Currency|Reward|Drop|Grant|Unlock|Owned|Storage",
+      "tags": [
+        "SysEconomy"
+      ],
+      "weight": 0.8
+    },
+    {
+      "pattern": "Backend|Bug|Discord|Webhook",
+      "tags": [
+        "SysBackend"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Automation|Auto",
+      "tags": [
+        "SysAutomation"
+      ],
+      "weight": 1.0
+    },
+    {
+      "pattern": "Playtest|Debug|Dev|Test|Demo|Spine",
+      "tags": [
+        "SysDebug"
+      ],
+      "weight": 0.6
+    }
+  ],
+  "types": {},
+  "members": {}
+}

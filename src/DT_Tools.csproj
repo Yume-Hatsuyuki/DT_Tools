@@ -1,0 +1,146 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>DT_Tools</AssemblyName>
+    <Version>0.2.0.1</Version>
+    <LangVersion>latest</LangVersion>
+    <GameManaged Condition="'$(GameManaged)' == ''">$(MSBuildThisFileDirectory)..\Managed</GameManaged>
+    <LibsDir Condition="'$(LibsDir)' == ''">$(MSBuildThisFileDirectory)..\libs</LibsDir>
+    <WebUISrc Condition="'$(WebUISrc)' == ''">$(MSBuildThisFileDirectory)..\webui</WebUISrc>
+  </PropertyGroup>
+
+  <Target Name="BuildWebUI"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(SkipWebUIBuild)' != 'true'"
+          Inputs="$(WebUISrc)\package.json;$(WebUISrc)\package-lock.json;$(WebUISrc)\vite.config.js;$(WebUISrc)\index.html;$(WebUISrc)\src\**;$(WebUISrc)\public\**"
+          Outputs="$(MSBuildThisFileDirectory)WebUI\js\app.js">
+    <Exec WorkingDirectory="$(WebUISrc)" Command="npm ci" Condition="!Exists('$(WebUISrc)\node_modules')" />
+    <Exec WorkingDirectory="$(WebUISrc)" Command="npm run build" />
+  </Target>
+
+  <Target Name="DT_CopyWebUI" AfterTargets="Build"
+          Condition="Exists('$(MSBuildThisFileDirectory)WebUI')">
+    <ItemGroup>
+      <_DtWebUIFile Include="$(MSBuildThisFileDirectory)WebUI\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_DtWebUIFile)"
+          DestinationFiles="@(_DtWebUIFile->'$(OutDir)WebUI\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.Core" Version="5.*" />
+    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+    <PackageReference Include="HarmonyX" Version="2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(GameManaged)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Google.Protobuf">
+      <HintPath>$(GameManaged)\Google.Protobuf.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(GameManaged)\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(GameManaged)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GameManaged)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="DissonanceVoip">
+      <HintPath>$(GameManaged)\DissonanceVoip.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(GameManaged)\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.Physics2DModule">
+      <HintPath>$(GameManaged)\UnityEngine.Physics2DModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(GameManaged)\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(GameManaged)\UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.VideoModule">
+      <HintPath>$(GameManaged)\UnityEngine.VideoModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(GameManaged)\UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(GameManaged)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(GameManaged)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(GameManaged)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule">
+      <HintPath>$(GameManaged)\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+      <HintPath>$(GameManaged)\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="com.rlabrecque.steamworks.net">
+      <HintPath>$(GameManaged)\com.rlabrecque.steamworks.net.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(GameManaged)\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="spine-csharp">
+      <HintPath>$(GameManaged)\spine-csharp.dll</HintPath>
+      <Private>false</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+    <Reference Include="spine-unity">
+      <HintPath>$(GameManaged)\spine-unity.dll</HintPath>
+      <Private>false</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Features/SitOnChairs/data/**" />
+  </ItemGroup>
+
+  <Target Name="DT_CheckSitOnChairsData" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <_SitOnChairsRequiredData Include="MapData_Island.json;RoomData_Island.json;DeviceData_Island.json;Device_DoorData_Island.json;TileData_Island.json;MissionData_Island.json;MapByte_Island.txt" />
+    </ItemGroup>
+    <Error Condition="!Exists('Features/SitOnChairs/data/%(_SitOnChairsRequiredData.Identity)')"
+           Text="可坐椅子数据文件缺失：Features/SitOnChairs/data/%(_SitOnChairsRequiredData.Identity)" />
+  </Target>
+
+  <Target Name="AddGameSystemDrawingReference" AfterTargets="ResolveAssemblyReferences" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <ReferencePath Include="$(GameManaged)\System.Drawing.dll" Aliases="GameDrawing" Private="false" CopyLocal="false" />
+    </ItemGroup>
+  </Target>
+
+</Project>

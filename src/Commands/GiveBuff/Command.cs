@@ -1,0 +1,89 @@
+// 作用：实现 /givebuff 命令的参数解析与执行；不负责命令注册与其他命令。
+using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
+using Server.Game;
+
+namespace DT_Tools.Commands.GiveBuff
+{
+    internal sealed class GiveBuffCommand : ICommand
+    {
+        public string Name => "givebuff";
+        public string[] Aliases => new[] { "buff" };
+        public string Usage => "givebuff <all|#id> <buff|clear> [seconds|clear|0]";
+        public string Description => "给所有/指定玩家添加或清除 BUFF。不带参数时显示可用 BUFF 列表。";
+        public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameBuff;
+
+        public bool RequireHost => true;
+
+        public CommandResult Execute(CommandContext ctx)
+        {
+            if (ctx.Args.Length == 0)
+            {
+                ctx.Reply(GiveBuffFormat.BuffList);
+                return CommandResult.Success();
+            }
+            if (ctx.Args.Length < 2)
+            {
+                ctx.Reply($"用法: {Usage}");
+                return CommandResult.Fail("usage");
+            }
+            if (!GiveBuffArgs.TryParse(ctx.Args, out var args, out string parseError))
+            {
+                ctx.Reply(parseError);
+                return CommandResult.Fail("invalid args");
+            }
+
+            var room = GameRoom.Instance;
+            if (room == null || room.Players.Count == 0)
+            {
+                ctx.Reply("当前没有活动的游戏房间或玩家。");
+                return CommandResult.Fail("no room");
+            }
+
+            switch (args.Action)
+            {
+                case GiveBuffAction.ClearAll:
+                {
+                    if (!GiveBuffLogic.ApplyToTargets(room, args,
+                            p => p.BuffComponent.Clear(isBroadcast: true), requireAlive: false,
+                            out int cleared, out string code, out string text))
+                    {
+                        ctx.Reply(text);
+                        return CommandResult.Fail(code);
+                    }
+                    ctx.Reply(GiveBuffFormat.ReplyClearAll(args.All, cleared));
+                    return CommandResult.Success(GiveBuffFormat.ResultClearAll(args.All, cleared));
+                }
+                case GiveBuffAction.ClearOne:
+                {
+                    if (!GiveBuffLogic.ApplyToTargets(room, args,
+                            p => p.BuffComponent.RemoveBuffForce(args.BuffType), requireAlive: false,
+                            out int cleared, out string code, out string text))
+                    {
+                        ctx.Reply(text);
+                        return CommandResult.Fail(code);
+                    }
+                    ctx.Reply(GiveBuffFormat.ReplyClearOne(args.All, cleared, args.BuffType));
+                    return CommandResult.Success(GiveBuffFormat.ResultClearOne(args.All, cleared, args.BuffType));
+                }
+                default:
+                {
+                    if (args.Clamped)
+                        ctx.Warn($"时长超过最大值，已修正为 {GiveBuffArgs.MaxDurationSeconds} 秒。");
+                    int durationMs = args.Seconds * 1000;
+                    if (!GiveBuffLogic.ApplyToTargets(room, args,
+                            p => GiveBuffLogic.AddBuffWithRefresh(room, p, args.BuffType, durationMs),
+                            requireAlive: true,
+                            out int count, out string code, out string text))
+                    {
+                        ctx.Reply(text);
+                        return CommandResult.Fail(code);
+                    }
+                    ctx.Reply(GiveBuffFormat.ReplyAdd(args.All, count, args.BuffType, args.Seconds));
+                    return CommandResult.Success(GiveBuffFormat.ResultAdd(args.All, count, args.BuffType, args.Seconds));
+                }
+            }
+        }
+    }
+}

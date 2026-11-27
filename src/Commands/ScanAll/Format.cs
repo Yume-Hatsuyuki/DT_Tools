@@ -1,0 +1,52 @@
+// 作用：格式化 /ScanAll 命令的回复文本；不负责命令执行与注册。
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Protocol;
+
+namespace DT_Tools.Commands.ScanAll
+{
+    internal static class ScanAllFormat
+    {
+        public static string Category(EDeviceType type)
+            => type switch
+            {
+                EDeviceType.Corpse => "尸体",
+                EDeviceType.Armory => "武器架",
+                _                  => "设备",
+            };
+
+        public static string Reply(List<DeviceBase> targets, float interval)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(interval > 0f
+                ? $"【知晓一切】已受理以下可扫描设备（按 {interval:0.##}s 分帧发送 C_SCAN_DEVICE）："
+                : "【知晓一切】已受理以下可扫描设备（同帧一次性发送 C_SCAN_DEVICE）：");
+
+            foreach (var d in targets)
+                sb.AppendLine($"  #{d.ID,-4} {d.DeviceType,-16} ({Category(d.DeviceType)})");
+
+            int corpse = targets.Count(d => d.DeviceType == EDeviceType.Corpse);
+            int armory = targets.Count(d => d.DeviceType == EDeviceType.Armory);
+            int other = targets.Count - corpse - armory;
+            sb.AppendLine($"共 {targets.Count} 个（尸体 {corpse} / 武器架 {armory} / 其他 {other}）。");
+            sb.Append("服务端无成功回执：线索会陆续通过 S_SCAN_DEVICE / S_SCAN_CORPSE / S_SCAN_ARMORY 推送到平板。");
+            return sb.ToString();
+        }
+
+        public static object Result(List<DeviceBase> targets)
+            => new
+            {
+                scanned = targets.Select(d => new
+                {
+                    id = d.ID,
+                    type = d.DeviceType.ToString(),
+                    category = Category(d.DeviceType),
+                }),
+                total = targets.Count,
+                corpse = targets.Count(d => d.DeviceType == EDeviceType.Corpse),
+                armory = targets.Count(d => d.DeviceType == EDeviceType.Armory),
+                other = targets.Count(d => d.DeviceType != EDeviceType.Corpse && d.DeviceType != EDeviceType.Armory),
+            };
+    }
+}

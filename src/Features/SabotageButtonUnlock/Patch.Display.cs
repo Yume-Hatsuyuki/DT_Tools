@@ -1,0 +1,41 @@
+// 作用：接管破坏按钮与冷却提示的显示；不消费玩家擦除次数。
+using DT_Tools.Core;
+using HarmonyLib;
+using Protocol;
+
+namespace DT_Tools.Features.SabotageButtonUnlock
+{
+    [HarmonyPatch(typeof(DeviceBase), nameof(DeviceBase.GetInteractSabotageMessageBase))]
+    internal static class SabotageMessageBasePatch
+    {
+        private static bool Prefix(DeviceBase __instance, int index, ref string __result)
+        {
+            if (!Engine.Enabled<SabotageButtonUnlockFeature>())
+                return true;
+
+            var color = Managers.Player.MyPlayer.Color;
+            if (color == EPlayerColor.Dark || color == EPlayerColor.Black)
+                return true;
+            if (!SabotageButtonUnlockLogic.ColorAllowedForDevice(__instance, color))
+            {
+                __result = "";
+                return false;
+            }
+            __result = SabotageButtonUnlockLogic.EvaluateMessage(__instance, index);
+            return false;
+        }
+    }
+
+    // 原版先跑，保留持武器/侦探查看/黑方原生破坏提示；只补原版对额外身份不显示的锁门与拆电源提示。
+    [HarmonyPatch(typeof(UI_GameScene), "ShowInteractSabotageText")]
+    internal static class SabotagePromptPatch
+    {
+        private static void Postfix(UI_GameScene __instance)
+        {
+            if (!Engine.Enabled<SabotageButtonUnlockFeature>())
+                return;
+
+            SabotageButtonUnlockLogic.RefreshSabotagePrompt(__instance);
+        }
+    }
+}

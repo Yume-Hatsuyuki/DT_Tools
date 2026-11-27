@@ -1,0 +1,40 @@
+# 作用：在 main 与版本分支上构建 DT_Tools 项目并上传程序集产物；不负责发布、不打 tag、不写版本号。
+name: Build
+
+on:
+  push:
+    branches: ['[0-9]*.[0-9]*']
+    tags-ignore: ['**']
+  pull_request:
+    branches: [main, '[0-9]*.[0-9]*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v5
+
+      - name: 配置 .NET
+        uses: actions/setup-dotnet@v5
+
+      - name: 配置 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: webui/package-lock.json
+
+      - name: 构建
+        run: dotnet build src/DT_Tools.csproj -c Release
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v6
+        with:
+          name: DT_Tools
+          path: |
+            src/bin/Release/netstandard2.1/DT_Tools.dll
+            src/bin/Release/netstandard2.1/WebUI
+          if-no-files-found: error

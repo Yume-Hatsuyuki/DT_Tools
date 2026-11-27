@@ -1,0 +1,17 @@
+// 作用：声明专业清洁功能、配置项与启用状态；不实现补丁与运行时逻辑。
+using DT_Tools.Core.Attributes;
+
+namespace DT_Tools.Features.DestroyEvidence
+{
+    [PatchFeature(
+        "专业清洁：可修改 Dark/Black 销毁证据读条时长（默认 2.5s，仅本地表现；'多久能破坏一次'的服务端冷却见「DestroyEvidenceCooldownServer」）。",
+        defaultEnabled: false,
+        side: FeatureSide.Client,
+        Tags = FeatureTag.GameSabotage | FeatureTag.GameEvidence,
+        Author = "梦初雪")]
+    public sealed class DestroyEvidenceFeature
+    {
+        [Config("销毁证据读条时长（秒）。建议 >= 0.1；服务端冷却不受影响。", Min = 0.1f)]
+        public static float CastingTime = 2.5f;
+    }
+}

@@ -1,0 +1,28 @@
+// 作用：声明房间人数上限功能、配置项与启用状态；不实现补丁与运行时逻辑。
+using System;
+using DT_Tools.Core.Attributes;
+
+namespace DT_Tools.Features.LobbyMaxPlayers
+{
+    [PatchFeature(
+        "房间人数上限：可修改开房最多人数。",
+        defaultEnabled: false,
+        side: FeatureSide.Host,
+        Tags = FeatureTag.SysRoom,
+        Author = "梦初雪")]
+    public sealed class LobbyMaxPlayersFeature
+    {
+        [Config("游戏进房人数上限（1–16）。原版 8。", Min = 1, Max = 16)]
+        public static int MaxMembersEntry = 8;
+
+        [Config("Steam Lobby 容器上限（1–16）。若小于 MaxMembers 会抬到 MaxMembers。", Min = 1, Max = 16)]
+        public static int SteamMemberLimitEntry = 16;
+
+        internal static int MaxMembers => Math.Clamp(MaxMembersEntry, 1, 16);
+
+        internal static int SteamMemberLimit => Math.Clamp(SteamMemberLimitEntry, 1, 16);
+
+        internal static int EffectiveSteamMemberLimit =>
+            Math.Clamp(Math.Max(SteamMemberLimit, MaxMembers), 1, 16);
+    }
+}

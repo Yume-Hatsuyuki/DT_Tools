@@ -1,0 +1,4410 @@
+{
+  "devices": [
+    {
+      "DataId": 10031,
+      "Name": "CabinetA",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -95.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 7,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4715.0,
+        "Y": 5503.0
+      },
+      "Positions": [
+        {
+          "X": 4715.0,
+          "Y": 5443.0
+        }
+      ],
+      "DevicePrefabName": "Cabinet",
+      "InteractPrefabName": "UI_CabinetPopup",
+      "InteractTextID": "CabinetInteract",
+      "RoomType": 21
+    },
+    {
+      "DataId": 10032,
+      "Name": "CabinetA",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -95.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 7,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6697.0,
+        "Y": 2200.0
+      },
+      "Positions": [
+        {
+          "X": 6697.0,
+          "Y": 2140.0
+        }
+      ],
+      "DevicePrefabName": "Cabinet",
+      "InteractPrefabName": "UI_CabinetPopup",
+      "InteractTextID": "CabinetInteract",
+      "RoomType": 9
+    },
+    {
+      "DataId": 10033,
+      "Name": "CabinetB",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -95.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 7,
+      "SubType": 1,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5347.0,
+        "Y": 3768.0
+      },
+      "Positions": [
+        {
+          "X": 5347.0,
+          "Y": 3708.0
+        }
+      ],
+      "DevicePrefabName": "Cabinet",
+      "InteractPrefabName": "UI_CabinetPopup",
+      "InteractTextID": "CabinetInteract",
+      "RoomType": 7
+    },
+    {
+      "DataId": 10034,
+      "Name": "CabinetB",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -95.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 7,
+      "SubType": 1,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6131.0,
+        "Y": 8478.0
+      },
+      "Positions": [
+        {
+          "X": 6131.0,
+          "Y": 8418.0
+        }
+      ],
+      "DevicePrefabName": "Cabinet",
+      "InteractPrefabName": "UI_CabinetPopup",
+      "InteractTextID": "CabinetInteract",
+      "RoomType": 27
+    },
+    {
+      "DataId": 10035,
+      "Name": "CabinetC",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -95.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 7,
+      "SubType": 2,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8344.0,
+        "Y": 8451.0
+      },
+      "Positions": [
+        {
+          "X": 8344.0,
+          "Y": 8391.0
+        }
+      ],
+      "DevicePrefabName": "Cabinet",
+      "InteractPrefabName": "UI_CabinetPopup",
+      "InteractTextID": "CabinetInteract",
+      "RoomType": 29
+    },
+    {
+      "DataId": 10036,
+      "Name": "CabinetC",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -95.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 7,
+      "SubType": 2,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1795.0,
+        "Y": 7110.0
+      },
+      "Positions": [
+        {
+          "X": 1795.0,
+          "Y": 7050.0
+        }
+      ],
+      "DevicePrefabName": "Cabinet",
+      "InteractPrefabName": "UI_CabinetPopup",
+      "InteractTextID": "CabinetInteract",
+      "RoomType": 23
+    },
+    {
+      "DataId": 10037,
+      "Name": "Fusebox",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 14,
+      "SubType": 0,
+      "WhatType": 40,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1046.0,
+        "Y": 7159.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Fusebox",
+      "InteractPrefabName": "UI_FuseboxPopup",
+      "InteractTextID": "",
+      "RoomType": 23
+    },
+    {
+      "DataId": 10038,
+      "Name": "Fusebox (1)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 14,
+      "SubType": 0,
+      "WhatType": 40,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6390.0,
+        "Y": 7817.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Fusebox",
+      "InteractPrefabName": "UI_FuseboxPopup",
+      "InteractTextID": "",
+      "RoomType": 26
+    },
+    {
+      "DataId": 10039,
+      "Name": "Fusebox (2)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 14,
+      "SubType": 0,
+      "WhatType": 40,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4594.0,
+        "Y": 4479.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Fusebox",
+      "InteractPrefabName": "UI_FuseboxPopup",
+      "InteractTextID": "",
+      "RoomType": 20
+    },
+    {
+      "DataId": 10040,
+      "Name": "Fusebox(3)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 14,
+      "SubType": 0,
+      "WhatType": 40,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9727.0,
+        "Y": 2230.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Fusebox",
+      "InteractPrefabName": "UI_FuseboxPopup",
+      "InteractTextID": "",
+      "RoomType": 10
+    },
+    {
+      "DataId": 10041,
+      "Name": "Broadcast",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -320.0,
+            "Y": 210.0
+          },
+          "Size": {
+            "X": 560.0,
+            "Y": 80.0
+          }
+        }
+      ],
+      "DeviceType": 8,
+      "SubType": 0,
+      "WhatType": 1,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7703.0,
+        "Y": 1580.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Broadcast",
+      "InteractPrefabName": "UI_BroadcastPopup",
+      "InteractTextID": "BroadcastInteract",
+      "RoomType": 9
+    },
+    {
+      "DataId": 10042,
+      "Name": "StorageLow",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -70.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 140.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1285.0,
+        "Y": 7178.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageLow",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 23
+    },
+    {
+      "DataId": 10043,
+      "Name": "StorageLow",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -70.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 140.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1476.0,
+        "Y": 7178.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageLow",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 23
+    },
+    {
+      "DataId": 10044,
+      "Name": "StorageVertical",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 975.0,
+        "Y": 6863.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageVertical",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 23
+    },
+    {
+      "DataId": 10045,
+      "Name": "StorageVertical",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 975.0,
+        "Y": 6611.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageVertical",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 23
+    },
+    {
+      "DataId": 10046,
+      "Name": "StorageMedium",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -70.0,
+            "Y": -210.0
+          },
+          "Size": {
+            "X": 140.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9352.0,
+        "Y": 1918.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageMedium",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 10
+    },
+    {
+      "DataId": 10047,
+      "Name": "StorageMedium",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -70.0,
+            "Y": -210.0
+          },
+          "Size": {
+            "X": 140.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9565.0,
+        "Y": 1918.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageMedium",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 10
+    },
+    {
+      "DataId": 10048,
+      "Name": "StorageVertical",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 10004.0,
+        "Y": 2107.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageVertical",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 10
+    },
+    {
+      "DataId": 10049,
+      "Name": "StorageVertical",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 10004.0,
+        "Y": 1715.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageVertical",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 10
+    },
+    {
+      "DataId": 10050,
+      "Name": "StorageLow",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -70.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 140.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5333.0,
+        "Y": 7609.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageLow",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 26
+    },
+    {
+      "DataId": 10051,
+      "Name": "StorageLow",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -70.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 140.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5525.0,
+        "Y": 7609.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageLow",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 26
+    },
+    {
+      "DataId": 10052,
+      "Name": "StorageVertical",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -200.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 0,
+      "WhatType": 11,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3908.5,
+        "Y": 4964.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageVertical",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10053,
+      "Name": "StorageLibrary",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -75.0,
+            "Y": -325.0
+          },
+          "Size": {
+            "X": 150.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 2,
+      "WhatType": 25,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1812.3,
+        "Y": 4789.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageLibrary",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 17
+    },
+    {
+      "DataId": 10054,
+      "Name": "StorageLibrary",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -75.0,
+            "Y": -325.0
+          },
+          "Size": {
+            "X": 150.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 2,
+      "WhatType": 25,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1510.0,
+        "Y": 5440.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageLibrary",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 17
+    },
+    {
+      "DataId": 10055,
+      "Name": "StorageBattery",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -45.0,
+            "Y": 20.0
+          },
+          "Size": {
+            "X": 90.0,
+            "Y": 120.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 1,
+      "WhatType": 41,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6701.0,
+        "Y": 4738.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageBattery",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 12
+    },
+    {
+      "DataId": 10056,
+      "Name": "StorageBattery",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -45.0,
+            "Y": 20.0
+          },
+          "Size": {
+            "X": 90.0,
+            "Y": 120.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 1,
+      "WhatType": 41,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6838.0,
+        "Y": 4738.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageBattery",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 12
+    },
+    {
+      "DataId": 10057,
+      "Name": "StorageBattery",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -45.0,
+            "Y": 20.0
+          },
+          "Size": {
+            "X": 90.0,
+            "Y": 120.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 1,
+      "WhatType": 41,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6762.0,
+        "Y": 1721.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageBattery",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 9
+    },
+    {
+      "DataId": 10058,
+      "Name": "StorageBattery",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -45.0,
+            "Y": 20.0
+          },
+          "Size": {
+            "X": 90.0,
+            "Y": 120.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 1,
+      "WhatType": 41,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6892.0,
+        "Y": 1721.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageBattery",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 9
+    },
+    {
+      "DataId": 10059,
+      "Name": "StorageSpray",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -35.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 270.0,
+            "Y": 150.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 3,
+      "WhatType": 45,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3926.0,
+        "Y": 2146.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageSpray",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 4
+    },
+    {
+      "DataId": 10060,
+      "Name": "StorageMushroom",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -120.0,
+            "Y": -275.0
+          },
+          "Size": {
+            "X": 240.0,
+            "Y": 190.0
+          }
+        }
+      ],
+      "DeviceType": 5,
+      "SubType": 4,
+      "WhatType": 46,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4267.0,
+        "Y": 7822.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "StorageMushroom",
+      "InteractPrefabName": "UI_StoragePopup",
+      "InteractTextID": "StorageInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10061,
+      "Name": "ManikinRoot",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -95.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 140.0
+          }
+        }
+      ],
+      "DeviceType": 9,
+      "SubType": 0,
+      "WhatType": 9,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8100.0,
+        "Y": 8451.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "ManikinRoot",
+      "InteractPrefabName": "UI_HarvestPopup",
+      "InteractTextID": "ManikinInteract",
+      "RoomType": 29
+    },
+    {
+      "DataId": 10062,
+      "Name": "Computer (12)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1480.0,
+        "Y": 6604.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 23
+    },
+    {
+      "DataId": 10063,
+      "Name": "Computer (14)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8391.0,
+        "Y": 3274.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 15
+    },
+    {
+      "DataId": 10064,
+      "Name": "Computer (10)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9041.0,
+        "Y": 3012.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 15
+    },
+    {
+      "DataId": 10065,
+      "Name": "Computer (9)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9411.3,
+        "Y": 3012.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 15
+    },
+    {
+      "DataId": 10066,
+      "Name": "Computer (7)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9785.0,
+        "Y": 1745.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 10
+    },
+    {
+      "DataId": 10067,
+      "Name": "Computer (5)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8002.5,
+        "Y": 4460.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 12
+    },
+    {
+      "DataId": 10068,
+      "Name": "Computer (3)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7141.0,
+        "Y": 5758.1
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 14
+    },
+    {
+      "DataId": 10069,
+      "Name": "Computer (2)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6244.0,
+        "Y": 6654.3
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 14
+    },
+    {
+      "DataId": 10070,
+      "Name": "Computer (1)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4875.0,
+        "Y": 4414.2
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 8
+    },
+    {
+      "DataId": 10071,
+      "Name": "Computer",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -90.0,
+            "Y": 225.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 11,
+      "SubType": 0,
+      "WhatType": 2,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2196.9,
+        "Y": 7554.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MissionComputer",
+      "InteractPrefabName": "UI_ComputerPopup",
+      "InteractTextID": "ComputerInteract",
+      "RoomType": 24
+    },
+    {
+      "DataId": 10072,
+      "Name": "Armory",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7059.0,
+        "Y": 4585.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 12
+    },
+    {
+      "DataId": 10073,
+      "Name": "Armory",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2995.0,
+        "Y": 5011.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10074,
+      "Name": "Armory",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4376.0,
+        "Y": 6967.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10075,
+      "Name": "Armory",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2831.0,
+        "Y": 4714.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 17
+    },
+    {
+      "DataId": 10076,
+      "Name": "Armory",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5955.0,
+        "Y": 7772.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 26
+    },
+    {
+      "DataId": 10077,
+      "Name": "Armory",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4362.0,
+        "Y": 4440.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 20
+    },
+    {
+      "DataId": 10078,
+      "Name": "Armory",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6949.0,
+        "Y": 2166.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 9
+    },
+    {
+      "DataId": 10079,
+      "Name": "Armory (3)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6379.0,
+        "Y": 3315.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 7
+    },
+    {
+      "DataId": 10080,
+      "Name": "Armory",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9561.0,
+        "Y": 3576.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 15
+    },
+    {
+      "DataId": 10081,
+      "Name": "Armory (1)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3697.0,
+        "Y": 1702.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 2
+    },
+    {
+      "DataId": 10082,
+      "Name": "Armory (4)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8366.0,
+        "Y": 4964.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 22
+    },
+    {
+      "DataId": 10083,
+      "Name": "Armory (2)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 250.0
+          }
+        }
+      ],
+      "DeviceType": 12,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8859.0,
+        "Y": 8427.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Armory",
+      "InteractPrefabName": "UI_ArmoryPopup",
+      "InteractTextID": "ArmoryInteract",
+      "RoomType": 29
+    },
+    {
+      "DataId": 10084,
+      "Name": "SurgeryMission",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -250.0,
+            "Y": -90.0
+          },
+          "Size": {
+            "X": 500.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 6,
+      "SubType": 4,
+      "WhatType": 5,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4520.0,
+        "Y": 2172.0
+      },
+      "Positions": [
+        {
+          "X": 4281.0,
+          "Y": 2280.0
+        }
+      ],
+      "DevicePrefabName": "SurgeryMission",
+      "InteractPrefabName": "UI_MissionPopup",
+      "InteractTextID": "SurgeryInteract",
+      "RoomType": 4
+    },
+    {
+      "DataId": 10085,
+      "Name": "CancerMission",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -250.0,
+            "Y": -191.735352
+          },
+          "Size": {
+            "X": 500.0,
+            "Y": 401.735352
+          }
+        }
+      ],
+      "DeviceType": 6,
+      "SubType": 6,
+      "WhatType": 17,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5254.0,
+        "Y": 5513.1
+      },
+      "Positions": [],
+      "DevicePrefabName": "CancerMission",
+      "InteractPrefabName": "UI_MissionPopup",
+      "InteractTextID": "CancerInteract",
+      "RoomType": 21
+    },
+    {
+      "DataId": 10086,
+      "Name": "AlchemistMission",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -117.5,
+            "Y": -152.5
+          },
+          "Size": {
+            "X": 235.0,
+            "Y": 145.0
+          }
+        }
+      ],
+      "DeviceType": 6,
+      "SubType": 7,
+      "WhatType": 36,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5896.0,
+        "Y": 5869.5
+      },
+      "Positions": [],
+      "DevicePrefabName": "AlchemistMission",
+      "InteractPrefabName": "UI_MissionPopup",
+      "InteractTextID": "AlchemistMissionInteract",
+      "RoomType": 21
+    },
+    {
+      "DataId": 10087,
+      "Name": "MorseMission",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -117.5,
+            "Y": -152.5
+          },
+          "Size": {
+            "X": 235.0,
+            "Y": 145.0
+          }
+        }
+      ],
+      "DeviceType": 6,
+      "SubType": 18,
+      "WhatType": 47,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9584.0,
+        "Y": 6357.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MorseMission",
+      "InteractPrefabName": "UI_MissionPopup",
+      "InteractTextID": "MorseCodeInteract",
+      "RoomType": 22
+    },
+    {
+      "DataId": 10088,
+      "Name": "MorseMission",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -117.5,
+            "Y": -152.5
+          },
+          "Size": {
+            "X": 235.0,
+            "Y": 145.0
+          }
+        }
+      ],
+      "DeviceType": 6,
+      "SubType": 18,
+      "WhatType": 47,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5669.0,
+        "Y": 8458.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MorseMission",
+      "InteractPrefabName": "UI_MissionPopup",
+      "InteractTextID": "MorseCodeInteract",
+      "RoomType": 27
+    },
+    {
+      "DataId": 10089,
+      "Name": "MorseMission",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -117.5,
+            "Y": -152.5
+          },
+          "Size": {
+            "X": 235.0,
+            "Y": 145.0
+          }
+        }
+      ],
+      "DeviceType": 6,
+      "SubType": 18,
+      "WhatType": 47,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6053.0,
+        "Y": 4423.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "MorseMission",
+      "InteractPrefabName": "UI_MissionPopup",
+      "InteractTextID": "MorseCodeInteract",
+      "RoomType": 8
+    },
+    {
+      "DataId": 10090,
+      "Name": "Charger",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -140.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 280.0,
+            "Y": 70.0
+          }
+        }
+      ],
+      "DeviceType": 16,
+      "SubType": 0,
+      "WhatType": 7,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5118.9,
+        "Y": 6602.4
+      },
+      "Positions": [],
+      "DevicePrefabName": "Charger",
+      "InteractPrefabName": "UI_ChargerPopup",
+      "InteractTextID": "ChargerInteract",
+      "RoomType": 14
+    },
+    {
+      "DataId": 10091,
+      "Name": "Charger (1)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -140.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 280.0,
+            "Y": 70.0
+          }
+        }
+      ],
+      "DeviceType": 16,
+      "SubType": 0,
+      "WhatType": 7,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3580.0,
+        "Y": 3242.8
+      },
+      "Positions": [],
+      "DevicePrefabName": "Charger",
+      "InteractPrefabName": "UI_ChargerPopup",
+      "InteractTextID": "ChargerInteract",
+      "RoomType": 3
+    },
+    {
+      "DataId": 10092,
+      "Name": "Charger (3)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -140.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 280.0,
+            "Y": 70.0
+          }
+        }
+      ],
+      "DeviceType": 16,
+      "SubType": 0,
+      "WhatType": 7,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1112.0,
+        "Y": 4587.6
+      },
+      "Positions": [],
+      "DevicePrefabName": "Charger",
+      "InteractPrefabName": "UI_ChargerPopup",
+      "InteractTextID": "ChargerInteract",
+      "RoomType": 17
+    },
+    {
+      "DataId": 10093,
+      "Name": "Charger (4)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -140.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 280.0,
+            "Y": 70.0
+          }
+        }
+      ],
+      "DeviceType": 16,
+      "SubType": 0,
+      "WhatType": 7,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9303.0,
+        "Y": 2123.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Charger",
+      "InteractPrefabName": "UI_ChargerPopup",
+      "InteractTextID": "ChargerInteract",
+      "RoomType": 10
+    },
+    {
+      "DataId": 10094,
+      "Name": "Flower",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 18,
+      "SubType": 1,
+      "WhatType": 12,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4359.59961,
+        "Y": 1929.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Flower",
+      "InteractPrefabName": "UI_FlowerPopup",
+      "InteractTextID": "FlowerInteract",
+      "RoomType": 4
+    },
+    {
+      "DataId": 10095,
+      "Name": "Flower (1)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 18,
+      "SubType": 2,
+      "WhatType": 12,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4466.09961,
+        "Y": 1929.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Flower",
+      "InteractPrefabName": "UI_FlowerPopup",
+      "InteractTextID": "FlowerInteract",
+      "RoomType": 4
+    },
+    {
+      "DataId": 10096,
+      "Name": "Flower (2)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 18,
+      "SubType": 3,
+      "WhatType": 12,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4587.8,
+        "Y": 1929.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Flower",
+      "InteractPrefabName": "UI_FlowerPopup",
+      "InteractTextID": "FlowerInteract",
+      "RoomType": 4
+    },
+    {
+      "DataId": 10097,
+      "Name": "Flower (3)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 18,
+      "SubType": 4,
+      "WhatType": 12,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4693.2,
+        "Y": 1929.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Flower",
+      "InteractPrefabName": "UI_FlowerPopup",
+      "InteractTextID": "FlowerInteract",
+      "RoomType": 4
+    },
+    {
+      "DataId": 10098,
+      "Name": "Flower",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 18,
+      "SubType": 1,
+      "WhatType": 12,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3093.59961,
+        "Y": 7277.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Flower",
+      "InteractPrefabName": "UI_FlowerPopup",
+      "InteractTextID": "FlowerInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10099,
+      "Name": "Flower (1)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 18,
+      "SubType": 2,
+      "WhatType": 12,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3200.09961,
+        "Y": 7277.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Flower",
+      "InteractPrefabName": "UI_FlowerPopup",
+      "InteractTextID": "FlowerInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10100,
+      "Name": "Flower (2)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 18,
+      "SubType": 3,
+      "WhatType": 12,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3321.7998,
+        "Y": 7277.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Flower",
+      "InteractPrefabName": "UI_FlowerPopup",
+      "InteractTextID": "FlowerInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10101,
+      "Name": "Flower (3)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -50.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 100.0,
+            "Y": 320.0
+          }
+        }
+      ],
+      "DeviceType": 18,
+      "SubType": 4,
+      "WhatType": 12,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3427.2002,
+        "Y": 7277.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Flower",
+      "InteractPrefabName": "UI_FlowerPopup",
+      "InteractTextID": "FlowerInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10102,
+      "Name": "Operating",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -30.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 120.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 0,
+      "WhatType": 13,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4430.0,
+        "Y": 3318.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "SanitizeLeverL",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 5
+    },
+    {
+      "DataId": 10103,
+      "Name": "Operating",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -30.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 120.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 0,
+      "WhatType": 13,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4954.0,
+        "Y": 2635.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "SanitizeLeverR",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 4
+    },
+    {
+      "DataId": 10104,
+      "Name": "Operating",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -30.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 120.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 0,
+      "WhatType": 13,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5429.0,
+        "Y": 2185.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "SanitizeLeverR",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 6
+    },
+    {
+      "DataId": 10105,
+      "Name": "Teleport",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -87.5
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 315.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 1,
+      "WhatType": 34,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4699.0,
+        "Y": 6595.0
+      },
+      "Positions": [
+        {
+          "X": 4699.0,
+          "Y": 6515.0
+        }
+      ],
+      "DevicePrefabName": "TeleportLeverB",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 19
+    },
+    {
+      "DataId": 10106,
+      "Name": "Teleport",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -87.5
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 315.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 1,
+      "WhatType": 34,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4699.0,
+        "Y": 6967.0
+      },
+      "Positions": [
+        {
+          "X": 4699.0,
+          "Y": 7157.0
+        }
+      ],
+      "DevicePrefabName": "TeleportLeverT",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 27
+    },
+    {
+      "DataId": 10107,
+      "Name": "Teleport",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -87.5
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 315.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 2,
+      "WhatType": 34,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7465.0,
+        "Y": 5743.0
+      },
+      "Positions": [
+        {
+          "X": 7465.0,
+          "Y": 5663.0
+        }
+      ],
+      "DevicePrefabName": "TeleportLeverB",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 14
+    },
+    {
+      "DataId": 10108,
+      "Name": "Teleport",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -125.0,
+            "Y": -87.5
+          },
+          "Size": {
+            "X": 250.0,
+            "Y": 315.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 2,
+      "WhatType": 34,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8319.0,
+        "Y": 5743.0
+      },
+      "Positions": [
+        {
+          "X": 8319.0,
+          "Y": 5663.0
+        }
+      ],
+      "DevicePrefabName": "TeleportLeverB",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 22
+    },
+    {
+      "DataId": 10109,
+      "Name": "Automatic",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -70.0,
+            "Y": 172.5
+          },
+          "Size": {
+            "X": 390.0,
+            "Y": 225.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -75.0,
+            "Y": 130.0
+          },
+          "Size": {
+            "X": 150.0,
+            "Y": 160.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 3,
+      "WhatType": 35,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6382.0,
+        "Y": 3746.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "AutomaticLeverT",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 8
+    },
+    {
+      "DataId": 10110,
+      "Name": "Automatic",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -277.5,
+            "Y": -237.5
+          },
+          "Size": {
+            "X": 355.0,
+            "Y": 225.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -75.0,
+            "Y": -65.0
+          },
+          "Size": {
+            "X": 160.0,
+            "Y": 310.0
+          }
+        }
+      ],
+      "DeviceType": 19,
+      "SubType": 4,
+      "WhatType": 35,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7273.0,
+        "Y": 2813.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "AutomaticLeverB",
+      "InteractPrefabName": "UI_LeverPopup",
+      "InteractTextID": "LeverInteract",
+      "RoomType": 13
+    },
+    {
+      "DataId": 10111,
+      "Name": "Nintendo",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -230.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 21,
+      "SubType": 0,
+      "WhatType": 10,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3350.0,
+        "Y": 6909.0
+      },
+      "Positions": [
+        {
+          "X": 3350.0,
+          "Y": 6829.0
+        },
+        {
+          "X": 3350.0,
+          "Y": 6675.0
+        }
+      ],
+      "DevicePrefabName": "NintendoPackman",
+      "InteractPrefabName": "UI_NintendoPopup",
+      "InteractTextID": "NintendoInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10112,
+      "Name": "Nintendo",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -230.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 21,
+      "SubType": 0,
+      "WhatType": 10,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7410.0,
+        "Y": 2206.0
+      },
+      "Positions": [
+        {
+          "X": 7410.0,
+          "Y": 2126.0
+        },
+        {
+          "X": 7410.0,
+          "Y": 1972.0
+        }
+      ],
+      "DevicePrefabName": "NintendoPackman",
+      "InteractPrefabName": "UI_NintendoPopup",
+      "InteractTextID": "NintendoInteract",
+      "RoomType": 9
+    },
+    {
+      "DataId": 10113,
+      "Name": "Miner",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -55.0
+          },
+          "Size": {
+            "X": 260.0,
+            "Y": 100.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -270.0,
+            "Y": -35.0
+          },
+          "Size": {
+            "X": 190.0,
+            "Y": 210.0
+          }
+        }
+      ],
+      "DeviceType": 22,
+      "SubType": 0,
+      "WhatType": 14,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7783.0,
+        "Y": 2938.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Miner",
+      "InteractPrefabName": "UI_MinerPopup",
+      "InteractTextID": "MinerInteract",
+      "RoomType": 13
+    },
+    {
+      "DataId": 10114,
+      "Name": "Miner (1)",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -55.0
+          },
+          "Size": {
+            "X": 260.0,
+            "Y": 100.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -270.0,
+            "Y": -35.0
+          },
+          "Size": {
+            "X": 190.0,
+            "Y": 210.0
+          }
+        }
+      ],
+      "DeviceType": 22,
+      "SubType": 0,
+      "WhatType": 14,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3369.0,
+        "Y": 7657.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Miner",
+      "InteractPrefabName": "UI_MinerPopup",
+      "InteractTextID": "MinerInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10115,
+      "Name": "Cancer",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": 107.5,
+            "Y": 215.0
+          },
+          "Size": {
+            "X": 95.0,
+            "Y": 110.0
+          }
+        },
+        {
+          "Pos": {
+            "X": 107.5,
+            "Y": 65.0
+          },
+          "Size": {
+            "X": 95.0,
+            "Y": 110.0
+          }
+        }
+      ],
+      "DeviceType": 23,
+      "SubType": 1,
+      "WhatType": 16,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3937.0,
+        "Y": 2233.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Compounder",
+      "InteractPrefabName": "UI_CancerPopup",
+      "InteractTextID": "CompounderInteract",
+      "RoomType": 4
+    },
+    {
+      "DataId": 10116,
+      "Name": "Mushroom",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -385.0,
+            "Y": -80.0
+          },
+          "Size": {
+            "X": 50.0,
+            "Y": 100.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -250.0,
+            "Y": -80.0
+          },
+          "Size": {
+            "X": 50.0,
+            "Y": 100.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -120.0,
+            "Y": -80.0
+          },
+          "Size": {
+            "X": 50.0,
+            "Y": 100.0
+          }
+        },
+        {
+          "Pos": {
+            "X": 10.0,
+            "Y": -80.0
+          },
+          "Size": {
+            "X": 50.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 25,
+      "SubType": 0,
+      "WhatType": 22,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3938.0,
+        "Y": 7774.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Mushroom",
+      "InteractPrefabName": "UI_MushroomPopup",
+      "InteractTextID": "MushroomInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10117,
+      "Name": "Alchemist",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -0.5,
+            "Y": -0.5
+          },
+          "Size": {
+            "X": 1.0,
+            "Y": 1.0
+          }
+        }
+      ],
+      "DeviceType": 26,
+      "SubType": 1,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2707.0,
+        "Y": 2723.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "AlchemistRuneBook",
+      "InteractPrefabName": "UI_AlchemistPopup",
+      "InteractTextID": "",
+      "RoomType": 2
+    },
+    {
+      "DataId": 10118,
+      "Name": "Alchemist",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -72.5,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 315.0,
+            "Y": 360.0
+          }
+        }
+      ],
+      "DeviceType": 26,
+      "SubType": 2,
+      "WhatType": 6,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2001.0,
+        "Y": 2727.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Cauldron",
+      "InteractPrefabName": "UI_AlchemistPopup",
+      "InteractTextID": "CauldronInteract",
+      "RoomType": 2
+    },
+    {
+      "DataId": 10119,
+      "Name": "Occult",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -155.0,
+            "Y": -162.5
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 385.0
+          }
+        }
+      ],
+      "DeviceType": 27,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3475.0,
+        "Y": 6031.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "OccultBook",
+      "InteractPrefabName": "UI_OccultPopup",
+      "InteractTextID": "OccultBookInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10120,
+      "Name": "Occult",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -80.0
+          },
+          "Size": {
+            "X": 340.0,
+            "Y": 370.0
+          }
+        }
+      ],
+      "DeviceType": 27,
+      "SubType": 1,
+      "WhatType": 23,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1995.0,
+        "Y": 1766.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "OccultFire",
+      "InteractPrefabName": "UI_OccultPopup",
+      "InteractTextID": "OccultFireInteract",
+      "RoomType": 2
+    },
+    {
+      "DataId": 10121,
+      "Name": "Occult",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -70.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 200.0
+          }
+        }
+      ],
+      "DeviceType": 27,
+      "SubType": 2,
+      "WhatType": 24,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3303.0,
+        "Y": 5833.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "OccultCandle",
+      "InteractPrefabName": "UI_OccultPopup",
+      "InteractTextID": "OccultCandleInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10122,
+      "Name": "Occult",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -70.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 200.0
+          }
+        }
+      ],
+      "DeviceType": 27,
+      "SubType": 2,
+      "WhatType": 24,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3641.0,
+        "Y": 5807.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "OccultCandle",
+      "InteractPrefabName": "UI_OccultPopup",
+      "InteractTextID": "OccultCandleInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10123,
+      "Name": "Occult",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -70.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 200.0
+          }
+        }
+      ],
+      "DeviceType": 27,
+      "SubType": 2,
+      "WhatType": 24,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3766.0,
+        "Y": 5607.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "OccultCandle",
+      "InteractPrefabName": "UI_OccultPopup",
+      "InteractTextID": "OccultCandleInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10124,
+      "Name": "Occult",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -70.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 200.0
+          }
+        }
+      ],
+      "DeviceType": 27,
+      "SubType": 2,
+      "WhatType": 24,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3589.0,
+        "Y": 5364.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "OccultCandle",
+      "InteractPrefabName": "UI_OccultPopup",
+      "InteractTextID": "OccultCandleInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10125,
+      "Name": "Occult",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -70.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 200.0
+          }
+        }
+      ],
+      "DeviceType": 27,
+      "SubType": 2,
+      "WhatType": 24,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3272.0,
+        "Y": 5390.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "OccultCandle",
+      "InteractPrefabName": "UI_OccultPopup",
+      "InteractTextID": "OccultCandleInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10126,
+      "Name": "Occult",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -70.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 200.0
+          }
+        }
+      ],
+      "DeviceType": 27,
+      "SubType": 2,
+      "WhatType": 24,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3151.0,
+        "Y": 5641.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "OccultCandle",
+      "InteractPrefabName": "UI_OccultPopup",
+      "InteractTextID": "OccultCandleInteract",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10127,
+      "Name": "Sample",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -5.0,
+            "Y": -255.0
+          },
+          "Size": {
+            "X": 270.0,
+            "Y": 70.0
+          }
+        }
+      ],
+      "DeviceType": 30,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7958.0,
+        "Y": 5122.0
+      },
+      "Positions": [
+        {
+          "X": 8088.0,
+          "Y": 5099.0
+        },
+        {
+          "X": 8088.0,
+          "Y": 4849.0
+        }
+      ],
+      "DevicePrefabName": "Separator",
+      "InteractPrefabName": "UI_SamplePopup",
+      "InteractTextID": "SeparatorInteract",
+      "RoomType": 12
+    },
+    {
+      "DataId": 10128,
+      "Name": "Sample",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": 97.5,
+            "Y": -245.0
+          },
+          "Size": {
+            "X": 85.0,
+            "Y": 490.0
+          }
+        }
+      ],
+      "DeviceType": 30,
+      "SubType": 1,
+      "WhatType": 28,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7285.0,
+        "Y": 4166.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Microscope",
+      "InteractPrefabName": "UI_SamplePopup",
+      "InteractTextID": "MicroscopeInteract",
+      "RoomType": 12
+    },
+    {
+      "DataId": 10129,
+      "Name": "RedMineral",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -352.5,
+            "Y": -5.0
+          },
+          "Size": {
+            "X": 175.0,
+            "Y": 310.0
+          }
+        }
+      ],
+      "DeviceType": 28,
+      "SubType": 0,
+      "WhatType": 21,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8071.0,
+        "Y": 7413.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "RedMineral",
+      "InteractPrefabName": "UI_MineralPopup",
+      "InteractTextID": "MineralInteract",
+      "RoomType": 28
+    },
+    {
+      "DataId": 10130,
+      "Name": "GreenMineral",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -342.5,
+            "Y": 10.0
+          },
+          "Size": {
+            "X": 185.0,
+            "Y": 350.0
+          }
+        }
+      ],
+      "DeviceType": 28,
+      "SubType": 1,
+      "WhatType": 21,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8236.0,
+        "Y": 7032.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "GreenMineral",
+      "InteractPrefabName": "UI_MineralPopup",
+      "InteractTextID": "MineralInteract",
+      "RoomType": 28
+    },
+    {
+      "DataId": 10131,
+      "Name": "BlueMineral",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -332.5,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 235.0,
+            "Y": 400.0
+          }
+        }
+      ],
+      "DeviceType": 28,
+      "SubType": 2,
+      "WhatType": 21,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8077.0,
+        "Y": 6675.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "BlueMineral",
+      "InteractPrefabName": "UI_MineralPopup",
+      "InteractTextID": "MineralInteract",
+      "RoomType": 28
+    },
+    {
+      "DataId": 10132,
+      "Name": "Collector",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -240.0,
+            "Y": -75.0
+          },
+          "Size": {
+            "X": 480.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 29,
+      "SubType": 0,
+      "WhatType": 19,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7549.0,
+        "Y": 7612.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Collector",
+      "InteractPrefabName": "UI_CollectorPopup",
+      "InteractTextID": "CollectorInteract",
+      "RoomType": 28
+    },
+    {
+      "DataId": 10133,
+      "Name": "Craft",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": 65.0,
+            "Y": -40.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 180.0
+          }
+        }
+      ],
+      "DeviceType": 31,
+      "SubType": 0,
+      "WhatType": 20,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7001.0,
+        "Y": 7152.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Craft",
+      "InteractPrefabName": "UI_CraftPopup",
+      "InteractTextID": "CraftInteract",
+      "RoomType": 28
+    },
+    {
+      "DataId": 10134,
+      "Name": "Rune",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -57.5
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 105.0
+          }
+        }
+      ],
+      "DeviceType": 32,
+      "SubType": 1,
+      "WhatType": 26,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3024.0,
+        "Y": 2189.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "RuneStand",
+      "InteractPrefabName": "UI_RunePopup",
+      "InteractTextID": "RuneStandInteract",
+      "RoomType": 2
+    },
+    {
+      "DataId": 10135,
+      "Name": "Rune",
+      "Interacts": [],
+      "DeviceType": 32,
+      "SubType": 2,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3029.0,
+        "Y": 2103.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "RuneCircle",
+      "InteractPrefabName": "UI_RunePopup",
+      "InteractTextID": "RuneCircleInteract",
+      "RoomType": 2
+    },
+    {
+      "DataId": 10136,
+      "Name": "Warp",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -145.0,
+            "Y": -117.5
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 165.0
+          }
+        }
+      ],
+      "DeviceType": 33,
+      "SubType": 0,
+      "WhatType": 29,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8962.0,
+        "Y": 3659.0
+      },
+      "Positions": [
+        {
+          "X": 8962.0,
+          "Y": 3559.0
+        }
+      ],
+      "DevicePrefabName": "WarpScience",
+      "InteractPrefabName": "UI_WarpPopup",
+      "InteractTextID": "WarpInteract",
+      "RoomType": 15
+    },
+    {
+      "DataId": 10137,
+      "Name": "Warp",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -60.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 140.0
+          }
+        }
+      ],
+      "DeviceType": 33,
+      "SubType": 1,
+      "WhatType": 29,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1451.0,
+        "Y": 3730.0
+      },
+      "Positions": [
+        {
+          "X": 1451.0,
+          "Y": 3685.0
+        }
+      ],
+      "DevicePrefabName": "WarpMagic",
+      "InteractPrefabName": "UI_WarpPopup",
+      "InteractTextID": "WarpInteract",
+      "RoomType": 17
+    },
+    {
+      "DataId": 10138,
+      "Name": "Boiler",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -65.0,
+            "Y": -17.5
+          },
+          "Size": {
+            "X": 130.0,
+            "Y": 135.0
+          }
+        }
+      ],
+      "DeviceType": 34,
+      "SubType": 0,
+      "WhatType": 18,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3660.8,
+        "Y": 3809.7
+      },
+      "Positions": [],
+      "DevicePrefabName": "Boiler",
+      "InteractPrefabName": "UI_BoilerPopup",
+      "InteractTextID": "BoilerInteract",
+      "RoomType": 20
+    },
+    {
+      "DataId": 10139,
+      "Name": "Boiler",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -100.0,
+            "Y": -260.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 34,
+      "SubType": 1,
+      "WhatType": 37,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3609.0,
+        "Y": 4354.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "IceMaker",
+      "InteractPrefabName": "UI_BoilerPopup",
+      "InteractTextID": "IceMakerInteract",
+      "RoomType": 20
+    },
+    {
+      "DataId": 10140,
+      "Name": "DrinkTable",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -82.5,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 325.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 35,
+      "SubType": 0,
+      "WhatType": 8,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2817.0,
+        "Y": 7642.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "DrinkTable",
+      "InteractPrefabName": "UI_DrinkPopup",
+      "InteractTextID": "DrinkInteract",
+      "RoomType": 25
+    },
+    {
+      "DataId": 10141,
+      "Name": "DrinkStatue",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -115.0,
+            "Y": -100.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 100.0
+          }
+        }
+      ],
+      "DeviceType": 35,
+      "SubType": 1,
+      "WhatType": 30,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5249.0,
+        "Y": 8497.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "DrinkStatue",
+      "InteractPrefabName": "UI_DrinkPopup",
+      "InteractTextID": "DrinkInteract",
+      "RoomType": 27
+    },
+    {
+      "DataId": 10142,
+      "Name": "PotionScanner",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -200.0,
+            "Y": -187.5
+          },
+          "Size": {
+            "X": 210.0,
+            "Y": 85.0
+          }
+        }
+      ],
+      "DeviceType": 37,
+      "SubType": 0,
+      "WhatType": 33,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5748.0,
+        "Y": 3794.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "PotionScanner",
+      "InteractPrefabName": "UI_PotionPopup",
+      "InteractTextID": "PotionInteract",
+      "RoomType": 7
+    },
+    {
+      "DataId": 10143,
+      "Name": "PotionRed",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -75.0,
+            "Y": -240.0
+          },
+          "Size": {
+            "X": 150.0,
+            "Y": 390.0
+          }
+        }
+      ],
+      "DeviceType": 37,
+      "SubType": 1,
+      "WhatType": 32,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5432.0,
+        "Y": 3330.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "PotionRed",
+      "InteractPrefabName": "UI_PotionPopup",
+      "InteractTextID": "PotionInteract",
+      "RoomType": 7
+    },
+    {
+      "DataId": 10144,
+      "Name": "PotionGreen",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -75.0,
+            "Y": -240.0
+          },
+          "Size": {
+            "X": 150.0,
+            "Y": 390.0
+          }
+        }
+      ],
+      "DeviceType": 37,
+      "SubType": 2,
+      "WhatType": 32,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5623.0,
+        "Y": 3330.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "PotionGreen",
+      "InteractPrefabName": "UI_PotionPopup",
+      "InteractTextID": "PotionInteract",
+      "RoomType": 7
+    },
+    {
+      "DataId": 10145,
+      "Name": "PotionBlue",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -75.0,
+            "Y": -240.0
+          },
+          "Size": {
+            "X": 150.0,
+            "Y": 390.0
+          }
+        }
+      ],
+      "DeviceType": 37,
+      "SubType": 3,
+      "WhatType": 32,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5821.0,
+        "Y": 3330.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "PotionBlue",
+      "InteractPrefabName": "UI_PotionPopup",
+      "InteractTextID": "PotionInteract",
+      "RoomType": 7
+    },
+    {
+      "DataId": 10146,
+      "Name": "PotionYellow",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -75.0,
+            "Y": -240.0
+          },
+          "Size": {
+            "X": 150.0,
+            "Y": 390.0
+          }
+        }
+      ],
+      "DeviceType": 37,
+      "SubType": 4,
+      "WhatType": 32,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6012.1,
+        "Y": 3330.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "PotionYellow",
+      "InteractPrefabName": "UI_PotionPopup",
+      "InteractTextID": "PotionInteract",
+      "RoomType": 7
+    },
+    {
+      "DataId": 10147,
+      "Name": "Bio",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -225.0,
+            "Y": -70.0
+          },
+          "Size": {
+            "X": 450.0,
+            "Y": 80.0
+          }
+        }
+      ],
+      "DeviceType": 36,
+      "SubType": 0,
+      "WhatType": 31,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 6730.0,
+        "Y": 5033.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Bio",
+      "InteractPrefabName": "UI_BioPopup",
+      "InteractTextID": "BioInteract",
+      "RoomType": 12
+    },
+    {
+      "DataId": 10148,
+      "Name": "Mirror",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -424.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 448.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -80.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 160.0
+          }
+        }
+      ],
+      "DeviceType": 40,
+      "SubType": 0,
+      "WhatType": 43,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8282.0,
+        "Y": 2238.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Mirror",
+      "InteractPrefabName": "UI_MirrorPopup",
+      "InteractTextID": "MirrorInteract",
+      "RoomType": 9
+    },
+    {
+      "DataId": 10149,
+      "Name": "Mirror",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -424.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 448.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -80.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 160.0
+          }
+        }
+      ],
+      "DeviceType": 40,
+      "SubType": 0,
+      "WhatType": 43,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5412.0,
+        "Y": 4478.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Mirror",
+      "InteractPrefabName": "UI_MirrorPopup",
+      "InteractTextID": "MirrorInteract",
+      "RoomType": 8
+    },
+    {
+      "DataId": 10150,
+      "Name": "Mirror",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -424.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 448.0
+          }
+        },
+        {
+          "Pos": {
+            "X": -112.0,
+            "Y": -80.0
+          },
+          "Size": {
+            "X": 224.0,
+            "Y": 160.0
+          }
+        }
+      ],
+      "DeviceType": 40,
+      "SubType": 0,
+      "WhatType": 43,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 4799.0,
+        "Y": 8510.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Mirror",
+      "InteractPrefabName": "UI_MirrorPopup",
+      "InteractTextID": "MirrorInteract",
+      "RoomType": 27
+    },
+    {
+      "DataId": 10151,
+      "Name": "Fishing",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -200.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 400.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 42,
+      "SubType": 0,
+      "WhatType": 48,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 8609.0,
+        "Y": 5360.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "FishingFlip",
+      "InteractPrefabName": "UI_FishingPopup",
+      "InteractTextID": "FishingInteract",
+      "RoomType": 22
+    },
+    {
+      "DataId": 10152,
+      "Name": "Fishing",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -200.0,
+            "Y": -50.0
+          },
+          "Size": {
+            "X": 400.0,
+            "Y": 300.0
+          }
+        }
+      ],
+      "DeviceType": 42,
+      "SubType": 1,
+      "WhatType": 48,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9474.0,
+        "Y": 5094.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Fishing",
+      "InteractPrefabName": "UI_FishingPopup",
+      "InteractTextID": "FishingInteract",
+      "RoomType": 22
+    },
+    {
+      "DataId": 10153,
+      "Name": "ChatDevice",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -105.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 90.0
+          }
+        }
+      ],
+      "DeviceType": 44,
+      "SubType": 0,
+      "WhatType": 49,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 7951.0,
+        "Y": 2181.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "ChatDevice",
+      "InteractPrefabName": "UI_ChatDevicePopup",
+      "InteractTextID": "",
+      "RoomType": 9
+    },
+    {
+      "DataId": 10154,
+      "Name": "ChatDevice",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -105.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 90.0
+          }
+        }
+      ],
+      "DeviceType": 44,
+      "SubType": 0,
+      "WhatType": 49,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2678.0,
+        "Y": 5314.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "ChatDevice",
+      "InteractPrefabName": "UI_ChatDevicePopup",
+      "InteractTextID": "",
+      "RoomType": 17
+    },
+    {
+      "DataId": 10155,
+      "Name": "ChatDevice",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -105.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 90.0
+          }
+        }
+      ],
+      "DeviceType": 44,
+      "SubType": 0,
+      "WhatType": 49,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 5087.0,
+        "Y": 7777.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "ChatDevice",
+      "InteractPrefabName": "UI_ChatDevicePopup",
+      "InteractTextID": "",
+      "RoomType": 26
+    },
+    {
+      "DataId": 10156,
+      "Name": "ChatDevice",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -150.0,
+            "Y": -105.0
+          },
+          "Size": {
+            "X": 300.0,
+            "Y": 90.0
+          }
+        }
+      ],
+      "DeviceType": 44,
+      "SubType": 0,
+      "WhatType": 49,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9110.0,
+        "Y": 5763.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "ChatDevice",
+      "InteractPrefabName": "UI_ChatDevicePopup",
+      "InteractTextID": "",
+      "RoomType": 22
+    },
+    {
+      "DataId": 10157,
+      "Name": "Pond",
+      "Interacts": [],
+      "DeviceType": 43,
+      "SubType": 2,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9039.0,
+        "Y": 5260.0
+      },
+      "Positions": [
+        {
+          "X": 8521.0,
+          "Y": 5244.0
+        },
+        {
+          "X": 9542.0,
+          "Y": 5276.0
+        },
+        {
+          "X": 9039.0,
+          "Y": 5260.0
+        },
+        {
+          "X": 500.0,
+          "Y": 325.0
+        }
+      ],
+      "DevicePrefabName": "SchoolPondTrick",
+      "InteractPrefabName": "UI_DeadlyTrickStagePopup",
+      "InteractTextID": "",
+      "RoomType": 22
+    },
+    {
+      "DataId": 10158,
+      "Name": "Occult",
+      "Interacts": [],
+      "DeviceType": 43,
+      "SubType": 3,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 3458.0,
+        "Y": 5607.0
+      },
+      "Positions": [
+        {
+          "X": 3458.0,
+          "Y": 5607.0
+        }
+      ],
+      "DevicePrefabName": "SchoolOccultTrick",
+      "InteractPrefabName": "UI_DeadlyTrickStagePopup",
+      "InteractTextID": "",
+      "RoomType": 18
+    },
+    {
+      "DataId": 10159,
+      "Name": "Shop",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": 80.0,
+            "Y": 0.0
+          },
+          "Size": {
+            "X": 200.0,
+            "Y": 400.0
+          }
+        }
+      ],
+      "DeviceType": 45,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1205.0,
+        "Y": 11290.0
+      },
+      "Positions": [],
+      "DevicePrefabName": "Shop",
+      "InteractPrefabName": "UI_ShopPopup",
+      "InteractTextID": "ShopInteract",
+      "RoomType": 1
+    },
+    {
+      "DataId": 19901,
+      "Name": "Chair_Bench",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9316.3,
+        "Y": 7483.0
+      },
+      "Positions": [
+        {
+          "X": 9316.3,
+          "Y": 7333.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 0
+    },
+    {
+      "DataId": 19902,
+      "Name": "Chair_Bench",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 9316.3,
+        "Y": 7946.0
+      },
+      "Positions": [
+        {
+          "X": 9316.3,
+          "Y": 7796.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 0
+    },
+    {
+      "DataId": 19903,
+      "Name": "Chair_Sofa",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2346.0,
+        "Y": 2777.0
+      },
+      "Positions": [
+        {
+          "X": 2346.0,
+          "Y": 2627.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 0
+    },
+    {
+      "DataId": 19911,
+      "Name": "Chair_Cafe",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1248.0,
+        "Y": 10986.6
+      },
+      "Positions": [
+        {
+          "X": 1232.0,
+          "Y": 11088.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 1
+    },
+    {
+      "DataId": 19912,
+      "Name": "Chair_Cafe",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1660.0,
+        "Y": 10986.6
+      },
+      "Positions": [
+        {
+          "X": 1680.0,
+          "Y": 11088.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 1
+    },
+    {
+      "DataId": 19913,
+      "Name": "Chair_Cafe",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2586.0,
+        "Y": 10890.6
+      },
+      "Positions": [
+        {
+          "X": 2576.0,
+          "Y": 10864.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 1
+    },
+    {
+      "DataId": 19914,
+      "Name": "Chair_Cafe",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2998.0,
+        "Y": 10890.6
+      },
+      "Positions": [
+        {
+          "X": 3024.0,
+          "Y": 10864.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 1
+    },
+    {
+      "DataId": 19915,
+      "Name": "Chair_Cafe",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2562.0,
+        "Y": 11269.6
+      },
+      "Positions": [
+        {
+          "X": 2576.0,
+          "Y": 11312.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 1
+    },
+    {
+      "DataId": 19916,
+      "Name": "Chair_Cafe",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2974.0,
+        "Y": 11269.6
+      },
+      "Positions": [
+        {
+          "X": 3024.0,
+          "Y": 11312.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 1
+    },
+    {
+      "DataId": 19917,
+      "Name": "Chair_Cafe",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 1912.0,
+        "Y": 10661.6
+      },
+      "Positions": [
+        {
+          "X": 1904.0,
+          "Y": 10640.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 1
+    },
+    {
+      "DataId": 19918,
+      "Name": "Chair_Cafe",
+      "Interacts": [
+        {
+          "Pos": {
+            "X": -220.0,
+            "Y": -170.0
+          },
+          "Size": {
+            "X": 440.0,
+            "Y": 340.0
+          }
+        }
+      ],
+      "DeviceType": 10,
+      "SubType": 0,
+      "WhatType": 0,
+      "IsAnonymity": false,
+      "Pos": {
+        "X": 2324.0,
+        "Y": 10661.6
+      },
+      "Positions": [
+        {
+          "X": 2352.0,
+          "Y": 10640.0
+        }
+      ],
+      "DevicePrefabName": "Chair",
+      "InteractPrefabName": "",
+      "InteractTextID": "ChairInteract",
+      "RoomType": 1
+    }
+  ]
+}

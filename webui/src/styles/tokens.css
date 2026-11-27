@@ -1,0 +1,68 @@
+:root {
+  --desktop-bg-0: #0a1a24;
+
+  --topbar-h: 32px;
+  --dock-h: 76px;
+  --topbar-bg: rgba(8, 15, 22, 0.72);
+  --topbar-border: rgba(140, 220, 255, 0.14);
+  --dock-bg: rgba(10, 20, 28, 0.52);
+  --dock-border: rgba(150, 225, 255, 0.16);
+
+  --accent-cyan: #277fff;
+  --accent-cyan-dim: rgba(39, 127, 255, 0.5);
+  --accent-magenta: #b18aff;
+  --accent-green: #47d4b9;
+  --accent-amber: #f5c542;
+  --accent-red: #ff5252;
+  --kali-red: #ec0101;
+  --accent-blue-btn: #2471f3;
+
+  --shell-glow: #5fd9f6;
+  --shell-glow-dim: rgba(95, 217, 246, 0.45);
+
+  --win-bg: rgba(13, 20, 30, 0.92);
+  --win-border: rgba(150, 220, 255, 0.12);
+  --win-border-active: rgba(95, 217, 246, 0.4);
+  --win-titlebar: rgba(9, 15, 23, 0.6);
+  --win-shadow: 0 24px 70px -18px rgba(2, 10, 18, 0.75), 0 0 0 1px rgba(150, 220, 255, 0.06);
+  --menu-shadow: 0 16px 48px -10px rgba(2, 10, 18, 0.75), 0 0 0 1px rgba(150, 220, 255, 0.08);
+  --win-radius: 12px;
+
+  --text-0: #f2f4f8;
+  --text-1: #b6bfce;
+  --text-2: #7b869b;
+  --surface-0: #121724;
+  --surface-1: #171e30;
+  --surface-2: #1e2840;
+  --line: rgba(140, 180, 255, 0.09);
+  --line-strong: rgba(140, 180, 255, 0.18);
+
+  --font-ui: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-mono: "Fira Code", "JetBrains Mono", "Cascadia Code", "Consolas", monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  color: var(--text-0);
+  background: var(--desktop-bg-0);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent-cyan); color: #fff; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan-dim); }

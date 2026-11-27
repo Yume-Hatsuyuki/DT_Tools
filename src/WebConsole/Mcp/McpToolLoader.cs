@@ -1,0 +1,67 @@
+// 作用：发现并加载 MCP 工具；不负责协议处理与配置声明。
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using DT_Tools.Core.Attributes;
+using DT_Tools.Commands;
+using Newtonsoft.Json.Linq;
+
+namespace DT_Tools.WebConsole.Mcp
+{
+    internal sealed class McpToolDef
+    {
+        public string Name;
+        public string Description;
+        public string Author;
+        public FeatureTag Tags;
+        public JObject SchemaJson;
+        public Func<JObject, CommandResult> Execute;
+    }
+
+    internal static class McpToolLoader
+    {
+        private static Dictionary<string, McpToolDef> _tools;
+
+        public static IReadOnlyDictionary<string, McpToolDef> Tools => _tools;
+
+        public static void Load()
+        {
+            if (_tools != null) return;
+
+            var map = new Dictionary<string, McpToolDef>(StringComparer.Ordinal);
+            foreach (var type in typeof(McpToolLoader).Assembly.GetTypes())
+            {
+                var attr = type.GetCustomAttribute<McpToolAttribute>();
+                if (attr == null)
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(attr.Author))
+                    throw new InvalidOperationException($"MCP 工具 {type.FullName} 漏写 Author（逐工具实名，禁止兜底）");
+
+                FeatureTagCatalog.Validate(attr.Tags, type.FullName);
+
+                var schemaMethod = type.GetMethod("Schema", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
+                var executeMethod = type.GetMethod("Execute", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(JObject) }, null);
+                if (schemaMethod == null || executeMethod == null)
+                    throw new InvalidOperationException($"MCP 工具 {type.FullName} 缺少 static Schema() 或 static Execute(JObject)");
+
+                if (map.ContainsKey(attr.Name))
+                    throw new InvalidOperationException($"MCP 工具重名: {attr.Name}");
+
+                map[attr.Name] = new McpToolDef
+                {
+                    Tags = attr.Tags,
+                    Name = attr.Name,
+                    Description = attr.Description,
+                    Author = attr.Author.Trim(),
+                    SchemaJson = (JObject)schemaMethod.Invoke(null, null),
+                    Execute = args => (CommandResult)executeMethod.Invoke(null, new object[] { args }),
+                };
+            }
+
+            _tools = map;
+            Log.Info("Mcp", $"已加载 {map.Count} 个 MCP 工具：{string.Join("、", map.Keys.OrderBy(n => n, StringComparer.Ordinal))}");
+        }
+    }
+}

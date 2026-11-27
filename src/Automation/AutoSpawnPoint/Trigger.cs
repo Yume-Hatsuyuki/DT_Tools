@@ -1,0 +1,34 @@
+// 作用：判定自动出生点的自动化触发条件；不负责动作执行与配置声明。
+using DT_Tools.Core;
+using DT_Tools.Game;
+using Protocol;
+
+namespace DT_Tools.Automation.AutoSpawnPoint
+{
+    internal static class AutoSpawnPointTrigger
+    {
+        public static void Tick()
+        {
+            if (!GameState.TryGetState(out EGameState state))
+                return;
+
+            if (state != AutoSpawnPointState.LastState)
+            {
+                if (state == EGameState.Survive)
+                {
+                    AutoSpawnPointState.BeginRound();
+                    Log.Info<AutoSpawnPointModule>("已进入 Survive，准备传送");
+                }
+                else if (AutoSpawnPointState.LastState == EGameState.Survive)
+                {
+                    AutoSpawnPointState.MarkLeft();
+                    Log.Info<AutoSpawnPointModule>($"离开 Survive → {state}");
+                }
+                AutoSpawnPointState.LastState = state;
+            }
+
+            if (state == EGameState.Survive && !AutoSpawnPointState.DoneThisRound)
+                AutoSpawnPointAction.Run();
+        }
+    }
+}

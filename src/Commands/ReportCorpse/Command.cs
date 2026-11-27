@@ -1,0 +1,70 @@
+// 作用：实现 /report 命令的参数解析与执行；不负责命令注册与其他命令。
+using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
+using DT_Tools.Game;
+using Protocol;
+
+namespace DT_Tools.Commands.ReportCorpse
+{
+    internal sealed class ReportCorpseCommand : ICommand
+    {
+        public string Name => "report";
+        public string[] Aliases => new[] { "alert_corpse", "开庭", "报警", "我想开庭" };
+        public string Usage => "report [#corpseId]";
+        public string Description => "客户端报警：无参列出场上尸体，带 #id 直接发 C_INTERACT_CORPSE 强制开会（跟随控制台）。⚠ 多人局：观战者也可强制开庭且事后无法区分，慎用。";
+        public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameCorpse;
+
+        public bool RequireHost => false;
+
+        public CommandResult Execute(CommandContext ctx)
+        {
+            if (!ReportCorpseLogic.TryGetLocalContext(out var device, out string ctxCode, out string ctxText))
+            {
+                ctx.Reply(ctxText);
+                return CommandResult.Fail(ctxCode);
+            }
+
+            if (ctx.Args.Length == 0)
+            {
+                var corpses = ReportCorpseLogic.ListCorpses(device);
+                ctx.Reply(ReportCorpseFormat.ReplyList(corpses, device));
+                return CommandResult.Success(ReportCorpseFormat.ResultList(corpses, device));
+            }
+
+            if (!ReportCorpseLogic.RequireSurvive(out string stateCode, out string stateText))
+            {
+                ctx.Reply(stateText);
+                return CommandResult.Fail(stateCode);
+            }
+
+            if (!TargetSpec.TryParseId(ctx.Args[0], out int targetId))
+            {
+                ctx.Reply($"无效的 ID: {ctx.Args[0]}（应为 #<数字> 或纯数字）");
+                return CommandResult.Fail("invalid target");
+            }
+
+            var target = ReportCorpseLogic.FindCorpse(device, targetId);
+            if (target == null)
+            {
+                ctx.Reply($"场上没有尸体 #{targetId}（先用 /report 查看当前尸体列表）。");
+                return CommandResult.Fail("corpse not found");
+            }
+
+            string blockReason = ReportCorpseLogic.GetBlockReason(device, target);
+            if (blockReason != null)
+            {
+                ctx.Reply($"尸体 #{targetId} 当前不可报警：{blockReason}。");
+                return CommandResult.Fail("blocked", new { reason = blockReason });
+            }
+
+            Managers.Network.GameServer.Send(new C_INTERACT_CORPSE
+            {
+                CorpseId = target.ID,
+            });
+
+            ctx.Reply(ReportCorpseFormat.ReplyReport(target));
+            return CommandResult.Success(ReportCorpseFormat.ResultReport(target));
+        }
+    }
+}

@@ -1,0 +1,450 @@
+// 作用：提供配置段的读写服务；不负责特性声明与绑定。
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using BepInEx.Configuration;
+using DT_Tools.Core.Attributes;
+using Newtonsoft.Json;
+
+namespace DT_Tools.Core
+{
+    public static class ConfigService
+    {
+        public sealed class SectionDto
+        {
+            public string Section;
+
+            public string Group;
+
+            public string[] Tags;
+
+            public string Side;
+
+            public string EnabledKey = Engine.EnabledKey;
+
+            public List<EntryDto> Entries = new List<EntryDto>();
+        }
+
+        public sealed class EntryDto
+        {
+            public string Section;
+            public string Key;
+            public string Type;
+            public object Value;
+            public object Default;
+            public string Description;
+            public object Accepts;
+        }
+
+        public sealed class ImportResult
+        {
+            public string Mode;
+            public int Updated;
+            public int Skipped;
+            public List<(string Section, string Key, string Error)> Errors =
+                new List<(string, string, string)>();
+        }
+
+        public static List<SectionDto> List(ConfigFile config)
+        {
+            var bySection = new Dictionary<string, SectionDto>(StringComparer.Ordinal);
+
+            foreach (ConfigDefinition def in config.Keys)
+            {
+                ConfigEntryBase entry = config[def];
+                if (entry == null)
+                    continue;
+
+                if (!bySection.TryGetValue(def.Section, out var sec))
+                {
+                    sec = new SectionDto
+                    {
+                        Section = def.Section,
+                        Group = ClassifyGroup(def.Section),
+                        Tags = FeatureTagCatalog.Names(Engine.TagsOfSection(def.Section)),
+                        Side = SideKeyOf(Engine.SideOfSection(def.Section)),
+                    };
+                    bySection[def.Section] = sec;
+                }
+
+                sec.Entries.Add(ToDto(def, entry));
+            }
+
+            foreach (var sec in bySection.Values)
+            {
+                sec.Entries = sec.Entries
+                    .OrderBy(e => e.Key == Engine.EnabledKey ? 0 : 1)
+                    .ThenBy(e => e.Key, StringComparer.Ordinal)
+                    .ToList();
+            }
+
+            return bySection.Values
+                .OrderBy(s => s.Section, StringComparer.Ordinal)
+                .ToList();
+        }
+
+        private static string ClassifyGroup(string section)
+        {
+            string group = Engine.GroupOfSection(section);
+            if (group != null)
+                return group;
+            foreach (var module in Engine.AutomationModules)
+            {
+                if (string.Equals(module.Section, section, StringComparison.Ordinal))
+                    return ConfigSectionAttribute.GroupAutomation;
+            }
+            return "feature";
+        }
+
+        public static (bool ok, string error, object value) Update(
+            ConfigFile config, string section, string key, string rawValue)
+        {
+            ConfigEntryBase entry;
+            try
+            {
+                entry = config[section, key];
+            }
+            catch
+            {
+                return (false, "not found", null);
+            }
+
+            if (entry == null)
+                return (false, "not found", null);
+
+            try
+            {
+                object parsed = ParseValue(rawValue, entry.SettingType);
+                if (!IsAcceptable(entry, parsed, out string rangeError))
+                    return (false, rangeError ?? "out of range", null);
+
+                entry.BoxedValue = parsed;
+                return (true, null, DisplayValue(entry.BoxedValue));
+            }
+            catch (Exception ex)
+            {
+                return (false, $"type mismatch: {ex.Message}", null);
+            }
+        }
+
+        public static void Save(ConfigFile config) => config.Save();
+
+        public static int Reset(ConfigFile config, string section, string key)
+        {
+            int n = 0;
+            if (!string.IsNullOrEmpty(section) && !string.IsNullOrEmpty(key))
+            {
+                try
+                {
+                    var entry = config[section, key];
+                    if (entry != null)
+                    {
+                        entry.BoxedValue = entry.DefaultValue;
+                        n = 1;
+                    }
+                }
+                catch
+                {
+                }
+                return n;
+            }
+
+            foreach (ConfigDefinition def in config.Keys)
+            {
+                if (!string.IsNullOrEmpty(section) &&
+                    !string.Equals(def.Section, section, StringComparison.Ordinal))
+                    continue;
+                var entry = config[def];
+                if (entry == null) continue;
+                entry.BoxedValue = entry.DefaultValue;
+                n++;
+            }
+            return n;
+        }
+
+        public static string ExportCfg(ConfigFile config)
+        {
+            var sb = new StringBuilder();
+            foreach (var sec in List(config))
+            {
+                sb.Append('[').Append(sec.Section).AppendLine("]");
+                foreach (var e in sec.Entries)
+                {
+                    if (!string.IsNullOrEmpty(e.Description))
+                    {
+                        foreach (var line in e.Description.Split('\n'))
+                            sb.Append("## ").AppendLine(line.TrimEnd());
+                    }
+                    sb.Append(e.Key).Append(" = ").AppendLine(FormatValue(e.Value));
+                }
+                sb.AppendLine();
+            }
+            return sb.ToString();
+        }
+
+        public static ImportResult ImportCfg(ConfigFile config, string text, string mode)
+        {
+            var result = new ImportResult { Mode = mode ?? "memory" };
+            string section = null;
+            foreach (var rawLine in (text ?? "").Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None))
+            {
+                string line = rawLine.Trim();
+                if (line.Length == 0 || line.StartsWith("#") || line.StartsWith(";"))
+                    continue;
+                if (line.StartsWith("[") && line.EndsWith("]"))
+                {
+                    section = line.Substring(1, line.Length - 2).Trim();
+                    continue;
+                }
+                if (section == null) continue;
+                int eq = line.IndexOf('=');
+                if (eq <= 0) continue;
+                string key = line.Substring(0, eq).Trim();
+                string val = line.Substring(eq + 1).Trim();
+                ApplyImportPair(config, result, section, key, val);
+            }
+            if (string.Equals(result.Mode, "overwrite", StringComparison.OrdinalIgnoreCase))
+                config.Save();
+            return result;
+        }
+
+        public static ImportResult ImportJson(ConfigFile config, string json, string mode)
+        {
+            var result = new ImportResult { Mode = mode ?? "memory" };
+
+            foreach (var (section, key, value) in ParseImportPairs(json ?? ""))
+                ApplyImportPair(config, result, section, key, value);
+
+            if (string.Equals(result.Mode, "overwrite", StringComparison.OrdinalIgnoreCase))
+                config.Save();
+            return result;
+        }
+
+        private static IEnumerable<(string Section, string Key, string Value)> ParseImportPairs(string json)
+        {
+            var list = new List<(string, string, string)>();
+            if (Json.TryFrom<List<ImportSectionDto>>(json, out var sections) && sections != null)
+            {
+                foreach (var sec in sections)
+                {
+                    if (sec?.Entries == null) continue;
+                    foreach (var e in sec.Entries)
+                    {
+                        if (string.IsNullOrEmpty(sec.Section) || string.IsNullOrEmpty(e?.Key)) continue;
+                        list.Add((sec.Section, e.Key, NormalizeRaw(e.Value)));
+                    }
+                }
+                if (list.Count > 0)
+                    return list;
+            }
+
+            if (Json.TryFrom<List<ImportPairDto>>(json, out var pairs) && pairs != null)
+            {
+                foreach (var p in pairs)
+                {
+                    if (string.IsNullOrEmpty(p?.Section) || string.IsNullOrEmpty(p.Key)) continue;
+                    list.Add((p.Section, p.Key, NormalizeRaw(p.Value)));
+                }
+            }
+            return list;
+        }
+
+        private sealed class ImportSectionDto
+        {
+            [JsonProperty("section")] public string Section = null;
+            [JsonProperty("entries")] public List<ImportEntryDto> Entries = null;
+        }
+
+        private sealed class ImportEntryDto
+        {
+            [JsonProperty("key")] public string Key = null;
+            [JsonProperty("value")] public object Value = null;
+        }
+
+        private sealed class ImportPairDto
+        {
+            [JsonProperty("section")] public string Section = null;
+            [JsonProperty("key")] public string Key = null;
+            [JsonProperty("value")] public object Value = null;
+        }
+
+        private static string NormalizeRaw(object value)
+        {
+            switch (value)
+            {
+                case null: return null;
+                case string s: return s;
+                case bool b: return b ? "true" : "false";
+                case IFormattable f: return f.ToString(null, CultureInfo.InvariantCulture);
+                default: return value.ToString();
+            }
+        }
+
+        private static void ApplyImportPair(
+            ConfigFile config, ImportResult result, string section, string key, string val)
+        {
+            try
+            {
+                ConfigEntryBase entry = config[section, key];
+                if (entry == null)
+                {
+                    result.Skipped++;
+                    return;
+                }
+                var (ok, error, _) = Update(config, section, key, val);
+                if (ok) result.Updated++;
+                else result.Errors.Add((section, key, error ?? "error"));
+            }
+            catch
+            {
+                result.Skipped++;
+            }
+        }
+
+        private static string SideKeyOf(FeatureSide? side)
+        {
+            if (side == null) return null;
+            switch (side.Value)
+            {
+                case FeatureSide.Client: return "client";
+                case FeatureSide.Host: return "host";
+                case FeatureSide.Both: return "both";
+                default: return null;
+            }
+        }
+
+        private static EntryDto ToDto(ConfigDefinition def, ConfigEntryBase entry)
+        {
+            return new EntryDto
+            {
+                Section = def.Section,
+                Key = def.Key,
+                Type = entry.SettingType.Name,
+                Value = DisplayValue(entry.BoxedValue),
+                Default = DisplayValue(entry.DefaultValue),
+                Description = entry.Description?.Description ?? "",
+                Accepts = ExtractAccepts(def, entry)
+            };
+        }
+
+        private static object DisplayValue(object value)
+            => value is Enum e ? Enum.GetName(e.GetType(), e) ?? e.ToString() : value;
+
+        private static object ExtractAccepts(ConfigDefinition def, ConfigEntryBase entry)
+        {
+            var dyn = OptionProviders.TryGet(def.Section, def.Key);
+            if (dyn != null)
+                return OptionsAccepts(dyn);
+
+            if (entry.SettingType != null && entry.SettingType.IsEnum)
+            {
+                var opts = new List<ConfigOption>();
+                foreach (string name in Enum.GetNames(entry.SettingType))
+                    opts.Add(new ConfigOption(name));
+                return OptionsAccepts(opts);
+            }
+
+            var acc = entry.Description?.AcceptableValues;
+            if (acc == null) return null;
+
+            var t = acc.GetType();
+            if (t.IsGenericType &&
+                t.GetGenericTypeDefinition().Name.StartsWith("AcceptableValueRange", StringComparison.Ordinal))
+            {
+                object min = t.GetProperty("MinValue")?.GetValue(acc);
+                object max = t.GetProperty("MaxValue")?.GetValue(acc);
+                return new Dictionary<string, object> { ["min"] = min, ["max"] = max };
+            }
+
+            if (t.IsGenericType &&
+                t.GetGenericTypeDefinition().Name.StartsWith("AcceptableValueList", StringComparison.Ordinal))
+            {
+                var arr = t.GetProperty("AcceptableValues")?.GetValue(acc) as Array;
+                if (arr != null)
+                {
+                    var opts = new List<ConfigOption>();
+                    foreach (var x in arr)
+                        opts.Add(new ConfigOption(Convert.ToString(x, CultureInfo.InvariantCulture)));
+                    return OptionsAccepts(opts);
+                }
+            }
+
+            return null;
+        }
+
+        private static Dictionary<string, object> OptionsAccepts(IReadOnlyList<ConfigOption> opts)
+        {
+            var options = new List<object>(opts.Count);
+            var values = new List<object>(opts.Count);
+            foreach (var o in opts)
+            {
+                options.Add(new Dictionary<string, object>
+                {
+                    ["value"] = o.Value,
+                    ["label"] = o.Label
+                });
+                values.Add(o.Value);
+            }
+            return new Dictionary<string, object>
+            {
+                ["options"] = options,
+                ["values"] = values
+            };
+        }
+
+        private static object ParseValue(string raw, Type type)
+        {
+            if (type == typeof(string))
+                return raw ?? "";
+
+            if (type == typeof(bool))
+            {
+                if (bool.TryParse(raw, out bool b)) return b;
+                if (raw == "1") return true;
+                if (raw == "0") return false;
+                throw new FormatException("expected bool");
+            }
+
+            if (type == typeof(int))
+                return int.Parse(raw, CultureInfo.InvariantCulture);
+            if (type == typeof(float))
+                return float.Parse(raw, CultureInfo.InvariantCulture);
+            if (type == typeof(double))
+                return double.Parse(raw, CultureInfo.InvariantCulture);
+            if (type.IsEnum)
+                return Enum.Parse(type, raw, ignoreCase: true);
+
+            return Convert.ChangeType(raw, type, CultureInfo.InvariantCulture);
+        }
+
+        private static bool IsAcceptable(ConfigEntryBase entry, object value, out string error)
+        {
+            error = null;
+            var acc = entry.Description?.AcceptableValues;
+            if (acc == null) return true;
+            try
+            {
+                if (!acc.IsValid(value))
+                {
+                    error = "out of range";
+                    return false;
+                }
+            }
+            catch
+            {
+            }
+            return true;
+        }
+
+        private static string FormatValue(object value)
+        {
+            if (value == null) return "";
+            if (value is bool b) return b ? "true" : "false";
+            if (value is IFormattable f)
+                return f.ToString(null, CultureInfo.InvariantCulture);
+            return value.ToString();
+        }
+    }
+}

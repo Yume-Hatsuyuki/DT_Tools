@@ -1,0 +1,58 @@
+// 作用：声明庭审画布动态照片功能、配置项与启用状态；不实现补丁与运行时逻辑。
+using DT_Tools.Core.Attributes;
+using UnityEngine;
+
+namespace DT_Tools.Features.LiveDraw
+{
+    [PatchFeature(
+        "庭审画布动态照片：庭审讨论阶段按 F9 把 photos 目录里的照片转成单色线稿画上画布（带画入场动画），" +
+        "画完持续沸腾抖动+周期波浪，其他玩家无需装本 mod 即可看到动画。F10 沸腾开关 / F11 手动波浪。",
+        defaultEnabled: false,
+        side: FeatureSide.Client,
+        Tags = FeatureTag.UiDraw | FeatureTag.GameVote,
+        Author = "花语")]
+    public sealed class LiveDrawFeature
+    {
+        [Config("画下一张照片（清空自己画布后重画，按文件名顺序轮换）。设为 None 关闭。")]
+        public static KeyCode DrawKey = KeyCode.F9;
+
+        [Config("沸腾动画 开/关。设为 None 关闭。")]
+        public static KeyCode AnimToggleKey = KeyCode.F10;
+
+        [Config("手动来一次波浪（需已画完在沸腾中）。设为 None 关闭。")]
+        public static KeyCode WaveKey = KeyCode.F11;
+
+        [Config("弹跳闪光：整幅画快速放大弹跳一下（需已画完）。设为 None 关闭。")]
+        public static KeyCode BounceKey = KeyCode.K;
+
+        [Config("逐笔重播：线条像写字一样重新一笔笔出现（需已画完）。设为 None 关闭。")]
+        public static KeyCode ReplayKey = KeyCode.L;
+
+        [Config("心跳呼吸：整幅画按心跳节奏缩放脉动（需已画完）。设为 None 关闭。")]
+        public static KeyCode HeartbeatKey = KeyCode.J;
+
+        [Config("漂浮纸片：整幅画像纸片一样缓慢上下漂移摇晃，再按一次停止。设为 None 关闭。")]
+        public static KeyCode FloatKey = KeyCode.H;
+
+        [Config("溶解消散：线条按随机顺序逐笔消失再重聚（需已画完）。设为 None 关闭。")]
+        public static KeyCode DissolveKey = KeyCode.U;
+
+        [Config("沸腾帧率（每秒 REPLACE 包数，1-12；人多/房主网络差就调低）。", Min = 1, Max = 12)]
+        public static int BoilFps = 6;
+
+        [Config("每 N 秒自动来一次波浪，0=关闭。", Min = 0, Max = 600)]
+        public static int AutoWaveEverySeconds = 6;
+
+        [Config("单张照片最多笔画数（协议上限 256）。", Min = 1, Max = 256)]
+        public static int MaxStrokes = 230;
+
+        [Config("单张照片最多点数（协议上限 8000，越多画得越久）。", Min = 1, Max = 8000)]
+        public static int MaxPoints = 3400;
+
+        [Config("线稿笔宽（主轮廓，2-16；次轮廓自动取 60%）。越小线条越细。", Min = 2, Max = 16)]
+        public static float StrokeWidth = 3.5f;
+
+        [Config("照片目录（绝对路径，例如 D:/我的照片，jpg/png 按文件名轮换）。留空用默认目录 BepInEx/config/DT_Tools/photos/。")]
+        public static string PhotoFolder = "";
+    }
+}

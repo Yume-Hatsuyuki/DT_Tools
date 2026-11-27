@@ -1,0 +1,37 @@
+// 作用：提供 MCP 工具「列出命令」的参数与执行；不负责协议处理与工具发现。
+using DT_Tools.Core.Attributes;
+using System;
+using System.Linq;
+using DT_Tools.Commands;
+using Newtonsoft.Json.Linq;
+
+namespace DT_Tools.WebConsole.Mcp.Tools.ListCommands
+{
+    [McpTool("list_commands",
+        "列出全部 DT_Tools 命令（name/usage/description/requireHost）。行动能力（发包、操控、查询、自动化）全部经 run_command 执行这些命令；本工具是 run_command 前的查阅面。",
+        Tags = FeatureTag.SysDebug,
+        Author = "梦初雪")]
+    internal static class ListCommandsTool
+    {
+        public static JObject Schema() => new JObject
+        {
+            ["type"] = "object",
+            ["properties"] = new JObject(),
+            ["additionalProperties"] = false,
+        };
+
+        public static CommandResult Execute(JObject args)
+            => CommandResult.Success(CommandRegistry.All
+                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(c => new
+                {
+                    name = c.Name,
+                    usage = c.Usage,
+                    description = c.Description,
+                    tags = FeatureTagCatalog.Names(c.Tags),
+                    requireHost = c.RequireHost,
+                    author = string.IsNullOrEmpty(c.Author) ? "佚名" : c.Author,
+                })
+                .ToList());
+    }
+}

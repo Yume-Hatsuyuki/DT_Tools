@@ -1,0 +1,20 @@
+// 作用：实现 /enter_detective 命令的参数解析与执行；不负责命令注册与其他命令。
+using DT_Tools.Commands;
+using DT_Tools.Core.Attributes;
+
+namespace DT_Tools.Commands.Phase
+{
+    internal sealed class EnterDetectiveCommand : ICommand
+    {
+        public string Name => "enter_detective";
+        public string[] Aliases => new[] { "detective", "调查", "进入调查" };
+        public string Usage => "enter_detective";
+        public string Description => "强制进入调查阶段（仅房主、生存阶段可用；有尸体时走原版发现流程）。";
+        public string Author => "梦初雪";
+        public FeatureTag Tags => FeatureTag.GameRound;
+
+        public bool RequireHost => true;
+
+        public CommandResult Execute(CommandContext ctx) => PhaseLogic.EnterDetective(ctx);
+    }
+}

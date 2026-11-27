@@ -1,0 +1,150 @@
+# 作用：按项目文件版本校验 tag 与 main 历史后构建并创建 GitHub Release；不负责维护版本号、不推送代码。
+name: Release
+
+on:
+  push:
+    tags:
+      # tag 过滤不支持表达式，具体版本在作业内按项目文件版本校验。
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '版本号（例如 v0.2.0.1）'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: 校验 tag 与来源分支
+        id: verify
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$REF_NAME" != "main" ]; then
+              echo "::error::手动发布必须在 main 上触发，当前分支是「$REF_NAME」。"
+              exit 1
+            fi
+            TAG="$INPUT_TAG"
+          else
+            TAG="$REF_NAME"
+          fi
+          VERSION="$(grep -oP '(?<=<Version>)[^<]+' src/DT_Tools.csproj | head -n 1 || true)"
+          if [ -z "$VERSION" ]; then
+            echo "::error::项目文件缺少 Version 属性。"
+            exit 1
+          fi
+          EXPECTED="v$VERSION"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::tag 必须是 v 加四段纯数字，当前为「$TAG」。"
+            exit 1
+          fi
+          if [ "$TAG" != "$EXPECTED" ]; then
+            echo "::error::tag「$TAG」与项目文件版本「$EXPECTED」不一致。"
+            exit 1
+          fi
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$SHA" origin/main; then
+            echo "::error::发布提交 $SHA 不在 main 历史中，已阻止发布。"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: 配置 .NET
+        uses: actions/setup-dotnet@v5
+
+      - name: 配置 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: webui/package-lock.json
+
+      - name: 构建
+        run: dotnet build src/DT_Tools.csproj -c Release
+
+      - name: 打包发布文件
+        id: package
+        shell: bash
+        env:
+          TAG: ${{ steps.verify.outputs.tag }}
+        run: |
+          set -euo pipefail
+          OUT_DIR="src/bin/Release/netstandard2.1"
+          # 用户解压到 BepInEx/plugins/ 后得到 plugins/DT_Tools/{dll,WebUI,README,images...}
+          STAGE="stage/DT_Tools"
+          mkdir -p "$STAGE"
+
+          DLL_PATH=$(find "$OUT_DIR" -maxdepth 1 -name 'DT_Tools*.dll' | head -n 1)
+          if [ -z "$DLL_PATH" ]; then
+            echo "::error::未找到编译产物 dll"
+            exit 1
+          fi
+          cp "$DLL_PATH" "$STAGE/DT_Tools.dll"
+
+          # 随主程序集发布信息类伴生文件：.pdb 定位行号、.deps.json 依赖清单、.xml 文档注释。
+          for ext in pdb deps.json xml; do
+            SRC_FILE="${DLL_PATH%.dll}.${ext}"
+            if [ -f "$SRC_FILE" ]; then
+              cp "$SRC_FILE" "$STAGE/DT_Tools.${ext}"
+              echo "已附带 ${ext}：$(basename "$SRC_FILE")"
+            else
+              echo "::notice::无 ${ext}（$SRC_FILE），跳过"
+            fi
+          done
+
+          if [ ! -f "$OUT_DIR/WebUI/js/app.js" ]; then
+            echo "::error::输出目录缺少 WebUI/js/app.js（检查前端构建与 csproj 复制目标）"
+            exit 1
+          fi
+          cp -a "$OUT_DIR/WebUI" "$STAGE/WebUI"
+
+          for f in README.md LICENSE; do
+            if [ ! -f "$f" ]; then
+              echo "::error::缺少发布必需文件：$f"
+              exit 1
+            fi
+            cp "$f" "$STAGE/"
+          done
+
+          # README 引用 images/ 下的截图与二维码，不随包发布会导致图片失效
+          if [ ! -d images ]; then
+            echo "::error::缺少 images/ 目录（README 引用了其中的图片）"
+            exit 1
+          fi
+          cp -a images "$STAGE/images"
+
+          ZIP_NAME="DT_Tools-${TAG}.zip"
+          (cd stage && zip -r "../$ZIP_NAME" DT_Tools)
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "Packed layout:"
+          unzip -l "$ZIP_NAME" | head -60
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.verify.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: DT_Tools ${{ steps.verify.outputs.tag }}
+          generate_release_notes: true
+          files: ${{ steps.package.outputs.zip_name }}

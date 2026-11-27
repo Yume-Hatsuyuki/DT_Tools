@@ -1,0 +1,25 @@
+// 作用：声明自定义房间名功能、配置项与启用状态；不实现补丁与运行时逻辑。
+using DT_Tools.Core.Attributes;
+
+namespace DT_Tools.Features.CustomRoomName
+{
+    [PatchFeature(
+        "自定义房间名：配置 RoomName 后建房即用该名；修改配置会立刻写入当前房间（需房主，0.1.18c 起游戏内房间名显示同步更新）。",
+        defaultEnabled: false,
+        side: FeatureSide.Host,
+        Tags = FeatureTag.SysRoom,
+        Author = "梦初雪")]
+    public sealed class CustomRoomNameFeature
+    {
+        [Config("房间显示名。留空则建房仍用创建者昵称。修改后会尝试立刻写入当前房间（需房主）。")]
+        public static string RoomName = "";
+
+        private static void OnPatched() => CustomRoomNameLogic.WireRoomNameChanged();
+
+        private static void OnEnabled()
+        {
+            CustomRoomNameLogic.WireRoomNameChanged();
+            CustomRoomNameLogic.TryApplyRoomName("OnEnabled");
+        }
+    }
+}
