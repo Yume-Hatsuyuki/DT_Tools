@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>DT_Tools</AssemblyName>
-    <Version>0.2.0.1</Version>
+    <Version>0.2.0.2</Version>
     <LangVersion>latest</LangVersion>
     <GameManaged Condition="'$(GameManaged)' == ''">$(MSBuildThisFileDirectory)..\Managed</GameManaged>
     <LibsDir Condition="'$(LibsDir)' == ''">$(MSBuildThisFileDirectory)..\libs</LibsDir>

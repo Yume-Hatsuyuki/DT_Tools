@@ -1,26 +1,16 @@
-// 作用：为隐私保护强制中继挂载补丁拦截；不负责配置声明与状态存储。
+// 作用：为房间内解锁流媒体开关挂载补丁拦截；不负责配置声明与状态存储。
 using DT_Tools.Core;
-using DummyClient;
 using HarmonyLib;
 
 namespace DT_Tools.Features.ForceRelay
 {
-    [HarmonyPatch(typeof(SteamP2PTransport), "ConfigureTransportSelection")]
-    internal static class ForceRelayConfigurePatch
+    [HarmonyPatch(typeof(StreamerMode), nameof(StreamerMode.CanChange), MethodType.Getter)]
+    internal static class StreamerCanChangePatch
     {
-        [HarmonyPostfix]
-        static void Postfix()
+        private static void Postfix(ref bool __result)
         {
-            if (!Engine.Enabled<ForceRelayFeature>())
-                return;
-            try
-            {
-                ForceRelayFeature.ApplyForceRelay(log: true);
-            }
-            catch (global::System.Exception ex)
-            {
-                Log.Warn(Engine.SectionOf(typeof(ForceRelayFeature)), ex, "ConfigureTransportSelection 后强制中继失败");
-            }
+            if (UnlockRelayToggleFeature.Restoring || Engine.Enabled<UnlockRelayToggleFeature>())
+                __result = true;
         }
     }
 }

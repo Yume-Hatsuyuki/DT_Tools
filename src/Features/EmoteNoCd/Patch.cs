@@ -23,7 +23,7 @@ namespace DT_Tools.Features.EmoteNoCd
 
             bool canUse =
                 panel != null
-                && Managers.Game.IsAlive
+                && (Managers.Game.IsAlive || UI_EmotionPanel.CanGhostEmote())
                 && (Managers.Player.MyPlayer == null
                     || Managers.Player.MyPlayer.State != EPlayerState.Possess)
                 && Traverse.Create(__instance).Method("CanUseEmotion").GetValue<bool>();

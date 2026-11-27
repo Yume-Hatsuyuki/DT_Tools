@@ -12,7 +12,7 @@ DT_Tools/
 ├── skills/                adhd-ste、occam-razor、untrusted-input-security
 ├── src/                   插件项目、核心、功能、命令、自动化与控制台
 │   ├── Core/              Engine、配置、特性、日志、路径与协程宿主
-│   ├── Features/          93 个功能目录、302 个源文件
+│   ├── Features/          95 个功能目录、311 个源文件
 │   ├── Commands/          41 个命令目录与 7 个基础设施文件、共 53 条命令
 │   ├── Automation/        4 个自动化模块与宿主、驱动，共 22 个源文件
 │   ├── WebConsole/        HTTP/WebSocket 控制台与 MCP 桥接，共 40 个源文件
@@ -29,7 +29,7 @@ DT_Tools/
 
 | 路径 | 职责 |
 | --- | --- |
-| `src/DT_Tools.csproj` | 插件项目文件，`TargetFramework` 为 `netstandard2.1`，`AssemblyName` 为 `DT_Tools`，`Version` 为 `0.2.0.1`。引用 `Managed/` 下的 `Assembly-CSharp.dll`、`Google.Protobuf.dll`、`Unity.TextMeshPro.dll`、`UnityEngine.dll`、`UnityEngine.CoreModule.dll`、`DissonanceVoip.dll`、`UnityEngine.ImageConversionModule.dll`、`UnityEngine.Physics2DModule.dll`、`UnityEngine.UI.dll`、`UnityEngine.AudioModule.dll`、`UnityEngine.VideoModule.dll`、`UnityEngine.UIModule.dll`、`UnityEngine.IMGUIModule.dll`、`UnityEngine.InputLegacyModule.dll`、`UnityEngine.TextRenderingModule.dll`、`UnityEngine.UnityWebRequestModule.dll`、`UnityEngine.UnityWebRequestAudioModule.dll`、`com.rlabrecque.steamworks.net.dll`、`Newtonsoft.Json.dll`、`spine-csharp.dll`、`spine-unity.dll`；`System.Drawing.dll` 以 `GameDrawing` 别名引用。内嵌 `Features/SitOnChairs/data/` 的 7 个数据文件并在构建前校验存在性。`BuildWebUI` 目标在构建前用 `npm ci` 与 `npm run build` 把 `webui/` 输出到 `src/WebUI/`，`DT_CopyWebUI` 在构建后复制到输出目录 `WebUI/`。`PackageReference` 为 `BepInEx.Analyzers`、`BepInEx.Core`、`BepInEx.PluginInfoProps`、`HarmonyX`。 |
+| `src/DT_Tools.csproj` | 插件项目文件，`TargetFramework` 为 `netstandard2.1`，`AssemblyName` 为 `DT_Tools`，`Version` 为 `0.2.0.2`。引用 `Managed/` 下的 `Assembly-CSharp.dll`、`Google.Protobuf.dll`、`Unity.TextMeshPro.dll`、`UnityEngine.dll`、`UnityEngine.CoreModule.dll`、`DissonanceVoip.dll`、`UnityEngine.ImageConversionModule.dll`、`UnityEngine.Physics2DModule.dll`、`UnityEngine.UI.dll`、`UnityEngine.AudioModule.dll`、`UnityEngine.VideoModule.dll`、`UnityEngine.UIModule.dll`、`UnityEngine.IMGUIModule.dll`、`UnityEngine.InputLegacyModule.dll`、`UnityEngine.TextRenderingModule.dll`、`UnityEngine.UnityWebRequestModule.dll`、`UnityEngine.UnityWebRequestAudioModule.dll`、`com.rlabrecque.steamworks.net.dll`、`Newtonsoft.Json.dll`、`spine-csharp.dll`、`spine-unity.dll`；`System.Drawing.dll` 以 `GameDrawing` 别名引用。内嵌 `Features/SitOnChairs/data/` 的 7 个数据文件并在构建前校验存在性。`BuildWebUI` 目标在构建前用 `npm ci` 与 `npm run build` 把 `webui/` 输出到 `src/WebUI/`，`DT_CopyWebUI` 在构建后复制到输出目录 `WebUI/`。`PackageReference` 为 `BepInEx.Analyzers`、`BepInEx.Core`、`BepInEx.PluginInfoProps`、`HarmonyX`。 |
 | `src/Plugin.cs` | BepInEx 入口，初始化配置目录与协程宿主，调用 `Engine.Load` 加载核心链并调用 `CommandRegistry.Load()` 注册命令；随后启动 `AutomationRunner`、`WebConsole` 与 MCP 桥接，三者各自按配置开关决定是否启动。 |
 | `src/Log.cs` | 标签化日志写入，维护全局与按标签的环形缓冲。 |
 | `src/Core/Engine/` | `Engine` 负责声明发现、配置绑定与补丁挂载；`FeatureLoader` 负责反射发现、Harmony 挂载与 Enabled 回调。 |
@@ -38,7 +38,7 @@ DT_Tools/
 | `src/Core/Log/` | 日志条目、命令会话标识与环形缓冲实现。 |
 | `src/Core/DtPaths.cs`、`src/Core/CoroutineHost.cs` | 配置目录路径与主线程协程宿主。 |
 | `src/Core/Reflect.cs`、`src/Core/Json/Json.cs` | 反射成员访问辅助与轻量 JSON 序列化。 |
-| `src/Features/` | 93 个功能目录、302 个源文件；每个目录按功能声明、补丁、运行时逻辑、状态与界面拆分。 |
+| `src/Features/` | 95 个功能目录、311 个源文件；每个目录按功能声明、补丁、运行时逻辑、状态与界面拆分。 |
 | `src/Features/DoorLockServer/` | 锁门服务端功能：配置声明、放行身份枚举、门交互拦截与迁移恢复；使用 `Player.EraseStack`、`SpendEraseStack()`、`EraseCooltime`、`SendEraseState()`。 |
 | `src/Features/SabotageButtonUnlock/` | 破坏按钮解锁功能：身份判定、按钮与冷却显示、按键输入、门锁客户端文案；通过反射调用 `DeviceBase.IsInteractSabotageState()`。 |
 | `src/Features/WebTablet/` | 平板增强功能：聊天、线索、照片、拍照预算与对局状态的页面注入。 |
@@ -83,7 +83,7 @@ DT_Tools/
 | `.github/workflows/build.yml`、`.github/workflows/release.yml` | 已跟踪 |
 | `.gitignore`、`LICENSE` | 已跟踪 |
 | `src/DT_Tools.csproj`、`src/Plugin.cs`、`src/Log.cs`、`src/Core/` 下 20 个源文件、`src/NuGet.Config` | 已跟踪 |
-| `src/Features/` 下 93 个目录、302 个源文件 | 已跟踪 |
+| `src/Features/` 下 95 个目录、311 个源文件 | 已跟踪 |
 | `src/Commands/` 下 41 个目录与 7 个基础设施文件、共 145 个源文件 | 已跟踪 |
 | `src/Automation/` 下 22 个源文件 | 已跟踪 |
 | `src/WebConsole/` 下 40 个源文件 | 已跟踪 |
@@ -99,4 +99,4 @@ DT_Tools/
 
 `.gitignore` 规则为 `src/bin/`、`src/obj/`、`src/WebUI/`。这些目录是本地构建产物，已被忽略；`webui/node_modules/` 由 `webui/.gitignore` 忽略。
 
-当前分支为 `0.2.0`。
+当前分支为 `main`。
